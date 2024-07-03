@@ -5,7 +5,7 @@ import mne
 import os
 import scipy as sc
 from scipy import signal
-from scipy.signal import butter, lfilter, filtfilt
+from scipy.signal import butter, lfilter, filtfilt, find_peaks
 import plotly.io as pio
 import plotly.express as px
 import plotly.graph_objs as go
@@ -266,8 +266,7 @@ def extract_adalearn_triggers_biopac(biopac_data, trig_channel, plot=False):
 
 def extract_task_session_emg_data(emg_data_df, task_session_summary, plot=False):
     """ 
-    Function to reduce the size of the data to only that within a task session. Creates a dictionary of stored dataframes housing the EMG data for each task session.
-    Additionally, can plot rectified EMG against time for each task session for visualization.
+    Function to reduce the size of the data to only that within a task session. Creates a dictionary of stored dataframes housing the EMG data for each task session. Also creates a relative timestamp for each task session. Can plot rectified EMG against time for each task session for visualization.
 
     Parameters:
     - emg_data_df: pd.DataFrame, contains EMG data, associated (relative) timestamp and data file number.  
@@ -290,7 +289,10 @@ def extract_task_session_emg_data(emg_data_df, task_session_summary, plot=False)
         task_data = emg_data_df[
             (emg_data_df['data_file'] == data_file) &
             (emg_data_df['time'] >= start_time) &
-            (emg_data_df['time'] <= end_time)]
+            (emg_data_df['time'] <= end_time)].copy()  
+        
+        # Calculate relative time starting from the beginning of each task session
+        task_data['rel_time'] = np.arange(0, len(task_data)) * 0.0005
         
         # Store the filtered dataframe in the dictionary with the index as the key
         task_session_dict[index] = task_data
@@ -307,11 +309,11 @@ def extract_task_session_emg_data(emg_data_df, task_session_summary, plot=False)
         # Iterate over each key (task session) and its corresponding dataframe
         for i, (key, df) in enumerate(task_session_dict.items(), start=1):
             # Add trace for rectified_emg against time
-            fig.add_trace(go.Scatter(x=df['time'], y=df['rectified_emg'], mode='lines', name=f'Task Session {key}'),
+            fig.add_trace(go.Scatter(x=df['rel_time'], y=df['rectified_emg'], mode='lines', name=f'Task Session {key}'),
                           row=i, col=1)
 
             # Update x-axis and y-axis titles for each subplot
-            fig.update_xaxes(title_text="Time", row=i, col=1)
+            fig.update_xaxes(title_text="Time (s)", row=i, col=1)
             fig.update_yaxes(title_text="EMG", row=i, col=1)
 
             # Hide the legend for each subplot
@@ -327,3 +329,141 @@ def extract_task_session_emg_data(emg_data_df, task_session_summary, plot=False)
         fig.show()
 
     return task_session_dict
+
+
+def identify_vns_from_emg(task_session_dict, vns_task_session_keys, sampling_rate = 2000, peak_window_size = 0.5, average_window_size = 2, threshold_increase = 1.2):
+    """ 
+    Function to identify the start and end of VNS activation from emg recording. EMG signal is noisey and attempts to use conventional methods to extract the enevelope of the signal were unfruitful (e.g. low-pass filtering, RMS, hilbert transformation; low-pass filtering destroys the signal). Opted for a very simple approach which identifies peaks within the signal to create a new "signal" by averaging around peaks. Identification of the start of VNS activation define by arbitary increase in the signal (here, 20% increase from the average of a number of points preceding a given peak). Function plots the data for visual inspection and returns the identified relative start time of VNS activation. 
+
+    Parameters:
+    - task_session_dict: dict, contains EMG dataframe (value) for each task session (key).
+    - vns_task_session_keys: list, contains numbers of task sessions that VNS activation was present in (pre-defined).
+    - sampling_rate: int, sampling rate of the data acquisition (2000 Hz)
+    - peak_window_size: int, defines the size (in seconds) of the window used to find peaks in the signal (default set to 0.5 s). 
+    - average_window_size: int, defines the size (in seconds) of half the window used to smooth the data by creating an average around identified peaks (default set to 2 s).
+    - threshold_increase: int, defines the (relative) magnitude of increase used to identify the start of VNS activation beyond preceding average (default set to +20%).
+
+    Returns:
+    - vns_start_times: pd.DataFrame, contains variables identifying task session, the relative index of the identified start and the timestamp of that identified start point  
+    """
+    # Setting the figure subplot parameters
+    fig = make_subplots(rows=len(vns_task_session_keys), cols=1, subplot_titles=[f"Task session: {key}" for key in vns_task_session_keys], shared_xaxes=True, vertical_spacing=0.01)
+
+    row_heights = [8000, 300, 500]
+    
+    # Creating an empty list to store the identified VNS start times
+    vns_activation = []
+
+    # For each key identifying a stored dataframe (task_sess_df), creates a new dataframe (data) housing the rectified_emg and rel_time. 
+    for idx, key in enumerate(vns_task_session_keys):
+        data = task_session_dict[key]
+        rectified_emg = data['rectified_emg']
+        rel_time = data['rel_time']
+
+        task_sess_df = pd.DataFrame({'rel_time': rel_time, 'rectified_emg': rectified_emg})
+
+        # Identifying peaks in rectified emg signal
+        # Calculate the number of samples in the window used to find peaks using the window size and the sampling rate 
+        window_samples = int(peak_window_size * sampling_rate)
+
+        # Create empty lists to store the peak amplitudes and corresponding timestamps
+        new_peaks = []
+        new_times = []
+
+        # For loop that iterates across the length of the rectified emg signal in chunks based on the size of the window sample
+        for start in range(0, len(task_sess_df['rectified_emg']) - window_samples, window_samples):
+            end = start + window_samples
+
+            # Extract segments of the rectified emg signal and corresponding time values for the current chunk specified by start and end.
+            segment = task_sess_df['rectified_emg'].iloc[start:end]
+            segment_time = task_sess_df['rel_time'].iloc[start:end]
+
+            # Checks if there are missing data before using the find_peaks function that identifies peaks in the segment array.
+            if not np.isnan(segment).all():
+                peaks, _ = find_peaks(segment)
+
+                # If peaks identified (i.e. len(peaks) > 0), the greatest peak within the segment is identified. Global_peak_idx calculates the global index of this peak in the original rectified emg signal.
+                if len(peaks) > 0:
+                    max_peak_idx = np.argmax(segment.iloc[peaks])
+                    global_peak_idx = start + peaks[max_peak_idx]
+
+                    # The global index is used to append the amplitude of the signal as well as the corresponding time point. 
+                    new_peaks.append(task_sess_df['rectified_emg'].iloc[global_peak_idx])
+                    new_times.append(task_sess_df['rel_time'].iloc[global_peak_idx])
+
+        # Converting lists to np.array
+        new_peaks = np.array(new_peaks)
+        new_times = np.array(new_times)
+
+        # Creating dataframe to store the peaks and times
+        identified_peaks = pd.DataFrame({'peak_amplitude': new_peaks, 'peak_time': new_times})
+
+
+        # Smoothing data through averaging around identified peaks
+        # Creating empty list to store the averaged peak amplitudes and corresponding timestamp
+        average_window_samples = int(average_window_size * sampling_rate)
+        smoothed_peaks = []
+        smoothed_times = []
+
+        # Creating a variable called half window variable which defines the size of the window used to average the data across each side of the identified peak 
+        half_window = average_window_size / 1
+
+        # For loop that iterates over the identifed peaks to calculate the mean amplitude and corresponding time. Appends the data to created lists.
+        for i in range(len(identified_peaks['peak_time'])):
+            window_start = identified_peaks['peak_time'].iloc[i] - half_window
+            window_end = identified_peaks['peak_time'].iloc[i] + half_window
+
+            mask = (identified_peaks['peak_time'] >= window_start) & (identified_peaks['peak_time'] <= window_end)
+            if np.any(mask):
+                smoothed_value = np.nanmean(identified_peaks['peak_amplitude'][mask])
+                smoothed_peaks.append(smoothed_value)
+                smoothed_times.append(identified_peaks['peak_time'].iloc[i])
+
+        # Converts averaged data from lists to np.arrays
+        smoothed_peaks = np.array(smoothed_peaks)
+        smoothed_times = np.array(smoothed_times)
+
+        # Genrates dataframe from np.arrays of averaged data and timestamps
+        smoothed_averaged_peaks = pd.DataFrame({'peaks': smoothed_peaks, 'times': smoothed_times})
+
+
+        # Identifying VNS activation based on threshold criterion
+        # Initialize a placeholder variable for the index of the first point meeting the criterion (currently ste to none)
+        first_increase_index = None
+
+        # Starting from the 6th element and moving across the length of the averaged peaks, calculate the average amplitude of peaks across the previous 10 data points/elements
+        for i in range(5, len(smoothed_averaged_peaks['peaks'])):
+            previous_avg = np.mean(smoothed_averaged_peaks['peaks'][i-10:i])
+
+            # Argument that is used to identify VNS start criterion (i.e. increase of 20% above preceding mean). Identifies whether current peak is 1.2 times greater than previous average. If it is, first_increase_index becomes the index of that peak and the for loop breaks.  
+            if smoothed_averaged_peaks['peaks'][i] > threshold_increase * previous_avg:
+                first_increase_index = i
+                break
+
+        # If an index is identified, the value stored is the corresponding timestamp (in addition to the task session key and index)
+        if first_increase_index is not None:
+            first_increase_value = smoothed_averaged_peaks['times'][first_increase_index]
+            vns_activation.append((key, first_increase_index, first_increase_value))
+        else:
+            vns_activation.append((key, None, None))
+
+        # Add traces to the subplot. Uses created dataframes for ease. 
+        fig.add_trace(go.Scatter(x=task_sess_df['rel_time'], y=task_sess_df['rectified_emg'], mode='lines', name='Original Signal', line=dict(color='rgba(0, 0, 255, 0.2)')), row=idx+1, col=1)
+        fig.add_trace(go.Scatter(x=identified_peaks['peak_time'], y=identified_peaks['peak_amplitude'], mode='markers', name='Identified Peaks', marker=dict(color='red', size=8)), row=idx+1, col=1)
+        fig.add_trace(go.Scatter(x=smoothed_averaged_peaks['times'], y=smoothed_averaged_peaks['peaks'], mode='lines', name='Smoothed Peaks', line=dict(color='green')), row=idx+1, col=1)
+
+        if first_increase_index is not None:
+            fig.add_trace(go.Scatter(x=[first_increase_value], y=[smoothed_averaged_peaks['peaks'][first_increase_index]], mode='markers', name='VNS activation', marker=dict(color='black', size=10)), row=idx+1, col=1)
+
+    fig.update_layout(height=sum(row_heights) + len(vns_task_session_keys) * 50, width=1200, title_text="VNS activation identification from rectified EMG signal", showlegend=False)
+
+    fig.show()
+
+    # The lists storing the timestamp of the first indication of conditions meeting crterion in the smoothed data converted to dataframe which is returned by the function.
+    vns_start_times = pd.DataFrame({
+    'task_session': [t[0] for t in vns_activation],
+    'rel_idx': [t[1] for t in vns_activation],
+    'rel_time': [t[2] for t in vns_activation]
+    })
+
+    return vns_start_times
