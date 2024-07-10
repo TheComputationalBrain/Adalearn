@@ -188,7 +188,8 @@ def plot_behavioural_data(behavioural_df, participant, condition, estimate_v_io_
     Parameters:
     - participant: string, identifier of participant number
     - condition: string, identifier of condition order (set to 2 numbers)
-    - behavioural_df: pd.DataFrame, contains parsed data from json adalearn data file for select variables. 
+    - behavioural_df: pd.DataFrame, contains parsed data from json adalearn data file for select variables.
+        - estimate_v_io_plot: boolean,, if True, will plot scatter graph of subjective estimates against ideal observer for all task sessions (plotly enables you to view individual task sessions by clicking on the respective label in the legend to activate/deactivate that series) 
 
     Returns:
     - Figure containing subplots opened within a browser.
