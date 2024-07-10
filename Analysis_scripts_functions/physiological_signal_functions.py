@@ -29,7 +29,7 @@ def load_biopac_data(participant_str, condition, run_ranges):
     - trig_chan: string, the adalearn outcome trigger channel names
     """
     # Set the working directory of the files
-    base_dir = f'/home/aaron/Documents/VNS Ada_Learn/data_VNS/sub-{participant_str}/ses-{condition}'
+    base_dir = f'/home/aaron/Documents/Python/Ada_Learn/VNS Ada_Learn/Data/sub-{participant_str}/ses-{condition}'
     os.chdir(base_dir)
     print(f"Current working directory: {os.getcwd()}")
 
@@ -38,6 +38,9 @@ def load_biopac_data(participant_str, condition, run_ranges):
 
     # Create a set to store unique stim channel names
     stim_chan_set = set()
+
+    # Create a set to store unique ECG channel names
+    ecg_chan_set = set()
 
     # Create a set to store unique trig channel names
     trig_chan_set = set()
@@ -57,17 +60,24 @@ def load_biopac_data(participant_str, condition, run_ranges):
             print(f"Channel names in {filename}: {raw_biopac.ch_names}")
             stim_channels_in_file = [ch for ch in raw_biopac.ch_names if ch.startswith('STIM')]
             print(f"Stim channels found: {stim_channels_in_file}")
+            ecg_channels_in_file = [ch for ch in raw_biopac.ch_names if ch.startswith('ECG')]
+            print(f"ECG channels found: {ecg_channels_in_file}")
             trig_channels_in_file = [ch for ch in raw_biopac.ch_names if ch.startswith('Digital')]
             print(f"Trig channels found: {trig_channels_in_file}")
             stim_chan_set.update(stim_channels_in_file)
+            ecg_chan_set.update(ecg_channels_in_file)
             trig_chan_set.update(trig_channels_in_file)
 
         else:
             print(f"File not found: {filename}")
 
-    # Convert stim channel set to a list and take the first element
+    # Convert stim (EMG) channel set to a list and take the first element
     stim_chan = list(stim_chan_set)[0] if stim_chan_set else None
     print(f"Final stim channel: {stim_chan}")
+
+    # Convert ECG channel set to a list and take the first element
+    ecg_chan = list(ecg_chan_set)[0] if ecg_chan_set else None
+    print(f"Final ECG channel: {ecg_chan}")
 
     # Convert trigger set to a list and take the third element (need to make sure that combined channel is always the third element)
     trig_set_to_list = list(trig_chan_set)
@@ -76,19 +86,19 @@ def load_biopac_data(participant_str, condition, run_ranges):
     trig_chan = trig_set_to_list[2]
     print(f"Final trig channel: {trig_chan}")
 
-    return biopac_data, stim_chan, trig_chan
+    return biopac_data, stim_chan, ecg_chan, trig_chan
 
 
-def process_biopac_data(biopac_data, stim_channels):
+def process_emg_data(biopac_data, stim_channels):
     """ 
-    Function to process the loaded biopac data. It creates and returns a dataframe with the emg data and (relative) timestamp (from beginning of file recording). EMG signal is rectified and enveloped. Created a variable to denote the data file that data is extracted from (data files vertically stacked in dataframe). Plots of the emg data generated from each data file to enable quality check of data. 
+    Function to process the loaded emg data. It creates and returns a dataframe with the emg data and (relative) timestamp (from beginning of file recording). EMG signal is rectified and enveloped. Created a variable to denote the data file that data is extracted from (data files vertically stacked in dataframe). Plots of the emg data generated from each data file to enable quality check of data. 
 
     Parameters:
     - bipoac_data: list, contains the dictionaries storing the data from the adalearn files for each run of task sessions. 
     - stim_channels: string, the stim channel name (used to extract the EMG data).
 
     Returns:
-    - emg_data_df: pd.DataFrame, contains raw EMG data, associated (relative) timestamp and data file number.  
+    - emg_data_df: pd.DataFrame, contains EMG data, associated (relative) timestamp and data file number.  
     """
     # Objects to (1) store dataframes for each data file and (2) a counter to populate data_file variable 
     all_emg_data = [] 
@@ -251,7 +261,6 @@ def extract_adalearn_triggers_biopac(biopac_data, trig_channel, plot=False):
     # Calculate descriptive statistics for each identified task session and enter within a data frame. First group data by task session 
     task_session_grouped = identified_triggers_df.groupby('task_session')
 
-
     task_session_summary = task_session_grouped.agg(
         data_file =('data_file', 'first'),
         num_triggers=('triggers', 'count'),
@@ -260,6 +269,7 @@ def extract_adalearn_triggers_biopac(biopac_data, trig_channel, plot=False):
     )
 
     task_session_summary['session_duration'] = task_session_summary['last_trig'] - task_session_summary['first_trig']
+
 
     return identified_triggers_df, task_session_summary
 
@@ -346,7 +356,7 @@ def identify_vns_from_emg(task_session_dict, vns_task_session_keys, sampling_rat
     Returns:
     - vns_start_times: pd.DataFrame, contains variables identifying task session, the relative index of the identified start and the timestamp of that identified start point  
     """
-    # Setting the figure subplot parameters
+# Setting the figure subplot parameters
     fig = make_subplots(rows=len(vns_task_session_keys), cols=1, subplot_titles=[f"Task session: {key}" for key in vns_task_session_keys], shared_xaxes=True, vertical_spacing=0.01)
 
     row_heights = [8000, 300, 500]
@@ -467,3 +477,123 @@ def identify_vns_from_emg(task_session_dict, vns_task_session_keys, sampling_rat
     })
 
     return vns_start_times
+
+
+def process_ecg_data(biopac_data, ecg_channels, task_session_summary, plot=False):
+    """ 
+    Function to extract and plot recorded ECG data. Data is reduced to that recorded over each task session, based on identified triggers.    
+    """
+
+    # Objects to store dataframes for each raw ECG data file and identified r-peaks
+    all_ecg_data = [] 
+    all_r_peaks = []
+    data_file_counter = 1 
+
+    # For loop to extract ECG and time data from loaded data files
+    for raw_biopac in biopac_data:
+        ecgdata = raw_biopac.copy().pick(picks=ecg_channels)
+        
+        # Filter the ECG data and extract times
+        cardiac_cycles, times = ecgdata.get_data(return_times=True)
+        cardiac_cycles = np.squeeze(cardiac_cycles) # reduces data to a one dimensional array 
+        
+        # Creating dataframe for storage of ECG data from each data file
+        ecg_data = pd.DataFrame({
+            'cardiac_cycles': cardiac_cycles, 
+            'time': times,
+            'data_file': data_file_counter  # Add the data_file variable
+        })
+
+        # Applying filter to ECG data (using MNE's filter function, if needed)
+        ecgdata_filtered = ecgdata.filter(l_freq=0.5, h_freq=None)
+        ecg_data['cardiac_cycles_filtered'] = np.squeeze(ecgdata_filtered.get_data())
+
+        # Identifying R-peaks
+        rpeak_threshold = 0.001
+        peaks, _ = find_peaks(ecg_data['cardiac_cycles_filtered'], height=rpeak_threshold)
+
+        # Apply refractory period
+        refractory_period = 0.2  # in seconds
+        sampling_rate = 2000  # Hz
+        refractory_samples = int(refractory_period * sampling_rate)
+
+        # Remove peaks that are too close to each other
+        filtered_peaks = [peaks[0]]  # Add the first peak
+        for peak in peaks[1:]:
+            if peak - filtered_peaks[-1] > refractory_samples:
+                filtered_peaks.append(peak)
+
+        # Convert these indices to time using the sampling rate
+        rpeak_times = np.array(filtered_peaks) / sampling_rate
+
+        # Creating dataframe to house r-peaks and convert r-r intervals into instantaneous heart rate
+        heart_rate_data = pd.DataFrame({'rpeak_time': rpeak_times})
+        heart_rate_data['r_r_interval'] = heart_rate_data['rpeak_time'].diff()
+        heart_rate_data['heart_rate'] = [60 / rr if rr != 0 else np.nan for rr in heart_rate_data['r_r_interval']]
+        heart_rate_data['data_file'] = data_file_counter   
+
+        # Append the raw ECG dataframe to the list (one for each datafile)
+        all_ecg_data.append(ecg_data)
+        
+        # Append the identified r-peaks dataframe to the list 
+        all_r_peaks.append(heart_rate_data)
+
+        # Increment the data_file counter for the next file
+        data_file_counter += 1
+    
+    # Concatenating all raw ECG dataframes into a single dataframe
+    ecg_data_df = pd.concat(all_ecg_data, ignore_index=True)
+
+    # Concatenating all R-peak dataframes into a single dataframe
+    rpeaks_df = pd.concat(all_r_peaks, ignore_index=True)
+
+    # Reduce r-peak data down to time range delimited by task sessions
+    task_session_dict = {}
+
+    for index, row in task_session_summary.iterrows():
+        data_file = row['data_file']
+        start_time = row['first_trig']
+        end_time = row['last_trig'] 
+        
+        # Filter the ECG dataframe to get the relevant rows
+        task_data = rpeaks_df[
+            (rpeaks_df['data_file'] == data_file) &
+            (rpeaks_df['rpeak_time'] >= start_time) &
+            (rpeaks_df['rpeak_time'] <= end_time)].copy()  
+        
+        # Calculate relative time starting from the beginning of each task session
+        task_data['rel_time'] = task_data['rpeak_time'] - start_time
+        
+        # Store the filtered dataframe in the dictionary with the index as the key
+        task_session_dict[index] = task_data
+
+    # Plotting the ECG data stored within the dictionary if plot=True
+    if plot:
+        # Calculate the total number of subplots
+        num_subplots = len(task_session_dict)
+
+        # Create a figure with subplots and specify row heights
+        fig = make_subplots(rows=num_subplots, cols=1, subplot_titles=[f"Task Session {key}" for key in task_session_dict.keys()], row_heights=[0.6] * num_subplots)
+
+        # Iterate over each key (task session) and its corresponding dataframe
+        for i, (key, df) in enumerate(task_session_dict.items(), start=1):
+            # Add traces for r-r interval over time
+            fig.add_trace(go.Scatter(x=df['rel_time'], y=df['r_r_interval'], mode='lines', name='Task SEssion {key}'), row=i, col=1)
+
+            # Update x-axis and y-axis titles for each subplot
+            fig.update_xaxes(title_text="Time (s)", row=i, col=1)
+            fig.update_yaxes(title_text="R-R Interval (s)", row=i, col=1)
+            
+            # Hide the legend for each subplot
+            fig.update_traces(showlegend=False)
+
+        # Update layout
+        fig.update_layout(
+            title="R-R Interval across Each Task Session",
+            height=4000 
+        )
+
+        # Show the plot
+        fig.show()
+
+    return task_session_dict
