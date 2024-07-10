@@ -24,7 +24,7 @@ def load_biopac_data(participant_str, condition, run_ranges):
     - run_ranges: list of dicts, each dict contains 'run_start' and 'run_end' denoting the range of task sessions in each file
 
     Returns:
-    - biopac_data: list, contains the dictionaries storing the data from the adalearn files for each run of task sessions. 
+    - biopac_data: list, contains the dictionaries storing the data extracted from the biopac files for each run of task sessions. 
     - stim_chan: string, the stimulation (emg) channel name
     - trig_chan: string, the adalearn outcome trigger channel names
     """
@@ -94,7 +94,7 @@ def process_emg_data(biopac_data, stim_channels):
     Function to process the loaded emg data. It creates and returns a dataframe with the emg data and (relative) timestamp (from beginning of file recording). EMG signal is rectified and enveloped. Created a variable to denote the data file that data is extracted from (data files vertically stacked in dataframe). Plots of the emg data generated from each data file to enable quality check of data. 
 
     Parameters:
-    - bipoac_data: list, contains the dictionaries storing the data from the adalearn files for each run of task sessions. 
+    - bipoac_data: list, contains the dictionaries storing the data extracted from the biopac files for each run of task sessions. 
     - stim_channels: string, the stim channel name (used to extract the EMG data).
 
     Returns:
@@ -146,7 +146,7 @@ def extract_adalearn_triggers_biopac(biopac_data, trig_channel, plot=False):
     Function to extract the adalearn outcome presentation triggers inserted into the biopac file. Extracts and creates a dataframe to store the trigger information (i.e. 0 or 1) as well as the respective timestamp. Extracts the triggers from the combined channel in the biopac file (i.e. the channel that contains triggers for both yellow and blue). Also generates a dataframe with summary statistics for each identified task session (I.e. number of triggers, duration of task session, time at first stimulation, etc)
 
     Parameters:
-    - biopac_data: list, contains the dictionaries storing the data from the adalearn files for each run of task sessions. 
+    - biopac_data: list, contains the dictionaries storing the data extracted from the biopac files for each run of task sessions. 
     - trig_channel: string, the combined trigger channel name (used to extract the trigger information) (*Note: need to make sure that this combined is set up. If it isn't will need to evaluate the individual channels (those set up for yellow and blue outcomes) separately and then combine).
     - plot: boolean, if True, creates subplots of identified triggers using Plotly.
 
@@ -481,7 +481,16 @@ def identify_vns_from_emg(task_session_dict, vns_task_session_keys, sampling_rat
 
 def process_ecg_data(biopac_data, ecg_channels, task_session_summary, plot=False):
     """ 
-    Function to extract and plot recorded ECG data. Data is reduced to that recorded over each task session, based on identified triggers.    
+    Function to extract and plot recorded ECG data. From raw signal, r-peaks are identified and consecutive r-r intervals and instantaneous heart rate is recorded. The data is reduced to that recorded over each task session, based on identified triggers. There is the option to plot the r-r interval across time for each task session for visualisation. 
+    
+    Parameters:
+    - bipoac_data: list, contains the dictionaries storing the data extracted from the biopac files for each run of task sessions. 
+    - ecg_channels: string, the ECG channel name containing the raw ECG data. 
+    - task_session_summary: pd.DataFrame, contains broad summary statistics of the characteristics of task sessions identified through triggers.
+    - plot: boolean, if True, creates subplots for each task session of consecutive r-r interval across time using Plotly. 
+
+    Returns:
+    - task_session_dict: dict, contains r-peak dataframe (value) for each task session (key).     
     """
 
     # Objects to store dataframes for each raw ECG data file and identified r-peaks
@@ -572,25 +581,32 @@ def process_ecg_data(biopac_data, ecg_channels, task_session_summary, plot=False
         # Calculate the total number of subplots
         num_subplots = len(task_session_dict)
 
-        # Create a figure with subplots and specify row heights
-        fig = make_subplots(rows=num_subplots, cols=1, subplot_titles=[f"Task Session {key}" for key in task_session_dict.keys()], row_heights=[0.6] * num_subplots)
+        # Dynamically adjust vertical spacing
+        vertical_spacing = min(0.05, 1 / (num_subplots + 1))
+
+        # Create a figure with subplots
+        fig = make_subplots(
+            rows=num_subplots, cols=1, 
+            subplot_titles=[f"Task Session {key}" for key in task_session_dict.keys()],
+            shared_xaxes=True, vertical_spacing=vertical_spacing,
+            specs=[[{"secondary_y": True}] for _ in range(num_subplots)]
+        )
 
         # Iterate over each key (task session) and its corresponding dataframe
         for i, (key, df) in enumerate(task_session_dict.items(), start=1):
-            # Add traces for r-r interval over time
-            fig.add_trace(go.Scatter(x=df['rel_time'], y=df['r_r_interval'], mode='lines', name='Task SEssion {key}'), row=i, col=1)
+            # Add traces for r-r interval and heart rate
+            fig.add_trace(go.Scatter(x=df['rel_time'], y=df['r_r_interval'], mode='lines', name='R-R Interval'), row=i, col=1)
+            fig.add_trace(go.Scatter(x=df['rel_time'], y=df['heart_rate'], mode='lines', name='Heart Rate', yaxis='y2'), row=i, col=1)
 
             # Update x-axis and y-axis titles for each subplot
             fig.update_xaxes(title_text="Time (s)", row=i, col=1)
             fig.update_yaxes(title_text="R-R Interval (s)", row=i, col=1)
-            
-            # Hide the legend for each subplot
-            fig.update_traces(showlegend=False)
+            fig.update_yaxes(title_text="Heart Rate (bpm)", row=i, col=1, secondary_y=True)
 
         # Update layout
         fig.update_layout(
-            title="R-R Interval across Each Task Session",
-            height=4000 
+            title="R-R Interval and Instantaneous Heart Rate During Each Task Session",
+            height=900 * num_subplots  
         )
 
         # Show the plot

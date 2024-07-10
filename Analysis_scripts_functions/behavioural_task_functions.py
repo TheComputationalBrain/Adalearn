@@ -10,7 +10,7 @@ pio.renderers.default='browser'
 
 def load_behavioural_data(participant_str, condition, condition_task_sessions):
     """
-    Function to load adalearn .json files. Sets the working directory to the relevant file, before loading and storeing the data for each task session for a given condition. 
+    Function to load adalearn .json files. Sets the working directory to the relevant file, before loading and storing the data for each task session for a given condition. 
     
     Parameters:
     - participant_str: string, identifier of participant number (set to 2 numbers)
