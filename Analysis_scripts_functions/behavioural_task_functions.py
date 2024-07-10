@@ -23,7 +23,7 @@ def load_behavioural_data(participant_str, condition, condition_task_sessions):
 
     # Setting the working directory of the files
     print(os.getcwd())
-    os.chdir(f'/home/aaron/Documents/VNS Ada_Learn/data_VNS/sub-{participant_str}/ses-{condition}')
+    os.chdir(f'/home/aaron/Documents/Python/Ada_Learn/VNS Ada_Learn/Data/sub-{participant_str}/ses-{condition}')
     print(os.getcwd())
 
     # Loading all adalearn task session data files
@@ -181,9 +181,9 @@ def behavioural_change_point_analysis(behavioural_df):
     
     return num_change_points, change_points_per_session, change_point_indices
 
-def plot_behavioural_data(behavioural_df, participant, condition):
+def plot_behavioural_data(behavioural_df, participant, condition, estimate_v_io_plot = False):
     """ 
-    Function to plot the behavioural, ideal observer, hidden estimates and outcome observations from each task session. 
+    Function to plot the behavioural, ideal observer, hidden estimates and outcome observations from each task session. Optionally, can plot subjective estimates against ideal observer across all task sessions (estimate_v_io_plot; default is False).
 
     Parameters:
     - participant: string, identifier of participant number
@@ -197,6 +197,7 @@ def plot_behavioural_data(behavioural_df, participant, condition):
     unique_sessions = behavioural_df['task_session'].unique()
     num_sessions = len(unique_sessions)
 
+    # Plotting behavioural responses for each task session 
     # Create subplots, one for each task session
     fig = make_subplots(rows=num_sessions, cols=1, shared_xaxes=True,
                         subplot_titles=[f'Behavioural estimates, ideal observer and task characteristics in task session {session}' for session in unique_sessions])
@@ -240,6 +241,22 @@ def plot_behavioural_data(behavioural_df, participant, condition):
 
     # Show plot
     fig.show()
+
+    # Plotting subjective estimates versus ideal observer
+    if estimate_v_io_plot:
+        df= behavioural_df.copy()
+        df['task_session'] = df['task_session'].astype('category')
+
+        fig = px.scatter(df, x="ideal_observer", y="estimate", color="task_session", symbol="task_session")
+
+        fig.update_layout(
+        title_text="Ideal observer by subjective estimate for each task session",
+        showlegend=True,
+        xaxis_title="Ideal Observer",
+        yaxis_title="Estimate"
+        )
+
+        fig.show()
 
 def calculate_behavioural_learning_rate(behavioural_df):
     """ 
