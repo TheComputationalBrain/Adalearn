@@ -1,10 +1,15 @@
 import pandas as pd
 import numpy as np
 import os
+import sys
 import plotly.io as pio
 import plotly.graph_objects as go
 import plotly.express as px
 pio.renderers.default='browser'
+
+sys.path.append('/home/aaron/Documents/Python/Ada_Learn/Analysis/Misc')
+from preprocess_eyedata import pupil
+from pick_best_eye import pick_best_eye
 
 
 def load_pupil_data(participant_str, condition, condition_task_sessions, plot = False):
@@ -132,6 +137,8 @@ def load_pupil_data(participant_str, condition, condition_task_sessions, plot = 
         'task_session': task_sess_trig_list 
     })
 
+    pupil_trig_df['trigger_num'] = range(len(pupil_trig_df))
+
     # Plotting the right eye pupil data using Plotly if plot=True
     if plot:
         grouped_df = pupil_df.groupby('task_session')
@@ -154,3 +161,161 @@ def load_pupil_data(participant_str, condition, condition_task_sessions, plot = 
             fig.show()
     
     return pupil_df, pupil_trig_df
+
+
+def convert_change_points_to_pupil(pupil_trig_df, change_point_indices, condition):
+    """ 
+    Function to convert identified change points from the task/behavioural data to corresponding time stamp within tobii .txt files. Stores data within dictionaries that can then be used to define epochs for the analysis of pupil diameter.
+
+    Parameters:
+    - pupil_trig_df: pd.DataFrame, contains the trigger information (i.e. time, outcome) for each task session
+    - change_point_indices: pd.DataFrame, with columns 'index', 'relative_time', and 'task_session', 
+      containing the indices and relative times of the change points for each session. (*Note: Have removed identification of the first outcome of each task session as a new change point)
+    - condition: string, identifier of condition order (set to 2 numbers) ** May need to change to denote actual condition in Adalearn VNS study **
+
+    Returns:
+    - change_point_onsets: dict, contains identified change point timestamps. Keys are task session and values are time stamps within that task session. 
+    - change_point_nums: dict, contains a cumulative count of the number of change points identified within each task session. Keys are task sessions and values are the cumulative count of the number of change points within that task session.  
+    """
+    # Identify change point based on cumulative trigger number 
+    tobii_by_change_points  = pupil_trig_df[pupil_trig_df['trigger_num'].isin(change_point_indices['index'])]
+
+    # Creating dictionaries for storage of change point time and number 
+    change_point_onsets = {}
+    change_point_nums = {}
+
+    # For loop that extracts identified change point times for each task session 
+    for session, group in tobii_by_change_points.groupby('task_session'):
+      # Extract the timeflow values for the current group (session)
+      change_point_onset_values = group['trigger_time'].tolist()
+    
+      # Create a cumulative count list for the current group (session)
+      change_point_num_values = list(range(1, len(group) + 1))
+
+      change_point_onsets[session] = change_point_onset_values
+      change_point_nums[session] = change_point_num_values
+
+    # Checking the number of change points identified
+    print(f"Condition {condition}:")
+    for session, events in change_point_nums.items():
+      print(f"In task session {session} there are {len(events)} identified change points") 
+
+    return change_point_onsets, change_point_nums
+
+
+def pupil_change_point_analysis(participant_str, list_subject_selected, condition, condition_task_sessions, from_session, to_session, change_point_indices, change_point_nums, outlier_limit_std = 10, outlier_correct_average_amount = 10, window_start_before = 1, window_end_after = 1.4, z_score = False, plot = True):
+    """ 
+    Function to preprocess and then compute epoched pupil size around a defined change point. Preprocessing and change point analysis taken from preprocess_eyedata script.
+
+    Parameters:
+    - 
+
+
+    Returns:
+    - 
+
+    """
+    # Running data through methods within class pupil taken from preprocess_eyedata, created by Florent, Maëva, Aziza and Yannaël
+    # Reset working directory
+    base_dir = f'/home/aaron/Documents/Python/Ada_Learn/VNS Ada_Learn/Data/sub-{participant_str}/ses-{condition}'
+    os.chdir(base_dir)
+    print(f"Current working directory: {os.getcwd()}")
+
+    # Initialize the class
+    data_tob = pupil()
+
+    # List of identified best eye
+    best_eye = []
+
+    # Iterate through each .txt pupil datafile
+    for session in condition_task_sessions:
+        file_name = f"sub-{participant_str}_ses-{condition}_task-AdalearnVNS_run-{session}_eyetracker.txt"
+        print(file_name) 
+    
+        list_best_eye = pick_best_eye(file_name, list_subject_selected, from_session, to_session)
+        best_eye.append(list_best_eye)
+
+        for subject, i_subject in zip(list_subject_selected, range(len(list_subject_selected))):
+
+            # Import the data
+            data_tob.import_data(file_name,
+                             events_warner='MSG', eye='right', 
+                             col=[0, 1, 2],
+                             col_name=['x_pos', 'y_pos', 'diameter'],
+                             eyetracker='tobii')
+
+            # Preprocess the data using "preprocess" function
+            time, diameter, diameter_int, x_pos, x_pos_int, y_pos, y_pos_int = data_tob.preprocess(plot=False, remove_outlier=True, outlier_limit_std=outlier_limit_std, outlier_correct_average_amount=outlier_correct_average_amount)
+
+            # Parse the events collected by Tobii
+            stim_onsets = [int(msg['time']) for msg in data_tob.events if 'Received' in msg['msg']]
+
+            stim_num = []
+            for num in range(len(stim_onsets)):
+                stim_num.append(num + 1)
+            
+            stim_type = [msg['msg'][-1] for msg in data_tob.events if 'Received' in msg['msg']]
+        
+            # Epoch the data and apply baseline correction
+            data_tob.epoch_tobii(change_point_indices[session], variable='diameter_int', decimate=1,
+                             before=window_start_before, after=window_end_after, baseline=[window_start_before, 0],
+                             conditions={'vns_num': change_point_nums[session]}, z_score_data=z_score)
+            
+    # Collating the timelocked epoched pupil data to calculate descriptive statistics for plotting
+    epoched_cp_data = []
+
+    for session in range(from_session, to_session):
+        epoched_cp_data.append(data_tob.epochs.T)
+
+    epoched_pupil_cp_df = pd.concat([pd.DataFrame(data) for data in epoched_cp_data], axis=1)
+
+    numeric_data = epoched_pupil_cp_df.iloc[:, :]
+
+    row_means = numeric_data.mean(axis=1)
+    row_std = numeric_data.std(axis=1)
+
+    epoched_pupil_cp_df['Mean'] = row_means
+    epoched_pupil_cp_df['Std'] = row_std
+    epoched_pupil_cp_df['Time'] = data_tob.epochs_times
+
+    if plot:
+        # Plotting the mean (and std) response of pupil response timelocked to change points
+        fig_epoch_avg = go.Figure()
+
+        fig_epoch_avg.add_trace(go.Scatter(
+            x=epoched_pupil_cp_df['Time'],
+            y=epoched_pupil_cp_df['Mean'],
+            mode='lines',
+            line=dict(color='rgba(0, 0, 255, 1)'),
+            name='Mean'
+        ))
+
+        fig_epoch_avg.add_trace(go.Scatter(
+            x=epoched_pupil_cp_df['Time'],
+            y=epoched_pupil_cp_df['Mean'] + epoched_pupil_cp_df['Std'],
+            mode='lines',
+            line=dict(color='rgba(0, 0, 255, 0.1)'),
+            showlegend=False
+        ))
+
+        fig_epoch_avg.add_trace(go.Scatter(
+            x=epoched_pupil_cp_df['Time'],
+            y=epoched_pupil_cp_df['Mean'] - epoched_pupil_cp_df['Std'],
+            mode='lines',
+            fill='tonexty',
+            fillcolor='rgba(0, 0, 255, 0.2)',
+            line=dict(color='rgba(0, 0, 255, 0.1)'),
+            showlegend=False
+        ))
+
+        fig_epoch_avg.add_vline(x=0, line_width=3, line_dash="dash", line_color="black", opacity=0.5)
+
+        fig_epoch_avg.update_layout(
+            title='Baseline corrected right pupil response to epoch around change points across all task sessions',
+            xaxis_title='Time (s)',
+            yaxis_title='Pupil diameter'
+        )       
+
+        fig_epoch_avg.show()
+
+        return epoched_pupil_cp_df
