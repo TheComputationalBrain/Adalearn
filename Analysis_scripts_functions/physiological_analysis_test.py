@@ -31,13 +31,13 @@ processed_biopac_c2 = process_emg_data(biopac_data_c2, stim_channel)
 
 
 # Extracting adalearn outcome presentation triggers within bipoac data using function in physiological_signal_functions 
-outcome_triggers_c1, c1_trig_summary = extract_adalearn_triggers_biopac(biopac_data_c1, trig_channel, plot=False)
-outcome_triggers_c2, c2_trig_summary = extract_adalearn_triggers_biopac(biopac_data_c2, trig_channel, plot=False)
+outcome_triggers_c1, c1_trig_summary = extract_adalearn_triggers_biopac(biopac_data_c1, trig_channel, plot=True)
+outcome_triggers_c2, c2_trig_summary = extract_adalearn_triggers_biopac(biopac_data_c2, trig_channel, plot=True)
 
 
 # Reducing EMG data to individual dataframes related to the duration of a task session and storing this within a dictionary using a function within physiological_signal_functions 
-c1_task_sess_dict = extract_task_session_emg_data(processed_biopac_c1, c1_trig_summary, plot=False)
-c2_task_sess_dict = extract_task_session_emg_data(processed_biopac_c2, c2_trig_summary, plot=False)
+c1_task_sess_dict = extract_task_session_emg_data(processed_biopac_c1, c1_trig_summary, plot=True)
+c2_task_sess_dict = extract_task_session_emg_data(processed_biopac_c2, c2_trig_summary, plot=True)
 
 # Checking the length of the dictionary and shape of each data frame within the dictionary for condition 1
 print(f"In condition {condition_1_str} the number of task sessions is: {len(c1_task_sess_dict)}")

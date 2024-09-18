@@ -15,7 +15,7 @@ from pupil_signal_functions import load_pupil_data, convert_change_points_to_pup
 
 from behavioural_analysis_test import c1_change_point_indices, c2_change_point_indices
 
-from participant_task_characteristics import participant, participant_str, list_subject_selected, condition_1_str, condition_2_str, c1_from_session, c1_to_session, c1_task_sessions, c2_from_session, c2_to_session, c2_task_sessions, c1_vns_task_session, formatted_c1_vns_task_session, c2_vns_task_session, formatted_c2_vns_task_session
+from participant_task_characteristics import participant, participant_str, list_subject_selected, condition_1_str, condition_2_str, c1_from_session, c1_to_session, c1_task_sessions, c2_from_session, c2_to_session, c2_task_sessions
 
 sys.path.append('/home/aaron/Documents/Python/Ada_Learn/Analysis/Misc')
 from preprocess_eyedata import pupil

@@ -13,7 +13,7 @@ from preprocess_eyedata import pupil
 from pick_best_eye import pick_best_eye
 
 
-def load_pupil_data(participant_str, condition, condition_task_sessions, plot=False):
+def load_pupil_data(participant_str, condition, condition_task_sessions, plot=False, file_size_threshold_mb=10):
     """ 
     Function to load and read .txt file from Tobii eyetracker. Sets the working directory to the relevant file, before loading and storing the data for each task session for a given condition. Also separates and stores trigger information taken from .txt file. There is an option to plot the right eye data for each task session. 
 
@@ -22,6 +22,7 @@ def load_pupil_data(participant_str, condition, condition_task_sessions, plot=Fa
     - condition: string, identifier of condition order (set to 2 numbers) ** May need to change to denote actual condition in Adalearn VNS study **
     - condition_task_sessions: list, contains string variables (set to 2 numbers) denoting the individual task sessions completed by the participant in that condition
     - plot: boolean, if True, creates subplots the right eye data for each task session across time using Plotly.
+    - file_size_threshold_mb: float, a threshold for the size of file to be loaded (in MB). Files larger than this threshold will be excluded.
 
     Returns:
     - pupil_df: pd.DataFrame, contains the pupil data recorded from each task session
@@ -29,9 +30,12 @@ def load_pupil_data(participant_str, condition, condition_task_sessions, plot=Fa
     """
 
     # Set the working directory of the files
-    base_dir = f'/home/aaron/Documents/Python/Ada_Learn/VNS Ada_Learn/Data/RESTORED(sub-{participant_str})/ses-{condition}'
+    base_dir = f'/home/aaron/Documents/Python/Ada_Learn/VNS Ada_Learn/Data/sub-{participant_str}/ses-{condition}/eye'
     os.chdir(base_dir)
     print(f"Current working directory: {os.getcwd()}")
+
+    # Convert size threshold from MB to bytes
+    file_size_threshold_bytes = file_size_threshold_mb * 1024 * 1024
 
     # Initialize lists for storing parsed data from Tobii eye tracker
     tobii_time_list = []
@@ -50,7 +54,13 @@ def load_pupil_data(participant_str, condition, condition_task_sessions, plot=Fa
     # Read in .txt file as lines and then for each line, separate the data and store it in an appropriate list.
     for session in condition_task_sessions:
         file_name = f"sub-{participant_str}_ses-{condition}_task-AdalearnVNS_run-{session}_eyetracker.txt"
-    
+        
+        # Check file size
+        file_size = os.path.getsize(file_name)
+        if file_size > file_size_threshold_bytes:
+            print(f"File {file_name} is too large to process (size: {file_size / (1024 * 1024):.2f} MB). This file was skipped.")
+            continue
+
         with open(file_name, 'r') as file:
             lines = file.readlines()
 
@@ -238,7 +248,7 @@ def pupil_change_point_analysis(participant_str, list_subject_selected, conditio
 
     """
      # Reset working directory
-    base_dir = f'/home/aaron/Documents/Python/Ada_Learn/VNS Ada_Learn/Data/RESTORED(sub-{participant_str})/ses-{condition}'
+    base_dir = f'/home/aaron/Documents/Python/Ada_Learn/VNS Ada_Learn/Data/sub-{participant_str}/ses-{condition}/eye'
     os.chdir(base_dir)
     print(f"Current working directory: {os.getcwd()}")
 
