@@ -23,7 +23,7 @@ def load_behavioural_data(participant_str, condition, condition_task_sessions):
 
     # Setting the working directory of the files
     print(os.getcwd())
-    os.chdir(f'/home/aaron/Documents/Python/Ada_Learn/VNS Ada_Learn/Data/sub-{participant_str}/ses-{condition}')
+    os.chdir(f'/home/aaron/Documents/Python/Ada_Learn/VNS Ada_Learn/Data/sub-{participant_str}/ses-{condition}/behav')
     print(os.getcwd())
 
     # Loading all adalearn task session data files
@@ -32,10 +32,10 @@ def load_behavioural_data(participant_str, condition, condition_task_sessions):
     # Iterate across all files and append data to storage list
     for session in condition_task_sessions:
     
-        with open(f'sub-{participant_str}_ses-{condition}_task-AdalearnVNS_run-{session}_behav.json') as ada_learn_file:
-             parsed_json_con_1 = json.load(ada_learn_file)
+        with open(f'sub-{participant_str}_ses-{condition}_task-AdalearnVNS_run-{session}_behav.json', 'rb') as ada_learn_file:
+             parsed_json_con = json.load(ada_learn_file)
     
-        adalearn_data.append(parsed_json_con_1)
+        adalearn_data.append(parsed_json_con)
     
     return adalearn_data
 

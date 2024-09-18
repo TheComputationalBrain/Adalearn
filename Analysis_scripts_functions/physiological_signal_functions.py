@@ -29,7 +29,7 @@ def load_biopac_data(participant_str, condition, run_ranges):
     - trig_chan: string, the adalearn outcome trigger channel names
     """
     # Set the working directory of the files
-    base_dir = f'/home/aaron/Documents/Python/Ada_Learn/VNS Ada_Learn/Data/sub-{participant_str}/ses-{condition}'
+    base_dir = f'/home/aaron/Documents/Python/Ada_Learn/VNS Ada_Learn/Data/RESTORED(sub-{participant_str})/ses-{condition}'
     os.chdir(base_dir)
     print(f"Current working directory: {os.getcwd()}")
 
@@ -58,7 +58,7 @@ def load_biopac_data(participant_str, condition, run_ranges):
 
             # Check channel names
             print(f"Channel names in {filename}: {raw_biopac.ch_names}")
-            stim_channels_in_file = [ch for ch in raw_biopac.ch_names if ch.startswith('STIM')]
+            stim_channels_in_file = [ch for ch in raw_biopac.ch_names if ch.startswith('EMG') or ch.startswith('STIM')]
             print(f"Stim channels found: {stim_channels_in_file}")
             ecg_channels_in_file = [ch for ch in raw_biopac.ch_names if ch.startswith('ECG')]
             print(f"ECG channels found: {ecg_channels_in_file}")
@@ -91,7 +91,7 @@ def load_biopac_data(participant_str, condition, run_ranges):
 
 def process_emg_data(biopac_data, stim_channels):
     """ 
-    Function to process the loaded emg data. It creates and returns a dataframe with the emg data and (relative) timestamp (from beginning of file recording). EMG signal is rectified and enveloped. Created a variable to denote the data file that data is extracted from (data files vertically stacked in dataframe). Plots of the emg data generated from each data file to enable quality check of data. 
+    Function to process the loaded emg data. It creates and returns a dataframe with the emg data and (relative) timestamp (from beginning of file recording). EMG signal is rectified and enveloped. Plots of the emg data are generated from each data file to enable quality check of data.
 
     Parameters:
     - bipoac_data: list, contains the dictionaries storing the data extracted from the biopac files for each run of task sessions. 
@@ -110,7 +110,7 @@ def process_emg_data(biopac_data, stim_channels):
         
         # Filter the stimulation data and extract times
         emg_extracted, times = stimdata.get_data(return_times=True)
-        emg_extracted = np.squeeze(emg_extracted) # reduces data to a one dimensional array 
+        emg_extracted = np.squeeze(emg_extracted)  # Reduces data to a one-dimensional array 
         
         # Creating dataframe for storage of EMG data from each data file
         emg_data = pd.DataFrame({
@@ -123,27 +123,46 @@ def process_emg_data(biopac_data, stim_channels):
         emg_data['rectified_emg'] = abs(emg_data['emg'])
 
         # Processing the EMG signal: low-pass filtering (4th order Butterworth filter) and enveloping
-        lowp = 5 # 5 Hz cut-off
+        lowp = 5  # 5 Hz cut-off
         samp_freq = 2000
-        low_pass = lowp/samp_freq
+        low_pass = lowp / samp_freq
         b, a = sc.signal.butter(4, low_pass, btype='lowpass')
         emg_data['lowpass_filtered'] = filtfilt(b, a, emg_data['rectified_emg'])
 
         # Append the dataframe to the list (one for each datafile)
         all_emg_data.append(emg_data)
-        
+
         # Increment the data_file counter for the next file
         data_file_counter += 1
-    
+
     # Concatenating all dataframes into a single dataframe
     emg_data_df = pd.concat(all_emg_data, ignore_index=True)
     
+    # Plotting with Plotly: one subplot per data file
+    fig = make_subplots(rows=len(all_emg_data), cols=1, shared_xaxes=True, 
+                        subplot_titles=[f'File {i+1}' for i in range(len(all_emg_data))])
+
+    # Add traces (one for each file)
+    for idx, emg_data in enumerate(all_emg_data):
+        fig.add_trace(
+            go.Scatter(x=emg_data['time'], y=emg_data['emg'], mode='lines',
+                       name=f'File {idx + 1}'),
+            row=idx + 1, col=1
+        )
+
+    # Update layout to show the plots stacked
+    fig.update_layout(height=300 * len(all_emg_data), title_text='EMG Data Across Files',
+                      xaxis_title='Time (s)', yaxis_title='EMG')
+
+    # Display the plot in the browser
+    fig.show()
+
     return emg_data_df
 
 
 def extract_adalearn_triggers_biopac(biopac_data, trig_channel, plot=False):
     """ 
-    Function to extract the adalearn outcome presentation triggers inserted into the biopac file. Extracts and creates a dataframe to store the trigger information (i.e. 0 or 1) as well as the respective timestamp. Extracts the triggers from the combined channel in the biopac file (i.e. the channel that contains triggers for both yellow and blue). Also generates a dataframe with summary statistics for each identified task session (I.e. number of triggers, duration of task session, time at first stimulation, etc)
+    Function to extract the adalearn outcome presentation triggers inserted into the biopac file. Extracts and creates a dataframe to store the trigger information (i.e. 0 or 1) as well as the respective timestamp. Extracts the triggers from the combined channel in the biopac file (i.e. the channel that contains triggers for both yellow and blue). Also generates a dataframe with summary statistics for each identified task session (i.e. number of triggers, duration of task session, time at first stimulation, etc)
 
     Parameters:
     - biopac_data: list, contains the dictionaries storing the data extracted from the biopac files for each run of task sessions. 
@@ -183,7 +202,7 @@ def extract_adalearn_triggers_biopac(biopac_data, trig_channel, plot=False):
     trig_data_df = pd.concat(all_trig_data, ignore_index=True)
 
     # Determine the threshold for identifying triggers
-    trig_thres = trig_data_df['triggers'].max() * 0.5
+    trig_thres = trig_data_df['triggers'].max() * 0.8
 
     # DataFrame to store identified triggers
     identified_triggers = []

@@ -29,7 +29,7 @@ def load_pupil_data(participant_str, condition, condition_task_sessions, plot=Fa
     """
 
     # Set the working directory of the files
-    base_dir = f'/home/aaron/Documents/Python/Ada_Learn/VNS Ada_Learn/Data/sub-{participant_str}/ses-{condition}'
+    base_dir = f'/home/aaron/Documents/Python/Ada_Learn/VNS Ada_Learn/Data/RESTORED(sub-{participant_str})/ses-{condition}'
     os.chdir(base_dir)
     print(f"Current working directory: {os.getcwd()}")
 
@@ -238,7 +238,7 @@ def pupil_change_point_analysis(participant_str, list_subject_selected, conditio
 
     """
      # Reset working directory
-    base_dir = f'/home/aaron/Documents/Python/Ada_Learn/VNS Ada_Learn/Data/sub-{participant_str}/ses-{condition}'
+    base_dir = f'/home/aaron/Documents/Python/Ada_Learn/VNS Ada_Learn/Data/RESTORED(sub-{participant_str})/ses-{condition}'
     os.chdir(base_dir)
     print(f"Current working directory: {os.getcwd()}")
 
