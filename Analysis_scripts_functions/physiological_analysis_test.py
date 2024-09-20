@@ -15,7 +15,7 @@ import plotly.graph_objs as go
 from plotly.subplots import make_subplots
 pio.renderers.default='browser'
 
-from physiological_signal_functions import load_biopac_data, process_emg_data, extract_adalearn_triggers_biopac, extract_task_session_emg_data, identify_vns_from_emg, process_ecg_data
+from physiological_signal_functions import load_biopac_data, process_emg_data, extract_adalearn_triggers_biopac, extract_task_session_emg_data, identify_vns_from_emg, process_ecg_data, integrate_separate_trigger_channels
 
 from participant_task_characteristics import participant_str, condition_1_str, condition_2_str, c1_run_ranges, c1_vns_task_session, c2_run_ranges, c2_vns_task_session, stimfreq, ONduration, OFFduration, minnumpulse
 
@@ -33,6 +33,11 @@ processed_biopac_c2 = process_emg_data(biopac_data_c2, stim_channel)
 # Extracting adalearn outcome presentation triggers within bipoac data using function in physiological_signal_functions 
 outcome_triggers_c1, c1_trig_summary = extract_adalearn_triggers_biopac(biopac_data_c1, trig_channel, plot=True)
 outcome_triggers_c2, c2_trig_summary = extract_adalearn_triggers_biopac(biopac_data_c2, trig_channel, plot=True)
+
+
+# Integrating adaearn outcome presentation triggers across two channels in the biopac data using function in physiological_signal_functions
+integrated_triggers_c1, c1_integrated_trig_summary = integrate_separate_trigger_channels(biopac_data_c1, c1_run_ranges, channel_plots=False, integrated_trigger_plot=False)
+integrated_triggers_c2, c2_integrated_trig_summary = integrate_separate_trigger_channels(biopac_data_c2, c2_run_ranges, channel_plots=False, integrated_trigger_plot=False)
 
 
 # Reducing EMG data to individual dataframes related to the duration of a task session and storing this within a dictionary using a function within physiological_signal_functions 
