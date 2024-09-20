@@ -283,7 +283,6 @@ def integrate_separate_trigger_channels(biopac_data, run_ranges):
                     integrated_trigger_channel = integrated_trigger_channel.drop(columns=['channel_x', 'channel_y', 'triggers_x', 'triggers_y', 'file_x', 'file_y'])
 
                     integrated_triggers_df.append(integrated_trigger_channel)
-
    
             # If no matching pair is found, raise an error
             if not pair_match_found:
