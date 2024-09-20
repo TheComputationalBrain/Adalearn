@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 import mne
 import os
+from itertools import combinations
 import scipy as sc
 from scipy import signal
 from scipy.signal import butter, lfilter, filtfilt, find_peaks
@@ -158,6 +159,198 @@ def process_emg_data(biopac_data, stim_channels):
     fig.show()
 
     return emg_data_df
+
+
+def integrate_separate_trigger_channels(biopac_data, run_ranges):
+    """
+    Function to assess and extract the trigger data from the bipoac file when one trigger channel is not integrating the two different types of trigger (0 or 1; blue or yellow) and so the triggers have to be extracted from two separate channels. Takes in the raw biopac files. Identifies each channel associated with triggers in each file. Derives the number of triggers in each file and compares this number to the number of triggers that would be expected based on the number of triggers within each task session multiplied by the number of task sessions that should be in that file (i.e. run range). If a single channel does not contain the ciorrect number of triggers, it looks for two separate channels which when summed does equate to the the expected number of triggers. Once defined, collates triggers across the two channels within each data file into a single variable, before separating and characterising task sessions within each file. 
+    
+    Parameters:
+    - bipoac_data: list, contains the dictionaries storing the data extracted from the biopac files for each run of task sessions. 
+    - run_ranges: list of dicts, each dictionary contains 'run_start' and 'run_end' denoting the range of task sessions in each file
+
+    Returns:
+    - combined_chan_triggers: pd.Dataframe, contains the integrated triggers derived from the two channels (or single channel if found). Contains the source channel and file, plus derived task session based on time difference between triggers. 
+    - task_session_summary_df: pd.Dataframe, contains summary statistics of each calculated task session (time of first trigger, time of last trigger, duration of task session, number of triggers within each session). 
+    -  """
+    
+        # Store results for each file within biopac_data
+    integrated_triggers_df = []  
+
+    for data_file_count, (raw_biopac, run_range) in enumerate(zip(biopac_data, run_ranges), start=1):
+        print(f"Channel names in file {data_file_count}: {raw_biopac.ch_names}")
+
+        # Identify trigger channels
+        trig_channels_in_file = [ch for ch in raw_biopac.ch_names if ch.startswith('Digital')]
+        print(f"Trig channels found: {trig_channels_in_file}")
+
+        # Get filename or manually pass it along
+        filename = raw_biopac.filenames[0] if hasattr(raw_biopac, 'filenames') else f'unknown_file_{data_file_count}'
+        print(f"Processing file: {filename}")
+
+        # Process and store trigger data for each channel
+        trigger_channel_data = []
+        for channel in trig_channels_in_file:
+            trigdata = raw_biopac.copy().pick(picks=channel)
+            trig_extracted, times = trigdata.get_data(return_times=True)
+            trig_extracted = np.squeeze(trig_extracted)
+
+            trig_df = pd.DataFrame({
+                'triggers': trig_extracted, 
+                'time': times,
+                'channel': channel, 
+                'file': data_file_count
+            })
+            print(f"Created trigger data for channel {channel} with shape {trig_df.shape}")
+            trigger_channel_data.append(trig_df)
+
+        # Concatenate the trigger data for all channels in the current file
+        all_trig_chan_df = pd.concat(trigger_channel_data, ignore_index=True)
+
+        # Identifying triggers and their timestamps in each channel per file
+        trig_thres = all_trig_chan_df['triggers'].max() * 0.5
+        identified_triggers = []
+        trigger_count_per_channel = {}
+
+        for channel in all_trig_chan_df['channel'].unique():
+            channel_data = all_trig_chan_df[all_trig_chan_df['channel'] == channel]
+            initial_triggers = channel_data[channel_data['triggers'] >= trig_thres]
+
+            if initial_triggers.empty:
+                trigger_count_per_channel[channel] = 0
+                continue
+
+            valid_triggers = [initial_triggers.iloc[0]]
+            for idx in range(1, len(initial_triggers)):
+                time_diff = initial_triggers.iloc[idx]['time'] - valid_triggers[-1]['time']
+                if time_diff >= 1.0:
+                    valid_triggers.append(initial_triggers.iloc[idx])
+
+            identified_triggers.extend(valid_triggers)
+            trigger_count_per_channel[channel] = len(valid_triggers)
+
+        identified_triggers_df = pd.DataFrame(identified_triggers)
+
+        if identified_triggers_df.empty:
+            print(f"No valid triggers identified for file: {filename}")
+        else:
+            print(f"Identified triggers shape: {identified_triggers_df.shape}")
+            print(f"Columns in identified triggers dataframe: {identified_triggers_df.columns}")
+
+            # Calculate expected triggers based on run_range
+            expected_trigs = 77 * (int(run_range['run_end']) - int(run_range['run_start']) + 1)
+            print(f"The number of triggers expected for {raw_biopac} is: {expected_trigs}")
+
+            # Check for a single channel with the correct number of triggers
+            single_channel_match_found = False
+
+            channel_pairs = []
+
+            pair_match_found = False
+
+            for channel, count in trigger_count_per_channel.items():
+                if count == expected_trigs:
+                    print(f"{channel}: Correct number of triggers found. Use {channel} for trig_channel.")
+                    integrated_triggers_df.append(identified_triggers_df[identified_triggers_df['channel'] == channel])
+                    single_channel_match_found = True
+                    continue
+
+            if not single_channel_match_found:
+                channel_pairs = list(combinations(trigger_count_per_channel.keys(), 2))
+                pair_match_found = False
+
+            # Check all pairs of channels
+            for pair in channel_pairs:
+                sum_triggers = trigger_count_per_channel[pair[0]] + trigger_count_per_channel[pair[1]]
+                print(f"Sum of triggers for channels {pair[0]} and {pair[1]}: {sum_triggers}")
+        
+                # Check if the sum matches the expected number of triggers
+                if sum_triggers == expected_trigs:
+                    print(f"Identified channels that need to be merged: {pair[0]} and {pair[1]}")
+                    integrated_triggers_df.append(
+                        identified_triggers_df[identified_triggers_df['channel'].isin([pair[0], pair[1]])]
+                    )
+                    pair_match_found = True
+
+                    # Integrate the triggers from both channels
+                    channel_1 = identified_triggers_df[identified_triggers_df['channel'] == pair[0]]
+                    channel_2 = identified_triggers_df[identified_triggers_df['channel'] == pair[1]]
+
+                    integrated_trigger_channel = pd.merge(channel_1, channel_2, on='time', how='outer')
+                    integrated_trigger_channel['channel'] = integrated_trigger_channel['channel_x'].combine_first(integrated_trigger_channel['channel_y'])
+                    integrated_trigger_channel['triggers'] = integrated_trigger_channel['triggers_x'].combine_first(integrated_trigger_channel['triggers_y'])
+                    integrated_trigger_channel['file'] = integrated_trigger_channel['file_x'].combine_first(integrated_trigger_channel['file_y'])
+                    integrated_trigger_channel = integrated_trigger_channel.drop(columns=['channel_x', 'channel_y', 'triggers_x', 'triggers_y', 'file_x', 'file_y'])
+
+                    integrated_triggers_df.append(integrated_trigger_channel)
+
+   
+            # If no matching pair is found, raise an error
+            if not pair_match_found:
+                print(f"No combination of channels matches the expected number of triggers ({expected_trigs}) for {raw_biopac}.")
+
+   
+    # Concatenate all triggers across data files
+    combined_chan_triggers = pd.concat(integrated_triggers_df, ignore_index=True)
+
+    # Sort by time and reset index
+    combined_chan_triggers.sort_values(by=['file', 'time'], inplace=True)
+    combined_chan_triggers.reset_index(drop=True, inplace=True)
+
+    # Create time_diff to act as criterion for separating task sessions
+    combined_chan_triggers['time_diff'] = combined_chan_triggers['time'].diff().fillna(0)
+
+    # Create task session variable based on criteria
+    task_session = 0 
+    task_sessions = []
+    prev_data_file = None
+    for index, row in combined_chan_triggers.iterrows():
+        if row['time_diff'] > 3 or row['file'] != prev_data_file:
+            task_session += 1
+        task_sessions.append(task_session)
+        prev_data_file = row['file']  # Ensure this column exists before using it
+
+    combined_chan_triggers['task_session'] = task_sessions
+
+    combined_chan_triggers.drop_duplicates(subset=['time'], inplace=True)
+    combined_chan_triggers.reset_index()
+
+    # Create a list to store task session information
+    task_session_summary = []
+
+    # Loop through each unique task session
+    for session in combined_chan_triggers['task_session'].unique():
+        # Filter the data for the current session
+        session_data = combined_chan_triggers[combined_chan_triggers['task_session'] == session]
+    
+        # Get the first and last trigger times in the session
+        first_trig = session_data['time'].min()
+        last_trig = session_data['time'].max()
+    
+        # Count the number of triggers in the session
+        num_triggers = session_data.shape[0]  # or len(session_data)
+    
+        # Identify the file in which the session occurs
+        data_file = session_data['file'].iloc[0]
+    
+        # Calculate the session duration
+        session_duration = last_trig - first_trig
+    
+        # Append a dictionary with the session summary
+        task_session_summary.append({
+            'task_session': session,
+            'data_file': data_file,
+            'first_trig': first_trig,
+            'last_trig': last_trig,
+            'num_triggers': num_triggers,
+            'session_duration': session_duration
+        })
+
+    # Convert the list of dictionaries into a DataFrame
+    task_session_summary_df = pd.DataFrame(task_session_summary)
+
+    # Return the combined triggers and task session summary
+    return combined_chan_triggers, task_session_summary_df
 
 
 def extract_adalearn_triggers_biopac(biopac_data, trig_channel, plot=False):
