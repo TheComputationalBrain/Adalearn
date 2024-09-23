@@ -26,18 +26,18 @@ biopac_data_c2, stim_channel, ecg_channel, trig_channel = load_biopac_data(parti
 
 
 # Processing EMG data and storing it in a dataframe using function in physiological_signal_functions
-processed_biopac_c1 = process_emg_data(biopac_data_c1, stim_channel)
-processed_biopac_c2 = process_emg_data(biopac_data_c2, stim_channel)
+processed_biopac_c1 = process_emg_data(biopac_data_c1, stim_channel, emg_by_file_plot = False)
+processed_biopac_c2 = process_emg_data(biopac_data_c2, stim_channel, emg_by_file_plot = False)
 
 
 # Extracting adalearn outcome presentation triggers within bipoac data using function in physiological_signal_functions 
-outcome_triggers_c1, c1_trig_summary = extract_adalearn_triggers_biopac(biopac_data_c1, trig_channel, plot=True)
-outcome_triggers_c2, c2_trig_summary = extract_adalearn_triggers_biopac(biopac_data_c2, trig_channel, plot=True)
+outcome_triggers_c1, c1_trig_summary = extract_adalearn_triggers_biopac(biopac_data_c1, trig_channel, plot=False)
+outcome_triggers_c2, c2_trig_summary = extract_adalearn_triggers_biopac(biopac_data_c2, trig_channel, plot=False)
 
 
 # Integrating adaearn outcome presentation triggers across two channels in the biopac data using function in physiological_signal_functions
-integrated_triggers_c1, c1_integrated_trig_summary = integrate_separate_trigger_channels(biopac_data_c1, c1_run_ranges, channel_plots=False, integrated_trigger_plot=False)
-integrated_triggers_c2, c2_integrated_trig_summary = integrate_separate_trigger_channels(biopac_data_c2, c2_run_ranges, channel_plots=False, integrated_trigger_plot=False)
+integrated_triggers_c1, c1_integrated_trig_summary = integrate_separate_trigger_channels(biopac_data_c1, c1_run_ranges)
+integrated_triggers_c2, c2_integrated_trig_summary = integrate_separate_trigger_channels(biopac_data_c2, c2_run_ranges)
 
 
 # Reducing EMG data to individual dataframes related to the duration of a task session and storing this within a dictionary using a function within physiological_signal_functions 

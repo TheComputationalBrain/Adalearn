@@ -90,13 +90,14 @@ def load_biopac_data(participant_str, condition, run_ranges):
     return biopac_data, stim_chan, ecg_chan, trig_chan
 
 
-def process_emg_data(biopac_data, stim_channels):
+def process_emg_data(biopac_data, stim_channels, emg_by_file_plot = False):
     """ 
     Function to process the loaded emg data. It creates and returns a dataframe with the emg data and (relative) timestamp (from beginning of file recording). EMG signal is rectified and enveloped. Plots of the emg data are generated from each data file to enable quality check of data.
 
     Parameters:
     - bipoac_data: list, contains the dictionaries storing the data extracted from the biopac files for each run of task sessions. 
     - stim_channels: string, the stim channel name (used to extract the EMG data).
+    - emg_by_file_Plot: boolean, if True, plots the emg signal for each file as subplots (default is set to False as uses lots of memory.)
 
     Returns:
     - emg_data_df: pd.DataFrame, contains EMG data, associated (relative) timestamp and data file number.  
@@ -140,23 +141,24 @@ def process_emg_data(biopac_data, stim_channels):
     emg_data_df = pd.concat(all_emg_data, ignore_index=True)
     
     # Plotting with Plotly: one subplot per data file
-    fig = make_subplots(rows=len(all_emg_data), cols=1, shared_xaxes=True, 
+    if emg_by_file_plot:
+        fig = make_subplots(rows=len(all_emg_data), cols=1, shared_xaxes=True, 
                         subplot_titles=[f'File {i+1}' for i in range(len(all_emg_data))])
 
-    # Add traces (one for each file)
-    for idx, emg_data in enumerate(all_emg_data):
-        fig.add_trace(
-            go.Scatter(x=emg_data['time'], y=emg_data['emg'], mode='lines',
+        # Add traces (one for each file)
+        for idx, emg_data in enumerate(all_emg_data):
+            fig.add_trace(
+                go.Scatter(x=emg_data['time'], y=emg_data['emg'], mode='lines',
                        name=f'File {idx + 1}'),
-            row=idx + 1, col=1
-        )
+                row=idx + 1, col=1
+            )
 
-    # Update layout to show the plots stacked
-    fig.update_layout(height=300 * len(all_emg_data), title_text='EMG Data Across Files',
+        # Update layout to show the plots stacked
+        fig.update_layout(height=300 * len(all_emg_data), title_text='EMG Data Across Files',
                       xaxis_title='Time (s)', yaxis_title='EMG')
 
-    # Display the plot in the browser
-    fig.show()
+        # Display the plot in the browser
+        fig.show()
 
     return emg_data_df
 
@@ -817,7 +819,8 @@ def process_ecg_data(biopac_data, ecg_channels, task_session_summary, plot=False
         # Update layout
         fig.update_layout(
             title="R-R Interval and Instantaneous Heart Rate During Each Task Session",
-            height=900 * num_subplots  
+            height=1400 * num_subplots,
+            showlegend = False  
         )
 
         # Show the plot

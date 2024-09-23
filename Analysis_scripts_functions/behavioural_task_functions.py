@@ -271,7 +271,7 @@ def calculate_behavioural_learning_rate(behavioural_df):
     - behavioural_df: pd.DataFrame, contains parsed data from json adalearn data file for select variables. 
 
     Returns:
-    - behavioural_df: pd.DataFrame, contains parsed data from json adalearn data file for select variables with the new addition of learning rate variable.     
+    - behavioural_df: pd.DataFrame, contains parsed data from json adalearn data file for select variables with the new addition of learning rate variable. Final data frame contains a "cleaned learning rate", which removes values that exceed set thresholds (-0.6 and +1.3, which were determined a priori from a pilot study conducted before Foucault & Meyniel, 2024. Thresholding used to to avoid aberrant learning rate values due to very small denominators (error: estimate - outcome)).      
     """
     # Create learning rate variable within dataframe
     behavioural_df['learning_rate'] = float('nan')
@@ -289,6 +289,8 @@ def calculate_behavioural_learning_rate(behavioural_df):
 
     # Implementing learning rate equation
     behavioural_df = behavioural_df.groupby('task_session').apply(compute_learning_rate).reset_index(drop=True) 
+
+    behavioural_df['cleaned_learning_rate'] = behavioural_df['learning_rate'].where((behavioural_df['learning_rate'] >= -0.6) & (behavioural_df['learning_rate'] < 1.3), float('nan'))
 
     return behavioural_df
 
@@ -315,7 +317,7 @@ def plotting_behavioural_learning_rate(behavioural_df, condition):
     for i, session in enumerate(unique_sessions, start=1):
         session_data = behavioural_df[behavioural_df['task_session'] == session]
         fig.add_trace(
-            go.Scatter(x=session_data['trial_number'], y=session_data['learning_rate'], mode='lines+markers', name=f'Beahvioural learning rate in task session {session}'), row=i, col=1)
+            go.Scatter(x=session_data['trial_number'], y=session_data['cleaned_learning_rate'], mode='lines+markers', name=f'Beahvioural learning rate in task session {session}'), row=i, col=1)
 
     # Update layout
     fig.update_layout(height=300*num_sessions, width=800, title_text=f"Behavioural learning rate across task sessions in condition {condition}",
@@ -377,7 +379,7 @@ def learning_rate_by_change_point(behavioural_df, change_point_indices, particip
     filtered_learning_rate_by_cp.drop(columns=['relative_time', 'trial_number_y'], inplace=True)
 
     # Calculate the average, standard deviation and count of the behavioural learning rate across the different relative positions to the change point
-    averaged_learning_rate_by_cp = filtered_learning_rate_by_cp.groupby('relative_position')['learning_rate'].agg(['mean', 'std', 'count']).reset_index()
+    averaged_learning_rate_by_cp = filtered_learning_rate_by_cp.groupby('relative_position')['cleaned_learning_rate'].agg(['mean', 'std', 'count']).reset_index()
 
     # Calculate SEM
     averaged_learning_rate_by_cp['sem'] = averaged_learning_rate_by_cp['std'] / np.sqrt(averaged_learning_rate_by_cp['count'])
@@ -400,7 +402,7 @@ def learning_rate_by_change_point(behavioural_df, change_point_indices, particip
             num_traces += 1
             fig.add_trace(go.Scatter(
                 x=session_data['relative_position'],
-                y=session_data['learning_rate'],
+                y=session_data['cleaned_learning_rate'],
                 mode='lines',
                 name=f'Trace {num_traces}',
                 line=dict(width=1),
