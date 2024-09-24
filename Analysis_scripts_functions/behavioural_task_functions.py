@@ -292,6 +292,9 @@ def calculate_behavioural_learning_rate(behavioural_df):
 
     behavioural_df['cleaned_learning_rate'] = behavioural_df['learning_rate'].where((behavioural_df['learning_rate'] >= -0.6) & (behavioural_df['learning_rate'] < 1.3), float('nan'))
 
+    removed_data_points = behavioural_df['learning_rate'].notna().sum() - behavioural_df['cleaned_learning_rate'].notna().sum()
+    print(f"Number of data points removed in cleaning step: {removed_data_points}")
+
     return behavioural_df
 
 def plotting_behavioural_learning_rate(behavioural_df, condition):
