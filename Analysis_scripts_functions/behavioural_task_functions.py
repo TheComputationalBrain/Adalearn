@@ -149,8 +149,7 @@ def behavioural_change_point_analysis(behavioural_df):
     Returns:
     - num_change_points: int, the total number of change points in the DataFrame.
     - change_points_per_session: pd.Series, the number of change points in each task session.
-    - change_point_indices: pd.DataFrame, with columns 'index', 'relative_time', and 'task_session', 
-      containing the indices and relative times of the change points for each session. (*Note: Have removed identification of the first outcome of each task session as a new change point)
+    - change_point_indices: pd.DataFrame, with columns 'index', 'relative_time', and 'task_session', containing the indices and relative times of the change points for each session. (*Note: Have removed identification of the first outcome of each task session as a new change point)
     """
 
     # Calculate the number of change points
@@ -189,7 +188,7 @@ def plot_behavioural_data(behavioural_df, participant, condition, estimate_v_io_
     - participant: string, identifier of participant number
     - condition: string, identifier of condition order (set to 2 numbers)
     - behavioural_df: pd.DataFrame, contains parsed data from json adalearn data file for select variables.
-        - estimate_v_io_plot: boolean,, if True, will plot scatter graph of subjective estimates against ideal observer for all task sessions (plotly enables you to view individual task sessions by clicking on the respective label in the legend to activate/deactivate that series) 
+    - estimate_v_io_plot: boolean,, if True, will plot scatter graph of subjective estimates against ideal observer for all task sessions (plotly enables you to view individual task sessions by clicking on the respective label in the legend to activate/deactivate that series) 
 
     Returns:
     - Figure containing subplots opened within a browser.
