@@ -176,21 +176,21 @@ def integrate_separate_trigger_channels(biopac_data, run_ranges):
     - task_session_summary_df: pd.Dataframe, contains summary statistics of each calculated task session (time of first trigger, time of last trigger, duration of task session, number of triggers within each session). 
     -  """
     
-        # Store results for each file within biopac_data
+    # Store results for each file within biopac_data
     integrated_triggers_df = []  
 
     for data_file_count, (raw_biopac, run_range) in enumerate(zip(biopac_data, run_ranges), start=1):
         print(f"Channel names in file {data_file_count}: {raw_biopac.ch_names}")
 
-        # Identify trigger channels
+        # Identify the names of the trigger channels
         trig_channels_in_file = [ch for ch in raw_biopac.ch_names if ch.startswith('Digital')]
         print(f"Trig channels found: {trig_channels_in_file}")
 
-        # Get filename or manually pass it along
+        # Get filename or manually pass it along (not really used anymore, but could be added to trig_df)
         filename = raw_biopac.filenames[0] if hasattr(raw_biopac, 'filenames') else f'unknown_file_{data_file_count}'
         print(f"Processing file: {filename}")
 
-        # Process and store trigger data for each channel
+        # Process and store trigger data (amplitude) and associated times for each channel in the datafile. 
         trigger_channel_data = []
         for channel in trig_channels_in_file:
             trigdata = raw_biopac.copy().pick(picks=channel)
@@ -225,7 +225,7 @@ def integrate_separate_trigger_channels(biopac_data, run_ranges):
             valid_triggers = [initial_triggers.iloc[0]]
             for idx in range(1, len(initial_triggers)):
                 time_diff = initial_triggers.iloc[idx]['time'] - valid_triggers[-1]['time']
-                if time_diff >= 1.0:
+                if time_diff >= 1.0: # This time difference can be changed if necessary. Difference between triggers should be ~1.5s, but may be lower for start/end triggers.
                     valid_triggers.append(initial_triggers.iloc[idx])
 
             identified_triggers.extend(valid_triggers)
@@ -239,11 +239,11 @@ def integrate_separate_trigger_channels(biopac_data, run_ranges):
             print(f"Identified triggers shape: {identified_triggers_df.shape}")
             print(f"Columns in identified triggers dataframe: {identified_triggers_df.columns}")
 
-            # Calculate expected triggers based on run_range
+            # Calculate expected triggers based on run_range (should be 77 time the number of task sessions within the file)
             expected_trigs = 77 * (int(run_range['run_end']) - int(run_range['run_start']) + 1)
             print(f"The number of triggers expected for {raw_biopac} is: {expected_trigs}")
 
-            # Check for a single channel with the correct number of triggers
+            # Check for a single channel with the correct number of triggers. This channel should then be used to extract trigger information. 
             single_channel_match_found = False
 
             channel_pairs = []
@@ -257,6 +257,7 @@ def integrate_separate_trigger_channels(biopac_data, run_ranges):
                     single_channel_match_found = True
                     continue
 
+            # If a single channel with the correct number of expected triggers is not found, look for a combination of two separate channels that do (the two separate channels represent the two colours respectively)
             if not single_channel_match_found:
                 channel_pairs = list(combinations(trigger_count_per_channel.keys(), 2))
                 pair_match_found = False
@@ -274,7 +275,7 @@ def integrate_separate_trigger_channels(biopac_data, run_ranges):
                     )
                     pair_match_found = True
 
-                    # Integrate the triggers from both channels
+                    # Integrate the triggers from both of the identified channels
                     channel_1 = identified_triggers_df[identified_triggers_df['channel'] == pair[0]]
                     channel_2 = identified_triggers_df[identified_triggers_df['channel'] == pair[1]]
 
@@ -298,7 +299,7 @@ def integrate_separate_trigger_channels(biopac_data, run_ranges):
     combined_chan_triggers.sort_values(by=['file', 'time'], inplace=True)
     combined_chan_triggers.reset_index(drop=True, inplace=True)
 
-    # Create time_diff to act as criterion for separating task sessions
+    # Create time_diff to act as criterion for separating task sessions. Again, difference greater of 1.5 s (here 3 s used) is the criterion as that is the time interval between stimuli. 
     combined_chan_triggers['time_diff'] = combined_chan_triggers['time'].diff().fillna(0)
 
     # Create task session variable based on criteria
@@ -329,8 +330,8 @@ def integrate_separate_trigger_channels(biopac_data, run_ranges):
         last_trig = session_data['time'].max()
     
         # Count the number of triggers in the session
-        num_triggers = session_data.shape[0]  # or len(session_data)
-    
+        num_triggers = session_data.shape[0]  
+
         # Identify the file in which the session occurs
         data_file = session_data['file'].iloc[0]
     
@@ -569,7 +570,7 @@ def identify_vns_from_emg(task_session_dict, vns_task_session_keys, sampling_rat
     Returns:
     - vns_start_times: pd.DataFrame, contains variables identifying task session, the relative index of the identified start and the timestamp of that identified start point  
     """
-# Setting the figure subplot parameters
+    # Setting the figure subplot parameters
     fig = make_subplots(rows=len(vns_task_session_keys), cols=1, subplot_titles=[f"Task session: {key}" for key in vns_task_session_keys], shared_xaxes=True, vertical_spacing=0.01)
 
     row_heights = [8000, 300, 500]
