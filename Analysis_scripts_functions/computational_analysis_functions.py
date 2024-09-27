@@ -113,7 +113,7 @@ def compute_surprise_of_observations (participant_str, condition_str, adalearn_d
     
         task_sess_outcome_1_df_list.append(outcome_df)
 
-    # Creating 
+    # Creating dataframe for posterior distribution characteristics
     task_sess_post_dis_0 = pd.concat(task_sess_outcome_0_df_list, ignore_index=True)
     task_sess_post_dis_1 = pd.concat(task_sess_outcome_1_df_list, ignore_index=True)
     task_sess_post_dis_df = pd.concat([task_sess_post_dis_0, task_sess_post_dis_1], axis=1)
