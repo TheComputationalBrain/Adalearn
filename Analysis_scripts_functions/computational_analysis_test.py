@@ -13,4 +13,5 @@ from behavioural_analysis_test import adalearn_data_c1_df
 
 
 
-c1_surprise = compute_surprise_of_observations(participant_str, condition_1_str, adalearn_data_c1_df)
+c1_surprise, c1_post_dist_df = compute_surprise_of_observations(participant_str, condition_1_str, adalearn_data_c1_df, plot_posterior_conf=True)
+print(c1_surprise)
