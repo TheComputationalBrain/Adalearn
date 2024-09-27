@@ -38,6 +38,9 @@ def compute_surprise_of_observations (participant_str, condition_str, adalearn_d
     - participant_str: string, participant identifier (number; set to 2 digits)  
     - condition: string, identifier of condition order (set to 2 digits) ** May need to change to denote actual condition in Adalearn VNS study **
     - adalearn_data_df: pd.DataFrame, contains the behavioural outputs of the adalearn data files for a given condition. 
+    - plot_surprise: boolean, if true, will plot the change in surprise per observation across each task session (default is set to True).
+    - plot_posterior_conf: boolean, if true, will plot the change in posterior distribution SD (confidence) per observation across each task session (default is set to True). 
+    - plot_posterior_dist_means: boolean, if true, will plot the change in posterior distribution means for both the blue and yellow distributions per observation across each task session (default is set to True).
 
     Parameters in run_inference function:
     - seq: np.array, 
@@ -160,7 +163,5 @@ def compute_surprise_of_observations (participant_str, condition_str, adalearn_d
         fig.update_layout(height=300 * len(unique_task_sessions), title_text="Posterior distribution mean across task sessions", showlegend=False)
 
         fig.show()
-
-
 
     return surprise_df, task_sess_post_dis_df
