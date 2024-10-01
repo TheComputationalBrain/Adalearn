@@ -8,6 +8,8 @@ import plotly.graph_objs as go
 from plotly.subplots import make_subplots
 pio.renderers.default='browser'
 
+
+
 def load_behavioural_data(participant_str, condition, condition_task_sessions):
     """
     Function to load adalearn .json files. Sets the working directory to the relevant file, before loading and storing the data for each task session for a given condition. 
@@ -38,6 +40,8 @@ def load_behavioural_data(participant_str, condition, condition_task_sessions):
         adalearn_data.append(parsed_json_con)
     
     return adalearn_data
+
+
 
 def create_behavioural_dataframe(behavioural_metric_list):
     """
@@ -91,6 +95,8 @@ def create_behavioural_dataframe(behavioural_metric_list):
 
     return adalearn_df
 
+
+
 def behavioural_data_diagnostics(behavioural_df, condition_task_sessions):
     """
     Function to evaluate whether the behavioural data that should be in the dataframe is in fact there. Prints outcome of analysis. This should include:
@@ -134,6 +140,8 @@ def behavioural_data_diagnostics(behavioural_df, condition_task_sessions):
 
     filtered_change_point_count_per_session = filtered_cp_df.groupby('task_session')['change_point'].sum()
     print(f"\nNumber of True values in 'change_point' for each task session after removing True value for trial number 1:\n{filtered_change_point_count_per_session}")
+
+
 
 def behavioural_change_point_analysis(behavioural_df):
     """
@@ -180,6 +188,8 @@ def behavioural_change_point_analysis(behavioural_df):
     
     return num_change_points, change_points_per_session, change_point_indices
 
+
+
 def plot_behavioural_data(behavioural_df, participant, condition, estimate_v_io_plot = False):
     """ 
     Function to plot the behavioural, ideal observer, hidden estimates and outcome observations from each task session. Optionally, can plot subjective estimates against ideal observer across all task sessions (estimate_v_io_plot; default is False).
@@ -200,7 +210,7 @@ def plot_behavioural_data(behavioural_df, participant, condition, estimate_v_io_
     # Plotting behavioural responses for each task session 
     # Create subplots, one for each task session
     fig = make_subplots(rows=num_sessions, cols=1, shared_xaxes=True,
-                        subplot_titles=[f'Behavioural estimates, ideal observer and task characteristics in task session {session}' for session in unique_sessions])
+                        subplot_titles=[f'Behavioural estimates (green), ideal observer (red) and hidden task structure (blue) in task session {session}' for session in unique_sessions])
 
     # Set of colours to be used to designate for each variable
     colors = ['blue', 'green', 'red', 'purple'] 
@@ -230,7 +240,7 @@ def plot_behavioural_data(behavioural_df, participant, condition, estimate_v_io_
         fig.update_yaxes(range=[-0.09, 1], row=i, col=1)
 
     # Update overall layout
-    fig.update_layout(height=900*num_sessions, width=1200, title_text=f"Behavioural estimates, ideal observer and task characteristics in condition {condition} for participant {participant}",
+    fig.update_layout(height=900*num_sessions, width=1200, title_text=f"Behavioural estimates (green), ideal observer (red) and hidden task structure (blue) in condition {condition} for participant {participant}",
                       showlegend=False, title_x=0.5) 
 
     # Add axis titles
@@ -258,11 +268,13 @@ def plot_behavioural_data(behavioural_df, participant, condition, estimate_v_io_
 
         fig.show()
 
+
+
 def calculate_behavioural_learning_rate(behavioural_df):
     """ 
     Function to calculate the behavioural learning rate for each outcome presentation. Learning rate (αt) is derived from the delta rule (Bt+1 = Bt + αt * t ): 
 
-                        αt = (vt - vt-1) / (xt - vt-1)
+                                                            αt = (vt - vt-1) / (xt - vt-1)
 
     where vt is the current estimate, vt-1 is the previous estimate and xt is the outcome (here, either 1 for blue and 0 for yellow). Returns dataframe with new learning rate variable created. 
 
@@ -296,12 +308,16 @@ def calculate_behavioural_learning_rate(behavioural_df):
 
     return behavioural_df
 
-def plotting_behavioural_learning_rate(behavioural_df, condition):
+
+
+def plotting_behavioural_learning_rate(behavioural_df, change_point_indices_df, participant_str, condition):
     """ 
     Function to plot the behavioural learning rate for each task session. 
 
     Parameters:
     - behavioural_df: pd.DataFrame, contains parsed data from json adalearn data file for select variables with the new addition of learning rate variable.
+    - change_point_indices_df: pd.DataFrame, with columns 'index', 'relative_time', and 'task_session', containing the indices and relative times of the change points for each session. Used to mark the change points on plots (*Note: Have removed identification of the first outcome of each task session as a new change point)
+    - participant_str: string, participant identifier (number; set to 2 digits)
     - condition: string, identifier of condition order (set to 2 numbers) ** May need to change to denote actual condition in Adalearn VNS study **
 
     Returns:
@@ -310,9 +326,8 @@ def plotting_behavioural_learning_rate(behavioural_df, condition):
 
     # Create subplots, one for each task session
     unique_sessions = behavioural_df['task_session'].unique()
-    num_sessions = len(unique_sessions)
-
-    fig = make_subplots(rows=num_sessions, cols=1, shared_xaxes=True,
+    
+    fig = make_subplots(rows=len(unique_sessions), cols=1, shared_xaxes=True,
                     subplot_titles=[f'Beahvioural learning rate in task session {session}' for session in unique_sessions])
 
     # Add learning rate traces to each subplot
@@ -321,18 +336,30 @@ def plotting_behavioural_learning_rate(behavioural_df, condition):
         fig.add_trace(
             go.Scatter(x=session_data['trial_number'], y=session_data['cleaned_learning_rate'], mode='lines+markers', name=f'Beahvioural learning rate in task session {session}'), row=i, col=1)
 
+        change_points = change_point_indices_df[change_point_indices_df['task_session'] == session]['trial_number']
+        for cp in change_points:
+            fig.add_shape(
+                type="line", 
+                x0=cp, x1=cp, 
+                y0=0, y1=1.5, 
+                line=dict(color="grey", width=2, dash="dash"),
+                xref=f'x{i}', yref=f'y{i}'
+            )  
+
     # Update layout
-    fig.update_layout(height=300*num_sessions, width=800, title_text=f"Behavioural learning rate across task sessions in condition {condition}",
+    fig.update_layout(height=300*len(unique_sessions), width=800, title_text=f"Behavioural learning rate across task sessions for participant {participant_str} in condition {condition}",
                   showlegend=False, title_x=0.5)
 
     # Add axis titles
-    fig.update_xaxes(title_text='Trial Number', row=num_sessions, col=1)
+    fig.update_xaxes(title_text='Trial Number', row=len(unique_sessions), col=1)
 
-    for i in range(1, num_sessions+1):
+    for i in range(1, len(unique_sessions)+1):
         fig.update_yaxes(title_text='Learning Rate', row=i, col=1)
 
     # Show plot
     fig.show()
+
+
 
 def learning_rate_by_change_point(behavioural_df, change_point_indices, participant, condition, pre=2, post=10):
     """ 
@@ -437,7 +464,7 @@ def learning_rate_by_change_point(behavioural_df, change_point_indices, particip
     # Add dashed line at change point
     for i in [1, 2]:
         fig.add_shape(type="line",
-            x0=0.5, y0=-5, x1=0.5, y1=5,
+            x0=0, y0=-5, x1=0, y1=5,
             line=dict(
                 color="Red",
                 width=2,

@@ -20,7 +20,7 @@ except ImportError as e:
 
 
 
-def compute_surprise_of_observations (participant_str, condition_str, adalearn_data_df, plot_surprise = True, plot_posterior_conf = True, plot_posterior_dist_means = True):
+def compute_surprise_of_observations (participant_str, condition_str, adalearn_data_df, change_point_indices_df, plot_surprise = True, plot_posterior_conf = True, plot_posterior_dist_means = True):
     """
     Computes the level of surprise of each observation. Achieves this using the "run_inference" function (created by Cedric Foucault and Florent Meyniel: https://github.com/florentmeyniel/Ada-Learn/blob/main/analysis) to generate posterior inferences of generative probabilities of the data sequence (seq). Surprise is calculated as:
 
@@ -38,6 +38,7 @@ def compute_surprise_of_observations (participant_str, condition_str, adalearn_d
     - participant_str: string, participant identifier (number; set to 2 digits)  
     - condition: string, identifier of condition order (set to 2 digits) ** May need to change to denote actual condition in Adalearn VNS study **
     - adalearn_data_df: pd.DataFrame, contains the behavioural outputs of the adalearn data files for a given condition. 
+    - change_point_indices_df: pd.DataFrame, contains outputs related to the presence of change points in the hidden task structure. The identified trial number within each task session will be used in plot visualisation.
     - plot_surprise: boolean, if true, will plot the change in surprise per observation across each task session (default is set to True).
     - plot_posterior_conf: boolean, if true, will plot the change in posterior distribution SD (confidence) per observation across each task session (default is set to True). 
     - plot_posterior_dist_means: boolean, if true, will plot the change in posterior distribution means for both the blue and yellow distributions per observation across each task session (default is set to True).
@@ -87,7 +88,7 @@ def compute_surprise_of_observations (participant_str, condition_str, adalearn_d
     surprise_df = pd.concat(task_session_surprise_df)
 
     # Extracting posterior distribution values for outcomes 0 and 1.
-    # Outcome 0 
+    # Outcome 0 - 'Yellow'
     task_sess_outcome_0_df_list = []
 
     for i, outcome in enumerate(task_sess_outcome_0):
@@ -100,7 +101,7 @@ def compute_surprise_of_observations (participant_str, condition_str, adalearn_d
     
         task_sess_outcome_0_df_list.append(outcome_df)
 
-    # Outcome 1
+    # Outcome 1 - 'Blue'
     task_sess_outcome_1_df_list = []
 
     for i, outcome in enumerate(task_sess_outcome_1):
@@ -131,7 +132,17 @@ def compute_surprise_of_observations (participant_str, condition_str, adalearn_d
             session_data = surprise_df[surprise_df['task_session'] == session]
             fig.add_trace(go.Scatter(x=session_data['task_sess_count'], y=session_data['surprise'], mode='lines', name=f'Surprise - Session {session}'), row=i, col=1)
 
-        fig.update_layout(height=300 * len(unique_sessions), title_text="Surprise across task sessions", showlegend=False)
+            change_points = change_point_indices_df[change_point_indices_df['task_session'] == session]['trial_number']
+            for cp in change_points:
+                fig.add_shape(
+                    type="line", 
+                    x0=cp, x1=cp, 
+                    y0=0, y1=5, 
+                    line=dict(color="grey", width=2, dash="dash"),
+                    xref=f'x{i}', yref=f'y{i}'
+                )  
+
+        fig.update_layout(height=300 * len(unique_sessions), title_text=f"Surprise across task sessions for participant {participant_str} in condition {condition_str}", showlegend=False)
 
         fig.show()
 
@@ -145,7 +156,17 @@ def compute_surprise_of_observations (participant_str, condition_str, adalearn_d
             session_data = task_sess_post_dis_df[task_sess_post_dis_df['task_session'] == session]
             fig.add_trace(go.Scatter(x=session_data['task_sess_count'], y=session_data['SD_1'], mode='lines', name=f'Posterior distribution SD (confidence) - Session {session}'), row=i, col=1)
 
-        fig.update_layout(height=300 * len(unique_task_sessions), title_text="Posterior distribution SD ('confidence') across task sessions", showlegend=False)
+            change_points = change_point_indices_df[change_point_indices_df['task_session'] == session]['trial_number']
+            for cp in change_points:
+                fig.add_shape(
+                    type="line", 
+                    x0=cp, x1=cp, 
+                    y0=0, y1=0.5, 
+                    line=dict(color="grey", width=2, dash="dash"),
+                    xref=f'x{i}', yref=f'y{i}'
+                )  
+
+        fig.update_layout(height=300 * len(unique_task_sessions), title_text=f"Posterior distribution SD ('confidence') across task sessions for participant {participant_str} in condition {condition_str}", showlegend=False)
 
         fig.show()
 
@@ -160,7 +181,17 @@ def compute_surprise_of_observations (participant_str, condition_str, adalearn_d
             fig.add_trace(go.Scatter(x=session_data['task_sess_count'], y=session_data['mean_0'], mode='lines', name=f'Posterior distribution mean (P(0)) - Session {session}', line_color = 'yellow'), row=i, col=1)
             fig.add_trace(go.Scatter(x=session_data['task_sess_count'], y=session_data['mean_1'], mode='lines', name=f'Posterior distribution mean (P(1)) - Session {session}', line_color = 'blue'), row=i, col=1)
 
-        fig.update_layout(height=300 * len(unique_task_sessions), title_text="Posterior distribution mean across task sessions", showlegend=False)
+            change_points = change_point_indices_df[change_point_indices_df['task_session'] == session]['trial_number']
+            for cp in change_points:
+                fig.add_shape(
+                    type="line", 
+                    x0=cp, x1=cp, 
+                    y0=0, y1=1, 
+                    line=dict(color="grey", width=2, dash="dash"),
+                    xref=f'x{i}', yref=f'y{i}'
+                )  
+
+        fig.update_layout(height=300 * len(unique_task_sessions), title_text=f"Posterior distribution mean across task sessions for participant {participant_str} in condition {condition_str}", showlegend=False)
 
         fig.show()
 

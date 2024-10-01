@@ -48,8 +48,8 @@ adalearn_data_c2_df = calculate_behavioural_learning_rate(adalearn_data_c2_df)
 
 
 # Plotting behavioural learning rate using function in behavioural_task_functions
-c1_learning_rate_fig = plotting_behavioural_learning_rate(adalearn_data_c1_df, condition_1_str)
-c2_learning_rate_fig = plotting_behavioural_learning_rate(adalearn_data_c2_df, condition_2_str)  
+c1_learning_rate_fig = plotting_behavioural_learning_rate(adalearn_data_c1_df, c1_change_point_indices, participant_str, condition_1_str)
+c2_learning_rate_fig = plotting_behavioural_learning_rate(adalearn_data_c2_df, c2_change_point_indices, participant_str, condition_2_str)  
 
 
 # Plotting average behavioural learning rate dynamics locked to change point using function in behavioural_task_functions
