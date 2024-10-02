@@ -341,7 +341,7 @@ def plotting_behavioural_learning_rate(behavioural_df, change_point_indices_df, 
             fig.add_shape(
                 type="line", 
                 x0=cp, x1=cp, 
-                y0=0, y1=1.5, 
+                y0=-0.8, y1=1.5, 
                 line=dict(color="grey", width=2, dash="dash"),
                 xref=f'x{i}', yref=f'y{i}'
             )  

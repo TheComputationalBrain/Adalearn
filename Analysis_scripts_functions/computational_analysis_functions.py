@@ -20,7 +20,7 @@ except ImportError as e:
 
 
 
-def compute_surprise_of_observations (participant_str, condition_str, adalearn_data_df, change_point_indices_df, plot_surprise = True, plot_posterior_conf = True, plot_posterior_dist_means = True):
+def compute_surprise_of_observations(participant_str, condition_str, adalearn_data_df, change_point_indices_df, plot_surprise = True, plot_posterior_conf = True, plot_posterior_dist_means = True):
     """
     Computes the level of surprise of each observation. Achieves this using the "run_inference" function (created by Cedric Foucault and Florent Meyniel: https://github.com/florentmeyniel/Ada-Learn/blob/main/analysis) to generate posterior inferences of generative probabilities of the data sequence (seq). Surprise is calculated as:
 
@@ -31,7 +31,7 @@ def compute_surprise_of_observations (participant_str, condition_str, adalearn_d
     
     So the surprise of observation at time t is the product of the negative logarithm to base 2 and the estimated probability of that observation given the last observation. 
 
-    This function takes the ada_learn data, converts the observations to a sequence for each task session, before returning a dataframe with the level of surprise included. The updated posterior distribution characteristics (mean and SD) in the face of each new observation are also returned.
+    This function takes the ada_learn data, converts the observations to a sequence for each task session, before returning a dataframe with the level of surprise included. For some basic analysis, the level of surprise is categorised as either "high" and "low" based on the interquartile range of the surprise values from all task sessions. The updated posterior distribution characteristics (mean and SD) in the face of each new observation are also returned.
 
     
     Parameters:
@@ -54,6 +54,8 @@ def compute_surprise_of_observations (participant_str, condition_str, adalearn_d
 
      Returns:
     - surprise_df: pd.DataFrame, containing 'task_session' and 'surprise' columns for each task session.
+    - task_sess_post_dist_df: pd.DataFrame, contains the model calculated posterior distribution. Includes the mean and SD of the posterior. 
+    - surprise_cat_df: pd.DataFrame, copy of surprise_df but contains a variable that categorises the level of surprise per observation based on the interquartile range across all task sessions. 
     """
 
     # Define options for "run inference" function
@@ -85,7 +87,22 @@ def compute_surprise_of_observations (participant_str, condition_str, adalearn_d
         surprise_df['task_sess_count'] = surprise_df.groupby('task_session').cumcount() + 1 
         task_session_surprise_df.append(surprise_df)
          
-    surprise_df = pd.concat(task_session_surprise_df)
+    surprise_df = pd.concat(task_session_surprise_df, ignore_index=True)
+    surprise_df['cum_trigger_count'] = surprise_df.index
+    (print(surprise_df))
+
+    # Categorizing the level of surprise for basic analysis
+    surprise_cat_df = surprise_df.copy()
+    surprise_cat_df['surprise'] = pd.to_numeric(surprise_cat_df['surprise'], errors='coerce')
+    surprise_cat_df = surprise_cat_df.dropna(subset=['surprise'])
+    first_quartile = surprise_cat_df['surprise'].quantile(0.25)
+    third_quartile = surprise_cat_df['surprise'].quantile(0.75)
+
+    surprise_cat_df['surprise_cat'] = 'between_quartiles'
+
+    surprise_cat_df.loc[surprise_cat_df['surprise'] < first_quartile, 'surprise_cat'] = 'below_first_quartile'
+    surprise_cat_df.loc[surprise_cat_df['surprise'] > third_quartile, 'surprise_cat'] = 'above_third_quartile'
+
 
     # Extracting posterior distribution values for outcomes 0 and 1.
     # Outcome 0 - 'Yellow'
@@ -195,4 +212,4 @@ def compute_surprise_of_observations (participant_str, condition_str, adalearn_d
 
         fig.show()
 
-    return surprise_df, task_sess_post_dis_df
+    return surprise_df, task_sess_post_dis_df, surprise_cat_df
