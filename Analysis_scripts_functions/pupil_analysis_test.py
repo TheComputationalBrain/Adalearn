@@ -29,9 +29,12 @@ c1_pupil_data, c1_trig_data = load_pupil_data(participant_str, condition_1_str, 
 c2_pupil_data, c2_trig_data = load_pupil_data(participant_str, condition_2_str, c2_task_sessions, plot=True)
 
 # Epoching and plotting pupil response to change points using function in pupil_signal_functions 
-c1_change_point_onsets, c1_change_point_nums, c1_epoched_pupil_cp_df = change_point_pupil_epochs(participant_str, list_subject_selected, condition_1_str, c1_from_session +1, c1_to_session, c1_trig_data, c1_change_point_indices, plot=True)
-c2_change_point_onsets, c2_change_point_nums, c2_epoched_pupil_cp_df = change_point_pupil_epochs(participant_str, list_subject_selected, condition_2_str, c2_from_session +1, c2_to_session, c2_trig_data, c2_change_point_indices, plot=True)
+c1_change_point_onsets, c1_change_point_nums, c1_epoched_pupil_cp_df = change_point_pupil_epochs(participant_str, list_subject_selected, condition_1_str, c1_from_session +1, c1_to_session, c1_trig_data, c1_change_point_indices, session_list=None, plot=True)
+c2_change_point_onsets, c2_change_point_nums, c2_epoched_pupil_cp_df = change_point_pupil_epochs(participant_str, list_subject_selected, condition_2_str, c2_from_session +1, c2_to_session, c2_trig_data, c2_change_point_indices, session_list=None, plot=True)
+
 
 # Epoching and plotting pupil response based on upper and lower quartiles for surprising observations using function in pupil_signal_functions 
-c1_low_surprise_dict, c1_low_surprise_count_dict, c1_high_surprise_dict, c1_high_surprise_count_dict, c1_low_surprise_epoch_df, c1_high_surprise_epoch_df = surprise_pupil_epochs(participant_str, list_subject_selected, condition_1_str, c1_from_session +1, c1_to_session, c1_surprise_cat_df, c1_trig_data, plot=True)
-c2_low_surprise_dict, c2_low_surprise_count_dict, c2_high_surprise_dict, c2_high_surprise_count_dict, c2_low_surprise_epoch_df, c2_high_surprise_epoch_df = surprise_pupil_epochs(participant_str, list_subject_selected, condition_2_str, c2_from_session +1, c1_to_session, c2_surprise_cat_df, c2_trig_data, plot=True)
+c1_low_surp_ses_list = ['02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12', '13', '14', '15', '16', '17', '19', '20']
+
+c1_low_surprise_dict, c1_low_surprise_count_dict, c1_high_surprise_dict, c1_high_surprise_count_dict, c1_low_surprise_epoch_df, c1_high_surprise_epoch_df = surprise_pupil_epochs(participant_str, list_subject_selected, condition_1_str, c1_from_session +1, c1_to_session, c1_surprise_cat_df, c1_trig_data, high_surp_ses_list=None, low_surp_ses_list=c1_low_surp_ses_list, plot=True)
+c2_low_surprise_dict, c2_low_surprise_count_dict, c2_high_surprise_dict, c2_high_surprise_count_dict, c2_low_surprise_epoch_df, c2_high_surprise_epoch_df = surprise_pupil_epochs(participant_str, list_subject_selected, condition_2_str, c2_from_session +1, c1_to_session, c2_surprise_cat_df, c2_trig_data, high_surp_ses_list=None, low_surp_ses_list=None, plot=True)

@@ -185,7 +185,7 @@ def load_pupil_data(participant_str, condition, condition_task_sessions, plot=Fa
 
 
 
-def process_pupil_data(participant_str, list_subject_selected, condition, from_session, to_session, dict_onsets, dict_num, outlier_limit_std = 10, outlier_correct_average_amount = 10,  window_start_before = 0.2, window_end_after = 1.4, z_score = False):
+def process_pupil_data(participant_str, list_subject_selected, condition, from_session, to_session, dict_onsets, dict_num, session_list = None, outlier_limit_std = 10, outlier_correct_average_amount = 10,  window_start_before = 0.2, window_end_after = 1.4, z_score = False):
     """
     Function to preprocess pupil data into epochs around defined outcomes of interest (e.g. change points, high and low surprise, etc). Preprocessing taken from preprocess_eyedata script, created by Florent, Maëva, Aziza and Yannaël. Calculates the mean and standard deviation across each identified epoch for all task session.
 
@@ -197,6 +197,7 @@ def process_pupil_data(participant_str, list_subject_selected, condition, from_s
     - to_session: int, defining the number of the last task session within the condition
     - dict_onsets: dict, contains timestamps of outcomes of interest (e.g. change points, high and low surprise, etc). Keys are task session and values are time stamps within that task session. 
     - dict_nums: dict, contains a cumulative count of the number of outcomes of interest identified within each task session. Keys are task sessions and values are the cumulative count of the number of change points within that task session.
+    - session_list: list, optional, specific list of sessions to process. If not provided, the function will use the range defined by from_session and to_session.
     - outlier_limit_std: int, defines the threshold of the standard deviation of the derivative when preprocessing the pupil data. Default = 10
     - outlier_correct_average_amount: int, the number of data points to the left and at the right of the artifact which will replace the value of the artifact by the value of the mean of the data around it. Default = 10.
     - window_start_before: int, value defining the start of the epoch window in time (seconds). Default = 1. 
@@ -219,8 +220,14 @@ def process_pupil_data(participant_str, list_subject_selected, condition, from_s
     # List to store dataframes containing the epoched data from each task session
     epoched_data_list = []
 
+    # Determine sessions to iterate over
+    if session_list is not None:
+        sessions_to_process = session_list
+    else:
+        sessions_to_process = range(from_session, to_session + 1)
+
     # Iterate through each task session file to analyse the pupil data
-    for session in range(from_session, to_session +1):
+    for session in sessions_to_process:
         session_str = str(session).zfill(2)
         file_name = f"sub-{participant_str}_ses-{condition}_task-AdalearnVNS_run-{session_str}_eyetracker.txt"
     
@@ -259,7 +266,7 @@ def process_pupil_data(participant_str, list_subject_selected, condition, from_s
 
 
 
-def change_point_pupil_epochs(participant_str, list_subject_selected, condition_str, from_session, to_session, pupil_trig_df, change_point_indices, plot=True):
+def change_point_pupil_epochs(participant_str, list_subject_selected, condition_str, from_session, to_session, pupil_trig_df, change_point_indices, session_list = None, plot=True):
     """
     Function to preprocess and analysis pupil data around identified change points in the task. Uses process_pupil_data function to run the preporocessing analysis. In addition to analysising the data around change points, there is an option to plot the mean and std derived from all instances across all task sessions. Parameters defining the preprocessing of the pupil data should be modified in the process_pupil_data function directly. 
 
@@ -272,6 +279,7 @@ def change_point_pupil_epochs(participant_str, list_subject_selected, condition_
     - pupil_trig_df: pd.DataFrame, contains the trigger information (i.e. time, outcome) for each task session, extracted from the pupil data files.
     - change_point_indices: pd.DataFrame, with columns 'index', 'relative_time', and 'task_session', 
       containing the indices and relative times of the change points for each session. (*Note: Have removed identification of the first outcome of each task session as a new change point)
+    - session_list: list, optional, specific list of sessions to process. If not provided, the function will use the range defined by from_session and to_session.
     - plot: boolean, option to plot the mean and standard deviation of the epoched pupil data around the change points using PLotly. Default = True.
 
     Returns:
@@ -304,7 +312,7 @@ def change_point_pupil_epochs(participant_str, list_subject_selected, condition_
       print(f"In task session {session} there are {len(events)} identified change points") 
 
     # Analysing pupil data based on identified change point indices
-    epoched_pupil_cp_df = process_pupil_data(participant_str, list_subject_selected, condition_str, from_session, to_session, change_point_onsets, change_point_nums)
+    epoched_pupil_cp_df = process_pupil_data(participant_str, list_subject_selected, condition_str, from_session, to_session, change_point_onsets, change_point_nums, session_list)
 
     # Plotting the mean (and std) response of pupil response timelocked to change points
     if plot:
@@ -351,7 +359,7 @@ def change_point_pupil_epochs(participant_str, list_subject_selected, condition_
 
 
 
-def surprise_pupil_epochs(participant_str, list_subject_selected, condition_str, from_session, to_session, surprise_cat_df, pupil_trig_df, plot=True):
+def surprise_pupil_epochs(participant_str, list_subject_selected, condition_str, from_session, to_session, surprise_cat_df, pupil_trig_df, high_surp_ses_list = None, low_surp_ses_list = None, plot=True):
     """"
      Function to preprocess and then compute epoched pupil diameter response around modelled "high" and "low" suprising observations. Preprocessing taken from preprocess_eyedata script. Calculates the mean and standard deviation across each identified epoch for all task session. In addition to analysising the data around surprise, there is an option to plot the mean and std derived from all instances across all task sessions. Parameters defining the preprocessing of the pupil data should be modified in the process_pupil_data function directly.
 
@@ -363,6 +371,8 @@ def surprise_pupil_epochs(participant_str, list_subject_selected, condition_str,
     - to_session: int, defining the number of the last task session within the condition
     - surprise_cat_df: pd.DataFrame, contains computed surprise values and the categorised values. Used to define timestamps for the categorised surprise values (which are contained in a dictionary, with keys being task sessions and values are time stamps within that task session) and a cumulative count of the number of surprise values categorised as either high or low (again, a dictionary with keys being task sessions and values being the cumulative count within that task session).
     - pupil_trig_df: pd.DataFrame, contains the trigger information (i.e. time, outcome) for each task session, extracted from the pupil data files. 
+    - high_surp_ses_list: list, optional, specific list of sessions to process for the high surprising observations. If not provided, the function will use the range defined by from_session and to_session.
+    - low_surp_ses_list: list, optional, specific list of sessions to process for the low surprising observations. If not provided, the function will use the range defined by from_session and to_session.
     - plot: boolean, option to plot the mean and standard deviation across epochs using Plotly. Default = True. 
 
     Returns:
@@ -419,8 +429,8 @@ def surprise_pupil_epochs(participant_str, list_subject_selected, condition_str,
 
         
     # Generating pupil response around surprising observations  
-    epoched_pupil_high_surprise_df = process_pupil_data(participant_str, list_subject_selected, condition_str, from_session, to_session, surprise_high_onsets, surprise_high_nums)
-    epoched_pupil_low_surprise_df = process_pupil_data(participant_str, list_subject_selected, condition_str, from_session, to_session, surprise_low_onsets, surprise_low_onsets)
+    epoched_pupil_high_surprise_df = process_pupil_data(participant_str, list_subject_selected, condition_str, from_session, to_session, surprise_high_onsets, surprise_high_nums, high_surp_ses_list)
+    epoched_pupil_low_surprise_df = process_pupil_data(participant_str, list_subject_selected, condition_str, from_session, to_session, surprise_low_onsets, surprise_low_onsets, low_surp_ses_list)
 
     # Plotting the mean (and std) response of the pupil diameter timelocked to high and low surprising observations
     if plot:
