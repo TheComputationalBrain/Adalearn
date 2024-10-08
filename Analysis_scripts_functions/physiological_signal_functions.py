@@ -16,8 +16,7 @@ pio.renderers.default='browser'
 
 def load_biopac_data(participant_str, condition, run_ranges):
     """
-    Function to load biopac .edf files. Sets the working directory to the relevant file, 
-    before loading and storing the data for each task session for a given condition. 
+    Function to load biopac .edf files. Sets the working directory to the relevant file, before loading and storing the data for each task session for a given condition. 
     
     Parameters:
     - participant_str: string, identifier of participant number (set to 2 numbers)
@@ -153,11 +152,9 @@ def process_emg_data(biopac_data, stim_channels, emg_by_file_plot = False):
                 row=idx + 1, col=1
             )
 
-        # Update layout to show the plots stacked
         fig.update_layout(height=300 * len(all_emg_data), title_text='EMG Data Across Files',
                       xaxis_title='Time (s)', yaxis_title='EMG')
 
-        # Display the plot in the browser
         fig.show()
 
     return emg_data_df
@@ -470,6 +467,7 @@ def extract_adalearn_triggers_biopac(biopac_data, trig_channel, plot=False):
                           row=i+1, col=1)
 
         fig.update_layout(height=300*num_files, width=1000, title_text="Identified Triggers Across Data Files")
+
         fig.show()
     
     # Calculate descriptive statistics for each identified task session and enter within a data frame. First group data by task session 
@@ -817,14 +815,12 @@ def process_ecg_data(biopac_data, ecg_channels, task_session_summary, plot=False
             fig.update_yaxes(title_text="R-R Interval (s)", row=i, col=1)
             fig.update_yaxes(title_text="Heart Rate (bpm)", row=i, col=1, secondary_y=True)
 
-        # Update layout
         fig.update_layout(
             title="R-R Interval and Instantaneous Heart Rate During Each Task Session",
             height=1400 * num_subplots,
             showlegend = False  
         )
 
-        # Show the plot
         fig.show()
 
     return task_session_dict

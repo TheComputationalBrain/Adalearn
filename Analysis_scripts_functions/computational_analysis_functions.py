@@ -76,7 +76,7 @@ def compute_surprise_from_observations(participant_str, condition_str, adalearn_
     for task_session, session_data in adalearn_data_df.groupby('task_session'):
         seq = np.array(session_data['outcome'])
 
-        # Run inference to compute surprise for the sequence
+        # Run inference to compute surprise for the sequence of observations
         output = run_inference(seq, options=options)
     
         task_sessions.append(task_session)

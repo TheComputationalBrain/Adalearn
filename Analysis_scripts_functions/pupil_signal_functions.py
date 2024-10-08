@@ -170,7 +170,6 @@ def load_pupil_data(participant_str, condition, condition_task_sessions, plot=Fa
             fig.add_trace(go.Scatter(x=session_data['tobii_time_rel'], y=session_data['RE_x'], mode='lines', line=dict(color=colors[1]), name='Right eye x position'), row=i, col=1)
             fig.add_trace(go.Scatter(x=session_data['tobii_time_rel'], y=session_data['RE_y'], mode='lines', line=dict(color=colors[2]), name='Right eye y position'), row=i, col=1)
 
-        # Update layout
         fig.update_layout(height=900*num_sessions, 
                           width=1200,
                           title_text=f'Right eye data across task sessions in condition {condition}',
@@ -178,7 +177,6 @@ def load_pupil_data(participant_str, condition, condition_task_sessions, plot=Fa
                           yaxis_title='Diameter',
                           showlegend=False)
         
-        # Show the figure
         fig.show()
     
     return pupil_df, pupil_trig_df
@@ -242,7 +240,7 @@ def process_pupil_data(participant_str, list_subject_selected, condition, from_s
                              col_name=['x_pos', 'y_pos', 'diameter'],
                              eyetracker='tobii')
 
-            # Preprocess the data
+            # Preprocess the data. If need, can plot the preprocessed pupil time series. To see the blink ratio use data_tob.epoch_blink_ratio. For more complete summary can insert data_tob.epochs_info (provides a data frame with the epoch number, the blink ratio, NaN ratio per epoch and conditions [rejected etc])
             time, diameter, diameter_int, x_pos, x_pos_int, y_pos, y_pos_int = data_tob.preprocess(plot=False, remove_outlier=True, outlier_limit_std=outlier_limit_std, outlier_correct_average_amount=outlier_correct_average_amount)
       
             # Epoch the data and apply baseline correction
@@ -378,7 +376,7 @@ def surprise_pupil_epochs(participant_str, list_subject_selected, condition_str,
     Returns:
     - epoched_pupil_surprise_df: pd.DataFrame, containing transposed epoched data (each column represents one epoch), the calculated mean and standard deviation across epochs and the timestamp. 
     """
-    # Filter for 'below_first_threshold' and 'above_third_threshold'
+    # Filter for 'below_first_threshold' and 'above_third_threshold' based on surprise category
     filtered_below_first = surprise_cat_df[surprise_cat_df['surprise_cat'] == 'below_first_quartile'].copy()
     filtered_above_third = surprise_cat_df[surprise_cat_df['surprise_cat'] == 'above_third_quartile'].copy()
 
