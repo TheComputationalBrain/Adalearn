@@ -17,7 +17,7 @@ from computational_analysis_test import c1_surprise_cat_df, c2_surprise_cat_df
 
 from behavioural_analysis_test import c1_change_point_indices, c2_change_point_indices
 
-from participant_task_characteristics import participant, participant_str, list_subject_selected, condition_1, condition_1_str, condition_2_str, c1_from_session, c1_to_session, c1_task_sessions, c2_from_session, c2_to_session, c2_task_sessions
+from participant_task_characteristics import participant_str, list_subject_selected, condition_1_str, condition_2_str, c1_from_session, c1_to_session, c1_task_sessions, c2_from_session, c2_to_session, c2_task_sessions
 
 sys.path.append('/home/aaron/Documents/Python/Ada_Learn/Analysis/Misc')
 from preprocess_eyedata import pupil

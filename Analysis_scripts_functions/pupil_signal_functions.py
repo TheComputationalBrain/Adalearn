@@ -172,7 +172,7 @@ def load_pupil_data(participant_str, condition, condition_task_sessions, plot=Fa
 
         fig.update_layout(height=900*num_sessions, 
                           width=1200,
-                          title_text=f'Right eye data across task sessions in condition {condition}',
+                          title_text=f'Right eye data across task sessions in condition {condition} for participant {participant_str}',
                           xaxis_title='Relative Time',
                           yaxis_title='Diameter',
                           showlegend=False)
@@ -248,6 +248,7 @@ def process_pupil_data(participant_str, list_subject_selected, condition, from_s
 
             # Check to ensure the correct number of epochs
             print("For participant n:", subject, " in session = ", session, "there are:", len(data_tob.epochs), "epochs")
+            print(data_tob.epochs_info)
 
             # Appending dataframes containing epoched data to list for each task session
             epoched_data = pd.DataFrame([epoch for epoch in data_tob.epochs])
