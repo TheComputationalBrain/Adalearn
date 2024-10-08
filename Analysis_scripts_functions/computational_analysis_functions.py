@@ -21,18 +21,19 @@ sys.path.append('/home/aaron/Documents/Python/Ada_Learn/Analysis/Misc')
 from IdealObserver import run_inference
 import data_analysis_utils as dana
 from data_analysis_utils import get_prev_estimates, get_values_with_prior
-from model_learner import ideal_learner_prob_estimates_from_outcomes, ideal_learner_prob_inference_from_outcomes, ideal_learner_prob_confidence_from_outcomes, ideal_learner_prob_cpp
+from model_learner import ideal_learner_prob_estimates_from_outcomes, ideal_learner_prob_inference_from_outcomes, ideal_learner_prob_confidence_from_outcomes, ideal_learner_prob_cpp, delta_rule_estimates_from_outcomes, noisy_delta_rule_estimates_from_outcomes
+
 
 
 def compute_surprise_from_observations(participant_str, condition_str, adalearn_data_df, change_point_indices_df, plot_surprise = True, plot_posterior_conf = True, plot_posterior_dist_means = True):
     """
     Function computes the level of surprise of each set of task session observations. Achieves this using the "run_inference" function (created by Cedric Foucault and Florent Meyniel: https://github.com/florentmeyniel/Ada-Learn/blob/main/analysis) to generate posterior inferences of generative probabilities of the data sequence (seq). Surprise is calculated as:
 
-                                                                                                                     S(x) =  -log2 P(x)
+                                                                       S(x) =  -log2 P(x)
 
     The surprise of an event (x) is therefore the product of the negative logarithm to base 2 and the probability of the event (x). In the code, surprise is calculated as:
 
-                                                                                                    surprise[t] = -np.log2(out[(seq[t],)]['mean'][t-1])
+                                                       surprise[t] = -np.log2(out[(seq[t],)]['mean'][t-1])
     
     So the surprise of observation at time t is the product of the negative logarithm to base 2 and the estimated probability of that observation given the last observation. 
 
@@ -224,7 +225,7 @@ def compute_prior_conf_and_cpp_from_observations(participant_str, condition_str,
     """
     Function computes the "confidence" in the prior and change point probability from each set of task session observations. Computes "confidence" and change point probability using functions within "model_learner" (created by Cedric Foucault and Florent Meyniel: https://github.com/florentmeyniel/Ada-Learn/blob/main/analysis). "Confidence" is the -log(sd) of the prior distribution, while change point probability is calculated from the conditional probability of an observation (at time t) given a change point has occurred multiplied by the true probability of a change point occurring, divided by the conditional probability of an observation (at time t) given a change point has occurred multiplied by the true probability of a change point occurring plus the conditional probability of an observation (at time t) given no change point has occurred multiplied by the true probability that a change point did not occur:
 
-                                                                                                    p(cp | X_t) = p(X_t | cp) p(cp) / (p(X_t | cp) p(cp) + p(X_t | no cp) (1-p(cp)))
+                                    p(cp | X_t) = p(X_t | cp) p(cp) / (p(X_t | cp) p(cp) + p(X_t | no cp) (1-p(cp)))
 
     This function takes the ada_learn data, converts the observations to a sequence for each task session, before returning a separate dataframe for prior "confidence" and change point probability.
 
@@ -233,9 +234,9 @@ def compute_prior_conf_and_cpp_from_observations(participant_str, condition_str,
     - condition: string, identifier of condition order (set to 2 digits) ** May need to change to denote actual condition in Adalearn VNS study **
     - adalearn_data_df: pd.DataFrame, contains the behavioural outputs of the adalearn data files for a given condition. 
     - change_point_indices_df: pd.DataFrame, contains outputs related to the presence of change points in the hidden task structure. The identified trial number within each task session will be used in plot visualisation.
-    - 'p_c': interger, true change point probability (should be 0.05)
-    - 'p1_min': interger, the minimum value of the Bernoulli parameter (used to clip the Dirichlet prior distribution) (should be 0.1)
-    - 'p1_max': interger, the maximum value of the Bernoulli parameter (used to clip the Dirichlet prior distribution) (should be 0.9)
+    - 'p_c': integer, true change point probability (should be 0.05)
+    - 'p1_min': integer, the minimum value of the Bernoulli parameter (used to clip the Dirichlet prior distribution) (should be 0.1)
+    - 'p1_max': integer, the maximum value of the Bernoulli parameter (used to clip the Dirichlet prior distribution) (should be 0.9)
     - estimate_type': string, parameter defining ideal_learner_prob_estimates_from_outcomes function. Options are "mean", "mean-pred", "median", "median-pred". The "-pred" options accountfor volatility in the estimate. Function returns the standard deviation and distribution with each distribution parameter selected (only working with "mean" at the minute. Cant get "mean_pred" to work)
     - 'conf_type': string, parameter defining ideal_learner_prob_conf_from_outcomes function. Options are "prev-conf", "prev-conf-pred", "new-conf", "new-conf-pred". The "-pred" options accountfor volatility in the estimate. "Prev-conf" refers to prior variance while "new-conf" refers to posterior variance. 
     - 'plot_distribution_mean: boolean, if true will plot the prior mean of the probability distribution (default set to true)
@@ -246,11 +247,11 @@ def compute_prior_conf_and_cpp_from_observations(participant_str, condition_str,
     Parameters in functions taken from "model_learner":
     - 'outcomes': np.array, outcome observations for each task session
     - 'p_c': interger, true change point probability  
-    - 'p1_min': interger, the minimum value of the Bernoulli parameter (used to clip the Dirichlet prior distribution)
-    - 'p1_max': interger, the maximum value of the Bernoulli parameter (used to clip the Dirichlet prior distribution)
+    - 'p1_min': integer, the minimum value of the Bernoulli parameter (used to clip the Dirichlet prior distribution)
+    - 'p1_max': integer, the maximum value of the Bernoulli parameter (used to clip the Dirichlet prior distribution)
     - 'estimate_type': string, parameter defining ideal_learner_prob_estimates_from_outcomes function. Options are "mean", "mean-pred", "median", "median-pred". The "-pred" options accountfor volatility in the estimate. Function returns the standard deviation and distribution with each distribution parameter selected.
     - 'keys': dictionary keys, defines ideal_learner_prob_inference_from_outcomes function, specifying the parameters of the distribution to be computed (['mean', 'SD', 'dist'])
-    - 'resol': interger, number of bins used for discretization (for hmm). Defines ideal_learner_prob_inference_from_outcomes function. Set to 20. 
+    - 'resol': integer, number of bins used for discretization (for hmm). Defines ideal_learner_prob_inference_from_outcomes function. Set to 20. 
     - 'conf_type': string, parameter defining ideal_learner_prob_conf_from_outcomes function. Options are "prev-conf", "prev-conf-pred", "new-conf", "new-conf-pred". The "-pred" options accountfor volatility in the estimate. "Prev-conf" refers to prior variance while "new-conf" refers to posterior variance. 
 
      Returns:
@@ -267,7 +268,6 @@ def compute_prior_conf_and_cpp_from_observations(participant_str, condition_str,
         seq = np.array(session_data['outcome'])
 
         # Run functions to compute prior parameters, confidence and change point probability. Create data frames for each variable and then save the data frame for each task session in a list
-
         outcome_inference = ideal_learner_prob_inference_from_outcomes(seq, p_c, keys=['mean', 'SD', 'dist'], p1_min=p1_min, p1_max=p1_max, do_inference_on_current_trial=True, resol=20)
 
         prior_dist = ideal_learner_prob_estimates_from_outcomes(seq, p_c, estimate_type = estimate_type, p1_min = p1_min, p1_max = p1_max)
@@ -309,7 +309,7 @@ def compute_prior_conf_and_cpp_from_observations(participant_str, condition_str,
     change_point_prob_df = pd.concat(cpp_df_list, ignore_index=True)
     change_point_prob_df['cum_trigger_count'] = change_point_prob_df.index
 
-
+    # Options to plots the the prior mean, prior confidence and change point probability
     if plot_distribution_mean:
         unique_sessions = prior_distribution_df['task_session'].unique()
 
@@ -384,3 +384,110 @@ def compute_prior_conf_and_cpp_from_observations(participant_str, condition_str,
         fig.show()
 
     return prior_distribution_df, prior_confidence_df, change_point_prob_df
+
+
+
+def compute_model_learning_rate(participant_str, condition_str, adalearn_data_df, change_point_indices_df, lr, prior_estimate=0.5, noise_level_type = "constant", plot_model_learning_rate_no_noise = True, plot_model_learning_rate_noisy = False):
+    """"
+    Function computes the model learning rate from a sequence of observations. Two different delta rule models are utilised: 1. conventional delta rule model and 2. noisy delta rule model. The noisy delta rule model is specified as:
+                                                
+                                                  v[t] = v[t-1] + eta (x[t] - v[t-1]) + epsilon[t]
+    
+    The model can handle different types of noise, with constant noise level (noise_level_type: "constant"; here, the noise std. is a constant equal to the given parameter value (sigma_epsilon)):
+
+                                                        epsilon[t] ~ N(0, sigma_epsilon)
+
+    with noise level proportion to the error magnitude (noise_level_type: "prop-error"; here, the noise std. is a proportional to the magnitude of the prediction error. The coefficient of proportionality is the given parameter value (zeta)):
+    
+                                        epsilon[t] = |x[t] - v[t-1]| epsilon2[t], epsilon2[t] ~ N(0, zeta)
+
+    Functions returns a dataframe containing the output of both models. Option to plot the output of the two models for each task session. 
+
+    Parameters:
+    - participant_str: string, participant identifier (number; set to 2 digits)  
+    - condition: string, identifier of condition order (set to 2 digits) ** May need to change to denote actual condition in Adalearn VNS study **
+    - adalearn_data_df: pd.DataFrame, contains the behavioural outputs of the adalearn data files for a given condition. 
+    - change_point_indices_df: pd.DataFrame, contains outputs related to the presence of change points in the hidden task structure. The identified trial number within each task session will be used in plot visualisation.  
+    - lr: integer, value of learning rate in the middle range of percentiles of the distribution of average learning rates obtained for subjects (obtained from Cedric Foucault & Florent Meyniel, 2024)
+    - prior_esimate: integer, sets starting point of the learning rate before an observation is made (set to 0.5). Defines functions used to compute model learning rates. 
+    - noise_level_type: string, defines the type of noise incorporated within noisy delta rule model. Two options available: "constant" (noise utilised in the model is constant) or "prop-error" (noise used in model is proportional to the prediction error).
+    - plot_model_learning_rate_no_noise: boolean, if true, will plot model learning rate across each task session. (Default = True)
+    - plot_model_learning_rate_noisy: boolean, if true, will plot the noisey model learning rate across each task session. (Default = False)
+
+    Returns:
+    - model_learning_rate_df: pd.DataFrame, dataframe containing the computed learning rate using the delta rule and noisy delta rule. Contains task session identifier, within session count and cumulative count.   
+    """
+    # Create a list to store the dataframes storing the data generated by delta rule and noisy delta rule functions 
+    delta_rule_estimates_df_list = []
+
+    # For loop, first creating an array from the the outcome presentation within each task session. THen running delta rule and noisy delta rule models to extract learning rate. Dataframe constructed for each task session and then concatenatied outside of the loop. 
+    for task_session, session_data in adalearn_data_df.groupby('task_session'):
+        seq = np.array(session_data['outcome'])
+
+        delta_rule_estimates = delta_rule_estimates_from_outcomes(seq, lr, prior_estimate=prior_estimate)
+        
+        nosiy_delta_rule_estimates = noisy_delta_rule_estimates_from_outcomes(seq, lr, noise_level_type=noise_level_type, noise_level_param = 0, prior_estimate=prior_estimate, do_clip_to_bounds = False, estimate_bounds=(0, 1.0))
+        
+        delta_rule_est_df = pd.DataFrame({
+            'delta_rule': delta_rule_estimates,
+            'noisy_delta_rule': nosiy_delta_rule_estimates
+        })
+        delta_rule_est_df['task_session'] = task_session
+        delta_rule_est_df['task_sess_count'] = delta_rule_est_df.groupby('task_session').cumcount() + 1
+        delta_rule_estimates_df_list.append(delta_rule_est_df)
+        
+    model_learning_rate_df = pd.concat(delta_rule_estimates_df_list, ignore_index=True)
+    model_learning_rate_df['cum_trigger_count'] = model_learning_rate_df.index
+
+    # Options to plot the delta rule learning rate and noisy delta rule learning rate
+    if plot_model_learning_rate_no_noise:
+        unique_sessions = model_learning_rate_df['task_session'].unique()
+
+        fig = make_subplots(rows=len(unique_sessions), cols=1, shared_xaxes=True,
+                    subplot_titles=[f'Task Session {session}' for session in unique_sessions])
+
+        for i, session in enumerate(unique_sessions, start=1):
+            session_data = model_learning_rate_df[model_learning_rate_df['task_session'] == session]
+            fig.add_trace(go.Scatter(x=session_data['task_sess_count'], y=session_data['delta_rule'], mode='lines', name=f'Model learning rate (delta rule) - Session {session}'), row=i, col=1)
+
+            change_points = change_point_indices_df[change_point_indices_df['task_session'] == session]['trial_number']
+            for cp in change_points:
+                fig.add_shape(
+                    type="line", 
+                    x0=cp, x1=cp, 
+                    y0=0, y1=1.05, 
+                    line=dict(color="grey", width=2, dash="dash"),
+                    xref=f'x{i}', yref=f'y{i}'
+                )  
+
+        fig.update_layout(height=300 * len(unique_sessions), title_text=f"Model learning rate (delta rule) across task sessions for participant {participant_str} in condition {condition_str}", showlegend=False)
+
+        fig.show()
+
+
+    if plot_model_learning_rate_noisy:
+        unique_sessions = model_learning_rate_df['task_session'].unique()
+
+        fig = make_subplots(rows=len(unique_sessions), cols=1, shared_xaxes=True,
+                    subplot_titles=[f'Task Session {session}' for session in unique_sessions])
+
+        for i, session in enumerate(unique_sessions, start=1):
+            session_data = model_learning_rate_df[model_learning_rate_df['task_session'] == session]
+            fig.add_trace(go.Scatter(x=session_data['task_sess_count'], y=session_data['noisy_delta_rule'], mode='lines', name=f'Model learning rate (noisy delta rule) - Session {session}'), row=i, col=1)
+
+            change_points = change_point_indices_df[change_point_indices_df['task_session'] == session]['trial_number']
+            for cp in change_points:
+                fig.add_shape(
+                    type="line", 
+                    x0=cp, x1=cp, 
+                    y0=0, y1=1.05, 
+                    line=dict(color="grey", width=2, dash="dash"),
+                    xref=f'x{i}', yref=f'y{i}'
+                )  
+
+        fig.update_layout(height=300 * len(unique_sessions), title_text=f"Model learning rate (noisy delta rule) across task sessions for participant {participant_str} in condition {condition_str}", showlegend=False)
+
+        fig.show()
+
+
+    return model_learning_rate_df
