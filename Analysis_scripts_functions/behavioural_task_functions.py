@@ -313,12 +313,11 @@ def behavioural_learning_rate_analysis(behavioural_df, change_point_indices_df, 
 
 def learning_rate_by_change_point(behavioural_df, change_point_indices, participant, condition, pre=2, post=10, plot_learning_rate_by_cp = True):
     """ 
-    Function to plot the average response around change points. Uses identified change point indices to derive learning rate dynamics before (2 outcomes) and after (10 outcomes). Stores responses across all task sessions and then plots the average plus standard deviation in a web browser. 
+    Function to plot the average learning rate around change points. Uses identified change point indices to derive learning rate dynamics before and after a change in task structure. Stores responses across all task sessions and then plots the average (plus standard deviation) learning rate. 
 
     Parameters:
     - behavioural_df: pd.DataFrame, contains parsed data from json adalearn data file for select variables with the new addition of learning rate variable.
-    - change_point_indices: pd.DataFrame, with columns 'index', 'relative_time', and 'task_session', 
-      containing the indices and relative times of the change points for each session. (*Note: Have removed identification of the first outcome of each task session as a new change point).
+    - change_point_indices: pd.DataFrame, with columns 'index', 'relative_time', and 'task_session', containing the indices and relative times of the change points for each session. (*Note: Have removed identification of the first outcome of each task session as a new change point).
     - participant: string, identifier of participant number
     - condition: string, identifier of condition order (set to 2 numbers) ** May need to change to denote actual condition in Adalearn VNS study **
     - pre: integer, number of outcomes before the change point. Predefined to incorporate in plotting the data.
@@ -326,8 +325,7 @@ def learning_rate_by_change_point(behavioural_df, change_point_indices, particip
     - plot_learning_rate_by_cp: boolean, if true, will plot individual traces as well as averaged learning rate around change points (defined by pre and post variables)
 
     Returns:
-    - Figure containing subplots opened within a browser.
-    - filtered_learning_rate_by_cp: pd.DataFrame, contains behavioural data within defined bounds around change points.
+    - filtered_learning_rate_by_cp: pd.DataFrame, contains learning rate data within defined bounds around change points.
     - averaged_learning_rate_by_cp: pd.DataFrame, contains calculated mean, std, count and sem of learning rate at each relative trial position for each identified change point. 
     """
   

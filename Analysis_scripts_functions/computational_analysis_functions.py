@@ -491,3 +491,139 @@ def compute_model_learning_rate(participant_str, condition_str, adalearn_data_df
 
 
     return model_learning_rate_df
+
+
+
+def model_learning_rate_by_change_point(model_learning_rate_df, change_point_indices, participant_str, condition_str, pre=2, post=10, plot_model_learning_rate_by_cp = True):
+    """ 
+    Function to plot the average model learning around change points. Uses identified change point indices to derive model learning rate dynamics before  and after a change point. Stores responses across all task sessions and then plots the average model learning rate (plus standard deviation). 
+
+    Parameters:
+    - model_learning_rate_df: pd.DataFrame, contains computed learning rate from the delta rule and noisy delta rule models.
+    - change_point_indices: pd.DataFrame, with columns 'index', 'relative_time', and 'task_session', containing the indices and relative times of the change points for each session. (*Note: Have removed identification of the first outcome of each task session as a new change point).
+    - participant_str: string, identifier of participant number (number; set to 2 digits)  
+    - condition_str: string, identifier of condition order (set to 2 numbers) ** May need to change to denote actual condition in Adalearn VNS study **
+    - pre: integer, number of outcomes before the change point. Predefined to incorporate in plotting the data.
+    - post: integer, number of outcomes after the change point. Predefined to incorporate in plotting the data.
+    - plot_model_learning_rate_by_cp: boolean, if true, will plot individual traces as well as averaged model learning rate around change points (defined by pre and post variables)
+
+    Returns:
+    - filtered_model_learning_rate_by_cp: pd.DataFrame, contains model leearning rate data within defined bounds around change points.
+    - averaged_model_learning_rate_by_cp: pd.DataFrame, contains calculated mean, std, count and sem of model learning rate at each relative trial position for each identified change point. 
+    """
+  
+    # Creating dataframe to store data around defined   
+    expanded_change_points = []
+
+    for idx, row in change_point_indices.iterrows():
+        task_session = row['task_session']
+        trial_number = row['trial_number']
+
+        for i in range(-pre, post+1):  # Predefined to be 2 trials before to 10 trials after identified change points. Can be changed to suit. 
+            expanded_change_points.append({
+                'task_session': task_session,
+                'trial_number': trial_number,
+                'relative_position': i,
+                'trial_number_rel': trial_number + i
+            })
+
+    expanded_change_points_df = pd.DataFrame(expanded_change_points)
+    expanded_change_points_df['relative_position'] = expanded_change_points_df['relative_position'] +1             
+
+    # Filter main behavioural dataframe to only contain values in defined range around change point  
+    filtered_model_learning_rate_by_cp = pd.merge(expanded_change_points_df, model_learning_rate_df, 
+                                            left_on=['task_session', 'trial_number_rel'], 
+                                            right_on=['task_session', 'task_sess_count'], 
+                                            how='left', suffixes=('', '_y'))
+
+    # Calculate the average, standard deviation and count of the model learning rate across the different relative positions to the change point
+    averaged_model_learning_rate_by_cp = filtered_model_learning_rate_by_cp.groupby('relative_position')['delta_rule'].agg(['mean', 'std', 'count']).reset_index()
+
+    # Calculate SEM
+    averaged_model_learning_rate_by_cp['sem'] = averaged_model_learning_rate_by_cp['std'] / np.sqrt(averaged_model_learning_rate_by_cp['count'])
+
+    # Convert 'relative_position' to a numeric range
+    averaged_model_learning_rate_by_cp['relative_position'] = averaged_model_learning_rate_by_cp['relative_position'].astype(int)
+    averaged_model_learning_rate_by_cp = averaged_model_learning_rate_by_cp.sort_values('relative_position')
+
+    # Option to plot averaged behavioural learning rate in relation to change points 
+    if plot_model_learning_rate_by_cp:
+        fig = make_subplots(rows=2, cols=1, shared_xaxes=True, vertical_spacing=0.1, subplot_titles=("Model Learning Rates", "Average Model Learning Rate"))
+
+        num_traces = 0
+
+        # Add individual learning rates
+        for idx, row in change_point_indices.iterrows():
+            session_data = filtered_model_learning_rate_by_cp[(filtered_model_learning_rate_by_cp['task_session'] == row['task_session']) & 
+                                                    (filtered_model_learning_rate_by_cp['trial_number'] == row['trial_number'])]
+
+            if len(session_data) == (pre + post + 1):
+                num_traces += 1
+                fig.add_trace(go.Scatter(
+                    x=session_data['relative_position'],
+                    y=session_data['delta_rule'],
+                    mode='lines',
+                    name=f'Trace {num_traces}',
+                    line=dict(width=1),
+                    opacity=0.5,
+                    showlegend = False
+                ), row=1, col=1)
+
+        print(f"Total number of traces added to the individual plot: {num_traces}")
+
+        # Add mean learning rate 
+        fig.add_trace(go.Scatter(
+            x=averaged_model_learning_rate_by_cp['relative_position'],
+            y=averaged_model_learning_rate_by_cp['mean'],
+            mode='lines',
+            name='Mean Model Learning Rate',
+            line=dict(color='blue')
+        ), row=2, col=1)
+
+        # Add standard error of the mean as a shaded area around the mean
+        fig.add_trace(go.Scatter(
+            x=list(averaged_model_learning_rate_by_cp['relative_position']) + list(averaged_model_learning_rate_by_cp['relative_position'][::-1]),
+            y=list(averaged_model_learning_rate_by_cp['mean'] + averaged_model_learning_rate_by_cp['sem']) + list((averaged_model_learning_rate_by_cp['mean'] - averaged_model_learning_rate_by_cp['sem'])[::-1]),
+            fill='toself',
+            fillcolor='rgba(0,0,255,0.2)',
+            line=dict(color='rgba(255,255,255,0)'),
+            hoverinfo="skip",
+            showlegend=False
+        ), row=2, col=1)
+
+        # Add dashed line at change point
+        for i in [1, 2]:
+            fig.add_shape(type="line",
+                x0=0, y0=-5, x1=0, y1=5,
+                line=dict(
+                    color="Red",
+                    width=2,
+                    dash="dash",
+                ),
+                row=i, col=1
+            )
+
+        # Update layout
+        fig.update_layout(
+            title=f"Model Learning Rate (Delta Rule) Relative to Change Points for Participant {participant_str} in Condition {condition_str}",
+            xaxis2_title="Trial Number After Change Point",
+            yaxis1_title="Model Learning Rates",
+            yaxis2_title="Mean Model Learning Rate",
+            xaxis1=dict(
+                tickmode='linear',
+                dtick=1,
+                tickvals=[i for i in range(1, post + 1)]
+            ),
+            xaxis2=dict(
+                tickmode='linear',
+                dtick=1,
+                tickvals=[i for i in range(1, post + 1)]
+            ),
+            yaxis2=dict(
+                range=[averaged_model_learning_rate_by_cp['mean'].min() - averaged_model_learning_rate_by_cp['sem'].max(), averaged_model_learning_rate_by_cp['mean'].max() + averaged_model_learning_rate_by_cp['sem'].max()]
+            ),
+        )
+
+        fig.show()
+
+    return filtered_model_learning_rate_by_cp, averaged_model_learning_rate_by_cp
