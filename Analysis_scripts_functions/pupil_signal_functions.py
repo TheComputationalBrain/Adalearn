@@ -183,7 +183,7 @@ def load_pupil_data(participant_str, condition, condition_task_sessions, plot=Fa
 
 
 
-def process_pupil_data(participant_str, list_subject_selected, condition, from_session, to_session, dict_onsets, dict_num, session_list = None, outlier_limit_std = 10, outlier_correct_average_amount = 10,  window_start_before = 0.2, window_end_after = 1.4, z_score = False):
+def process_pupil_data(participant_str, list_subject_selected, condition, from_session, to_session, dict_onsets, dict_num, session_list = None, outlier_limit_std = 10, outlier_correct_average_amount = 10,  window_start_before = 0.2, window_end_after = 4.5, z_score = False):
     """
     Function to preprocess pupil data into epochs around defined outcomes of interest (e.g. change points, high and low surprise, etc). Preprocessing taken from preprocess_eyedata script, created by Florent, Maëva, Aziza and Yannaël. Calculates the mean and standard deviation across each identified epoch for all task session.
 
@@ -199,7 +199,7 @@ def process_pupil_data(participant_str, list_subject_selected, condition, from_s
     - outlier_limit_std: int, defines the threshold of the standard deviation of the derivative when preprocessing the pupil data. Default = 10
     - outlier_correct_average_amount: int, the number of data points to the left and at the right of the artifact which will replace the value of the artifact by the value of the mean of the data around it. Default = 10.
     - window_start_before: int, value defining the start of the epoch window in time (seconds). Default = 1. 
-    - window_end_after: int, value defining the end of the epoch window in time (seconds). Default = 1.4.
+    - window_end_after: int, value defining the end of the epoch window in time (seconds). Default = 4.5.
     - z_score: boolean, option to z_score data before computing epochs. Default = False.
     - plot: boolean, option to plot the mean and standard deviation across epochs using Plotly. Default = True. 
 
