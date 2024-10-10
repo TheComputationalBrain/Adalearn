@@ -15,9 +15,11 @@ import plotly.graph_objs as go
 from plotly.subplots import make_subplots
 pio.renderers.default='browser'
 
-from physiological_signal_functions import load_biopac_data, process_emg_data, extract_adalearn_triggers_biopac, extract_task_session_emg_data, identify_vns_from_emg, process_ecg_data, integrate_separate_trigger_channels
+from physiological_signal_functions import load_biopac_data, process_emg_data, extract_adalearn_triggers_biopac, extract_task_session_emg_data, identify_vns_from_emg, process_ecg_data, integrate_separate_trigger_channels, r_r_interval_by_change_point
 
-from participant_task_characteristics import participant_str, condition_1_str, condition_2_str, c1_run_ranges, c1_vns_task_session, c2_run_ranges, c2_vns_task_session, stimfreq, ONduration, OFFduration, minnumpulse
+from participant_task_characteristics import participant_str, condition_1_str, condition_2_str, c1_run_ranges, c1_vns_task_session, c2_run_ranges, c2_vns_task_session
+
+from behavioural_analysis_test import c1_change_point_indices, c2_change_point_indices
 
 
 # Loading biopac data using function in physiological_signal_functions
@@ -63,3 +65,8 @@ c2_vns_start_times = identify_vns_from_emg(c2_task_sess_dict, c2_vns_task_sessio
 # Analysis of heart rate and R-R interval across each task session using function in physiological_signal_functions
 c1_rpeaks_dict = process_ecg_data(biopac_data_c1, ecg_channel, c1_trig_summary, plot = True)
 c2_rpeaks_dict = process_ecg_data(biopac_data_c2, ecg_channel, c2_trig_summary, plot = True)
+
+
+# Analysis of R-R intervals around change points using function in physiological_signal_functions
+c1_r_r_interval_by_cp, c1_r_r_intervals_time_binned_cp = r_r_interval_by_change_point(c1_rpeaks_dict, c1_change_point_indices, participant_str, condition_1_str, pre = 2, post = 10, time_bin_size = 0.5, plot_r_r_intervals_by_cp=True)
+c2_r_r_interval_by_cp, c2_r_r_intervals_time_binned_cp = r_r_interval_by_change_point(c2_rpeaks_dict, c2_change_point_indices, participant_str, condition_2_str, pre = 2, post = 10, time_bin_size = 0.5, plot_r_r_intervals_by_cp=True)

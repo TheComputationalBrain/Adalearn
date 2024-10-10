@@ -702,7 +702,7 @@ def process_ecg_data(biopac_data, ecg_channels, task_session_summary, plot=False
     - plot: boolean, if True, creates subplots for each task session of consecutive r-r interval across time using Plotly. 
 
     Returns:
-    - task_session_dict: dict, contains r-peak dataframe (value) for each task session (key).     
+    - hr_task_session_dict: dict, contains r-peak dataframe (value) for each task session (key).     
     """
 
     # Objects to store dataframes for each raw ECG data file and identified r-peaks
@@ -769,7 +769,7 @@ def process_ecg_data(biopac_data, ecg_channels, task_session_summary, plot=False
     rpeaks_df = pd.concat(all_r_peaks, ignore_index=True)
 
     # Reduce r-peak data down to time range delimited by task sessions
-    task_session_dict = {}
+    hr_task_session_dict = {}
 
     for index, row in task_session_summary.iterrows():
         data_file = row['data_file']
@@ -786,12 +786,12 @@ def process_ecg_data(biopac_data, ecg_channels, task_session_summary, plot=False
         task_data['rel_time'] = task_data['rpeak_time'] - start_time
         
         # Store the filtered dataframe in the dictionary with the index as the key
-        task_session_dict[index] = task_data
+        hr_task_session_dict[index] = task_data
 
     # Plotting the ECG data stored within the dictionary if plot=True
     if plot:
         # Calculate the total number of subplots
-        num_subplots = len(task_session_dict)
+        num_subplots = len(hr_task_session_dict)
 
         # Dynamically adjust vertical spacing
         vertical_spacing = min(0.05, 1 / (num_subplots + 1))
@@ -799,13 +799,13 @@ def process_ecg_data(biopac_data, ecg_channels, task_session_summary, plot=False
         # Create a figure with subplots
         fig = make_subplots(
             rows=num_subplots, cols=1, 
-            subplot_titles=[f"Task Session {key}" for key in task_session_dict.keys()],
+            subplot_titles=[f"Task Session {key}" for key in hr_task_session_dict.keys()],
             shared_xaxes=True, vertical_spacing=vertical_spacing,
             specs=[[{"secondary_y": True}] for _ in range(num_subplots)]
         )
 
         # Iterate over each key (task session) and its corresponding dataframe
-        for i, (key, df) in enumerate(task_session_dict.items(), start=1):
+        for i, (key, df) in enumerate(hr_task_session_dict.items(), start=1):
             # Add traces for r-r interval and heart rate
             fig.add_trace(go.Scatter(x=df['rel_time'], y=df['r_r_interval'], mode='lines', name='R-R Interval'), row=i, col=1)
             fig.add_trace(go.Scatter(x=df['rel_time'], y=df['heart_rate'], mode='lines', name='Heart Rate', yaxis='y2'), row=i, col=1)
@@ -823,4 +823,117 @@ def process_ecg_data(biopac_data, ecg_channels, task_session_summary, plot=False
 
         fig.show()
 
-    return task_session_dict
+    return hr_task_session_dict
+
+
+
+def r_r_interval_by_change_point(hr_task_session_dict, change_point_indices, participant_str, condition_str, pre = 2, post = 10, time_bin_size = 0.5, plot_r_r_intervals_by_cp = True):
+    """
+    Function to compute the dynamics of R-R intervals around identified change points. The time range (from before a change point to after a change point) can be specified. Averaging is performed by using time bins (which can also be specified) to standardize the timing of R-R intervals. Option to plot the data to see visualise how R-R intervals change in response to a change point. 
+
+    Parameters
+    - hr_task_session_dict: dictionary, contains r-peak dataframe (value) for each task session (key).
+    - change_point_indices: pd.DataFrame, with columns 'index', 'relative_time', and 'task_session', containing the indices and relative times of the change points for each session. (*Note: Have removed identification of the first outcome of each task session as a new change point).
+    - participant_str: string, identifier of participant number (set to 2 numbers)
+    - condition: string, identifier of condition order (set to 2 numbers)
+    - pre: integer, defines the time in seconds before the change point (used to define the time range over wihich the time bins are computed) (default = -2 s)
+    - pre: integer, defines the time in seconds after the change point (used to define the time range over wihich the time bins are computed) (default = +10 s)
+    - time_bin_size: integer, defines the size of the time bin window (default = 0.5 s)
+    - plot_r_r_intervals_by_cp: boolean, if true with plot the mean R-R interval computed within each time bin (plus the sem) against time. 
+
+    Returns:
+    - r_r_interval_by_cp_df: pd.DataFrame, contains the filtered raw R-peaks within the specified time range (i.e. between 'pre' and 'post')
+    - binned_r_r_data: pd.DataFrame, containes the averaged R-R intervals across time bins plus measures of variance (std and sem) and a count of the number of data points contributing to each time bin
+    """
+
+    r_r_intervals_by_cp = []
+
+    # Iterate over each row in change_point_indices
+    for idx, row in change_point_indices.iterrows():
+        task_session = row['task_session']  # Get the task_session
+        rel_time_cp = row['relative_time']  # Get the relative time of the change point
+    
+        # Find the corresponding dictionary for the task session
+        session_data = hr_task_session_dict[task_session]  # Access the dictionary for the task session
+    
+        # Filter the session data for rr_interval between rel_time_cp - 2 and rel_time_cp + 10
+        filtered_data = session_data[
+            (session_data['rel_time'] >= rel_time_cp - pre) & 
+            (session_data['rel_time'] <= rel_time_cp + post)
+        ].copy()  # Use .copy() to avoid SettingWithCopyWarning
+
+        # Adjust the 'rel_time' column to be relative to the change point's 'relative_time'
+        filtered_data['rel_time'] = filtered_data['rel_time'] - rel_time_cp
+
+        # Add the relevant columns from the change point DataFrame
+        filtered_data['task_session'] = row['task_session']
+        filtered_data['trial_number'] = row['trial_number']
+        filtered_data['relative_time'] = row['relative_time']
+        filtered_data['change_point_count'] = row['change_point_count']
+
+        # Append the filtered data to the list
+        r_r_intervals_by_cp.append(filtered_data)
+
+    # Convert the results list to a DataFrame
+    r_r_interval_by_cp_df = pd.concat(r_r_intervals_by_cp, ignore_index=True)
+
+    # Generate time bins to compute average for a given time interval
+    # Define the bin edges for time 
+    time_bins = np.arange(-pre, post, time_bin_size)  
+
+    # Create a new column that assigns each row to a time bin
+    r_r_interval_by_cp_df['time_bin'] = pd.cut(r_r_interval_by_cp_df['rel_time'], bins=time_bins, labels=time_bins[:-1])
+
+    # Group by change_point_number and time_bin, and calculate mean rr_interval for each bin
+    binned_r_r_data = r_r_interval_by_cp_df.groupby(['time_bin']).agg(
+        mean_r_r_interval=('r_r_interval', 'mean'),
+        std_r_r_interval=('r_r_interval', 'std'),
+        count=('r_r_interval', 'size')  # To know how many data points contributed to each bin
+    ).reset_index()
+
+    binned_r_r_data['sem_r_r_interval'] = binned_r_r_data['std_r_r_interval'] / np.sqrt(binned_r_r_data['count'])
+
+    binned_r_r_data['time_bin'] = binned_r_r_data['time_bin'].astype(float)
+
+    # Plotting option for the dynamics of r-r intervals around change point
+    if plot_r_r_intervals_by_cp:
+        fig = go.Figure()
+
+        fig.add_trace(go.Scatter(
+            x=binned_r_r_data['time_bin'], 
+            y=binned_r_r_data['mean_r_r_interval'], 
+            mode='lines',
+            line=dict(color='rgba(0, 0, 255, 1)'), 
+            name='R-R Interval'
+        ))
+
+        fig.add_trace(go.Scatter(
+            x=binned_r_r_data['time_bin'], 
+            y=binned_r_r_data['mean_r_r_interval'] + binned_r_r_data['sem_r_r_interval'], 
+            mode='lines',
+            line=dict(color='rgba(0, 0, 255, 0.1)'), 
+            showlegend=False
+        ))
+
+        fig.add_trace(go.Scatter(
+            x=binned_r_r_data['time_bin'], 
+            y=binned_r_r_data['mean_r_r_interval'] - binned_r_r_data['sem_r_r_interval'], 
+            mode='lines',
+            fill='tonexty',
+            fillcolor='rgba(0, 0, 255, 0.2)',
+            line=dict(color='rgba(0, 0, 255, 0.1)'), 
+            showlegend=False
+        ))
+
+        fig.add_vline(x=0, line_width=3, line_dash="dash", line_color="black", opacity=0.5)
+
+        fig.update_layout(
+            title=f'Raw R-R interval time binned around change point for participant {participant_str} in condition {condition_str}',
+            xaxis_title='Time (s)',
+            yaxis_title='R-R interval' 
+        )       
+
+        fig.show()
+        
+
+    return r_r_interval_by_cp_df, binned_r_r_data

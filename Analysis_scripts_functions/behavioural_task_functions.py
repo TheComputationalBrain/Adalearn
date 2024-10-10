@@ -226,6 +226,9 @@ def behavioural_change_point_analysis(behavioural_df):
 
     # Identifying the change point numbers that are not associated with the start of a new task session
     change_point_indices = change_point_indices[change_point_indices['trial_number'] > 1]
+
+    # Create a running count of the number of change points in a condition
+    change_point_indices['change_point_count'] = range(1, len(change_point_indices) + 1)
     
     return num_change_points, change_points_per_session, change_point_indices
 
@@ -296,7 +299,7 @@ def behavioural_learning_rate_analysis(behavioural_df, change_point_indices_df, 
                 )  
 
         # Update layout
-        fig.update_layout(height=300*len(unique_sessions), width=800, title_text=f"Behavioural learning rate across task sessions for participant           {participant_str} in condition {condition_str}",
+        fig.update_layout(height=300*len(unique_sessions), width=800, title_text=f"Behavioural learning rate across task sessions for participant {participant_str} in condition {condition_str}",
                   showlegend=False, title_x=0.5)
 
         fig.update_xaxes(title_text='Trial Number', row=len(unique_sessions), col=1)
