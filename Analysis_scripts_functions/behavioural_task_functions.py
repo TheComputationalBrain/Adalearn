@@ -316,7 +316,7 @@ def behavioural_learning_rate_analysis(behavioural_df, change_point_indices_df, 
 
 def learning_rate_by_change_point(behavioural_df, change_point_indices, participant, condition, pre=2, post=10, plot_learning_rate_by_cp = True):
     """ 
-    Function to plot the average learning rate around change points. Uses identified change point indices to derive learning rate dynamics before and after a change in task structure. Stores responses across all task sessions and then plots the average (plus standard deviation) learning rate. 
+    Function to calculate the average learning rate around change points. Uses identified change point indices to derive learning rate dynamics before and after a change in task structure. Stores responses across all task sessions and then plots the average (plus standard deviation) learning rate. 
 
     Parameters:
     - behavioural_df: pd.DataFrame, contains parsed data from json adalearn data file for select variables with the new addition of learning rate variable.
