@@ -96,7 +96,7 @@ def process_emg_data(biopac_data, stim_channels, emg_by_file_plot = False):
     Parameters:
     - bipoac_data: list, contains the dictionaries storing the data extracted from the biopac files for each run of task sessions. 
     - stim_channels: string, the stim channel name (used to extract the EMG data).
-    - emg_by_file_Plot: boolean, if True, plots the emg signal for each file as subplots (default is set to False as uses lots of memory.)
+    - emg_by_file_plot: boolean, if True, plots the emg signal for each file as subplots (default  =  False;  as uses lots of memory.)
 
     Returns:
     - emg_data_df: pd.DataFrame, contains EMG data, associated (relative) timestamp and data file number.  
@@ -228,13 +228,13 @@ def integrate_separate_trigger_channels(biopac_data, run_ranges):
             identified_triggers.extend(valid_triggers)
             trigger_count_per_channel[channel] = len(valid_triggers)
 
-        identified_triggers_df = pd.DataFrame(identified_triggers)
+        physiological_triggers_df = pd.DataFrame(identified_triggers)
 
-        if identified_triggers_df.empty:
+        if physiological_triggers_df.empty:
             print(f"No valid triggers identified for file: {filename}")
         else:
-            print(f"Identified triggers shape: {identified_triggers_df.shape}")
-            print(f"Columns in identified triggers dataframe: {identified_triggers_df.columns}")
+            print(f"Identified triggers shape: {physiological_triggers_df.shape}")
+            print(f"Columns in identified triggers dataframe: {physiological_triggers_df.columns}")
 
             # Calculate expected triggers based on run_range (should be 77 time the number of task sessions within the file)
             expected_trigs = 77 * (int(run_range['run_end']) - int(run_range['run_start']) + 1)
@@ -250,7 +250,7 @@ def integrate_separate_trigger_channels(biopac_data, run_ranges):
             for channel, count in trigger_count_per_channel.items():
                 if count == expected_trigs:
                     print(f"{channel}: Correct number of triggers found. Use {channel} for trig_channel.")
-                    integrated_triggers_df.append(identified_triggers_df[identified_triggers_df['channel'] == channel])
+                    integrated_triggers_df.append(physiological_triggers_df[physiological_triggers_df['channel'] == channel])
                     single_channel_match_found = True
                     continue
 
@@ -268,13 +268,13 @@ def integrate_separate_trigger_channels(biopac_data, run_ranges):
                 if sum_triggers == expected_trigs:
                     print(f"Identified channels that need to be merged: {pair[0]} and {pair[1]}")
                     integrated_triggers_df.append(
-                        identified_triggers_df[identified_triggers_df['channel'].isin([pair[0], pair[1]])]
+                        physiological_triggers_df[physiological_triggers_df['channel'].isin([pair[0], pair[1]])]
                     )
                     pair_match_found = True
 
                     # Integrate the triggers from both of the identified channels
-                    channel_1 = identified_triggers_df[identified_triggers_df['channel'] == pair[0]]
-                    channel_2 = identified_triggers_df[identified_triggers_df['channel'] == pair[1]]
+                    channel_1 = physiological_triggers_df[physiological_triggers_df['channel'] == pair[0]]
+                    channel_2 = physiological_triggers_df[physiological_triggers_df['channel'] == pair[1]]
 
                     integrated_trigger_channel = pd.merge(channel_1, channel_2, on='time', how='outer')
                     integrated_trigger_channel['channel'] = integrated_trigger_channel['channel_x'].combine_first(integrated_trigger_channel['channel_y'])
@@ -352,17 +352,17 @@ def integrate_separate_trigger_channels(biopac_data, run_ranges):
     return combined_chan_triggers, task_session_summary_df
 
 
-def extract_adalearn_triggers_biopac(biopac_data, trig_channel, plot=False):
+def extract_adalearn_triggers_biopac(biopac_data, trig_channel, plot_phys_trigs=False):
     """ 
     Function to extract the adalearn outcome presentation triggers inserted into the biopac file. Extracts and creates a dataframe to store the trigger information (i.e. 0 or 1) as well as the respective timestamp. Extracts the triggers from the combined channel in the biopac file (i.e. the channel that contains triggers for both yellow and blue). Also generates a dataframe with summary statistics for each identified task session (i.e. number of triggers, duration of task session, time at first stimulation, etc)
 
     Parameters:
     - biopac_data: list, contains the dictionaries storing the data extracted from the biopac files for each run of task sessions. 
     - trig_channel: string, the combined trigger channel name (used to extract the trigger information) (*Note: need to make sure that this combined is set up. If it isn't will need to evaluate the individual channels (those set up for yellow and blue outcomes) separately and then combine).
-    - plot: boolean, if True, creates subplots of identified triggers using Plotly.
+    - plot_phys_trigs: boolean, if True, creates subplots of identified triggers. (default = False)
 
     Returns:
-    - identified_triggers_df: pd.DataFrame, contains trigger data, associated timestamp, and data file number. 
+    - physiological_triggers_df: pd.DataFrame, contains trigger data, associated timestamp, and data file number. 
     - task_session_summary: pd.DataFrame, contains broad summary statistics of the characteristics of task sessions identified through triggers. 
     """
     # Objects to store dataframes for each data file and a counter to populate the data_file variable
@@ -422,38 +422,38 @@ def extract_adalearn_triggers_biopac(biopac_data, trig_channel, plot=False):
         identified_triggers.extend(valid_triggers)
 
     # Convert the list of identified triggers to a DataFrame
-    identified_triggers_df = pd.DataFrame(identified_triggers)
-    print(f"Number of valid triggers found: {len(identified_triggers_df)}")
+    physiological_triggers_df = pd.DataFrame(identified_triggers)
+    print(f"Number of valid triggers found: {len(physiological_triggers_df)}")
 
     # Calculate time differences between successive triggers
-    identified_triggers_df['time_diff'] = identified_triggers_df['time'].diff()
-    identified_triggers_df['time_diff'].iloc[0] = 0  # Set the first time difference to 0
+    physiological_triggers_df['time_diff'] = physiological_triggers_df['time'].diff()
+    physiological_triggers_df['time_diff'].iloc[0] = 0  # Set the first time difference to 0
 
     # Create task session variable based on multiple criteria (i.e. threshold in time difference between successive triggers and the start of a new data file.)
     task_session = 1
     task_sessions = []
     prev_data_file = None
-    for index, row in identified_triggers_df.iterrows():
+    for index, row in physiological_triggers_df.iterrows():
         if index == 0 or row['time_diff'] > 3 or row['data_file'] != prev_data_file:
             task_session += 1
         task_sessions.append(task_session)
         prev_data_file = row['data_file']
-    identified_triggers_df['task_session'] = task_sessions
-    identified_triggers_df['task_session'] = identified_triggers_df['task_session'] -1
+    physiological_triggers_df['task_session'] = task_sessions
+    physiological_triggers_df['task_session'] = physiological_triggers_df['task_session'] -1
 
     # Count the number of triggers in each task session
-    task_session_counts = identified_triggers_df['task_session'].value_counts().sort_index()
+    task_session_counts = physiological_triggers_df['task_session'].value_counts().sort_index()
     print(f"Number of triggers in each task session:\n{task_session_counts}")
 
     # Plotting the triggers is required for visualisation
-    if plot:
+    if plot_phys_trigs:
         num_files = len(trig_data_df['data_file'].unique())
         fig = make_subplots(rows=num_files, cols=1, shared_xaxes=True, 
                             subplot_titles=[f"Data File {i+1}" for i in range(num_files)])
         
         for i, file in enumerate(trig_data_df['data_file'].unique()):
             file_data = trig_data_df[trig_data_df['data_file'] == file]
-            identified_triggers_file = identified_triggers_df[identified_triggers_df['data_file'] == file]
+            identified_triggers_file = physiological_triggers_df[physiological_triggers_df['data_file'] == file]
             
             # Add the trace for all triggers
             fig.add_trace(go.Scatter(x=file_data['time'], y=file_data['triggers'], mode='lines', 
@@ -471,7 +471,7 @@ def extract_adalearn_triggers_biopac(biopac_data, trig_channel, plot=False):
         fig.show()
     
     # Calculate descriptive statistics for each identified task session and enter within a data frame. First group data by task session 
-    task_session_grouped = identified_triggers_df.groupby('task_session')
+    task_session_grouped = physiological_triggers_df.groupby('task_session')
 
     task_session_summary = task_session_grouped.agg(
         data_file =('data_file', 'first'),
@@ -483,17 +483,17 @@ def extract_adalearn_triggers_biopac(biopac_data, trig_channel, plot=False):
     task_session_summary['session_duration'] = task_session_summary['last_trig'] - task_session_summary['first_trig']
 
 
-    return identified_triggers_df, task_session_summary
+    return physiological_triggers_df, task_session_summary
 
 
-def extract_task_session_emg_data(emg_data_df, task_session_summary, plot=False):
+def extract_task_session_emg_data(emg_data_df, task_session_summary, plot_task_session_emg=False):
     """ 
     Function to reduce the size of the data to only that within a task session. Creates a dictionary of stored dataframes housing the EMG data for each task session. Also creates a relative timestamp for each task session. Can plot rectified EMG against time for each task session for visualization.
 
     Parameters:
     - emg_data_df: pd.DataFrame, contains EMG data, associated (relative) timestamp and data file number.  
     - task_session_summary: pd.DataFrame, contains broad summary statistics of the characteristics of task sessions identified through triggers.
-    - plot: boolean, if True, creates subplots for each task session of rectified EMG signal across time using Plotly. 
+    - plot_task_session_emg: boolean, if True, creates subplots for each task session of rectified EMG signal (default = False)
 
     Returns:
     - task_session_dict: dict, contains EMG dataframe (value) for each task session (key).
@@ -520,7 +520,7 @@ def extract_task_session_emg_data(emg_data_df, task_session_summary, plot=False)
         task_session_dict[index] = task_data
 
     # Plotting the EMG data stored within the dictionary if plot=True
-    if plot:
+    if plot_task_session_emg:
         # Calculate the total number of subplots
         num_subplots = len(task_session_dict)
 
@@ -691,7 +691,7 @@ def identify_vns_from_emg(task_session_dict, vns_task_session_keys, sampling_rat
     return vns_start_times
 
 
-def process_ecg_data(biopac_data, ecg_channels, task_session_summary, plot=False):
+def process_ecg_data(biopac_data, ecg_channels, task_session_summary, plot_ecg=False):
     """ 
     Function to extract and plot recorded ECG data. From raw signal, r-peaks are identified and consecutive r-r intervals and instantaneous heart rate is recorded. The data is reduced to that recorded over each task session, based on identified triggers. There is the option to plot the r-r interval across time for each task session for visualisation. 
     
@@ -699,7 +699,7 @@ def process_ecg_data(biopac_data, ecg_channels, task_session_summary, plot=False
     - bipoac_data: list, contains the dictionaries storing the data extracted from the biopac files for each run of task sessions. 
     - ecg_channels: string, the ECG channel name containing the raw ECG data. 
     - task_session_summary: pd.DataFrame, contains broad summary statistics of the characteristics of task sessions identified through triggers.
-    - plot: boolean, if True, creates subplots for each task session of consecutive r-r interval across time using Plotly. 
+    - plot_ecg: boolean, if True, creates subplots for each task session of consecutive r-r interval across time using Plotly. 
 
     Returns:
     - hr_task_session_dict: dict, contains r-peak dataframe (value) for each task session (key).     
@@ -789,7 +789,7 @@ def process_ecg_data(biopac_data, ecg_channels, task_session_summary, plot=False
         hr_task_session_dict[index] = task_data
 
     # Plotting the ECG data stored within the dictionary if plot=True
-    if plot:
+    if plot_ecg:
         # Calculate the total number of subplots
         num_subplots = len(hr_task_session_dict)
 
@@ -827,7 +827,7 @@ def process_ecg_data(biopac_data, ecg_channels, task_session_summary, plot=False
 
 
 
-def r_r_interval_by_change_point(hr_task_session_dict, change_point_indices, participant_str, condition_str, pre = 2, post = 10, time_bin_size = 0.5, plot_r_r_intervals_by_cp = True):
+def r_r_interval_by_change_point(hr_task_session_dict, change_point_indices, participant_str, condition_str, pre = 2, post = 10, time_bin_size = 0.5, plot_r_r_intervals_by_cp = False):
     """
     Function to compute the dynamics of R-R intervals around identified change points. The time range (from before a change point to after a change point) can be specified. Averaging is performed by using time bins (which can also be specified) to standardize the timing of R-R intervals. Option to plot the data to see visualise how R-R intervals change in response to a change point. 
 
@@ -839,7 +839,7 @@ def r_r_interval_by_change_point(hr_task_session_dict, change_point_indices, par
     - pre: integer, defines the time in seconds before the change point (used to define the time range over wihich the time bins are computed) (default = -2 s)
     - pre: integer, defines the time in seconds after the change point (used to define the time range over wihich the time bins are computed) (default = +10 s)
     - time_bin_size: integer, defines the size of the time bin window (default = 0.5 s)
-    - plot_r_r_intervals_by_cp: boolean, if true with plot the mean R-R interval computed within each time bin (plus the sem) against time. 
+    - plot_r_r_intervals_by_cp: boolean, if true with plot the mean R-R interval computed within each time bin (plus the sem) against time. (default = False)
 
     Returns:
     - r_r_interval_by_cp_df: pd.DataFrame, contains the filtered raw R-peaks within the specified time range (i.e. between 'pre' and 'post')

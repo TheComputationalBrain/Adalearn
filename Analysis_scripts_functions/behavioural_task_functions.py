@@ -10,7 +10,7 @@ pio.renderers.default='browser'
 
 
 
-def load_behavioural_data(participant_str, condition, condition_task_sessions, plot_behav_data = True, plot_estimate_v_ideal = True):
+def load_behavioural_data(participant_str, condition, condition_task_sessions, plot_behav_data = False, plot_estimate_v_ideal = False):
     """
     Function to load adalearn .json files. Sets the working directory to the relevant file, before loading and storing the data for each task session for a given condition. Then unpacks parsed_json adalearn files into a dataframe. Returned dataframe contains only selected variables deemed most relevant from the full .json file. Diagnostics identify whether what is expected in the dataframe is in fact there. Options to plot the the behavioural data (participants estimation, ideal observer, true hidden estimates and outcome observations) from each task session, and also the participants estimates against ideal observer across all task sessions.  
 
@@ -23,8 +23,8 @@ def load_behavioural_data(participant_str, condition, condition_task_sessions, p
     - participant_str: string, participant identifier (number; set to 2 digits)
     - condition: string, identifier of condition order (set to 2 numbers) ** May need to change to denote actual condition in Adalearn VNS study **
     - condition_task_sessions: list, contains string variables (set to 2 numbers) denoting the individual task sessions completed by the participant in the condition
-    - plot_behav_data: boolean, if true, will plot the raw behavioural data as subplots for each task session. (Default = True)
-    - plot_estimate_v_ideal: boolean, if true, will plot the participants' estimates against the ideal observer across all task sessions. (Default = True)
+    - plot_behav_data: boolean, if true, will plot the raw behavioural data as subplots for each task session (default = False)
+    - plot_estimate_v_ideal: boolean, if true, will plot the participants' estimates against the ideal observer across all task sessions (default = False)
 
     Returns:
     - behavioural_df: pd.DataFrame, contains parsed data from all .json adalearn data files for select variables. 
@@ -234,7 +234,7 @@ def behavioural_change_point_analysis(behavioural_df):
 
 
 
-def behavioural_learning_rate_analysis(behavioural_df, change_point_indices_df, participant_str, condition_str, plot_learning_rate_by_ses = True):
+def behavioural_learning_rate_analysis(behavioural_df, change_point_indices_df, participant_str, condition_str, plot_learning_rate_by_ses = False):
     """ 
     Function to calculate the behavioural learning rate for each outcome presentation. Learning rate (αt) is derived from the delta rule (Bt+1 = Bt + αt * t ): 
 
@@ -247,7 +247,7 @@ def behavioural_learning_rate_analysis(behavioural_df, change_point_indices_df, 
     - change_point_indices_df: pd.DataFrame, with columns 'index', 'relative_time', and 'task_session', containing the indices and relative times of the change points for each session. Used to mark the change points on plots (*Note: Have removed identification of the first outcome of each task session as a new change point)
     - participant_str: string, participant identifier (number; set to 2 digits)
     - condition: string, identifier of condition order (set to 2 numbers) ** May need to change to denote actual condition in Adalearn VNS study **
-    - plot_learning_rate_by_ses: boolean, if true, will plot the calculated (and filtered) learning rate across each task session. Change points added as dotted horizontal lines for visualisation. 
+    - plot_learning_rate_by_ses: boolean, if true, will plot the calculated (and filtered) learning rate across each task session. Change points added as dotted horizontal lines for visualisation (default = false).
 
     Returns:
     - behavioural_df: pd.DataFrame, contains parsed data from json adalearn data file for select variables with the new addition of learning rate variable. Final data frame contains a "cleaned learning rate", which removes values that exceed set thresholds (-0.6 and +1.3, which were determined a priori from a pilot study conducted before Foucault & Meyniel, 2024. Thresholding used to to avoid aberrant learning rate values due to very small denominators (error: estimate - outcome)).      
@@ -314,7 +314,7 @@ def behavioural_learning_rate_analysis(behavioural_df, change_point_indices_df, 
 
 
 
-def learning_rate_by_change_point(behavioural_df, change_point_indices, participant, condition, pre=2, post=10, plot_learning_rate_by_cp = True):
+def learning_rate_by_change_point(behavioural_df, change_point_indices, participant, condition, pre=2, post=10, plot_learning_rate_by_cp = False):
     """ 
     Function to calculate the average learning rate around change points. Uses identified change point indices to derive learning rate dynamics before and after a change in task structure. Stores responses across all task sessions and then plots the average (plus standard deviation) learning rate. 
 
@@ -325,7 +325,7 @@ def learning_rate_by_change_point(behavioural_df, change_point_indices, particip
     - condition: string, identifier of condition order (set to 2 numbers) ** May need to change to denote actual condition in Adalearn VNS study **
     - pre: integer, number of outcomes before the change point. Predefined to incorporate in plotting the data.
     - post: integer, number of outcomes after the change point. Predefined to incorporate in plotting the data.
-    - plot_learning_rate_by_cp: boolean, if true, will plot individual traces as well as averaged learning rate around change points (defined by pre and post variables)
+    - plot_learning_rate_by_cp: boolean, if true, will plot individual traces as well as averaged learning rate around change points (defined by pre and post variables) (default = False)
 
     Returns:
     - filtered_learning_rate_by_cp: pd.DataFrame, contains learning rate data within defined bounds around change points.

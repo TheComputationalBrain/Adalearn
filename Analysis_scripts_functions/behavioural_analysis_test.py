@@ -17,8 +17,8 @@ from participant_task_characteristics import participant,participant_str, condit
 
 
 # Loading adalearn task behavioural data using function created in behavioural_task_functions
-adalearn_data_c1_df = load_behavioural_data(participant_str, condition_1_str, c1_task_sessions, plot_behav_data=True, plot_estimate_v_ideal=True)
-adalearn_data_c2_df = load_behavioural_data(participant_str, condition_2_str, c2_task_sessions, plot_behav_data=True, plot_estimate_v_ideal=True)
+adalearn_data_c1_df = load_behavioural_data(participant_str, condition_1_str, c1_task_sessions, plot_behav_data=False, plot_estimate_v_ideal=False)
+adalearn_data_c2_df = load_behavioural_data(participant_str, condition_2_str, c2_task_sessions, plot_behav_data=False, plot_estimate_v_ideal=False)
 
 
 # Identifying change points within behavioural data for each task session using function in behavioural_task_functions
@@ -27,10 +27,10 @@ c2_change_point_num, c2_change_point_by_sess, c2_change_point_indices = behaviou
 
 
 # Calculate behavioural learning rate using function in behavioural_task_functions
-adalearn_data_c1_df = behavioural_learning_rate_analysis(adalearn_data_c1_df, c1_change_point_indices, participant_str, condition_1_str, plot_learning_rate_by_ses=True)
-adalearn_data_c2_df = behavioural_learning_rate_analysis(adalearn_data_c2_df, c2_change_point_indices, participant_str, condition_2_str, plot_learning_rate_by_ses=True)
+adalearn_data_c1_df = behavioural_learning_rate_analysis(adalearn_data_c1_df, c1_change_point_indices, participant_str, condition_1_str, plot_learning_rate_by_ses=False)
+adalearn_data_c2_df = behavioural_learning_rate_analysis(adalearn_data_c2_df, c2_change_point_indices, participant_str, condition_2_str, plot_learning_rate_by_ses=False)
 
 
 # Plotting average behavioural learning rate dynamics locked to change point using function in behavioural_task_functions
-c1_learning_rate_by_cp, c1_avg_learning_rate_cp = learning_rate_by_change_point(adalearn_data_c1_df, c1_change_point_indices, participant, condition_1_str, pre=2, post=10, plot_learning_rate_by_cp=True)
-c2_learning_rate_by_cp, c2_avg_learning_rate_cp = learning_rate_by_change_point(adalearn_data_c2_df, c2_change_point_indices, participant, condition_2_str, pre=2, post = 10, plot_learning_rate_by_cp=True)
+c1_learning_rate_by_cp, c1_avg_learning_rate_cp = learning_rate_by_change_point(adalearn_data_c1_df, c1_change_point_indices, participant, condition_1_str, pre=2, post=10, plot_learning_rate_by_cp=False)
+c2_learning_rate_by_cp, c2_avg_learning_rate_cp = learning_rate_by_change_point(adalearn_data_c2_df, c2_change_point_indices, participant, condition_2_str, pre=2, post = 10, plot_learning_rate_by_cp=False)

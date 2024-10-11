@@ -25,7 +25,7 @@ from model_learner import ideal_learner_prob_estimates_from_outcomes, ideal_lear
 
 
 
-def compute_surprise_from_observations(participant_str, condition_str, adalearn_data_df, change_point_indices_df, plot_surprise = True, plot_posterior_conf = True, plot_posterior_dist_means = True):
+def compute_surprise_from_observations(participant_str, condition_str, adalearn_data_df, change_point_indices_df, plot_surprise = False, plot_posterior_conf = False, plot_posterior_dist_means = False):
     """
     Function computes the level of surprise of each set of task session observations. Achieves this using the "run_inference" function (created by Cedric Foucault and Florent Meyniel: https://github.com/florentmeyniel/Ada-Learn/blob/main/analysis) to generate posterior inferences of generative probabilities of the data sequence (seq). Surprise is calculated as:
 
@@ -45,9 +45,9 @@ def compute_surprise_from_observations(participant_str, condition_str, adalearn_
     - condition: string, identifier of condition order (set to 2 digits) ** May need to change to denote actual condition in Adalearn VNS study **
     - adalearn_data_df: pd.DataFrame, contains the behavioural outputs of the adalearn data files for a given condition. 
     - change_point_indices_df: pd.DataFrame, contains outputs related to the presence of change points in the hidden task structure. The identified trial number within each task session will be used in plot visualisation.
-    - plot_surprise: boolean, if true, will plot the change in surprise per observation across each task session (default is set to True).
-    - plot_posterior_conf: boolean, if true, will plot the change in posterior distribution SD (confidence) per observation across each task session (default is set to True). 
-    - plot_posterior_dist_means: boolean, if true, will plot the change in posterior distribution means for both the blue and yellow distributions per observation across each task session (default is set to True).
+    - plot_surprise: boolean, if true, will plot the change in surprise per observation across each task session (default = False).
+    - plot_posterior_conf: boolean, if true, will plot the change in posterior distribution SD (confidence) per observation across each task session (default = False). 
+    - plot_posterior_dist_means: boolean, if true, will plot the change in posterior distribution means for both the blue and yellow distributions per observation across each task session (default = False).
 
     Parameters in run_inference function:
     - seq: np.array, 
@@ -175,7 +175,7 @@ def compute_surprise_from_observations(participant_str, condition_str, adalearn_
 
 
 
-def compute_prior_conf_and_cpp_from_observations(participant_str, condition_str, adalearn_data_df, change_point_indices_df, p_c, p1_min, p1_max, estimate_type, conf_type, plot_distribution_mean = True, plot_prior_conf = True, plot_cpp = True):
+def compute_prior_conf_and_cpp_from_observations(participant_str, condition_str, adalearn_data_df, change_point_indices_df, p_c, p1_min, p1_max, estimate_type, conf_type, plot_distribution_mean = False, plot_prior_conf = False, plot_cpp = False):
     """
     Function computes the "confidence" in the prior and change point probability from each set of task session observations. Computes "confidence" and change point probability using functions within "model_learner" (created by Cedric Foucault and Florent Meyniel: https://github.com/florentmeyniel/Ada-Learn/blob/main/analysis). "Confidence" is the -log(sd) of the prior distribution, while change point probability is calculated from the conditional probability of an observation (at time t) given a change point has occurred multiplied by the true probability of a change point occurring, divided by the conditional probability of an observation (at time t) given a change point has occurred multiplied by the true probability of a change point occurring plus the conditional probability of an observation (at time t) given no change point has occurred multiplied by the true probability that a change point did not occur:
 
@@ -193,9 +193,9 @@ def compute_prior_conf_and_cpp_from_observations(participant_str, condition_str,
     - 'p1_max': integer, the maximum value of the Bernoulli parameter (used to clip the Dirichlet prior distribution) (should be 0.9)
     - estimate_type': string, parameter defining ideal_learner_prob_estimates_from_outcomes function. Options are "mean", "mean-pred", "median", "median-pred". The "-pred" options accountfor volatility in the estimate. Function returns the standard deviation and distribution with each distribution parameter selected (only working with "mean" at the minute. Cant get "mean_pred" to work)
     - 'conf_type': string, parameter defining ideal_learner_prob_conf_from_outcomes function. Options are "prev-conf", "prev-conf-pred", "new-conf", "new-conf-pred". The "-pred" options accountfor volatility in the estimate. "Prev-conf" refers to prior variance while "new-conf" refers to posterior variance. 
-    - 'plot_distribution_mean: boolean, if true will plot the prior mean of the probability distribution (default set to true)
-    - 'plot_prior_conf: boolean, if true will plot the prior "confidence" of the probability distribution (default set to true)
-    - 'plot_cpp: boolean, if true will plot the change point probability (default set to true)
+    - 'plot_distribution_mean: boolean, if true will plot the prior mean of the probability distribution (default = False)
+    - 'plot_prior_conf: boolean, if true will plot the prior "confidence" of the probability distribution (default = False)
+    - 'plot_cpp: boolean, if true will plot the change point probability (default = False)
 
     
     Parameters in functions taken from "model_learner":
@@ -341,7 +341,7 @@ def compute_prior_conf_and_cpp_from_observations(participant_str, condition_str,
 
 
 
-def compute_model_learning_rate(participant_str, condition_str, adalearn_data_df, change_point_indices_df, lr, prior_estimate=0.5, noise_level_type = "constant", plot_model_learning_rate_no_noise = True, plot_model_learning_rate_noisy = False):
+def compute_model_learning_rate(participant_str, condition_str, adalearn_data_df, change_point_indices_df, lr, prior_estimate=0.5, noise_level_type = "constant", plot_model_learning_rate_no_noise = False, plot_model_learning_rate_noisy = False):
     """"
     Function computes the model learning rate from a sequence of observations. Two different delta rule models are utilised: 1. conventional delta rule model and 2. noisy delta rule model. The noisy delta rule model is specified as:
                                                 
@@ -365,7 +365,7 @@ def compute_model_learning_rate(participant_str, condition_str, adalearn_data_df
     - lr: integer, value of learning rate in the middle range of percentiles of the distribution of average learning rates obtained for subjects (obtained from Cedric Foucault & Florent Meyniel, 2024)
     - prior_esimate: integer, sets starting point of the learning rate before an observation is made (set to 0.5). Defines functions used to compute model learning rates. 
     - noise_level_type: string, defines the type of noise incorporated within noisy delta rule model. Two options available: "constant" (noise utilised in the model is constant) or "prop-error" (noise used in model is proportional to the prediction error).
-    - plot_model_learning_rate_no_noise: boolean, if true, will plot model learning rate across each task session. (Default = True)
+    - plot_model_learning_rate_no_noise: boolean, if true, will plot model learning rate across each task session. (Default = False)
     - plot_model_learning_rate_noisy: boolean, if true, will plot the noisey model learning rate across each task session. (Default = False)
 
     Returns:
@@ -448,7 +448,7 @@ def compute_model_learning_rate(participant_str, condition_str, adalearn_data_df
 
 
 
-def model_learning_rate_by_change_point(model_learning_rate_df, change_point_indices, participant_str, condition_str, pre=2, post=10, plot_model_learning_rate_by_cp = True):
+def model_learning_rate_by_change_point(model_learning_rate_df, change_point_indices, participant_str, condition_str, pre=2, post=10, plot_model_learning_rate_by_cp = False):
     """ 
     Function to plot the average model learning around change points. Uses identified change point indices to derive model learning rate dynamics before  and after a change point. Stores responses across all task sessions and then plots the average model learning rate (plus standard deviation). 
 
@@ -459,7 +459,7 @@ def model_learning_rate_by_change_point(model_learning_rate_df, change_point_ind
     - condition_str: string, identifier of condition order (set to 2 numbers) ** May need to change to denote actual condition in Adalearn VNS study **
     - pre: integer, number of outcomes before the change point. Predefined to incorporate in plotting the data.
     - post: integer, number of outcomes after the change point. Predefined to incorporate in plotting the data.
-    - plot_model_learning_rate_by_cp: boolean, if true, will plot individual traces as well as averaged model learning rate around change points (defined by pre and post variables)
+    - plot_model_learning_rate_by_cp: boolean, if true, will plot individual traces as well as averaged model learning rate around change points (defined by pre and post variables) (default = False)
 
     Returns:
     - filtered_model_learning_rate_by_cp: pd.DataFrame, contains model leearning rate data within defined bounds around change points.
