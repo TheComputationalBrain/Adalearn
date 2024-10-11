@@ -50,6 +50,7 @@ def load_pupil_data(participant_str, condition, condition_task_sessions, plot=Fa
     # Initialize lists for storing trigger times inserted into Tobii eye tracker
     trig_time_list = []
     task_sess_trig_list = []
+    message_list = []
 
     # Read in .txt file as lines and then for each line, separate the data and store it in an appropriate list.
     for session in condition_task_sessions:
@@ -75,6 +76,7 @@ def load_pupil_data(participant_str, condition, condition_task_sessions, plot=Fa
                 if 'MSG: Session starts' in lines[nlines] and ind1 != -1:
                     sessionstarttime = float(lines[nlines][0:ind1-1])
                 elif 'MSG: Received : stim' in lines[nlines] and ind1 != -1:
+                    message_list.append(lines[nlines])
                     trig_time_list.append(float(lines[nlines][0:ind1-1]))
                     task_sess_trig_list.append(session)
                 elif 'MSG: Session ends' in lines[nlines] and ind1 != -1:
@@ -142,10 +144,14 @@ def load_pupil_data(participant_str, condition, condition_task_sessions, plot=Fa
     # Create relative time variable in pupil_df
     pupil_df['tobii_time_rel'] = pupil_df.groupby('task_session')['tobii_time'].diff().fillna(0).groupby(pupil_df['task_session']).cumsum() / 1000000
 
+    # Convert trigger message to outcome variable
+    converted_trigger_list = [1 if 'stim_1' in msg else 0 for msg in message_list]
+
     # Create a DataFrame for the trigger data stored in lists
     pupil_trig_df = pd.DataFrame({
         'trigger_time': trig_time_list,
-        'task_session': task_sess_trig_list 
+        'task_session': task_sess_trig_list, 
+        'outcome' : converted_trigger_list
     })
 
     pupil_trig_df['trigger_num'] = range(len(pupil_trig_df))
@@ -183,7 +189,7 @@ def load_pupil_data(participant_str, condition, condition_task_sessions, plot=Fa
 
 
 
-def process_pupil_data(participant_str, list_subject_selected, condition, from_session, to_session, dict_onsets, dict_num, session_list = None, outlier_limit_std = 10, outlier_correct_average_amount = 10,  window_start_before = 0.2, window_end_after = 4.5, z_score = False):
+def process_pupil_data(participant_str, list_subject_selected, condition, from_session, to_session, dict_onsets, dict_num, reject_epochs = True, blink_ratio_threshold = 0.20, session_list = None, outlier_limit_std = 10, outlier_correct_average_amount = 10,  window_start_before = 0.2, window_end_after = 3, z_score = False):
     """
     Function to preprocess pupil data into epochs around defined outcomes of interest (e.g. change points, high and low surprise, etc). Preprocessing taken from preprocess_eyedata script, created by Florent, Maëva, Aziza and Yannaël. Calculates the mean and standard deviation across each identified epoch for all task session.
 
@@ -195,11 +201,13 @@ def process_pupil_data(participant_str, list_subject_selected, condition, from_s
     - to_session: int, defining the number of the last task session within the condition
     - dict_onsets: dict, contains timestamps of outcomes of interest (e.g. change points, high and low surprise, etc). Keys are task session and values are time stamps within that task session. 
     - dict_nums: dict, contains a cumulative count of the number of outcomes of interest identified within each task session. Keys are task sessions and values are the cumulative count of the number of change points within that task session.
-    - session_list: list, optional, specific list of sessions to process. If not provided, the function will use the range defined by from_session and to_session.
+    - reject_epochs: boolean, parameter determining whether epochs with an excessive blink ratio should be removed (default = False)
+    - blink_ratio_threshold:, integer, value determining the threshold criteria for the removal of an epoch due to excessive blink ratio (default = 0.2)
+    - session_list: list, optional, specific list of sessions to process. If not provided, the function will use the range defined by from_session and to_session
     - outlier_limit_std: int, defines the threshold of the standard deviation of the derivative when preprocessing the pupil data. Default = 10
     - outlier_correct_average_amount: int, the number of data points to the left and at the right of the artifact which will replace the value of the artifact by the value of the mean of the data around it. Default = 10.
-    - window_start_before: int, value defining the start of the epoch window in time (seconds). Default = 1. 
-    - window_end_after: int, value defining the end of the epoch window in time (seconds). Default = 4.5.
+    - window_start_before: int, value defining the start of the epoch window in time (seconds). Default = 1
+    - window_end_after: int, value defining the end of the epoch window in time (seconds). Default = 3
     - z_score: boolean, option to z_score data before computing epochs. Default = False.
     - plot: boolean, option to plot the mean and standard deviation across epochs using Plotly. Default = True. 
 
@@ -217,6 +225,7 @@ def process_pupil_data(participant_str, list_subject_selected, condition, from_s
 
     # List to store dataframes containing the epoched data from each task session
     epoched_data_list = []
+    blink_ratio_epoch_list = []
 
     # Determine sessions to iterate over
     if session_list is not None:
@@ -244,7 +253,7 @@ def process_pupil_data(participant_str, list_subject_selected, condition, from_s
             time, diameter, diameter_int, x_pos, x_pos_int, y_pos, y_pos_int = data_tob.preprocess(plot=False, remove_outlier=True, outlier_limit_std=outlier_limit_std, outlier_correct_average_amount=outlier_correct_average_amount)
       
             # Epoch the data and apply baseline correction
-            data_tob.epoch_tobii(dict_onsets[session_str], variable='diameter_int', decimate=1, before=window_start_before, after=window_end_after, baseline=[-1, 0], conditions={'event_num': dict_num[session_str]}, z_score_data=z_score)
+            data_tob.epoch_tobii(dict_onsets[session_str], variable='diameter_int', decimate=1, reject=reject_epochs, blink_ratio_thd=blink_ratio_threshold, before=window_start_before, after=window_end_after, baseline=[-1, 0], conditions={'event_num': dict_num[session_str]}, z_score_data=z_score)
 
             # Check to ensure the correct number of epochs
             print("For participant n:", subject, " in session = ", session, "there are:", len(data_tob.epochs), "epochs")
@@ -254,6 +263,15 @@ def process_pupil_data(participant_str, list_subject_selected, condition, from_s
             epoched_data = pd.DataFrame([epoch for epoch in data_tob.epochs])
             epoched_data_list.append(epoched_data)
 
+            # Append list to blink_ratio list 
+            blink_ratio_epoch_list.append(data_tob.epoch_blink_ratio)
+
+    # Generate dataframe with blink_ratio for each epoch vertically stacked
+    flattened_array = np.concatenate(blink_ratio_epoch_list)
+
+    blink_ratio_epoch_df = pd.DataFrame(flattened_array, columns=['blink_ratio'])
+    blink_ratio_epoch_df['above_threshold'] = blink_ratio_epoch_df['blink_ratio'] >= blink_ratio_threshold
+
     # Collating the timelocked epoched pupil data to calculate descriptive statistics for plotting
     epoched_pupil_df = pd.concat(epoched_data_list, ignore_index=True).T
     numeric_data = epoched_pupil_df.iloc[:, :]
@@ -261,7 +279,7 @@ def process_pupil_data(participant_str, list_subject_selected, condition, from_s
     epoched_pupil_df['std'] = numeric_data.std(axis=1)
     epoched_pupil_df['time'] = data_tob.epochs_times
 
-    return epoched_pupil_df
+    return epoched_pupil_df, blink_ratio_epoch_df
 
 
 
@@ -311,7 +329,7 @@ def change_point_pupil_epochs(participant_str, list_subject_selected, condition_
       print(f"In task session {session} there are {len(events)} identified change points") 
 
     # Analysing pupil data based on identified change point indices
-    epoched_pupil_cp_df = process_pupil_data(participant_str, list_subject_selected, condition_str, from_session, to_session, change_point_onsets, change_point_nums, session_list)
+    epoched_pupil_cp_df, blink_ratio_cp_df = process_pupil_data(participant_str, list_subject_selected, condition_str, from_session, to_session, change_point_onsets, change_point_nums, session_list)
 
     # Plotting the mean (and std) response of pupil response timelocked to change points
     if plot:
@@ -354,7 +372,7 @@ def change_point_pupil_epochs(participant_str, list_subject_selected, condition_
 
         fig_epoch_avg.show()
 
-    return change_point_onsets, change_point_nums, epoched_pupil_cp_df
+    return change_point_onsets, change_point_nums, epoched_pupil_cp_df, blink_ratio_cp_df
 
 
 
@@ -428,8 +446,8 @@ def surprise_pupil_epochs(participant_str, list_subject_selected, condition_str,
 
         
     # Generating pupil response around surprising observations  
-    epoched_pupil_high_surprise_df = process_pupil_data(participant_str, list_subject_selected, condition_str, from_session, to_session, surprise_high_onsets, surprise_high_nums, high_surp_ses_list)
-    epoched_pupil_low_surprise_df = process_pupil_data(participant_str, list_subject_selected, condition_str, from_session, to_session, surprise_low_onsets, surprise_low_onsets, low_surp_ses_list)
+    epoched_pupil_high_surprise_df, high_surprise_blink_ratio_df = process_pupil_data(participant_str, list_subject_selected, condition_str, from_session, to_session, surprise_high_onsets, surprise_high_nums, high_surp_ses_list)
+    epoched_pupil_low_surprise_df, low_surprise_blink_ratio_df = process_pupil_data(participant_str, list_subject_selected, condition_str, from_session, to_session, surprise_low_onsets, surprise_low_onsets, low_surp_ses_list)
 
     # Plotting the mean (and std) response of the pupil diameter timelocked to high and low surprising observations
     if plot:
@@ -498,4 +516,4 @@ def surprise_pupil_epochs(participant_str, list_subject_selected, condition_str,
 
         fig_epoch_avg.show()
 
-    return surprise_low_onsets, surprise_low_nums, surprise_high_onsets, surprise_high_nums, epoched_pupil_low_surprise_df, epoched_pupil_high_surprise_df
+    return surprise_low_onsets, surprise_low_nums, surprise_high_onsets, surprise_high_nums, epoched_pupil_low_surprise_df, epoched_pupil_high_surprise_df, high_surprise_blink_ratio_df, low_surprise_blink_ratio_df

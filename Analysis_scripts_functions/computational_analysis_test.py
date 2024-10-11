@@ -19,8 +19,8 @@ LEARNING_RATE = 0.4
 
 
 # Computing the surprise per observation within each task session using a function in computational_analysis_functions
-c1_surprise, c1_post_dist_df, c1_surprise_cat_df = compute_surprise_from_observations(participant_str, condition_1_str, adalearn_data_c1_df, c1_change_point_indices, plot_surprise=True, plot_posterior_conf=True, plot_posterior_dist_means=True)
-c2_surprise, c2_post_dist_df, c2_surprise_cat_df = compute_surprise_from_observations(participant_str, condition_2_str, adalearn_data_c2_df, c2_change_point_indices, plot_surprise=True, plot_posterior_conf=True, plot_posterior_dist_means=True)
+c1_surprise = compute_surprise_from_observations(participant_str, condition_1_str, adalearn_data_c1_df, c1_change_point_indices, plot_surprise=True, plot_posterior_conf=True, plot_posterior_dist_means=True)
+c2_surprise = compute_surprise_from_observations(participant_str, condition_2_str, adalearn_data_c2_df, c2_change_point_indices, plot_surprise=True, plot_posterior_conf=True, plot_posterior_dist_means=True)
 
 
 # Computes the prior confidence and change point probability of each observation within each task session using a function in computational_analysis_functions
@@ -35,4 +35,4 @@ c2_model_learning_rate = compute_model_learning_rate(participant_str, condition_
 
 # Calculates the mean model learning rate around identified change points using function in computational_analysis_functions
 c1_learning_rate_by_cp, c1_average_model_learning_rate_by_cp = model_learning_rate_by_change_point(c1_model_learning_rate, c1_change_point_indices, participant_str, condition_1_str, pre = 2, post = 10, plot_model_learning_rate_by_cp=True)
-c2_learning_rate_by_cp, c2_average_model_learning_rate_by_cp = model_learning_rate_by_change_point(c2_model_learning_rate, c2_change_point_indices, participant_str, condition_2_str, pre=2, post=10, plot_model_learning_rate_by_cp=True)
+c2_learning_rate_by_cp, c2_average_model_learning_rate_by_cp = model_learning_rate_by_change_point(c2_model_learning_rate, c2_change_point_indices, participant_str, condition_2_str, pre = 2, post = 10, plot_model_learning_rate_by_cp=True)

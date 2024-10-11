@@ -41,7 +41,7 @@ def compute_surprise_from_observations(participant_str, condition_str, adalearn_
 
     
     Parameters:
-    - participant_str: string, participant identifier (number; set to 2 digits)  
+    - participant_str: string, participant identifier (set to 2 digits)  
     - condition: string, identifier of condition order (set to 2 digits) ** May need to change to denote actual condition in Adalearn VNS study **
     - adalearn_data_df: pd.DataFrame, contains the behavioural outputs of the adalearn data files for a given condition. 
     - change_point_indices_df: pd.DataFrame, contains outputs related to the presence of change points in the hidden task structure. The identified trial number within each task session will be used in plot visualisation.
@@ -58,19 +58,13 @@ def compute_surprise_from_observations(participant_str, condition_str, adalearn_
         'p1_max': the maximum value of the Bernoulli parameter (used to clip the Dirichlet prior distribution)
 
      Returns:
-    - surprise_df: pd.DataFrame, containing 'task_session' and 'surprise' columns for each task session.
-    - task_sess_post_dist_df: pd.DataFrame, contains the model calculated posterior distribution. Includes the mean and SD of the posterior. 
-    - surprise_cat_df: pd.DataFrame, copy of surprise_df but contains a variable that categorises the level of surprise per observation based on the interquartile range across all task sessions. 
+    - surprise_df: pd.DataFrame, containing 'task_session' and 'surprise' columns for each task session. Also contains a variable that categorises the level of surprise per observation based on the interquartile range across all task sessions (used for basic analysis) and model calculated posterior distribution parameters (mean and SD of the posterior).
     """
 
     # Define options for "run inference" function
     options = {'p_c': 0.05, 'resol': 20, 'p1_min': 0.1, 'p1_max': 0.9}
 
     # Initialize lists to store task session data
-    task_sessions = []
-    task_sess_outcome_0 = []
-    task_sess_outcome_1 = []
-    task_session_surprise = []
     task_session_surprise_df = []
 
     # Loop over task sessions and convert the outcome column to a sequence (np.array)
@@ -79,69 +73,29 @@ def compute_surprise_from_observations(participant_str, condition_str, adalearn_
 
         # Run inference to compute surprise for the sequence of observations
         output = run_inference(seq, options=options)
-    
-        task_sessions.append(task_session)
-        task_sess_outcome_0.append(output[(0,)])
-        task_sess_outcome_1.append(output[(1,)])
-        task_session_surprise.append(output['surprise'])
 
         # Creating dataframe to store for that task session
         surprise_values = output['surprise']
-        surprise_df = pd.DataFrame({'surprise': surprise_values})
-        surprise_df['task_session'] = task_session
-        surprise_df['task_sess_count'] = surprise_df.groupby('task_session').cumcount() + 1 
-        task_session_surprise_df.append(surprise_df)
+        session_surprise_df = pd.DataFrame({'surprise': surprise_values})
+        session_surprise_df['task_session'] = task_session
+        session_surprise_df['task_sess_count'] = np.arange(1, len(session_surprise_df)+1)
+        session_surprise_df['outcome'] = seq
+        session_surprise_df['model_post_prob_1'] = output[(1,)]['mean']
+        session_surprise_df['model_post_prob_0'] = output[(0,)]['mean']
+        session_surprise_df['model_post_prob_var'] = output[(1,)]['SD']
+        task_session_surprise_df.append(session_surprise_df)
          
     surprise_df = pd.concat(task_session_surprise_df, ignore_index=True)
     surprise_df['cum_trigger_count'] = surprise_df.index
-    (print(surprise_df))
 
     # Categorizing the level of surprise for basic analysis
-    surprise_cat_df = surprise_df.copy()
-    surprise_cat_df['surprise'] = pd.to_numeric(surprise_cat_df['surprise'], errors='coerce')
-    surprise_cat_df = surprise_cat_df.dropna(subset=['surprise'])
-    first_quartile = surprise_cat_df['surprise'].quantile(0.25)
-    third_quartile = surprise_cat_df['surprise'].quantile(0.75)
+    first_quartile = surprise_df['surprise'].quantile(0.25)
+    third_quartile = surprise_df['surprise'].quantile(0.75)
 
-    surprise_cat_df['surprise_cat'] = 'between_quartiles'
+    surprise_df['surprise_cat'] = 'between_quartiles'
 
-    surprise_cat_df.loc[surprise_cat_df['surprise'] < first_quartile, 'surprise_cat'] = 'below_first_quartile'
-    surprise_cat_df.loc[surprise_cat_df['surprise'] > third_quartile, 'surprise_cat'] = 'above_third_quartile'
-
-
-    # Extracting posterior distribution values for outcomes 0 and 1.
-    # Outcome 0 - 'Yellow'
-    task_sess_outcome_0_df_list = []
-
-    for i, outcome in enumerate(task_sess_outcome_0):
-        outcome_df = pd.DataFrame({
-            'mean_0': np.ravel(outcome['mean']),
-            'SD_0': np.ravel(outcome['SD'])
-        })
-    
-        outcome_df['task_session'] = task_sessions[i]
-    
-        task_sess_outcome_0_df_list.append(outcome_df)
-
-    # Outcome 1 - 'Blue'
-    task_sess_outcome_1_df_list = []
-
-    for i, outcome in enumerate(task_sess_outcome_1):
-        outcome_df = pd.DataFrame({
-            'mean_1': np.ravel(outcome['mean']),
-            'SD_1': np.ravel(outcome['SD'])
-        })
-    
-        outcome_df['task_session'] = task_sessions[i]
-    
-        task_sess_outcome_1_df_list.append(outcome_df)
-
-    # Creating dataframe for posterior distribution characteristics
-    task_sess_post_dis_0 = pd.concat(task_sess_outcome_0_df_list, ignore_index=True)
-    task_sess_post_dis_1 = pd.concat(task_sess_outcome_1_df_list, ignore_index=True)
-    task_sess_post_dis_df = pd.concat([task_sess_post_dis_0, task_sess_post_dis_1], axis=1)
-    task_sess_post_dis_df = task_sess_post_dis_df.loc[:, ~task_sess_post_dis_df.columns.duplicated()]
-    task_sess_post_dis_df['task_sess_count'] = task_sess_post_dis_df.groupby('task_session').cumcount() + 1 
+    surprise_df.loc[surprise_df['surprise'] < first_quartile, 'surprise_cat'] = 'below_first_quartile'
+    surprise_df.loc[surprise_df['surprise'] > third_quartile, 'surprise_cat'] = 'above_third_quartile'
 
 
     if plot_surprise:
@@ -169,14 +123,14 @@ def compute_surprise_from_observations(participant_str, condition_str, adalearn_
         fig.show()
 
     if plot_posterior_conf:
-        unique_task_sessions = task_sess_post_dis_df['task_session'].unique()
+        unique_task_sessions = surprise_df['task_session'].unique()
 
         fig = make_subplots(rows=len(unique_task_sessions), cols=1, shared_xaxes=True,
                     subplot_titles=[f'Task Session {session}' for session in unique_task_sessions])
 
         for i, session in enumerate(unique_task_sessions, start=1):
-            session_data = task_sess_post_dis_df[task_sess_post_dis_df['task_session'] == session]
-            fig.add_trace(go.Scatter(x=session_data['task_sess_count'], y=session_data['SD_1'], mode='lines', name=f'Posterior distribution SD (confidence) - Session {session}'), row=i, col=1)
+            session_data = surprise_df[surprise_df['task_session'] == session]
+            fig.add_trace(go.Scatter(x=session_data['task_sess_count'], y=session_data['model_post_prob_var'], mode='lines', name=f'Posterior distribution SD (confidence) - Session {session}'), row=i, col=1)
 
             change_points = change_point_indices_df[change_point_indices_df['task_session'] == session]['trial_number']
             for cp in change_points:
@@ -193,15 +147,15 @@ def compute_surprise_from_observations(participant_str, condition_str, adalearn_
         fig.show()
 
     if plot_posterior_dist_means:
-        unique_task_sessions = task_sess_post_dis_df['task_session'].unique()
+        unique_task_sessions = surprise_df['task_session'].unique()
 
         fig = make_subplots(rows=len(unique_task_sessions), cols=1, shared_xaxes=True,
                     subplot_titles=[f'Task Session {session}' for session in unique_task_sessions])
 
         for i, session in enumerate(unique_task_sessions, start=1):
-            session_data = task_sess_post_dis_df[task_sess_post_dis_df['task_session'] == session]
-            fig.add_trace(go.Scatter(x=session_data['task_sess_count'], y=session_data['mean_0'], mode='lines', name=f'Posterior distribution mean (P(0)) - Session {session}', line_color = 'yellow'), row=i, col=1)
-            fig.add_trace(go.Scatter(x=session_data['task_sess_count'], y=session_data['mean_1'], mode='lines', name=f'Posterior distribution mean (P(1)) - Session {session}', line_color = 'blue'), row=i, col=1)
+            session_data = surprise_df[surprise_df['task_session'] == session]
+            fig.add_trace(go.Scatter(x=session_data['task_sess_count'], y=session_data['model_post_prob_0'], mode='lines', name=f'Posterior distribution mean (P(0)) - Session {session}', line_color = 'yellow'), row=i, col=1)
+            fig.add_trace(go.Scatter(x=session_data['task_sess_count'], y=session_data['model_post_prob_1'], mode='lines', name=f'Posterior distribution mean (P(1)) - Session {session}', line_color = 'blue'), row=i, col=1)
 
             change_points = change_point_indices_df[change_point_indices_df['task_session'] == session]['trial_number']
             for cp in change_points:
@@ -217,7 +171,7 @@ def compute_surprise_from_observations(participant_str, condition_str, adalearn_
 
         fig.show()
 
-    return surprise_df, task_sess_post_dis_df, surprise_cat_df
+    return surprise_df
 
 
 
