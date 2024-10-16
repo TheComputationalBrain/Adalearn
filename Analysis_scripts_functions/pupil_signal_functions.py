@@ -343,7 +343,7 @@ def align_pupil_to_events(pupil_trig_df, event_df, to_session, print_event_df_sh
     # If checks were not violated, match pupil to behavioural event based on cumulative outcome number across all task sessions
     else:
 
-        pupil_by_event = pupil_trig_df[pupil_trig_df['outcome_num'].isin(event_df['cum_outcome_num'])]
+        pupil_by_event = pupil_trig_df[pupil_trig_df['cum_outcome_num'].isin(event_df['cum_outcome_num'])]
 
         print(f"Merged dataframe based on cumulative triggers. The number of triggers found was: {pupil_by_event.shape[0]}.")
 
@@ -381,7 +381,9 @@ def change_point_pupil_epochs(participant_str, list_subject_selected, condition_
     - blink_ratio_cp_df: pd.DataFrame, contains the blink ratio inofrmation for each generated epoch around change points
     """
     pupil_by_change_points = align_pupil_to_events(pupil_trig_df=pupil_trig_df, event_df=change_point_indices, to_session=to_session, print_event_df_shape=True)
-  
+    print(pupil_by_change_points)
+
+
     # Creating dictionaries for storage of change point time and number 
     change_point_onsets = {}
     change_point_nums = {}
