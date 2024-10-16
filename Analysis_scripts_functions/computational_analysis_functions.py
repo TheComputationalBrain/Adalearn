@@ -97,7 +97,10 @@ def compute_surprise_from_observations(participant_str, condition_str, behaviour
     surprise_df.loc[surprise_df['surprise'] < first_quartile, 'surprise_cat'] = 'below_first_quartile'
     surprise_df.loc[surprise_df['surprise'] > third_quartile, 'surprise_cat'] = 'above_third_quartile'
 
+    surprise_cat_counts = surprise_df.groupby(['task_session', 'surprise_cat']).size().reset_index(name='counts')
+    surprise_cat_df = surprise_cat_counts.pivot(index='task_session', columns='surprise_cat', values='counts').fillna(0)
 
+    # Option to plot the data for surprise and posterior distribution parameters
     if plot_surprise:
         unique_sessions = surprise_df['task_session'].unique()
 
@@ -171,7 +174,7 @@ def compute_surprise_from_observations(participant_str, condition_str, behaviour
 
         fig.show()
 
-    return surprise_df
+    return surprise_df, surprise_cat_df
 
 
 
@@ -343,7 +346,7 @@ def compute_prior_conf_and_cpp_from_observations(participant_str, condition_str,
 
 
 
-def compute_model_learning_rate(participant_str, condition_str, adalearn_data_df, change_point_indices_df, lr, prior_estimate=0.5, noise_level_type = "constant", plot_model_learning_rate_no_noise = False, plot_model_learning_rate_noisy = False):
+def compute_model_learning_rate(participant_str, condition_str, behavioural_df, change_point_indices_df, lr, prior_estimate=0.5, noise_level_type = "constant", plot_model_learning_rate_no_noise = False, plot_model_learning_rate_noisy = False):
     """"
     Function computes the model learning rate from a sequence of observations. Two different delta rule models are utilised: 1. conventional delta rule model and 2. noisy delta rule model. The noisy delta rule model is specified as:
                                                 
@@ -362,7 +365,7 @@ def compute_model_learning_rate(participant_str, condition_str, adalearn_data_df
     Parameters:
     - participant_str: string, participant identifier (number; set to 2 digits)  
     - condition: string, identifier of condition order (set to 2 digits) ** May need to change to denote actual condition in Adalearn VNS study **
-    - adalearn_data_df: pd.DataFrame, contains the behavioural outputs of the adalearn data files for a given condition. 
+    - behavioural_df: pd.DataFrame, contains the behavioural outputs of the adalearn data files for a given condition. 
     - change_point_indices_df: pd.DataFrame, contains outputs related to the presence of change points in the hidden task structure. The identified trial number within each task session will be used in plot visualisation.  
     - lr: integer, value of learning rate in the middle range of percentiles of the distribution of average learning rates obtained for subjects (obtained from Cedric Foucault & Florent Meyniel, 2024)
     - prior_esimate: integer, sets starting point of the learning rate before an observation is made (set to 0.5). Defines functions used to compute model learning rates. 
@@ -377,7 +380,7 @@ def compute_model_learning_rate(participant_str, condition_str, adalearn_data_df
     delta_rule_estimates_df_list = []
 
     # For loop, first creating an array from the the outcome presentation within each task session. THen running delta rule and noisy delta rule models to extract learning rate. Dataframe constructed for each task session and then concatenatied outside of the loop. 
-    for task_session, session_data in adalearn_data_df.groupby('task_session'):
+    for task_session, session_data in behavioural_df.groupby('task_session'):
         seq = np.array(session_data['outcome'])
 
         delta_rule_estimates = delta_rule_estimates_from_outcomes(seq, lr, prior_estimate=prior_estimate)

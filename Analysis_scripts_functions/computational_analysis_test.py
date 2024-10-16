@@ -19,8 +19,8 @@ LEARNING_RATE = 0.4
 
 
 # Computing the surprise per observation within each task session using a function in computational_analysis_functions
-c1_surprise = compute_surprise_from_observations(participant_str, condition_1_str, c1_behavioural_df, c1_change_point_indices, plot_surprise=False, plot_posterior_conf=False, plot_posterior_dist_means=False)
-c2_surprise = compute_surprise_from_observations(participant_str, condition_2_str, c2_behavioural_df, c2_change_point_indices, plot_surprise=False, plot_posterior_conf=False, plot_posterior_dist_means=False)
+c1_surprise, c1_surprise_cat_df = compute_surprise_from_observations(participant_str, condition_1_str, c1_behavioural_df, c1_change_point_indices, plot_surprise=False, plot_posterior_conf=False, plot_posterior_dist_means=False)
+c2_surprise, c2_surprise_cat_df = compute_surprise_from_observations(participant_str, condition_2_str, c2_behavioural_df, c2_change_point_indices, plot_surprise=False, plot_posterior_conf=False, plot_posterior_dist_means=False)
 
 
 # Computes the prior confidence and change point probability of each observation within each task session using a function in computational_analysis_functions

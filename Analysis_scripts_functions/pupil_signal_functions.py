@@ -349,8 +349,10 @@ def align_pupil_to_events(pupil_trig_df, event_df, to_session, print_event_df_sh
 
     # Return the pupil task session to zero-padded so compatible with pupil processing function 
     pupil_by_event['task_session'] = pupil_by_event['task_session'].astype(str).str.zfill(2)
-    pupil_by_event = pupil_by_event.drop(columns=['cum_outcome_num_x'])
-    pupil_by_event = pupil_by_event.rename(columns={'cum_outcome_num_y': 'cum_outcome_num'})
+
+    duplicate_cols = [col for col in pupil_by_event.columns if col.endswith('_x') or col.endswith('_y')]
+    if duplicate_cols:
+        pupil_by_event = pupil_by_event.drop(columns=duplicate_cols)
    
     return pupil_by_event
 
