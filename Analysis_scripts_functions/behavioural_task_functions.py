@@ -59,7 +59,7 @@ def load_behavioural_data(participant_str, condition, condition_task_sessions, p
         session_df["P1"] = parsed_json_file['p1']
         session_df["change_point"] = parsed_json_file['didP1Change']
         session_df["task_session"] = parsed_json_file['taskSessionIdx']
-        session_df["trial_number"] = parsed_json_file['trialIdx']
+        session_df["outcome_num"] = parsed_json_file['trialIdx']
         session_df["sequence_id"] = parsed_json_file['sequenceIdx']
         session_df["run_id"] = parsed_json_file['runId']
         session_df["score"] = parsed_json_file['scoreFrac']
@@ -79,12 +79,12 @@ def load_behavioural_data(participant_str, condition, condition_task_sessions, p
     # Calculate first outcome presentation times for each task session
     first_outcome_times = behavioural_df.groupby('task_session')['time'].transform('first')
 
-    # Subtract start times from 'time' column to create 'relative_time' column for each task session
-    behavioural_df['relative_time'] = (behavioural_df['time'] - first_outcome_times) / 1000
+    # Subtract start times from 'time' column to create 'rel_time' column for each task session
+    behavioural_df['rel_time'] = (behavioural_df['time'] - first_outcome_times) / 1000
 
     # adjust trial and task session index
     behavioural_df['task_session'] = behavioural_df['task_session'] + 1
-    behavioural_df['trial_number'] = behavioural_df['trial_number'] + 1
+    #behavioural_df['outcome_num'] = behavioural_df['outcome_num'] + 1
 
     # Behavioural data diagnostics
     # Checking whether the right number of task sessions are in the data frame
@@ -98,7 +98,7 @@ def load_behavioural_data(participant_str, condition, condition_task_sessions, p
         print(f"There is not the expected number of task sessions: {number_of_unique_task_sessions} / {len(condition_task_sessions)}")
     
     # Checking whether there are 75 outcome presentations per task session
-    trial_count_per_session = behavioural_df.groupby('task_session')['trial_number'].count()
+    trial_count_per_session = behavioural_df.groupby('task_session')['outcome_num'].count()
 
     for task_session, count in trial_count_per_session.items():
         if count == 75:
@@ -109,8 +109,8 @@ def load_behavioural_data(participant_str, condition, condition_task_sessions, p
     # Checking the number of change points within each task session data file
     change_point_count_per_session = behavioural_df.groupby('task_session')['change_point'].sum()
 
-    # Remove the True value associated with trial number 1 in each task session then group by 'task_session' and count the number of True values in 'change_point' again
-    filtered_cp_df = behavioural_df[~((behavioural_df['trial_number'] == 1) & (behavioural_df['change_point'] == True))]
+    # Remove the True value associated with trial number 0 in each task session then group by 'task_session' and count the number of True values in 'change_point' again
+    filtered_cp_df = behavioural_df[~((behavioural_df['outcome_num'] == 0) & (behavioural_df['change_point'] == True))]
 
     filtered_change_point_count_per_session = filtered_cp_df.groupby('task_session')['change_point'].sum()
     print(f"\nNumber of True values in 'change_point' for each task session (after removing 'True' value for the first observation of each session:\n{filtered_change_point_count_per_session}")
@@ -135,21 +135,21 @@ def load_behavioural_data(participant_str, condition, condition_task_sessions, p
 
             # Scatter for P1 
             fig.add_trace(
-                go.Scatter(x=session_data['relative_time'], y=session_data['P1'], mode='lines', line=dict(color=colors[0]), name=f'Hidden proportion of blue'), row=i, col=1)
+                go.Scatter(x=session_data['rel_time'], y=session_data['P1'], mode='lines', line=dict(color=colors[0]), name=f'Hidden proportion of blue'), row=i, col=1)
 
             # Scatter for participant estimate
             fig.add_trace(
-                go.Scatter(x=session_data['relative_time'], y=session_data['estimate'], mode='lines', line=dict(color=colors[1]), name=f'Participant estimate of proportion'), row=i, col=1)
+                go.Scatter(x=session_data['rel_time'], y=session_data['estimate'], mode='lines', line=dict(color=colors[1]), name=f'Participant estimate of proportion'), row=i, col=1)
 
             # Scatter for ideal observer estimate
             fig.add_trace(
-                go.Scatter(x=session_data['relative_time'], y=session_data['ideal_observer'], mode='lines', line=dict(color=colors[2]), name=f'Ideal observer estimate of proportion'), row=i, col=1)
+                go.Scatter(x=session_data['rel_time'], y=session_data['ideal_observer'], mode='lines', line=dict(color=colors[2]), name=f'Ideal observer estimate of proportion'), row=i, col=1)
 
             # Scatter for outcome presentation with colour based on 'outcome'
             colours_adalearn = ['blue' if val == 1 else 'yellow' for val in session_data['outcome']]
         
             fig.add_trace(
-                go.Scatter(x=session_data['relative_time'], y=[0]*len(session_data['outcome']), mode='markers', marker=dict(color=colours_adalearn), name='Outcomes'), row=i, col=1)
+                go.Scatter(x=session_data['rel_time'], y=[0]*len(session_data['outcome']), mode='markers', marker=dict(color=colours_adalearn), name='Outcomes'), row=i, col=1)
 
             # Set y-axis range
             fig.update_yaxes(range=[-0.09, 1], row=i, col=1)
@@ -198,7 +198,7 @@ def behavioural_change_point_analysis(behavioural_df):
     Returns:
     - num_change_points: int, the total number of change points in the DataFrame.
     - change_points_per_session: pd.Series, the number of change points in each task session.
-    - change_point_indices: pd.DataFrame, with columns 'index', 'relative_time', and 'task_session', containing the indices and relative times of the change points for each session. (*Note: Have removed identification of the first outcome of each task session as a new change point)
+    - change_point_indices: pd.DataFrame, with columns 'cum_outcome_num', 'rel_time', and 'task_session', containing the indices and relative times of the change points for each session. (*Note: Have removed identification of the first outcome of each task session as a new change point)
     """
 
     # Calculate the number of change points
@@ -213,11 +213,11 @@ def behavioural_change_point_analysis(behavioural_df):
     # Iterate over each group of Task_session
     for task_session, group in behavioural_df.groupby('task_session'):
         indices = group.index[group['change_point']].tolist()
-        trial_number = group.loc[group['change_point'], 'trial_number'].tolist()
-        relative_times = group.loc[group['change_point'], 'relative_time'].tolist()
+        outcome_num = group.loc[group['change_point'], 'outcome_num'].tolist()
+        relative_times = group.loc[group['change_point'], 'rel_time'].tolist()
         
         # Create a DataFrame for the current group and append to the list
-        change_point_indices_df = pd.DataFrame({'index': indices, 'trial_number': trial_number,'relative_time': relative_times})
+        change_point_indices_df = pd.DataFrame({'cum_outcome_num': indices, 'outcome_num': outcome_num,'rel_time': relative_times})
         change_point_indices_df['task_session'] = task_session  # Add Task_session for identification
         change_point_indices_list.append(change_point_indices_df)
     
@@ -225,7 +225,7 @@ def behavioural_change_point_analysis(behavioural_df):
     change_point_indices = pd.concat(change_point_indices_list).reset_index(drop=True)
 
     # Identifying the change point numbers that are not associated with the start of a new task session
-    change_point_indices = change_point_indices[change_point_indices['trial_number'] > 1]
+    change_point_indices = change_point_indices[change_point_indices['outcome_num'] > 1]
 
     # Create a running count of the number of change points in a condition
     change_point_indices['change_point_count'] = range(1, len(change_point_indices) + 1)
@@ -244,7 +244,7 @@ def behavioural_learning_rate_analysis(behavioural_df, change_point_indices_df, 
 
     Parameters:
     - behavioural_df: pd.DataFrame, contains parsed data from json adalearn data file for select variables.
-    - change_point_indices_df: pd.DataFrame, with columns 'index', 'relative_time', and 'task_session', containing the indices and relative times of the change points for each session. Used to mark the change points on plots (*Note: Have removed identification of the first outcome of each task session as a new change point)
+    - change_point_indices_df: pd.DataFrame, with columns 'cum_outcome_num', 'rel_time', and 'task_session', containing the indices and relative times of the change points for each session. Used to mark the change points on plots (*Note: Have removed identification of the first outcome of each task session as a new change point)
     - participant_str: string, participant identifier (number; set to 2 digits)
     - condition: string, identifier of condition order (set to 2 numbers) ** May need to change to denote actual condition in Adalearn VNS study **
     - plot_learning_rate_by_ses: boolean, if true, will plot the calculated (and filtered) learning rate across each task session. Change points added as dotted horizontal lines for visualisation (default = false).
@@ -286,9 +286,9 @@ def behavioural_learning_rate_analysis(behavioural_df, change_point_indices_df, 
         for i, session in enumerate(unique_sessions, start=1):
             session_data = behavioural_df[behavioural_df['task_session'] == session]
             fig.add_trace(
-                go.Scatter(x=session_data['trial_number'], y=session_data['cleaned_learning_rate'], mode='lines+markers', name=f'Beahvioural learning rate in task session {session}'), row=i, col=1)
+                go.Scatter(x=session_data['outcome_num'], y=session_data['cleaned_learning_rate'], mode='lines+markers', name=f'Beahvioural learning rate in task session {session}'), row=i, col=1)
 
-            change_points = change_point_indices_df[change_point_indices_df['task_session'] == session]['trial_number']
+            change_points = change_point_indices_df[change_point_indices_df['task_session'] == session]['outcome_num']
             for cp in change_points:
                 fig.add_shape(
                     type="line", 
@@ -320,7 +320,7 @@ def learning_rate_by_change_point(behavioural_df, change_point_indices, particip
 
     Parameters:
     - behavioural_df: pd.DataFrame, contains parsed data from json adalearn data file for select variables with the new addition of learning rate variable.
-    - change_point_indices: pd.DataFrame, with columns 'index', 'relative_time', and 'task_session', containing the indices and relative times of the change points for each session. (*Note: Have removed identification of the first outcome of each task session as a new change point).
+    - change_point_indices: pd.DataFrame, with columns 'cum_outcome_num', 'rel_time', and 'task_session', containing the indices and relative times of the change points for each session. (*Note: Have removed identification of the first outcome of each task session as a new change point).
     - participant: string, identifier of participant number
     - condition: string, identifier of condition order (set to 2 numbers) ** May need to change to denote actual condition in Adalearn VNS study **
     - pre: integer, number of outcomes before the change point. Predefined to incorporate in plotting the data.
@@ -337,14 +337,14 @@ def learning_rate_by_change_point(behavioural_df, change_point_indices, particip
 
     for idx, row in change_point_indices.iterrows():
         task_session = row['task_session']
-        trial_number = row['trial_number']
+        outcome_num = row['outcome_num']
 
         for i in range(-pre, post+1):  # Predefined to be 2 trials before to 10 trials after identified change points. Can be changed to suit. 
             expanded_change_points.append({
                 'task_session': task_session,
-                'trial_number': trial_number,
+                'outcome_num': outcome_num,
                 'relative_position': i,
-                'trial_number_rel': trial_number + i
+                'outcome_num_rel_pos': outcome_num + i
             })
 
     expanded_change_points_df = pd.DataFrame(expanded_change_points)
@@ -352,12 +352,12 @@ def learning_rate_by_change_point(behavioural_df, change_point_indices, particip
 
     # Filter main behavioural dataframe to only contain values in defined range around change point  
     filtered_learning_rate_by_cp = pd.merge(expanded_change_points_df, behavioural_df, 
-                                            left_on=['task_session', 'trial_number_rel'], 
-                                            right_on=['task_session', 'trial_number'], 
+                                            left_on=['task_session', 'outcome_num_rel_pos'], 
+                                            right_on=['task_session', 'outcome_num'], 
                                             how='left', suffixes=('', '_y'))
 
     # Drop unnecessary columns
-    filtered_learning_rate_by_cp.drop(columns=['relative_time', 'trial_number_y'], inplace=True)
+    filtered_learning_rate_by_cp.drop(columns=['rel_time', 'outcome_num_y'], inplace=True)
 
     # Calculate the average, standard deviation and count of the behavioural learning rate across the different relative positions to the change point
     averaged_learning_rate_by_cp = filtered_learning_rate_by_cp.groupby('relative_position')['cleaned_learning_rate'].agg(['mean', 'std', 'count']).reset_index()
@@ -378,7 +378,7 @@ def learning_rate_by_change_point(behavioural_df, change_point_indices, particip
         # Add individual learning rates
         for idx, row in change_point_indices.iterrows():
             session_data = filtered_learning_rate_by_cp[(filtered_learning_rate_by_cp['task_session'] == row['task_session']) & 
-                                                    (filtered_learning_rate_by_cp['trial_number'] == row['trial_number'])]
+                                                    (filtered_learning_rate_by_cp['outcome_num'] == row['outcome_num'])]
 
             if len(session_data) == (pre + post + 1):
                 num_traces += 1
@@ -417,7 +417,7 @@ def learning_rate_by_change_point(behavioural_df, change_point_indices, particip
         # Add dashed line at change point
         for i in [1, 2]:
             fig.add_shape(type="line",
-                x0=0, y0=-5, x1=0, y1=5,
+                x0=1, y0=-5, x1=1, y1=5,
                 line=dict(
                     color="Red",
                     width=2,

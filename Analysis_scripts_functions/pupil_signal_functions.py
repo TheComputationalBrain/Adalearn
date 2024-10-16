@@ -38,7 +38,7 @@ def load_pupil_data(participant_str, condition, condition_task_sessions, plot_pu
     file_size_threshold_bytes = file_size_threshold_mb * 1024 * 1024
 
     # Initialize lists for storing parsed data from Tobii eye tracker
-    tobii_time_list = []
+    time_list = []
     RE_x_list = []
     LE_x_list = []
     RE_y_list = []
@@ -95,7 +95,7 @@ def load_pupil_data(participant_str, condition, condition_task_sessions, plot_pu
                         indtab.append(ind2)
                         ind2 = lines[nlines].find(',', ind2 + 1)
             
-                tobii_time_list.append(float(lines[nlines][0:indtab[0]-1]))
+                time_list.append(float(lines[nlines][0:indtab[0]-1]))
 
                 if lines[nlines][indtab[0]+3:indtab[1]] == 'nan':
                     RE_x_list.append(np.nan)
@@ -131,7 +131,7 @@ def load_pupil_data(participant_str, condition, condition_task_sessions, plot_pu
 
     # Create a DataFrame for the pupil data from storage lists
     pupil_df = pd.DataFrame({
-        'tobii_time': tobii_time_list,
+        'time': time_list,
         'RE_x': RE_x_list,
         'RE_y': RE_y_list,
         'LE_x': LE_x_list,
@@ -142,7 +142,8 @@ def load_pupil_data(participant_str, condition, condition_task_sessions, plot_pu
     })
 
     # Create relative time variable in pupil_df
-    pupil_df['tobii_time_rel'] = pupil_df.groupby('task_session')['tobii_time'].diff().fillna(0).groupby(pupil_df['task_session']).cumsum() / 1000000
+    pupil_df['rel_time'] = pupil_df.groupby('task_session')['time'].diff().fillna(0).groupby(pupil_df['task_session']).cumsum() / 1000000
+
 
     # Convert trigger message to outcome variable
     converted_trigger_list = [1 if 'stim_1' in msg else 0 for msg in message_list]
@@ -154,8 +155,9 @@ def load_pupil_data(participant_str, condition, condition_task_sessions, plot_pu
         'outcome' : converted_trigger_list
     })
 
-    pupil_trig_df['trigger_num'] = range(len(pupil_trig_df))
-
+    pupil_trig_df['cum_outcome_num'] = range(len(pupil_trig_df))
+    pupil_trig_df['outcome_num'] = pupil_trig_df.groupby('task_session').cumcount() 
+ 
     # Plotting the right eye pupil data using Plotly if plot=True
     if plot_pupil_by_task_session:   
         # Defining the unique task sessions within the data file 
@@ -172,9 +174,9 @@ def load_pupil_data(participant_str, condition, condition_task_sessions, plot_pu
         for i, session in enumerate(unique_sessions, start=1):
             session_data = pupil_df[pupil_df['task_session'] == session]
 
-            fig.add_trace(go.Scatter(x=session_data['tobii_time_rel'], y=session_data['RE_diameter'], mode='lines', line=dict(color=colors[0]), name='Right eye diameter'), row=i, col=1)
-            fig.add_trace(go.Scatter(x=session_data['tobii_time_rel'], y=session_data['RE_x'], mode='lines', line=dict(color=colors[1]), name='Right eye x position'), row=i, col=1)
-            fig.add_trace(go.Scatter(x=session_data['tobii_time_rel'], y=session_data['RE_y'], mode='lines', line=dict(color=colors[2]), name='Right eye y position'), row=i, col=1)
+            fig.add_trace(go.Scatter(x=session_data['rel_time'], y=session_data['RE_diameter'], mode='lines', line=dict(color=colors[0]), name='Right eye diameter'), row=i, col=1)
+            fig.add_trace(go.Scatter(x=session_data['rel_time'], y=session_data['RE_x'], mode='lines', line=dict(color=colors[1]), name='Right eye x position'), row=i, col=1)
+            fig.add_trace(go.Scatter(x=session_data['rel_time'], y=session_data['RE_y'], mode='lines', line=dict(color=colors[2]), name='Right eye y position'), row=i, col=1)
 
         fig.update_layout(height=900*num_sessions, 
                           width=1200,
@@ -189,7 +191,7 @@ def load_pupil_data(participant_str, condition, condition_task_sessions, plot_pu
 
 
 
-def process_pupil_data(participant_str, list_subject_selected, condition, from_session, to_session, dict_onsets, dict_num, session_list = None, outlier_limit_std = 10, outlier_correct_average_amount = 10,  window_start_before = 0.2, window_end_after = 3, blink_ratio_threshold = 0.20, reject_epochs = False, z_score = False):
+def process_pupil_data(participant_str, list_subject_selected, condition, from_session, to_session, dict_onsets, dict_num, session_list = None, outlier_limit_std = 10, outlier_correct_average_amount = 10,  window_start_before = 0.2, window_end_after = 3, blink_ratio_threshold = 0.20, reject_epochs = False, z_score = True):
     """
     Function to preprocess pupil data into epochs around defined outcomes of interest (e.g. change points, high and low surprise, etc). Preprocessing taken from preprocess_eyedata script, created by Florent, Maëva, Aziza and Yannaël. Calculates the mean and standard deviation across each identified epoch for all task session.
 
@@ -208,11 +210,12 @@ def process_pupil_data(participant_str, list_subject_selected, condition, from_s
     - window_end_after: int, value defining the end of the epoch window in time (seconds). Default = 3
     - blink_ratio_threshold:, integer, value determining the threshold criteria for the removal of an epoch due to excessive blink ratio (default = 0.2)
     - reject_epochs: boolean, parameter determining whether epochs with an excessive blink ratio should be removed (default = False)
-    - z_score: boolean, option to z_score data before computing epochs. Default = False.
+    - z_score: boolean, option to z_score data before computing epochs. Default = True.
     - plot: boolean, option to plot the mean and standard deviation across epochs using Plotly. Default = True. 
 
     Returns:
     - epoched_pupil_df: pd.DataFrame, containing transposed epoched data (each column represents one epoch), the calculated mean and standard deviation across epochs and the timestamp. 
+    - blink_ratio_epoch_df: pd.DataFrame, contains the blink ratio inofrmation for each generated epoch
     """
     # Reset working directory
     base_dir = f'/home/aaron/Documents/Python/Ada_Learn/VNS Ada_Learn/Data/sub-{participant_str}/ses-{condition}/eye'
@@ -253,7 +256,7 @@ def process_pupil_data(participant_str, list_subject_selected, condition, from_s
             time, diameter, diameter_int, x_pos, x_pos_int, y_pos, y_pos_int = data_tob.preprocess(plot=False, remove_outlier=True, outlier_limit_std=outlier_limit_std, outlier_correct_average_amount=outlier_correct_average_amount)
       
             # Epoch the data and apply baseline correction
-            data_tob.epoch_tobii(dict_onsets[session_str], variable='diameter_int', decimate=1, reject=reject_epochs, blink_ratio_thd=blink_ratio_threshold, before=window_start_before, after=window_end_after, baseline=[-1, 0], conditions={'event_num': dict_num[session_str]}, z_score_data=z_score)
+            data_tob.epoch_tobii(dict_onsets[session_str], variable='diameter_int', decimate=1, reject=reject_epochs, blink_ratio_thd=blink_ratio_threshold, before=window_start_before, after=window_end_after, baseline=[-0.2, 0], conditions={'event_num': dict_num[session_str]}, z_score_data=z_score)
 
             # Check to ensure the correct number of epochs
             print("For participant n:", subject, " in session = ", session, "there are:", len(data_tob.epochs), "epochs")
@@ -277,9 +280,79 @@ def process_pupil_data(participant_str, list_subject_selected, condition, from_s
     numeric_data = epoched_pupil_df.iloc[:, :]
     epoched_pupil_df['mean'] = numeric_data.mean(axis=1)
     epoched_pupil_df['std'] = numeric_data.std(axis=1)
+    epoched_pupil_df['sem'] = epoched_pupil_df['std'] / np.sqrt(numeric_data.shape[1])
     epoched_pupil_df['time'] = data_tob.epochs_times
 
     return epoched_pupil_df, blink_ratio_epoch_df
+
+
+
+def align_pupil_to_events(pupil_trig_df, event_df, to_session, print_event_df_shape=True):
+    """
+    Function to align pupil data with adalearn outcome presentations marking some event of interest. Aligns outcome triggers between different files based on the cumulative number (id) of that outcome, or based on a relative number within task sessions. Provides initial checks to ensure that the data is macthed and determine which route to progress with during the alignment.
+
+    Parameters:
+    - pupil_trig_df: pd.DataFrame, contains the trigger information (i.e. time, outcome) for each task session, extracted from the pupil data files. 
+    - event_df: pd.DataFrame, contains the outcome trigger information concerning some parameter of interest. Must include variables: task_session (task session identifier), outcome_num (relative number of the outcome of interest within a particular task session: 0-74), cum_outcome_num (cumulative count of the outcome number across all task sessions). 
+    - to_session: int, defining the number of the last task session within the condition.
+    - print_event_df_shape: boolean, if true will print descriptive stats of the event_df so one can ensure that the function is working correctly 
+
+    Returns:
+    - pupil_by_event: pd.DataFrame, merged dataframe defined by the outcome identifiers within event dataframe. Importantly extracts the timestamp of that outcome from the pupil data which is used in the process of the pupil response.   
+    """
+    if print_event_df_shape:
+        print(f'The dataframe has shape: {event_df.shape}')
+    
+
+    # Identify triggers in pupil file by aligning with outcomes that signify some event of interest. 3 step process.
+    # Change pupil trig datafile task session to integer (removing zero padding)
+    pupil_trig_df['task_session'] = pupil_trig_df['task_session'].astype(int)
+
+    # Step 1: Ensure that the same number of unique task session values exist in both the pupil and behavioural event dataframes. If not, signifies that either some data is missing, or data in certain task sessions have been excluded (e.g. there were nor high/low surprising observations in a particular task session):
+    pupil_sessions = set(pupil_trig_df['task_session'].unique())
+    event_sessions = set(event_df['task_session'].unique())
+
+    if pupil_sessions != event_sessions:
+        print(f"ERROR MISMATCH: Pupil data has {len(pupil_sessions)} unique task sessions ({pupil_sessions}), while behavioural events were taken from {len(event_sessions)} unique task sessions ({event_sessions}).")
+    else:
+        print("MATCH: Task sessions match across both dataframes")
+
+    # Step 2: Check that the length of the pupil trig data equals 75 * the number of unique task sessions. Indicates that all of the pupil data is being included.
+    expected_length = 75 * to_session
+
+    if len(pupil_trig_df) != expected_length:
+        print(f"ERROR MISMATCH: Pupil data has {len(pupil_trig_df)} rows, but there should be {expected_length} expected rows.")
+    else:
+        print("MATCH: Pupil data is as expected given the number of task sessions performed.")
+
+    # Step 3: If any of the checks above are violated, proceed with finding the matching rows based on relative task session trigger number
+    if pupil_sessions != event_sessions or len(pupil_trig_df) != expected_length:
+        pupil_grouped = pupil_trig_df.groupby('task_session').apply(lambda x: x.reset_index(drop=True)).reset_index(drop=True)
+        behav_event_grouped = event_df.groupby('task_session').apply(lambda x: x.reset_index(drop=True)).reset_index(drop=True)
+
+        pupil_by_event = pd.merge(
+            pupil_grouped,
+            behav_event_grouped,
+            left_on=['task_session', 'outcome_num'],
+            right_on=['task_session', 'outcome_num'],
+            how='inner'
+        )
+
+        print(f"Merged dataframe based on relative triggers. The number of relative triggers found was: {pupil_by_event.shape[0]}.")
+
+    # If checks were not violated, match pupil to behavioural event based on cumulative outcome number across all task sessions
+    else:
+
+        pupil_by_event = pupil_trig_df[pupil_trig_df['outcome_num'].isin(event_df['cum_outcome_num'])]
+
+        print(f"Merged dataframe based on cumulative triggers. The number of triggers found was: {pupil_by_event.shape[0]}.")
+
+    # Return the pupil task session to zero-padded so compatible with pupil processing function 
+    pupil_by_event['task_session'] = pupil_by_event['task_session'].astype(str).str.zfill(2)
+    pupil_by_event = pupil_by_event.drop(columns=['cum_outcome_num_x'])
+    pupil_by_event = pupil_by_event.rename(columns={'cum_outcome_num_y': 'cum_outcome_num'})
+   
+    return pupil_by_event
 
 
 
@@ -303,16 +376,16 @@ def change_point_pupil_epochs(participant_str, list_subject_selected, condition_
     - change_point_onsets: dict, contains identified change point timestamps. Keys are task session and values are time stamps within that task session. 
     - change_point_nums: dict, contains a cumulative count of the number of change points identified within each task session. Keys are task sessions and values are the cumulative count of the number of change points within that task session.
     - epoched_pupil_df: pd.DataFrame, containing transposed epoched data (each column represents one epoch), the calculated mean and standard deviation across change point defined epochs and the timestamp.
+    - blink_ratio_cp_df: pd.DataFrame, contains the blink ratio inofrmation for each generated epoch around change points
     """
-    # Identify change point based on cumulative trigger number 
-    tobii_by_change_points = pupil_trig_df[pupil_trig_df['trigger_num'].isin(change_point_indices['index'])]
-
+    pupil_by_change_points = align_pupil_to_events(pupil_trig_df=pupil_trig_df, event_df=change_point_indices, to_session=to_session, print_event_df_shape=True)
+  
     # Creating dictionaries for storage of change point time and number 
     change_point_onsets = {}
     change_point_nums = {}
 
     # For loop that extracts identified change point times for each task session 
-    for session, group in tobii_by_change_points.groupby('task_session'):
+    for session, group in pupil_by_change_points.groupby('task_session'):
       # Extract the timeflow values for the current group (session)
       change_point_onset_values = group['trigger_time'].tolist()
     
@@ -346,7 +419,7 @@ def change_point_pupil_epochs(participant_str, list_subject_selected, condition_
 
         fig_epoch_avg.add_trace(go.Scatter(
             x=epoched_pupil_cp_df['time'],
-            y=epoched_pupil_cp_df['mean'] + epoched_pupil_cp_df['std'],
+            y=epoched_pupil_cp_df['mean'] + epoched_pupil_cp_df['sem'],
             mode='lines',
             line=dict(color='rgba(0, 0, 255, 0.1)'),
             showlegend=False
@@ -354,7 +427,7 @@ def change_point_pupil_epochs(participant_str, list_subject_selected, condition_
 
         fig_epoch_avg.add_trace(go.Scatter(
             x=epoched_pupil_cp_df['time'],
-            y=epoched_pupil_cp_df['mean'] - epoched_pupil_cp_df['std'],
+            y=epoched_pupil_cp_df['mean'] - epoched_pupil_cp_df['sem'],
             mode='lines',
             fill='tonexty',
             fillcolor='rgba(0, 0, 255, 0.2)',
@@ -365,9 +438,9 @@ def change_point_pupil_epochs(participant_str, list_subject_selected, condition_
         fig_epoch_avg.add_vline(x=0, line_width=3, line_dash="dash", line_color="black", opacity=0.5)
 
         fig_epoch_avg.update_layout(
-            title='Baseline corrected right pupil response epoched around change points across all task sessions (Mean +/- Std)',
+            title=f'Baseline corrected right pupil response epoched around change points for participant {participant_str} in condition {condition_str} (Mean +/- SEM)',
             xaxis_title='Time (s)',
-            yaxis_title='Pupil diameter'
+            yaxis_title='Pupil diameter (z-score)'
         )       
 
         fig_epoch_avg.show()
@@ -393,21 +466,28 @@ def surprise_pupil_epochs(participant_str, list_subject_selected, condition_str,
     - plot_pupil_by_surprise: boolean, option to plot the mean and standard deviation across epochs using Plotly. (Default = True). 
 
     Returns:
-    - epoched_pupil_surprise_df: pd.DataFrame, containing transposed epoched data (each column represents one epoch), the calculated mean and standard deviation across epochs and the timestamp. 
+    - surprise_low_onsets: dict, contains low surprise observation timestamps. Keys are task session and values are time stamps within that task session. 
+    - surprise_low_nums: dict, contains a cumulative count of the number of low surprise observations identified within each task session. Keys are task sessions and values are the cumulative count of the number of low surprise observations within that task session.
+    - surprise_high_onsets: dict, contains high surprise observation timestamps. Keys are task session and values are time stamps within that task session. 
+    - surprise_high_nums: dict, contains a cumulative count of the number of high surprise observations identified within each task session. Keys are task sessions and values are the cumulative count of the number of high surprise observations within that task session.
+    - epoched_pupil_low_surprise_df: pd.DataFrame, containing transposed epoched data for the low surprise condition (each column represents one epoch). Variables include the calculated mean and standard deviation epochs and the timestamp. 
+    - epoched_pupil_high_surprise_df: pd.DataFrame, containing transposed epoched data for the high surprise condition (each column represents one epoch). Variables include the calculated mean and standard deviation epochs and the timestamp. 
+    - low_surprise_blink_ratio_df: pd.DataFrame, contains the blink ratio inofrmation for each generated epoch around low surprise observations.
+    - high_surprise_blink_ratio_df: pd.DataFrame, contains the blink ratio inofrmation for each generated epoch around high surprise observations.
     """
     # Filter for 'below_first_threshold' and 'above_third_threshold' based on surprise category
     filtered_below_first = surprise_df[surprise_df['surprise_cat'] == 'below_first_quartile'].copy()
     filtered_above_third = surprise_df[surprise_df['surprise_cat'] == 'above_third_quartile'].copy()
 
-    tobii_by_surprise_low = pupil_trig_df[pupil_trig_df['trigger_num'].isin(filtered_below_first['cum_trigger_count'])]
-    tobii_by_surprise_high = pupil_trig_df[pupil_trig_df['trigger_num'].isin(filtered_above_third['cum_trigger_count'])]
-
+    pupil_by_surprise_low = align_pupil_to_events(pupil_trig_df=pupil_trig_df, event_df=filtered_below_first, to_session=to_session, print_event_df_shape=True)
+    pupil_by_surprise_high = align_pupil_to_events(pupil_trig_df=pupil_trig_df, event_df=filtered_above_third, to_session=to_session, print_event_df_shape=True)
+   
     # Creating dictionaries for storage of low surprising outcomes: time/onset and number 
     surprise_low_onsets = {}
     surprise_low_nums = {}
 
     # For loop that extracts times for low surprising outcomes duirng each task session 
-    for session, group in tobii_by_surprise_low.groupby('task_session'):
+    for session, group in pupil_by_surprise_low.groupby('task_session'):
       # Extract the timeflow values for the current group (session)
       low_surprise_onset_values = group['trigger_time'].tolist()
     
@@ -428,7 +508,7 @@ def surprise_pupil_epochs(participant_str, list_subject_selected, condition_str,
     surprise_high_nums = {}
 
     # For loop that extracts times for high surprising outcomes during each task session 
-    for session, group in tobii_by_surprise_high.groupby('task_session'):
+    for session, group in pupil_by_surprise_high.groupby('task_session'):
       # Extract the timeflow values for the current group (session)
       high_surprise_onset_values = group['trigger_time'].tolist()
     
@@ -446,8 +526,8 @@ def surprise_pupil_epochs(participant_str, list_subject_selected, condition_str,
 
         
     # Generating pupil response around surprising observations  
-    epoched_pupil_high_surprise_df, high_surprise_blink_ratio_df = process_pupil_data(participant_str=participant_str, list_subject_selected=list_subject_selected, condition=condition_str, from_session=from_session, to_session=to_session, dict_onsets=surprise_high_onsets, dict_num=surprise_high_nums, session_list=high_surp_ses_list)
     epoched_pupil_low_surprise_df, low_surprise_blink_ratio_df = process_pupil_data(participant_str=participant_str, list_subject_selected=list_subject_selected, condition=condition_str, from_session=from_session, to_session=to_session, dict_onsets=surprise_low_onsets, dict_num=surprise_low_onsets, session_list=low_surp_ses_list)
+    epoched_pupil_high_surprise_df, high_surprise_blink_ratio_df = process_pupil_data(participant_str=participant_str, list_subject_selected=list_subject_selected, condition=condition_str, from_session=from_session, to_session=to_session, dict_onsets=surprise_high_onsets, dict_num=surprise_high_nums, session_list=high_surp_ses_list)
 
     # Plotting the mean (and std) response of the pupil diameter timelocked to high and low surprising observations
     if plot_pupil_by_surprise:
@@ -464,7 +544,7 @@ def surprise_pupil_epochs(participant_str, list_subject_selected, condition_str,
 
         fig_epoch_avg.add_trace(go.Scatter(
             x=epoched_pupil_high_surprise_df['time'],
-            y=epoched_pupil_high_surprise_df['mean'] + epoched_pupil_high_surprise_df['std'],
+            y=epoched_pupil_high_surprise_df['mean'] + epoched_pupil_high_surprise_df['sem'],
             mode='lines',
             line=dict(color='rgba(0, 0, 255, 0.1)'),
             showlegend=False
@@ -472,7 +552,7 @@ def surprise_pupil_epochs(participant_str, list_subject_selected, condition_str,
 
         fig_epoch_avg.add_trace(go.Scatter(
             x=epoched_pupil_high_surprise_df['time'],
-            y=epoched_pupil_high_surprise_df['mean'] - epoched_pupil_high_surprise_df['std'],
+            y=epoched_pupil_high_surprise_df['mean'] - epoched_pupil_high_surprise_df['sem'],
             mode='lines',
             fill='tonexty',
             fillcolor='rgba(0, 0, 255, 0.2)',
@@ -490,7 +570,7 @@ def surprise_pupil_epochs(participant_str, list_subject_selected, condition_str,
 
         fig_epoch_avg.add_trace(go.Scatter(
             x=epoched_pupil_low_surprise_df['time'],
-            y=epoched_pupil_low_surprise_df['mean'] + epoched_pupil_low_surprise_df['std'],
+            y=epoched_pupil_low_surprise_df['mean'] + epoched_pupil_low_surprise_df['sem'],
             mode='lines',
             line=dict(color='rgba(255, 0, 0, 0.1)'),
             showlegend=False
@@ -498,7 +578,7 @@ def surprise_pupil_epochs(participant_str, list_subject_selected, condition_str,
 
         fig_epoch_avg.add_trace(go.Scatter(
             x=epoched_pupil_low_surprise_df['time'],
-            y=epoched_pupil_low_surprise_df['mean'] - epoched_pupil_low_surprise_df['std'],
+            y=epoched_pupil_low_surprise_df['mean'] - epoched_pupil_low_surprise_df['sem'],
             mode='lines',
             fill='tonexty',
             fillcolor='rgba(255, 0, 0, 0.2)',
@@ -509,11 +589,11 @@ def surprise_pupil_epochs(participant_str, list_subject_selected, condition_str,
         fig_epoch_avg.add_vline(x=0, line_width=3, line_dash="dash", line_color="black", opacity=0.5)
 
         fig_epoch_avg.update_layout(
-            title='Baseline corrected right pupil response epoched around observations of high and low surprise across all task sessions (Mean +/- Std)',
+            title=f'Baseline corrected right pupil response epoched around observations of high and low surprise for participant {participant_str} in condition {condition_str} (Mean +/- SEM)',
             xaxis_title='Time (s)',
-            yaxis_title='Pupil diameter'
+            yaxis_title='Pupil diameter (z-score)'
         )       
 
         fig_epoch_avg.show()
 
-    return surprise_low_onsets, surprise_low_nums, surprise_high_onsets, surprise_high_nums, epoched_pupil_low_surprise_df, epoched_pupil_high_surprise_df, high_surprise_blink_ratio_df, low_surprise_blink_ratio_df
+    return surprise_low_onsets, surprise_low_nums, surprise_high_onsets, surprise_high_nums, epoched_pupil_low_surprise_df, epoched_pupil_high_surprise_df,  low_surprise_blink_ratio_df, high_surprise_blink_ratio_df

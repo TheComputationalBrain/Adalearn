@@ -25,7 +25,7 @@ from model_learner import ideal_learner_prob_estimates_from_outcomes, ideal_lear
 
 
 
-def compute_surprise_from_observations(participant_str, condition_str, adalearn_data_df, change_point_indices_df, plot_surprise = False, plot_posterior_conf = False, plot_posterior_dist_means = False):
+def compute_surprise_from_observations(participant_str, condition_str, behavioural_df, change_point_indices_df, plot_surprise = False, plot_posterior_conf = False, plot_posterior_dist_means = False):
     """
     Function computes the level of surprise of each set of task session observations. Achieves this using the "run_inference" function (created by Cedric Foucault and Florent Meyniel: https://github.com/florentmeyniel/Ada-Learn/blob/main/analysis) to generate posterior inferences of generative probabilities of the data sequence (seq). Surprise is calculated as:
 
@@ -43,8 +43,8 @@ def compute_surprise_from_observations(participant_str, condition_str, adalearn_
     Parameters:
     - participant_str: string, participant identifier (set to 2 digits)  
     - condition: string, identifier of condition order (set to 2 digits) ** May need to change to denote actual condition in Adalearn VNS study **
-    - adalearn_data_df: pd.DataFrame, contains the behavioural outputs of the adalearn data files for a given condition. 
-    - change_point_indices_df: pd.DataFrame, contains outputs related to the presence of change points in the hidden task structure. The identified trial number within each task session will be used in plot visualisation.
+    - behavioural_df: pd.DataFrame, contains the behavioural outputs of the adalearn data files for a given condition. 
+    - change_point_indices_df: pd.DataFrame, contains outputs related to the presence of change points in the hidden task structure. The identified outcome number within each task session will be used in plot visualisation.
     - plot_surprise: boolean, if true, will plot the change in surprise per observation across each task session (default = False).
     - plot_posterior_conf: boolean, if true, will plot the change in posterior distribution SD (confidence) per observation across each task session (default = False). 
     - plot_posterior_dist_means: boolean, if true, will plot the change in posterior distribution means for both the blue and yellow distributions per observation across each task session (default = False).
@@ -68,7 +68,7 @@ def compute_surprise_from_observations(participant_str, condition_str, adalearn_
     task_session_surprise_df = []
 
     # Loop over task sessions and convert the outcome column to a sequence (np.array)
-    for task_session, session_data in adalearn_data_df.groupby('task_session'):
+    for task_session, session_data in behavioural_df.groupby('task_session'):
         seq = np.array(session_data['outcome'])
 
         # Run inference to compute surprise for the sequence of observations
@@ -78,15 +78,15 @@ def compute_surprise_from_observations(participant_str, condition_str, adalearn_
         surprise_values = output['surprise']
         session_surprise_df = pd.DataFrame({'surprise': surprise_values})
         session_surprise_df['task_session'] = task_session
-        session_surprise_df['task_sess_count'] = np.arange(1, len(session_surprise_df)+1)
         session_surprise_df['outcome'] = seq
+        session_surprise_df['outcome_num'] = np.arange(0, len(session_surprise_df))
         session_surprise_df['model_post_prob_1'] = output[(1,)]['mean']
         session_surprise_df['model_post_prob_0'] = output[(0,)]['mean']
         session_surprise_df['model_post_prob_var'] = output[(1,)]['SD']
         task_session_surprise_df.append(session_surprise_df)
          
     surprise_df = pd.concat(task_session_surprise_df, ignore_index=True)
-    surprise_df['cum_trigger_count'] = surprise_df.index
+    surprise_df['cum_outcome_num'] = surprise_df.index
 
     # Categorizing the level of surprise for basic analysis
     first_quartile = surprise_df['surprise'].quantile(0.25)
@@ -106,9 +106,9 @@ def compute_surprise_from_observations(participant_str, condition_str, adalearn_
 
         for i, session in enumerate(unique_sessions, start=1):
             session_data = surprise_df[surprise_df['task_session'] == session]
-            fig.add_trace(go.Scatter(x=session_data['task_sess_count'], y=session_data['surprise'], mode='lines', name=f'Surprise - Session {session}'), row=i, col=1)
+            fig.add_trace(go.Scatter(x=session_data['outcome_num'], y=session_data['surprise'], mode='lines', name=f'Surprise - Session {session}'), row=i, col=1)
 
-            change_points = change_point_indices_df[change_point_indices_df['task_session'] == session]['trial_number']
+            change_points = change_point_indices_df[change_point_indices_df['task_session'] == session]['outcome_num']
             for cp in change_points:
                 fig.add_shape(
                     type="line", 
@@ -130,9 +130,9 @@ def compute_surprise_from_observations(participant_str, condition_str, adalearn_
 
         for i, session in enumerate(unique_task_sessions, start=1):
             session_data = surprise_df[surprise_df['task_session'] == session]
-            fig.add_trace(go.Scatter(x=session_data['task_sess_count'], y=session_data['model_post_prob_var'], mode='lines', name=f'Posterior distribution SD (confidence) - Session {session}'), row=i, col=1)
+            fig.add_trace(go.Scatter(x=session_data['outcome_num'], y=session_data['model_post_prob_var'], mode='lines', name=f'Posterior distribution SD (confidence) - Session {session}'), row=i, col=1)
 
-            change_points = change_point_indices_df[change_point_indices_df['task_session'] == session]['trial_number']
+            change_points = change_point_indices_df[change_point_indices_df['task_session'] == session]['outcome_num']
             for cp in change_points:
                 fig.add_shape(
                     type="line", 
@@ -154,10 +154,10 @@ def compute_surprise_from_observations(participant_str, condition_str, adalearn_
 
         for i, session in enumerate(unique_task_sessions, start=1):
             session_data = surprise_df[surprise_df['task_session'] == session]
-            fig.add_trace(go.Scatter(x=session_data['task_sess_count'], y=session_data['model_post_prob_0'], mode='lines', name=f'Posterior distribution mean (P(0)) - Session {session}', line_color = 'yellow'), row=i, col=1)
-            fig.add_trace(go.Scatter(x=session_data['task_sess_count'], y=session_data['model_post_prob_1'], mode='lines', name=f'Posterior distribution mean (P(1)) - Session {session}', line_color = 'blue'), row=i, col=1)
+            fig.add_trace(go.Scatter(x=session_data['outcome_num'], y=session_data['model_post_prob_0'], mode='lines', name=f'Posterior distribution mean (P(0)) - Session {session}', line_color = 'yellow'), row=i, col=1)
+            fig.add_trace(go.Scatter(x=session_data['outcome_num'], y=session_data['model_post_prob_1'], mode='lines', name=f'Posterior distribution mean (P(1)) - Session {session}', line_color = 'blue'), row=i, col=1)
 
-            change_points = change_point_indices_df[change_point_indices_df['task_session'] == session]['trial_number']
+            change_points = change_point_indices_df[change_point_indices_df['task_session'] == session]['outcome_num']
             for cp in change_points:
                 fig.add_shape(
                     type="line", 
@@ -175,7 +175,7 @@ def compute_surprise_from_observations(participant_str, condition_str, adalearn_
 
 
 
-def compute_prior_conf_and_cpp_from_observations(participant_str, condition_str, adalearn_data_df, change_point_indices_df, p_c, p1_min, p1_max, estimate_type, conf_type, plot_distribution_mean = False, plot_prior_conf = False, plot_cpp = False):
+def compute_prior_conf_and_cpp_from_observations(participant_str, condition_str, behavioural_df, change_point_indices_df, p_c, p1_min, p1_max, estimate_type, conf_type, plot_distribution_mean = False, plot_prior_conf = False, plot_cpp = False):
     """
     Function computes the "confidence" in the prior and change point probability from each set of task session observations. Computes "confidence" and change point probability using functions within "model_learner" (created by Cedric Foucault and Florent Meyniel: https://github.com/florentmeyniel/Ada-Learn/blob/main/analysis). "Confidence" is the -log(sd) of the prior distribution, while change point probability is calculated from the conditional probability of an observation (at time t) given a change point has occurred multiplied by the true probability of a change point occurring, divided by the conditional probability of an observation (at time t) given a change point has occurred multiplied by the true probability of a change point occurring plus the conditional probability of an observation (at time t) given no change point has occurred multiplied by the true probability that a change point did not occur:
 
@@ -186,8 +186,8 @@ def compute_prior_conf_and_cpp_from_observations(participant_str, condition_str,
     Parameters:
     - participant_str: string, participant identifier (number; set to 2 digits)  
     - condition: string, identifier of condition order (set to 2 digits) ** May need to change to denote actual condition in Adalearn VNS study **
-    - adalearn_data_df: pd.DataFrame, contains the behavioural outputs of the adalearn data files for a given condition. 
-    - change_point_indices_df: pd.DataFrame, contains outputs related to the presence of change points in the hidden task structure. The identified trial number within each task session will be used in plot visualisation.
+    - behavioural_df: pd.DataFrame, contains the behavioural outputs of the adalearn data files for a given condition. 
+    - change_point_indices_df: pd.DataFrame, contains outputs related to the presence of change points in the hidden task structure. The outcome number within each task session will be used in plot visualisation.
     - 'p_c': integer, true change point probability (should be 0.05)
     - 'p1_min': integer, the minimum value of the Bernoulli parameter (used to clip the Dirichlet prior distribution) (should be 0.1)
     - 'p1_max': integer, the maximum value of the Bernoulli parameter (used to clip the Dirichlet prior distribution) (should be 0.9)
@@ -218,29 +218,31 @@ def compute_prior_conf_and_cpp_from_observations(participant_str, condition_str,
     prior_conf_df_list =[]
     cpp_df_list =[]
 
-    for task_session, session_data in adalearn_data_df.groupby('task_session'):
+    for task_session, session_data in behavioural_df.groupby('task_session'):
         seq = np.array(session_data['outcome'])
 
         # Run functions to compute prior parameters, confidence and change point probability. Create data frames for each variable and then save the data frame for each task session in a list
         outcome_inference = ideal_learner_prob_inference_from_outcomes(seq, p_c, keys=['mean', 'SD', 'dist'], p1_min=p1_min, p1_max=p1_max, do_inference_on_current_trial=True, resol=20)
 
         prior_dist = ideal_learner_prob_estimates_from_outcomes(seq, p_c, estimate_type = estimate_type, p1_min = p1_min, p1_max = p1_max)
+        
         mean_values = prior_dist
         prior_dist_df = pd.DataFrame({
             'mean': mean_values,
         })
         prior_dist_df['task_session'] = task_session
-        prior_dist_df['task_sess_count'] = prior_dist_df.groupby('task_session').cumcount() + 1
+        prior_dist_df['outcome_num'] = prior_dist_df.groupby('task_session').cumcount()
         prior_dist_df_list.append(prior_dist_df)
         
 
         prior_conf = ideal_learner_prob_confidence_from_outcomes(seq, p_c, conf_type = conf_type, p1_min = p1_min, p1_max = p1_max)
+
         conf_values = prior_conf
         prior_conf_df = pd.DataFrame({
             'prior_conf': conf_values
         })
         prior_conf_df['task_session'] = task_session
-        prior_conf_df['task_sess_count'] = prior_conf_df.groupby('task_session').cumcount() + 1
+        prior_conf_df['outcome_num'] = prior_conf_df.groupby('task_session').cumcount()
         prior_conf_df_list.append(prior_conf_df)
 
 
@@ -250,18 +252,18 @@ def compute_prior_conf_and_cpp_from_observations(participant_str, condition_str,
             'cpp': cpp_values
         })
         cpp_df['task_session'] = task_session
-        cpp_df['task_sess_count'] = cpp_df.groupby('task_session').cumcount() + 1
+        cpp_df['outcome_num'] = cpp_df.groupby('task_session').cumcount() 
         cpp_df_list.append(cpp_df)
 
 
     prior_distribution_df = pd.concat(prior_dist_df_list, ignore_index=True)
-    prior_distribution_df['cum_trigger_count'] = prior_distribution_df.index
+    prior_distribution_df['cum_outcome_num'] = prior_distribution_df.index
 
     prior_confidence_df = pd.concat(prior_conf_df_list, ignore_index=True)
-    prior_confidence_df['cum_trigger_count'] = prior_confidence_df.index
+    prior_confidence_df['cum_outcome_num'] = prior_confidence_df.index
 
     change_point_prob_df = pd.concat(cpp_df_list, ignore_index=True)
-    change_point_prob_df['cum_trigger_count'] = change_point_prob_df.index
+    change_point_prob_df['cum_outcome_num'] = change_point_prob_df.index
 
     # Options to plots the the prior mean, prior confidence and change point probability
     if plot_distribution_mean:
@@ -272,9 +274,9 @@ def compute_prior_conf_and_cpp_from_observations(participant_str, condition_str,
 
         for i, session in enumerate(unique_sessions, start=1):
             session_data = prior_distribution_df[prior_distribution_df['task_session'] == session]
-            fig.add_trace(go.Scatter(x=session_data['task_sess_count'], y=session_data['mean'], mode='lines', name=f'Prior distribution mean - Session {session}'), row=i, col=1)
+            fig.add_trace(go.Scatter(x=session_data['outcome_num'], y=session_data['mean'], mode='lines', name=f'Prior distribution mean - Session {session}'), row=i, col=1)
 
-            change_points = change_point_indices_df[change_point_indices_df['task_session'] == session]['trial_number']
+            change_points = change_point_indices_df[change_point_indices_df['task_session'] == session]['outcome_num']
             for cp in change_points:
                 fig.add_shape(
                     type="line", 
@@ -297,9 +299,9 @@ def compute_prior_conf_and_cpp_from_observations(participant_str, condition_str,
 
         for i, session in enumerate(unique_sessions, start=1):
             session_data = prior_confidence_df[prior_confidence_df['task_session'] == session]
-            fig.add_trace(go.Scatter(x=session_data['task_sess_count'], y=session_data['prior_conf'], mode='lines', name=f'Prior confidence - Session {session}'), row=i, col=1)
+            fig.add_trace(go.Scatter(x=session_data['outcome_num'], y=session_data['prior_conf'], mode='lines', name=f'Prior confidence - Session {session}'), row=i, col=1)
 
-            change_points = change_point_indices_df[change_point_indices_df['task_session'] == session]['trial_number']
+            change_points = change_point_indices_df[change_point_indices_df['task_session'] == session]['outcome_num']
             for cp in change_points:
                 fig.add_shape(
                     type="line", 
@@ -321,9 +323,9 @@ def compute_prior_conf_and_cpp_from_observations(participant_str, condition_str,
 
         for i, session in enumerate(unique_sessions, start=1):
             session_data = change_point_prob_df[change_point_prob_df['task_session'] == session]
-            fig.add_trace(go.Scatter(x=session_data['task_sess_count'], y=session_data['cpp'], mode='lines', name=f'Change point probability - Session {session}'), row=i, col=1)
+            fig.add_trace(go.Scatter(x=session_data['outcome_num'], y=session_data['cpp'], mode='lines', name=f'Change point probability - Session {session}'), row=i, col=1)
 
-            change_points = change_point_indices_df[change_point_indices_df['task_session'] == session]['trial_number']
+            change_points = change_point_indices_df[change_point_indices_df['task_session'] == session]['outcome_num']
             for cp in change_points:
                 fig.add_shape(
                     type="line", 
@@ -387,11 +389,11 @@ def compute_model_learning_rate(participant_str, condition_str, adalearn_data_df
             'noisy_delta_rule': nosiy_delta_rule_estimates
         })
         delta_rule_est_df['task_session'] = task_session
-        delta_rule_est_df['task_sess_count'] = delta_rule_est_df.groupby('task_session').cumcount() + 1
+        delta_rule_est_df['outcome_num'] = delta_rule_est_df.groupby('task_session').cumcount() + 1
         delta_rule_estimates_df_list.append(delta_rule_est_df)
         
     model_learning_rate_df = pd.concat(delta_rule_estimates_df_list, ignore_index=True)
-    model_learning_rate_df['cum_trigger_count'] = model_learning_rate_df.index
+    model_learning_rate_df['cum_outcome_num'] = model_learning_rate_df.index
 
     # Options to plot the delta rule learning rate and noisy delta rule learning rate
     if plot_model_learning_rate_no_noise:
@@ -402,9 +404,9 @@ def compute_model_learning_rate(participant_str, condition_str, adalearn_data_df
 
         for i, session in enumerate(unique_sessions, start=1):
             session_data = model_learning_rate_df[model_learning_rate_df['task_session'] == session]
-            fig.add_trace(go.Scatter(x=session_data['task_sess_count'], y=session_data['delta_rule'], mode='lines', name=f'Model learning rate (delta rule) - Session {session}'), row=i, col=1)
+            fig.add_trace(go.Scatter(x=session_data['outcome_num'], y=session_data['delta_rule'], mode='lines', name=f'Model learning rate (delta rule) - Session {session}'), row=i, col=1)
 
-            change_points = change_point_indices_df[change_point_indices_df['task_session'] == session]['trial_number']
+            change_points = change_point_indices_df[change_point_indices_df['task_session'] == session]['outcome_num']
             for cp in change_points:
                 fig.add_shape(
                     type="line", 
@@ -427,9 +429,9 @@ def compute_model_learning_rate(participant_str, condition_str, adalearn_data_df
 
         for i, session in enumerate(unique_sessions, start=1):
             session_data = model_learning_rate_df[model_learning_rate_df['task_session'] == session]
-            fig.add_trace(go.Scatter(x=session_data['task_sess_count'], y=session_data['noisy_delta_rule'], mode='lines', name=f'Model learning rate (noisy delta rule) - Session {session}'), row=i, col=1)
+            fig.add_trace(go.Scatter(x=session_data['outcome_num'], y=session_data['noisy_delta_rule'], mode='lines', name=f'Model learning rate (noisy delta rule) - Session {session}'), row=i, col=1)
 
-            change_points = change_point_indices_df[change_point_indices_df['task_session'] == session]['trial_number']
+            change_points = change_point_indices_df[change_point_indices_df['task_session'] == session]['outcome_num']
             for cp in change_points:
                 fig.add_shape(
                     type="line", 
@@ -471,14 +473,14 @@ def model_learning_rate_by_change_point(model_learning_rate_df, change_point_ind
 
     for idx, row in change_point_indices.iterrows():
         task_session = row['task_session']
-        trial_number = row['trial_number']
+        outcome_num = row['outcome_num']
 
         for i in range(-pre, post+1):  # Predefined to be 2 trials before to 10 trials after identified change points. Can be changed to suit. 
             expanded_change_points.append({
                 'task_session': task_session,
-                'trial_number': trial_number,
+                'outcome_num': outcome_num,
                 'relative_position': i,
-                'trial_number_rel': trial_number + i
+                'outcome_num_rel_pos': outcome_num + i
             })
 
     expanded_change_points_df = pd.DataFrame(expanded_change_points)
@@ -486,8 +488,8 @@ def model_learning_rate_by_change_point(model_learning_rate_df, change_point_ind
 
     # Filter main behavioural dataframe to only contain values in defined range around change point  
     filtered_model_learning_rate_by_cp = pd.merge(expanded_change_points_df, model_learning_rate_df, 
-                                            left_on=['task_session', 'trial_number_rel'], 
-                                            right_on=['task_session', 'task_sess_count'], 
+                                            left_on=['task_session', 'outcome_num_rel_pos'], 
+                                            right_on=['task_session', 'outcome_num'], 
                                             how='left', suffixes=('', '_y'))
 
     # Calculate the average, standard deviation and count of the model learning rate across the different relative positions to the change point
@@ -509,7 +511,7 @@ def model_learning_rate_by_change_point(model_learning_rate_df, change_point_ind
         # Add individual learning rates
         for idx, row in change_point_indices.iterrows():
             session_data = filtered_model_learning_rate_by_cp[(filtered_model_learning_rate_by_cp['task_session'] == row['task_session']) & 
-                                                    (filtered_model_learning_rate_by_cp['trial_number'] == row['trial_number'])]
+                                                    (filtered_model_learning_rate_by_cp['outcome_num'] == row['outcome_num'])]
 
             if len(session_data) == (pre + post + 1):
                 num_traces += 1

@@ -851,7 +851,7 @@ def r_r_interval_by_change_point(hr_task_session_dict, change_point_indices, par
     # Iterate over each row in change_point_indices
     for idx, row in change_point_indices.iterrows():
         task_session = row['task_session']  # Get the task_session
-        rel_time_cp = row['relative_time']  # Get the relative time of the change point
+        rel_time_cp = row['rel_time']  # Get the relative time of the change point
     
         # Find the corresponding dictionary for the task session
         session_data = hr_task_session_dict[task_session]  # Access the dictionary for the task session
@@ -862,13 +862,13 @@ def r_r_interval_by_change_point(hr_task_session_dict, change_point_indices, par
             (session_data['rel_time'] <= rel_time_cp + post)
         ].copy()  # Use .copy() to avoid SettingWithCopyWarning
 
-        # Adjust the 'rel_time' column to be relative to the change point's 'relative_time'
+        # Adjust the 'rel_time' column to be relative to the change point's 'rel_time'
         filtered_data['rel_time'] = filtered_data['rel_time'] - rel_time_cp
 
         # Add the relevant columns from the change point DataFrame
         filtered_data['task_session'] = row['task_session']
-        filtered_data['trial_number'] = row['trial_number']
-        filtered_data['relative_time'] = row['relative_time']
+        filtered_data['outcome_num'] = row['outcome_num']
+        filtered_data['rel_time'] = row['rel_time']
         filtered_data['change_point_count'] = row['change_point_count']
 
         # Append the filtered data to the list
