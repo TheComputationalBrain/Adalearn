@@ -117,7 +117,7 @@ def pupil_data_check(data_tob, blink_ses, pupil_ses, file_path, session, file_si
     pupil_data = data_tob.data.copy()
     pupil_data['task_session'] = session
     
-    # Returns both the self object of the pupil class and a copy of the data that can be used
+    # Returns both the self object of the pupil class and a copy of the data 
     return data_tob, pupil_data, blink_ses
 
 
@@ -220,7 +220,7 @@ def load_pupil_data(participant_str, condition_str, condition_task_sessions, sel
         pupil_ses_list.append(pupil_ses)
         blink_ses_list.append(blink_ses)
 
-    # Concatenate data across taks sessions and store in a single dataframe   
+    # Concatenate data across task sessions and store dataframes   
     pupil_df = pd.concat(pupil_data_ses_list, ignore_index=True)
 
     pupil_trig_df = pd.concat(pupil_trig_ses_list, ignore_index=True)
@@ -544,33 +544,32 @@ def align_pupil_to_events(pupil_trig_df, event_df, to_session, print_event_df_sh
     return pupil_by_event
 
 
-def all_outcome_pupil_epochs(participant_str, condition_str, list_subject_selected, from_session, to_session, pupil_trig_df, session_list = None, plot_averaged_pupil_response = True, plot_raster_pupil_response = True):
+def all_outcome_pupil_epochs(participant_str, condition_str, list_subject_selected, from_session, to_session, pupil_trig_df, session_list = None, plot_averaged_pupil_response = False, plot_raster_pupil_response = False):
     """
-    Function to preprocess and analysis pupil data around identified change points in the task. Uses process_pupil_data function to run the preporocessing analysis. In addition to analysising the data around change points, there is an option to plot the mean and std derived from all instances across all task sessions. Parameters defining the preprocessing of the pupil data should be modified in the process_pupil_data function directly. 
+    Function to preprocess and analysis pupil data for each outcome in the task. Uses process_pupil_data function to run the preporocessing analysis. There is an option to plot the mean response from all outcomes across all task sessions, as well as a raster plot from each outcome. Parameters defining the preprocessing of the pupil data should be modified in the process_pupil_data function directly. 
 
     Parameters:
     - participant_str: string, identifier of participant number (set to 2 numbers)
-    - list_subject_selected: list, identifier generated from participant number
     - condition_str: string, identifier of condition order (set to 2 numbers) ** May need to change to denote actual condition in Adalearn VNS study **
+    - list_subject_selected: list, identifier generated from participant number
     - from_session: int, defining the number of the first task session within the condition
     - to_session: int, defining the number of the last task session within the condition
-    - pupil_trig_df: pd.DataFrame, contains the trigger information (i.e. time, outcome) for each task session, extracted from the pupil data files.
-    - change_point_indices: pd.DataFrame, with columns 'index', 'relative_time', and 'task_session', 
-      containing the indices and relative times of the change points for each session. (*Note: Have removed identification of the first outcome of each task session as a new change point)
+    - pupil_trig_df: pd.DataFrame, contains the trigger information (i.e. time, outcome) for each task session, extracted from the pupil data 
     - session_list: list, optional, specific list of sessions to process. If not provided, the function will use the range defined by from_session and to_session.
-    - plot_pupil_by_cp: boolean, option to plot the mean and standard deviation of the epoched pupil data around the change points using PLotly. (Default = False).
+    - plot_average_pupil_response: boolean, option to plot the mean and sem across each output using Plotly. (Default = False).
+    - plot_raster_pupil_response: boolean, option to plot raster plot for each output using Plotly. (Default = False).
 
     Returns:
-    - change_point_onsets: dict, contains identified change point timestamps. Keys are task session and values are time stamps within that task session. 
-    - change_point_nums: dict, contains a cumulative count of the number of change points identified within each task session. Keys are task sessions and values are the cumulative count of the number of change points within that task session.
-    - epoched_pupil_df: pd.DataFrame, containing transposed epoched data (each column represents one epoch), the calculated mean and standard deviation across change point defined epochs and the timestamp.
-    - blink_ratio_cp_df: pd.DataFrame, contains the blink ratio inofrmation for each generated epoch around change points
+    - outcome_onsets: dict, contains timestamps of all outcomes from all task sessions. Keys are task session and values are time stamps within that task session. 
+    - outcome_nums: dict, contains a cumulative count of the number of change points identified within each task session. Keys are task sessions and values are the cumulative count of the number of change points within that task session.
+    - outcome_epoched_pupil_df: pd.DataFrame, containing transposed epoched data (each column represents one epoch), the calculated mean, standard deviation and sem across all outcome defined epochs. Includes the timestamp.
+    - outcome_blink_ratio_cp_df: pd.DataFrame, contains the blink ratio information for each generated epoch around outcome observations
     """
-    # Creating dictionaries for storage of change point time and number 
+    # Creating dictionaries for storage of each outcome time and number 
     outcome_onsets = {}
     outcome_nums = {}
 
-    # For loop that extracts identified change point times for each task session 
+    # For loop that extracts outcome times for each task session 
     for session, outcome in pupil_trig_df.groupby('task_session'):
       # Extract the timeflow values for the current group (session)
       outcome_onset_values = outcome['time_stamp'].tolist()
@@ -582,12 +581,12 @@ def all_outcome_pupil_epochs(participant_str, condition_str, list_subject_select
       outcome_onsets[session] = outcome_onset_values
       outcome_nums[session] = outcome_num_values
 
-    # Checking the number of change points identified
+    # Checking the number of outcomes
     print(f"Condition {condition_str}:")
     for session, events in outcome_nums.items():
       print(f"In task session {session} there are {len(events)} outcome observations") 
 
-    # Analysing pupil data based on identified change point indices
+    # Analysing pupil data based on identified outcome indices
     outcome_epoched_pupil_df, outcome_blink_ratio_df = process_pupil_data(participant_str, list_subject_selected, condition_str, from_session, to_session, outcome_onsets, outcome_nums, session_list, window_start_before=0.2, window_end_after=1.45)
 
     # Option to plot the average pupil response across all outcomes
@@ -641,7 +640,7 @@ def all_outcome_pupil_epochs(participant_str, condition_str, list_subject_select
 
         fig_pupil_avg.show()
 
-
+    # Option to plot rasterplot from each pupil epoch
     if plot_raster_pupil_response:
         pupil_epoch_matrix = [outcome_epoched_pupil_df.iloc[:, i].values for i in range(outcome_epoched_pupil_df.shape[1] - 4)]
 
@@ -661,29 +660,31 @@ def all_outcome_pupil_epochs(participant_str, condition_str, list_subject_select
     return outcome_onsets, outcome_nums, outcome_epoched_pupil_df, outcome_blink_ratio_df
 
 
-def outcome_colour_pupil_epochs(participant_str, condition_str, list_subject_selected, from_session, to_session, pupil_trig_df, session_list = None, plot_pupil_by_colour_response = True):
+def outcome_colour_pupil_epochs(participant_str, condition_str, list_subject_selected, from_session, to_session, pupil_trig_df, session_list = None, plot_pupil_by_colour_response = False):
     """
-    Function to preprocess and analysis pupil data around identified change points in the task. Uses process_pupil_data function to run the preporocessing analysis. In addition to analysising the data around change points, there is an option to plot the mean and std derived from all instances across all task sessions. Parameters defining the preprocessing of the pupil data should be modified in the process_pupil_data function directly. 
+    Function to preprocess and analysis pupil data based on the specific colour of the outcome. Uses process_pupil_data function to run the preporocessing analysis. Option to plot the mean and sem derived from all instances of 'blue' and 'yellow' outcomes across all trials. Parameters defining the preprocessing of the pupil data should be modified in the process_pupil_data function directly. 
 
     Parameters:
     - participant_str: string, identifier of participant number (set to 2 numbers)
-    - list_subject_selected: list, identifier generated from participant number
     - condition_str: string, identifier of condition order (set to 2 numbers) ** May need to change to denote actual condition in Adalearn VNS study **
+    - list_subject_selected: list, identifier generated from participant number
     - from_session: int, defining the number of the first task session within the condition
     - to_session: int, defining the number of the last task session within the condition
     - pupil_trig_df: pd.DataFrame, contains the trigger information (i.e. time, outcome) for each task session, extracted from the pupil data files.
-    - change_point_indices: pd.DataFrame, with columns 'index', 'relative_time', and 'task_session', 
-      containing the indices and relative times of the change points for each session. (*Note: Have removed identification of the first outcome of each task session as a new change point)
     - session_list: list, optional, specific list of sessions to process. If not provided, the function will use the range defined by from_session and to_session.
-    - plot_pupil_by_cp: boolean, option to plot the mean and standard deviation of the epoched pupil data around the change points using PLotly. (Default = False).
+    - plot_pupil_by_colour: boolean, option to plot the mean and sem of the epoched pupil data around the different coloured outcomes using PLotly. (Default = False).
 
     Returns:
-    - change_point_onsets: dict, contains identified change point timestamps. Keys are task session and values are time stamps within that task session. 
-    - change_point_nums: dict, contains a cumulative count of the number of change points identified within each task session. Keys are task sessions and values are the cumulative count of the number of change points within that task session.
-    - epoched_pupil_df: pd.DataFrame, containing transposed epoched data (each column represents one epoch), the calculated mean and standard deviation across change point defined epochs and the timestamp.
-    - blink_ratio_cp_df: pd.DataFrame, contains the blink ratio inofrmation for each generated epoch around change points
+    - outcome_1_onsets: dict, contains timestamps for outcomes = 1. Keys are task session and values are time stamps within that task session. 
+    - outcome_1_nums: dict, contains a cumulative count of the number of outcomes = 1 within each task session. Keys are task sessions and values are the cumulative count of the number of change points within that task session.
+    - outcome_1_epoched_pupil_df: pd.DataFrame, containing transposed epoched data (each column represents one epoch), the calculated mean std, sem and time stamps for each epochs defined by an outcome = 1.
+    - outcome_1_blink_ratio_cp_df: pd.DataFrame, contains the blink ratio information for each epoch around outcomes = 1.
+    - outcome_0_onsets: dict, contains timestamps for outcomes = 0. Keys are task session and values are time stamps within that task session. 
+    - outcome_0_nums: dict, contains a cumulative count of the number of outcomes = 0 within each task session. Keys are task sessions and values are the cumulative count of the number of change points within that task session.
+    - outcome_0_epoched_pupil_df: pd.DataFrame, containing transposed epoched data (each column represents one epoch), the calculated mean std, sem and time stamps for each epochs defined by an outcome = 0.
+    - outcome_0_blink_ratio_cp_df: pd.DataFrame, contains the blink ratio information for each epoch around outcomes = 0.
     """
-    # Splitting the pupil trig dataframe into two based on outcome 
+    # Splitting the pupil trig dataframe into two based on outcomes 
     pupil_trig_1_df = pupil_trig_df[pupil_trig_df['outcome'] == 1]
     pupil_trig_0_df = pupil_trig_df[pupil_trig_df['outcome'] == 0] 
 
@@ -734,7 +735,7 @@ def outcome_colour_pupil_epochs(participant_str, condition_str, list_subject_sel
 
     outcome_0_epoched_pupil_df, outcome_0_blink_ratio_df = process_pupil_data(participant_str, list_subject_selected, condition_str, from_session, to_session, outcome_0_onsets, outcome_0_nums, session_list, window_start_before=0.2, window_end_after=1.45)
 
-
+    # Option to plot the two average pupil responses to different outcome colours
     if plot_pupil_by_colour_response:
               
         fig_pupil_avg = go.Figure()
@@ -815,8 +816,8 @@ def change_point_pupil_epochs(participant_str, condition_str, list_subject_selec
 
     Parameters:
     - participant_str: string, identifier of participant number (set to 2 numbers)
-    - list_subject_selected: list, identifier generated from participant number
     - condition_str: string, identifier of condition order (set to 2 numbers) ** May need to change to denote actual condition in Adalearn VNS study **
+    - list_subject_selected: list, identifier generated from participant number
     - from_session: int, defining the number of the first task session within the condition
     - to_session: int, defining the number of the last task session within the condition
     - pupil_trig_df: pd.DataFrame, contains the trigger information (i.e. time, outcome) for each task session, extracted from the pupil data files.
@@ -831,6 +832,7 @@ def change_point_pupil_epochs(participant_str, condition_str, list_subject_selec
     - epoched_pupil_df: pd.DataFrame, containing transposed epoched data (each column represents one epoch), the calculated mean and standard deviation across change point defined epochs and the timestamp.
     - blink_ratio_cp_df: pd.DataFrame, contains the blink ratio inofrmation for each generated epoch around change points
     """
+    # Ensure that change points and pupil triggers and aligned correctly
     pupil_by_change_points = align_pupil_to_events(pupil_trig_df=pupil_trig_df, event_df=change_point_indices, to_session=to_session, print_event_df_shape=True)
 
 
@@ -858,7 +860,7 @@ def change_point_pupil_epochs(participant_str, condition_str, list_subject_selec
     # Analysing pupil data based on identified change point indices
     epoched_pupil_cp_df, blink_ratio_cp_df = process_pupil_data(participant_str, list_subject_selected, condition_str, from_session, to_session, change_point_onsets, change_point_nums, session_list)
 
-    # Plotting the mean (and std) response of pupil response timelocked to change points
+    # Option to plot the average pupil response timelocked to change points
     if plot_pupil_by_cp:
         
         fig_epoch_avg = go.Figure()
@@ -903,14 +905,14 @@ def change_point_pupil_epochs(participant_str, condition_str, list_subject_selec
     return change_point_onsets, change_point_nums, epoched_pupil_cp_df, blink_ratio_cp_df
 
 
-def surprise_pupil_epochs(participant_str, list_subject_selected, condition_str, from_session, to_session, surprise_df, pupil_trig_df, high_surp_ses_list = None, low_surp_ses_list = None, plot_pupil_by_surprise=True):
+def surprise_pupil_epochs(participant_str, condition_str, list_subject_selected, from_session, to_session, surprise_df, pupil_trig_df, high_surp_ses_list = None, low_surp_ses_list = None, plot_pupil_by_surprise=True):
     """"
-     Function to preprocess and then compute epoched pupil diameter response around modelled "high" and "low" suprising observations. Preprocessing taken from preprocess_eyedata script. Calculates the mean and standard deviation across each identified epoch for all task session. In addition to analysising the data around surprise, there is an option to plot the mean and std derived from all instances across all task sessions. Parameters defining the preprocessing of the pupil data should be modified in the process_pupil_data function directly.
+     Function to preprocess and then compute epoched pupil diameter response around modelled "high" and "low" suprising observations. Preprocessing taken from preprocess_eyedata script. Calculates the mean, std and sem  across each identified epoch for all task session. In addition to analysising the data around surprise, there is an option to plot the mean and sem derived from all instances across all task sessions. Parameters defining the preprocessing of the pupil data should be modified in the process_pupil_data function directly.
 
     Parameters:
     - participant_str: string, identifier of participant number (set to 2 numbers)
-    - list_subject_selected: list, identifier generated from participant number
     - condition: string, identifier of condition order (set to 2 numbers) ** May need to change to denote actual condition in Adalearn VNS study **
+    - list_subject_selected: list, identifier generated from participant number
     - from_session: int, defining the number of the first task session within the condition
     - to_session: int, defining the number of the last task session within the condition
     - surprise_df: pd.DataFrame, contains computed surprise values and the categorised values. Used to define timestamps for the categorised surprise values (which are contained in a dictionary, with keys being task sessions and values are time stamps within that task session) and a cumulative count of the number of surprise values categorised as either high or low (again, a dictionary with keys being task sessions and values being the cumulative count within that task session).
