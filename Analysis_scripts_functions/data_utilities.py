@@ -3,7 +3,7 @@ import sys
 import plotly.io as pio
 pio.renderers.default='browser'
 
-from pupil_analysis_test import c1_trig_data
+from vega_pupil_script import c1_pupil_trig_df
 
 sys.path.append('/home/aaron/Documents/Python/Ada_Learn/Analysis/Analysis_scripts_functions')
 from physiological_analysis_test import c1_outcome_triggers
@@ -30,14 +30,18 @@ def check_trig_sync_between_files(behavioural_df, pupil_trig_df, physiological_t
     combined_outcome_df = pd.DataFrame({
         'behavioural': behavioural_df['outcome'].reset_index(drop=True),
         'pupil': pupil_trig_df['outcome'].reset_index(drop=True),
-        'physiological': filtered_physiological_df['triggers'].reset_index(drop=True)
+        'physiological': filtered_physiological_df['triggers'].reset_index(drop=True),
+        'task_session': behavioural_df['task_session'].reset_index(drop=True),
+        'outcome_num': behavioural_df['outcome_num'].reset_index(drop=True)
     })
+    combined_outcome_df['cum_outcome_num'] = combined_outcome_df.index
+
 
     return combined_outcome_df
 
 
 # Example usage:
-trig_check = check_trig_sync_between_files(behavioural_df=c1_behavioural_df, pupil_trig_df=c1_trig_data, physiological_triggers_df=c1_outcome_triggers)
+trig_check = check_trig_sync_between_files(behavioural_df=c1_behavioural_df, pupil_trig_df=c1_pupil_trig_df, physiological_triggers_df=c1_outcome_triggers)
 
 
 
