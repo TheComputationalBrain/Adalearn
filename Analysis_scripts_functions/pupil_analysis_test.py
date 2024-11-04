@@ -11,7 +11,7 @@ import plotly.express as px
 from plotly.subplots import make_subplots
 pio.renderers.default='browser'
 
-from pupil_signal_functions import load_and_process_pupil_data, change_point_pupil_epochs, surprise_pupil_epochs, all_outcome_pupil_epochs, outcome_colour_pupil_epochs, surprise_by_colour_pupil_epochs
+from pupil_signal_functions import load_and_process_pupil_data, change_point_pupil_epochs, surprise_pupil_epochs, all_outcome_pupil_epochs, outcome_colour_pupil_epochs
 
 from computational_analysis_test import c1_surprise, c2_surprise
 
