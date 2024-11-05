@@ -15,7 +15,7 @@ import plotly.graph_objs as go
 from plotly.subplots import make_subplots
 pio.renderers.default='browser'
 
-from physiological_signal_functions import load_biopac_data, process_emg_data, extract_adalearn_triggers_biopac, extract_task_session_emg_data, identify_vns_from_emg, process_ecg_data, integrate_separate_trigger_channels, r_r_interval_by_change_point
+from physiological_signal_functions import load_biopac_data, process_emg_data, biopac_trigger_extraction, extract_task_session_emg_data, identify_vns_from_emg, process_ecg_data, r_r_interval_by_change_point
 
 from participant_task_characteristics import participant_str, condition_1_str, condition_2_str, c1_run_ranges, c1_vns_task_session, c2_run_ranges, c2_vns_task_session
 
@@ -35,21 +35,15 @@ c2_processed_biopac = process_emg_data(biopac_data=c2_biopac_df, stim_channels=s
 
 
 
-c1_outcome_triggers, c1_trig_summary = extract_adalearn_triggers_biopac(biopac_data=c1_biopac_df, trig_channel=trig_channel, plot_phys_trigs=False)
+c1_raw_trig_file_df, c1_trig_chan_df, c1_task_session_summary_df, c1_missing_trigger_df = biopac_trigger_extraction(biopac_data=c1_biopac_df, run_ranges=c1_run_ranges, plot_triggers_by_channel=True, plot_trigs_by_task_session=True)
 
-c2_outcome_triggers, c2_trig_summary = extract_adalearn_triggers_biopac(biopac_data=c2_biopac_df, trig_channel=trig_channel, plot_phys_trigs=False)
-
-
-
-c1_integrated_triggers, c1_integrated_trig_summary = integrate_separate_trigger_channels(biopac_data=c1_biopac_df, run_ranges=c1_run_ranges)
-
-c2_integrated_triggers, c2_integrated_trig_summary = integrate_separate_trigger_channels(biopac_data=c2_biopac_df, run_ranges=c2_run_ranges)
+c2_raw_trig_file_df, c2_trig_chan_df, c2_task_session_summary_df, c2_missing_trigger_df = biopac_trigger_extraction(biopac_data=c2_biopac_df, run_ranges=c2_run_ranges, plot_triggers_by_channel=True, plot_trigs_by_task_session=True)
 
 
 
-c1_emg_task_sess_dict = extract_task_session_emg_data(emg_data_df=c1_processed_biopac, task_session_summary=c1_trig_summary, plot_task_session_emg=False)
+c1_emg_task_sess_dict = extract_task_session_emg_data(emg_data_df=c1_processed_biopac, task_session_summary=c1_task_session_summary_df, plot_task_session_emg=True)
 
-c2_emg_task_sess_dict = extract_task_session_emg_data(emg_data_df=c2_processed_biopac, task_session_summary=c2_trig_summary, plot_task_session_emg=False)
+c2_emg_task_sess_dict = extract_task_session_emg_data(emg_data_df=c2_processed_biopac, task_session_summary=c2_task_session_summary_df, plot_task_session_emg=True)
 
 
 print(f"In condition {condition_1_str} the number of task sessions is: {len(c1_emg_task_sess_dict)}")
@@ -69,9 +63,9 @@ c2_vns_start_times = identify_vns_from_emg(task_session_dict=c2_emg_task_sess_di
 
 
 
-c1_rpeaks_dict = process_ecg_data(biopac_data=c1_biopac_df, ecg_channels=ecg_channel, task_session_summary=c1_trig_summary, plot_ecg = False)
+c1_rpeaks_dict = process_ecg_data(biopac_data=c1_biopac_df, ecg_channels=ecg_channel, task_session_summary=c1_task_session_summary_df, plot_ecg = False)
 
-c2_rpeaks_dict = process_ecg_data(biopac_data=c2_biopac_df, ecg_channels=ecg_channel, task_session_summary=c2_trig_summary, plot_ecg = False)
+c2_rpeaks_dict = process_ecg_data(biopac_data=c2_biopac_df, ecg_channels=ecg_channel, task_session_summary=c2_task_session_summary_df, plot_ecg = False)
 
 
 

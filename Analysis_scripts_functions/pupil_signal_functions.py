@@ -198,7 +198,7 @@ def load_and_process_pupil_data(participant_str, list_subject_selected, conditio
     - select_eye: boolean, if true, will use a predfined eye (Default = right). If false will run a function to identify the best eye (one with the least nan values) and collect data using that eye (Default = True)
     - remove_epochs: boolean, parameter determining whether epochs with an excessive blink ratio should be removed. (Default = True)
     - z_score: boolean, option to z_score data before computing epochs. Default = True.
-    - plot: boolean, option to plot the mean and standard deviation across epochs using Plotly. (Default = True) 
+    - plo_interpolation_process: boolean, option to plot the mean and standard deviation across epochs using Plotly. (Default = True) 
 
     Returns:
     - preprocessed_pupil_df: pd.DataFrame, contains the pupil data, preprocessed to interpolate across identified blinks, recorded from each task session
