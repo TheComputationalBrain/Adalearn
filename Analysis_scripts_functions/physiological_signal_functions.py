@@ -7,6 +7,7 @@ from itertools import combinations
 import scipy as sc
 from scipy import signal
 from scipy.signal import butter, lfilter, filtfilt, find_peaks
+import matplotlib.pyplot as plt
 import plotly.io as pio
 import plotly.express as px
 import plotly.graph_objs as go
@@ -73,18 +74,18 @@ def load_biopac_data(participant_str, condition, run_ranges):
 
     # Convert stim (EMG) channel set to a list and take the first element
     stim_chan = list(stim_chan_set)[0] if stim_chan_set else None
-    print(f"Final stim channel: {stim_chan}")
+    print(f"Selected stim channel: {stim_chan}")
 
     # Convert ECG channel set to a list and take the first element
     ecg_chan = list(ecg_chan_set)[0] if ecg_chan_set else None
-    print(f"Final ECG channel: {ecg_chan}")
+    print(f"Selected ECG channel: {ecg_chan}")
 
     # Convert trigger set to a list and take the third element (need to make sure that combined channel is always the third element)
     trig_set_to_list = list(trig_chan_set)
     trig_set_to_list = sorted(trig_set_to_list)
     print(trig_set_to_list)
     trig_chan = trig_set_to_list[2]
-    print(f"Final trig channel: {trig_chan}")
+    print(f"Selected trig channel: {trig_chan}")
 
     return biopac_data, stim_chan, ecg_chan, trig_chan
 
@@ -158,22 +159,6 @@ def process_emg_data(biopac_data, stim_channels, emg_by_file_plot = False):
         fig.show()
 
     return emg_data_df
-
-
-import pandas as pd
-import numpy as np
-import mne
-import os
-from itertools import combinations
-import scipy as sc
-from scipy import signal
-from scipy.signal import butter, lfilter, filtfilt, find_peaks
-import matplotlib.pyplot as plt
-import plotly.io as pio
-import plotly.express as px
-import plotly.graph_objs as go
-from plotly.subplots import make_subplots
-pio.renderers.default='browser'
 
 
 
@@ -295,75 +280,66 @@ def biopac_trigger_extraction(biopac_data, run_ranges, plot_triggers_by_channel 
             fig.show()
 
         # Checking if one channel matches the expected number of triggers given the number of task sessions within the file
-        if id_trig_df.empty:
-            print(f"No valid triggers identified for file: {data_file_count}")
-        else:
-            # Calculate expected triggers based on run_range (should be 77 times the number of task sessions within the file)
-            expected_trigs = 77 * (int(run_range['run_end']) - int(run_range['run_start']) + 1)
-            print(f"The number of triggers expected within file {data_file_count} is: {expected_trigs}")
+        expected_trigs = 77 * (int(run_range['run_end']) - int(run_range['run_start']) + 1)
+        print(f"The number of triggers expected within file {data_file_count} is: {expected_trigs}")
 
-            # Check for a single channel with the correct number of triggers
-            single_channel_match_found = False
+        # Check for a single channel or paired channels with correct trigger count
+        single_channel_match_found = False
+        paired_channel_match = False
+        count_diff_dict = {channel: abs(count - expected_trigs) for channel, count in trigger_count_per_channel.items()}
+        channel_pairs_dict = {
+            pair: abs(trigger_count_per_channel[pair[0]] + trigger_count_per_channel[pair[1]] - expected_trigs)
+            for pair in combinations(trigger_count_per_channel.keys(), 2)
+        }
 
-            channel_pairs = []
+        # Check single channels
+        for channel, diff in count_diff_dict.items():
+            if diff == 0:
+                print(f"Correct number of triggers ({trigger_count_per_channel[channel]}) identified in {channel}. Appending trigger information...")
+                identified_chan_trigs.append(id_trig_df[id_trig_df['channel'] == channel])
+                single_channel_match_found = True
+                break  # Exit loop once a match is found
 
-            pair_match_found = False
+        # Check pairs if no single match was found
+        if not single_channel_match_found:
+            for pair, diff in channel_pairs_dict.items():
+                if diff == 0:
+                    combined_count = trigger_count_per_channel[pair[0]] + trigger_count_per_channel[pair[1]]
+                    print(f"Correct number of triggers ({combined_count}) found by combining {pair}. Appending trigger information...")
+                    channel_1 = id_trig_df[id_trig_df['channel'] == pair[0]]
+                    channel_2 = id_trig_df[id_trig_df['channel'] == pair[1]]
+                    integrated_trigger_channel = pd.merge(channel_1, channel_2, on='time', how='outer')
+                    integrated_trigger_channel['channel'] = integrated_trigger_channel['channel_x'].combine_first(integrated_trigger_channel['channel_y'])
+                    integrated_trigger_channel['triggers'] = integrated_trigger_channel['triggers_x'].combine_first(integrated_trigger_channel['triggers_y'])
+                    integrated_trigger_channel['file'] = integrated_trigger_channel['file_x'].combine_first(integrated_trigger_channel['file_y'])
+                    integrated_trigger_channel['outcome'] = integrated_trigger_channel['outcome_x'].combine_first(integrated_trigger_channel['outcome_y'])
+                    integrated_trigger_channel = integrated_trigger_channel.drop(columns=['channel_x', 'channel_y', 'triggers_x', 'triggers_y', 'file_x', 'file_y', 'outcome_x', 'outcome_y'])
+                    integrated_trigger_channel = integrated_trigger_channel.drop_duplicates(subset='time', keep='first').reset_index(drop=True)
+                    identified_chan_trigs.append(integrated_trigger_channel)
+                    paired_channel_match = True
+                    break  # Exit loop once a pair match is found
 
+        # Handle closest match if no exact match was found
+        if not single_channel_match_found and not paired_channel_match:
+            closest_channel = min(count_diff_dict, key=lambda k: abs(count_diff_dict[k]))
+            closest_pair = min(channel_pairs_dict, key=lambda k: abs(channel_pairs_dict[k]))
+            if count_diff_dict[closest_channel] <= channel_pairs_dict[closest_pair]:
+                print(f"Closest match found in single channel: {closest_channel} with {trigger_count_per_channel[closest_channel]} triggers.")
+                identified_chan_trigs.append(id_trig_df[id_trig_df['channel'] == closest_channel])
+            else:
+                combined_count = trigger_count_per_channel[closest_pair[0]] + trigger_count_per_channel[closest_pair[1]]
+                print(f"Closest match found in channel pair: {closest_pair} with {combined_count} triggers.")
+                channel_1 = id_trig_df[id_trig_df['channel'] == closest_pair[0]]
+                channel_2 = id_trig_df[id_trig_df['channel'] == closest_pair[1]]
+                integrated_trigger_channel = pd.merge(channel_1, channel_2, on='time', how='outer')
+                integrated_trigger_channel['channel'] = integrated_trigger_channel['channel_x'].combine_first(integrated_trigger_channel['channel_y'])
+                integrated_trigger_channel['triggers'] = integrated_trigger_channel['triggers_x'].combine_first(integrated_trigger_channel['triggers_y'])
+                integrated_trigger_channel['file'] = integrated_trigger_channel['file_x'].combine_first(integrated_trigger_channel['file_y'])
+                integrated_trigger_channel['outcome'] = integrated_trigger_channel['outcome_x'].combine_first(integrated_trigger_channel['outcome_y'])
+                integrated_trigger_channel = integrated_trigger_channel.drop(columns=['channel_x', 'channel_y', 'triggers_x', 'triggers_y', 'file_x', 'file_y', 'outcome_x', 'outcome_y'])
+                integrated_trigger_channel = integrated_trigger_channel.drop_duplicates(subset='time', keep='first').reset_index(drop=True)
+                identified_chan_trigs.append(integrated_trigger_channel)
 
-            for channel, count in trigger_count_per_channel.items():
-                if count == expected_trigs:
-                    print(f"{channel}: Correct number of triggers found. Use {channel} for trig_channel in file {data_file_count}.")
-                    identified_chan_trigs.append(id_trig_df[id_trig_df['channel'] == channel])
-                    single_channel_match_found = True
-                    break  # Exit loop if a matching single channel is found
-
-            # If a single channel with the correct number of expected triggers is not found, look for a combination of two separate channels
-            if not single_channel_match_found:
-                channel_pairs = list(combinations(trigger_count_per_channel.keys(), 2))
-                pair_match_found = False
-
-                # Check all pairs of channels
-                for pair in channel_pairs:
-                    sum_triggers = trigger_count_per_channel[pair[0]] + trigger_count_per_channel[pair[1]]
-                    print(f"Sum of triggers for channels {pair[0]} and {pair[1]}: {sum_triggers}")
-
-                    # Check if the sum matches the expected number of triggers
-                    if sum_triggers == expected_trigs:
-                        print(f"Identified channels that need to be merged: {pair[0]} and {pair[1]}")
-                        identified_chan_trigs.append(
-                            id_trig_df[id_trig_df['channel'].isin([pair[0], pair[1]])]
-                        )
-                        pair_match_found = True
-
-                        # Integrate the triggers from both of the identified channels
-                        channel_1 = id_trig_df[id_trig_df['channel'] == pair[0]]
-                        channel_2 = id_trig_df[id_trig_df['channel'] == pair[1]]
-
-                        integrated_trigger_channel = pd.merge(channel_1, channel_2, on='time', how='outer')
-                        integrated_trigger_channel['channel'] = integrated_trigger_channel['channel_x'].combine_first(integrated_trigger_channel['channel_y'])
-                        integrated_trigger_channel['triggers'] = integrated_trigger_channel['triggers_x'].combine_first(integrated_trigger_channel['triggers_y'])
-                        integrated_trigger_channel['file'] = integrated_trigger_channel['file_x'].combine_first(integrated_trigger_channel['file_y'])
-                        integrated_trigger_channel = integrated_trigger_channel.drop(columns=['channel_x', 'channel_y', 'triggers_x', 'triggers_y', 'file_x', 'file_y'])
-
-                        identified_chan_trigs.append(integrated_trigger_channel)
-                        break  # Exit loop if a matching pair is found
-
-                # If no matching pair is found, raise an error
-                if not pair_match_found:
-                    closest_channel = None
-                    closest_count = float('inf')
-
-                    for channel, count in trigger_count_per_channel.items():
-                        count_diff = abs(count - expected_trigs)
-                        if count_diff < closest_count:
-                            closest_count = count_diff
-                            closest_channel = channel
-                    
-                    if closest_channel:
-                        print(f"No combination of channels matches the expected number of triggers ({expected_trigs}) for file {data_file_count}. Closest match found: {closest_channel} with {trigger_count_per_channel[closest_channel]} triggers.")
-                        identified_chan_trigs.append(id_trig_df[id_trig_df['channel'] == closest_channel])
-                    else:
-                        print(f"No valid triggers found for file {data_file_count}.")
 
     file_trig_df = pd.concat(trig_by_file, ignore_index=True)
     raw_trig_chan_df = pd.concat(raw_trig_chan_data_by_file, ignore_index=True)
@@ -384,12 +360,15 @@ def biopac_trigger_extraction(biopac_data, run_ranges, plot_triggers_by_channel 
         if row['time_diff'] > 20 or row['file'] != prev_data_file:
             task_session += 1
         task_sessions.append(task_session)
-        prev_data_file = row['file']  # Ensure this column exists before using it
+        prev_data_file = row['file']
 
     trig_chan_df['task_session'] = task_sessions
+    trig_chan_df['task_session'] = trig_chan_df['task_session'].astype(int)
 
     # Storing missing trigger values present within task sessions
     # Group by task session
+    trig_chan_df['time_diff'] = trig_chan_df.groupby('task_session')['time_diff'].transform(lambda x: x.mask(x.index == x.index[0], float('nan')))
+
     task_session_groups = trig_chan_df.groupby('task_session')
 
     # Initialize a list to store information about sessions with missing triggers
@@ -402,7 +381,7 @@ def biopac_trigger_extraction(biopac_data, run_ranges, plot_triggers_by_channel 
         
         # Check for less than 77 triggers
         if trigger_count < 77:
-            # Identify the indices where time_diff > 1.5 seconds
+            # Identify the indices where time_diff > 1.6 seconds
             missing_indices = group.index[group['time_diff'] > 1.6].tolist()
             
             if missing_indices:
@@ -422,6 +401,17 @@ def biopac_trigger_extraction(biopac_data, run_ranges, plot_triggers_by_channel 
         print(missing_trigger_df)
     else:
         print("No sessions with missing triggers found.")
+
+    # Insert NaN rows at missing indices 
+    for _, row in missing_trigger_df.iterrows():
+        task_session = row['task_session']
+        for idx in row['missing_indices']:
+            # Create a new row with NaN values except for task_session
+            nan_row = pd.Series({col: np.nan for col in trig_chan_df.columns})
+            nan_row['task_session'] = task_session
+            
+            # Insert the NaN row at the specific index
+            trig_chan_df = pd.concat([trig_chan_df.iloc[:idx], pd.DataFrame([nan_row]), trig_chan_df.iloc[idx:]]).reset_index(drop=True)
 
     # Create a list to store task session information
     task_session_summary = []
@@ -462,7 +452,7 @@ def biopac_trigger_extraction(biopac_data, run_ranges, plot_triggers_by_channel 
         for i, session in enumerate(trig_chan_df['task_session'].unique()):
             session_data = trig_chan_df[trig_chan_df['task_session'] == session]
             
-            color_map = {1: 'blue', 0: 'yellow', -1: 'red'}
+            color_map = {1: 'blue', 0: 'yellow'}
             marker_colors = [color_map[val] if val in color_map else 'green' for val in session_data['outcome']]
 
             fig.add_trace(go.Scatter(

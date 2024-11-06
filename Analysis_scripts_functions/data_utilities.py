@@ -1,5 +1,6 @@
 import pandas as pd
 import sys
+import os
 import plotly.io as pio
 import plotly.express as px
 import plotly.graph_objs as go
@@ -8,8 +9,10 @@ pio.renderers.default='browser'
 
 from physiological_analysis_test import c1_trig_chan_df, c2_trig_chan_df
 
+os.chdir("/home/aaron/Documents/Python/Ada_Learn/Analysis/Analysis_scripts_functions")
 from pupil_analysis_test import c1_pupil_trig_df, c2_pupil_trig_df
 
+os.chdir("/home/aaron/Documents/Python/Ada_Learn/Analysis/Analysis_scripts_functions")
 from behavioural_analysis_test import c1_behavioural_df, c2_behavioural_df
 
 
@@ -45,62 +48,42 @@ def check_trig_sync_between_files(behavioural_df, pupil_trig_df, physiological_t
     else:
         print("MATCHED: Outcomes derived from different files are matched")
 
-    # Option to plot outcomes between files across task sessions
-    if plot_outcomes_between_files:
-        task_sessions = combined_outcome_df['task_session'].unique()
-        num_task_sessions = len(task_sessions)
-        num_files = len(['behavioural', 'pupil', 'physiological'])
+    
+    combined_outcome_df_filled = combined_outcome_df.copy().fillna(-1)
 
-        # Create subplots 
-        fig = make_subplots(rows=num_files, cols=num_task_sessions, subplot_titles=[f"Session {i+1}" for i in range(num_task_sessions)])
+
+    # Plot outcomes if requested
+    if plot_outcomes_between_files:
+        task_sessions = combined_outcome_df_filled['task_session'].unique()
+        num_task_sessions = len(task_sessions)
+        
+        # Create subplots
+        fig = make_subplots(rows=3, cols=num_task_sessions, subplot_titles=[f"Session {i+1}" for i in range(num_task_sessions)])
+
+        color_map = {1: 'blue', 0: 'yellow', -1: 'red'}
+        symbol_map = {1: 'circle', 0: 'circle', -1: 'cross'}
 
         # Plot each channel and task session
         for i, task_session in enumerate(task_sessions):
-            session_data = combined_outcome_df[combined_outcome_df['task_session'] == task_session]
+            session_data = combined_outcome_df_filled[combined_outcome_df_filled['task_session'] == task_session]
 
-            # Define colors based on values
-            behavioral_colors = ['blue' if val == 1 else 'yellow' for val in session_data['behavioural']]
-            pupil_colors = ['blue' if val == 1 else 'yellow' for val in session_data['pupil']]
-            physiological_colors = ['blue' if val == 1 else 'yellow' for val in session_data['physiological']]
+            for j, (col, label) in enumerate(zip(['behavioural', 'pupil', 'physiological'], ['Behavioural', 'Pupil', 'Physiological'])):
+                valid_session_data = session_data[pd.notna(session_data[col])]
+                colors = [color_map[val] for val in valid_session_data[col]]
+                symbols = [symbol_map[val] for val in session_data[col]]
+                
+                fig.add_trace(
+                    go.Scatter(
+                        x=valid_session_data['cum_outcome_num'],
+                        y=[0] * len(valid_session_data),  
+                        mode='markers',
+                        marker=dict(color=colors, symbol=symbols, size=10),
+                        name=f"{label} {task_session}",
+                    ),
+                    row=j+1, col=i+1
+                )
 
-            # Plot behavioural channel at y=0
-            fig.add_trace(
-                go.Scatter(x=session_data['cum_outcome_num'], y=[0] * len(session_data),  # Set y to 0
-                        mode='markers', name=f"Behavioural {task_session}",
-                        marker=dict(color=behavioral_colors)),
-                row=1, col=i+1
-            )
-
-            # Plot pupil channel at y=0
-            fig.add_trace(
-                go.Scatter(x=session_data['cum_outcome_num'], y=[0] * len(session_data),  # Set y to 0
-                        mode='markers', name=f"Pupil {task_session}",
-                        marker=dict(color=pupil_colors)),
-                row=2, col=i+1
-            )
-
-            # Plot physiological channel at y=0
-            fig.add_trace(
-                go.Scatter(x=session_data['cum_outcome_num'], y=[0] * len(session_data),  # Set y to 0
-                        mode='markers', name=f"Physiological {task_session}",
-                        marker=dict(color=physiological_colors)),
-                row=3, col=i+1
-            )
-
-            # Highlight differences
-            if session_data['difference_flag'].any():
-                for row_num in range(1, 4):  # Rows 1, 2, and 3 for each channel
-                    diff_indices = session_data[session_data['difference_flag']].index
-                    fig.add_trace(
-                        go.Scatter(x=session_data.loc[diff_indices, 'cum_outcome_num'],
-                                y=[0] * len(diff_indices),  # Set y to 0 for differences as well
-                                mode='markers', marker=dict(color='orange', symbol='cross', size=10),
-                                name="Difference"),
-                        row=row_num, col=i+1
-                    )
-
-        # Update layout
-        fig.update_layout(height=900, width=9000, title_text="Outcome Comparisons Across Files and Task Sessions", showlegend = False), 
+        fig.update_layout(height=900, width=900 * num_task_sessions, title_text="Outcome Comparisons Across Files and Task Sessions", showlegend=False)
         
         fig.update_yaxes(title_text="Behavioural Outcome", row=1, col=1)
         fig.update_yaxes(title_text="Pupil Outcome", row=2, col=1)
@@ -108,12 +91,12 @@ def check_trig_sync_between_files(behavioural_df, pupil_trig_df, physiological_t
 
         fig.show()
 
-
     return combined_outcome_df
 
 
 # Example usage:
-trig_check = check_trig_sync_between_files(behavioural_df=c1_behavioural_df, pupil_trig_df=c1_pupil_trig_df, physiological_triggers_df=c1_trig_chan_df, plot_outcomes_between_files=True)
+c1_trig_check = check_trig_sync_between_files(behavioural_df=c1_behavioural_df, pupil_trig_df=c1_pupil_trig_df, physiological_triggers_df=c1_trig_chan_df, plot_outcomes_between_files=True)
 
+c2_trig_check = check_trig_sync_between_files(behavioural_df=c2_behavioural_df, pupil_trig_df=c2_pupil_trig_df, physiological_triggers_df=c2_trig_chan_df, plot_outcomes_between_files=True)
 
 
