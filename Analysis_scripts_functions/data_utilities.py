@@ -15,14 +15,18 @@ from pupil_analysis_test import c1_pupil_trig_df, c2_pupil_trig_df
 os.chdir("/home/aaron/Documents/Python/Ada_Learn/Analysis/Analysis_scripts_functions")
 from behavioural_analysis_test import c1_behavioural_df, c2_behavioural_df
 
+from participant_task_characteristics import participant_str, condition_1_str, condition_2_str
 
 
-def check_trig_sync_between_files(behavioural_df, pupil_trig_df, physiological_triggers_df, plot_outcomes_between_files = True):
+
+def check_trig_sync_between_files(participant_str, condition_str, behavioural_df, pupil_trig_df, physiological_triggers_df, plot_outcomes_between_files = True):
     """
     Function to check that the number and order of triggers inserted matches across the different files.
     It aligns the triggers by 'task_session' and handles missing data by inserting NaN where necessary.
 
     Parameters:
+    - participant_str: string, identifier of participant number (set to 2 numbers)
+    - condition_str: string, identifier of condition order (set to 2 numbers)
     - behavioural_df: pd.DataFrame, contains parsed data from all .json adalearn data files for select variables. Variable of interest is 'outcome'. 
     - pupil_trig_df: pd.DataFrame, contains the trigger information (i.e. time, outcome) for each task session from pupil .txt file. Variable of interest is 'outcome'
     - physiological_triggers_df: pd.DataFrame, contains trigger data, associated timestamp, and data file number obtained from .edf file. Variable of interest is 'triggers'
@@ -83,7 +87,7 @@ def check_trig_sync_between_files(behavioural_df, pupil_trig_df, physiological_t
                     row=j+1, col=i+1
                 )
 
-        fig.update_layout(height=900, width=900 * num_task_sessions, title_text="Outcome Comparisons Across Files and Task Sessions", showlegend=False)
+        fig.update_layout(height=900, width=900 * num_task_sessions, title_text=f"Outcome comparisons across files and task sessions for participant {participant_str} in condition {condition_str}", showlegend=False)
         
         fig.update_yaxes(title_text="Behavioural Outcome", row=1, col=1)
         fig.update_yaxes(title_text="Pupil Outcome", row=2, col=1)
@@ -95,8 +99,8 @@ def check_trig_sync_between_files(behavioural_df, pupil_trig_df, physiological_t
 
 
 # Example usage:
-c1_trig_check = check_trig_sync_between_files(behavioural_df=c1_behavioural_df, pupil_trig_df=c1_pupil_trig_df, physiological_triggers_df=c1_trig_chan_df, plot_outcomes_between_files=True)
+c1_trig_check = check_trig_sync_between_files(participant_str=participant_str, condition_str=condition_1_str, behavioural_df=c1_behavioural_df, pupil_trig_df=c1_pupil_trig_df, physiological_triggers_df=c1_trig_chan_df, plot_outcomes_between_files=True)
 
-c2_trig_check = check_trig_sync_between_files(behavioural_df=c2_behavioural_df, pupil_trig_df=c2_pupil_trig_df, physiological_triggers_df=c2_trig_chan_df, plot_outcomes_between_files=True)
+c2_trig_check = check_trig_sync_between_files(participant_str=participant_str, condition_str=condition_2_str,behavioural_df=c2_behavioural_df, pupil_trig_df=c2_pupil_trig_df, physiological_triggers_df=c2_trig_chan_df, plot_outcomes_between_files=True)
 
 
