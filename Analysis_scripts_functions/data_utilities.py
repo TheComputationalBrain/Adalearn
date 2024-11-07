@@ -103,4 +103,6 @@ c1_trig_check = check_trig_sync_between_files(participant_str=participant_str, c
 
 c2_trig_check = check_trig_sync_between_files(participant_str=participant_str, condition_str=condition_2_str,behavioural_df=c2_behavioural_df, pupil_trig_df=c2_pupil_trig_df, physiological_triggers_df=c2_trig_chan_df, plot_outcomes_between_files=True)
 
+# check
+
 
