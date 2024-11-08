@@ -24,6 +24,7 @@ from participant_task_characteristics import participant_str, condition_1_str, c
 from behavioural_analysis_test import c1_change_point_indices, c2_change_point_indices
 
 
+
 c1_biopac_df, stim_channel, ecg_channel, trig_channel = load_biopac_data(participant_str=participant_str, condition_str=condition_1_str, run_ranges=c1_run_ranges)
 
 c2_biopac_df, stim_channel, ecg_channel, trig_channel = load_biopac_data(participant_str=participant_str, condition_str=condition_2_str, run_ranges=c2_run_ranges)
@@ -48,9 +49,9 @@ c2_emg_task_sess_dict = extract_task_session_emg_data(condition_str=condition_2_
 
 
 
-c1_ecg_file, c1_ecg_session, c1_rpeaks_session_dict = process_ecg_data(biopac_data=c1_biopac_df, ecg_channels=ecg_channel, task_session_summary=c1_task_session_summary_df, low_pass_filter=True, plot_raw_ecg_file=False, plot_rpeaks_session=True)
+c1_ecg_file, c1_ecg_session, c1_r_r_interval_dict = process_ecg_data(participant_str=participant_str, condition_str=condition_1_str, biopac_data=c1_biopac_df, ecg_channels=ecg_channel, task_session_summary=c1_task_session_summary_df, ecg_trace='cardiac_cycles', apply_filter=True, plot_raw_ecg_file=False)
 
-c2_ecg_file, c2_ecg_session, c2_rpeaks_session_dict = process_ecg_data(biopac_data=c2_biopac_df, ecg_channels=ecg_channel, task_session_summary=c2_task_session_summary_df, low_pass_filter=True, plot_raw_ecg_file=False, plot_rpeaks_session=True)
+c2_ecg_file, c2_ecg_session, c2_r_r_interval_dict = process_ecg_data(participant_str=participant_str, condition_str=condition_2_str, biopac_data=c2_biopac_df, ecg_channels=ecg_channel, task_session_summary=c2_task_session_summary_df, ecg_trace='cardiac_cycles', apply_filter=True, plot_raw_ecg_file=False)
 
 
 
