@@ -629,10 +629,14 @@ def process_ecg_data(participant_str, condition_str, biopac_data, ecg_channels, 
         
         # Store the filtered DataFrame in the dictionary with the index as the key
         hr_task_session_dict[index +1] = task_data
+    
+    print("Initalising r-peak detection...")
 
     rpeaks_session_dict = rpeak_detection(participant_str=participant_str, condition_str=condition_str, hr_dict=hr_task_session_dict, ecg_trace=ecg_trace, height = None, threshold = None, distance = (20/60), prominence = 0.0005, sampling_rate = 2000, plot_rpeaks_session = True)
 
-    r_r_int_session_dict = r_r_interval_calculation(participant_str=participant_str, condition_str=condition_str, rpeaks_dict=rpeaks_session_dict, hr_dict=hr_task_session_dict, sampling_rate=2000, plot_r_r_interval_session=True)
+    print("Calculating r-r intervals...")
+
+    r_r_int_session_dict = r_r_interval_calculation(participant_str=participant_str, condition_str=condition_str, rpeaks_session_dict=rpeaks_session_dict, plot_r_r_interval_session=True)
 
     return ecg_data_df, hr_task_session_dict, r_r_int_session_dict
 
@@ -666,26 +670,25 @@ def ecg_trace_filter(ecgdata, low_filter_cutoff = 40, high_filter_cutoff = None,
 
 
 def rpeak_detection(participant_str, condition_str, hr_dict, ecg_trace = 'cardiac_cycles', height = None, threshold = None, distance = (20/60), prominence = 0.0005, sampling_rate = 2000, plot_rpeaks_session = True):
-    """"
-    Function to detect r-peak of the QRS segment of an ECG trace. Uses SciPys's 'find_peaks' function, which uses parameters such as height, threshold, distance, prominence and width to fine-tune peak detection. Returns a dictionary with the indices of identified r-peaks (the 'proprties' object, is a dictionary containing properties of the returned peaks which were calculated as intermediate results during evaluation of the specified conditions. Includes: 'peak_heights', 'left_thresholds', 'right_thresholds', 'prominences', 'right_bases', 'left_bases', 'width_heights', 'left_ips', 'right_ips', 'plateau_sizes', 'left_edges', 'right_edges'). 
+    """
+    Function to detect r-peak of the QRS segment of an ECG trace. Uses SciPy's 'find_peaks' function, which uses parameters such as height, threshold, distance, prominence, and width to fine-tune peak detection. Returns a dictionary with the indices of identified r-peaks (the 'properties' object, is a dictionary containing properties of the returned peaks which were calculated as intermediate results during evaluation of the specified conditions).
 
     Parameters:
     - participant_str: string, identifier of participant number (set to 2 numbers)
     - condition_str: string, identifier of condition order (set to 2 numbers)
-    - hr_dict: dictionary, contains keys referencing task session number. Each key contains a DataFrame which contains the raw ECG trace for that session, data point time stamps, data file number and a possibly a filtered version of the raw ECG trace. 
-    - ecg_trace: string, column identifier for the ECG trace to be used for r-peak detection. 
+    - hr_dict: dictionary, contains keys referencing task session number. Each key contains a DataFrame which contains the raw ECG trace for that session, data point time stamps, data file number and possibly a filtered version of the raw ECG trace.
+    - ecg_trace: string, column identifier for the ECG trace to be used for r-peak detection.
     - 'find_peaks' parameters:
         - height: number or ndarray or sequence (optional), specifies the required height of peaks.
         - threshold: number or ndarray or sequence (optional), required threshold of peaks, the vertical distance to its neighboring samples.
-        - distance: number (optional), required minimal horizontal distance (>= 1) in samples between neighbouring peaks. Smaller peaks are removed first until the condition is fulfilled for all remaining peaks.
-        - prominence: number or ndarray or sequence (optional), required prominence of peaks. The prominence of a peak measures how much a peak stands out from the surrounding baseline of the signal and is defined as the vertical distance between the peak and its lowest contour line. 
+        - distance: number (optional), required minimal horizontal distance (>= 1) in samples between neighboring peaks. Smaller peaks are removed first until the condition is fulfilled for all remaining peaks.
+        - prominence: number or ndarray or sequence (optional), required prominence of peaks.
         - width: number or ndarray or sequence (optional), specifies the required width of peaks in samples.
     - sampling_rate: integer: sampling rate of the data in Hz.
-    - plot_rpeaks_session: boolean, if true, option to plot the raw ECG trace for each task session with detected r-peaks overlaid. 
+    - plot_rpeaks_session: boolean, if true, option to plot the raw ECG trace for each task session with detected r-peaks overlaid.
 
     Returns:
-    - rpeaks_session_dict: dictionary, contains the indices of detected r-peaks in the ECG trace (values) for each task session (keys)   
-    
+    - rpeaks_session_dict: dictionary, contains the indices of detected r-peaks in the ECG trace (values) for each task session (keys)
     """
     rpeaks_session_dict = {}
 
@@ -698,18 +701,30 @@ def rpeak_detection(participant_str, condition_str, hr_dict, ecg_trace = 'cardia
         # Baseline correcting ECG trace by mean response
         ecg_signal = ecg_signal - np.mean(ecg_signal)
 
-        # Find peaks in the ECG signal (r-peaks) using scipy's find_peaks function. 
+        # Find peaks in the ECG signal (r-peaks) using scipy's find_peaks function.
         rpeak_indices, properties = find_peaks(
             ecg_signal,
-            height = height,
-            threshold = threshold, 
-            distance=fs*distance,
+            height=height,
+            threshold=threshold,
+            distance=fs * distance,
             prominence=prominence,
-            width = None)
+            width=None)
+
+        if len(rpeak_indices) == 0:
+            print(f"No r-peaks detected for session {session_key}", flush=True)
+            rpeaks_session_dict[session_key] = pd.DataFrame(columns=['rpeaks_indices', 'rpeak_rel_time'])
+            continue
+
+        rpeaks_time = session_data['time'].iloc[rpeak_indices].reset_index(drop=True)
         
-        # Store the detected peaks and their count in the dictionary
-        rpeaks_session_dict[session_key] = rpeak_indices
-        
+        rpeak_rel_time = session_data['rel_time'].iloc[rpeak_indices].reset_index(drop=True)
+
+        rpeaks_session_dict[session_key] = pd.DataFrame({
+            'rpeaks_indices': rpeak_indices,
+            'rpeaks_time': rpeaks_time,
+            'rpeak_rel_time': rpeak_rel_time
+        })
+
         # Collect the time of the detected R-peaks
         valid_rpeaks = session_data.iloc[rpeak_indices]
 
@@ -717,38 +732,33 @@ def rpeak_detection(participant_str, condition_str, hr_dict, ecg_trace = 'cardia
             print(f"The number of r-peaks identified in session {session_key} is: {len(valid_rpeaks)}")
         else:
             print(f"No valid r-peaks found in channel {session_key}")
-        
+
         # Option to plot the raw ECG signal and detected r-peaks
     if plot_rpeaks_session:
-        num_subplots = len(hr_dict) 
+        num_subplots = len(hr_dict)
         fig = make_subplots(
-            rows=num_subplots, 
-            cols=1, 
+            rows=num_subplots,
+            cols=1,
             shared_xaxes=False,
             subplot_titles=[f"Task Session {session_key}" for session_key in hr_dict.keys()]
         )
 
         # Loop through each key in ecg containing dictionary and then add the ECG signal and detected r-peaks to each subplot
         for i, (session_key, session_data) in enumerate(hr_dict.items(), start=1):
-            ecg_signal = session_data[ecg_trace]  
-            rpeak_indices, _ = find_peaks(
-                ecg_signal,
-                height = height,
-                threshold = threshold, 
-                distance=fs*distance,
-                prominence=prominence,
-                width = None)
-
+            ecg_signal = session_data[ecg_trace]
+            rpeaks_data = rpeaks_session_dict[session_key]  # Extract stored R-peaks data
+            
             # Add ECG signal trace
             fig.add_trace(
                 go.Scatter(x=session_data['rel_time'], y=ecg_signal, mode='lines', name='ECG Signal'),
                 row=i, col=1
             )
             
-            # Add r-peak markers
+            # Add r-peak markers (use the actual ECG signal values corresponding to the r-peak indices)
+            rpeak_values = ecg_signal.iloc[rpeaks_data['rpeaks_indices']].values
             fig.add_trace(
-                go.Scatter(x=session_data['rel_time'].iloc[rpeak_indices], 
-                        y=ecg_signal.iloc[rpeak_indices], 
+                go.Scatter(x=rpeaks_data['rpeak_rel_time'], 
+                        y=rpeak_values, 
                         mode='markers', 
                         marker=dict(color='red', size=10), 
                         name='Detected R-peaks'),
@@ -770,14 +780,14 @@ def rpeak_detection(participant_str, condition_str, hr_dict, ecg_trace = 'cardia
 
 
 
-def r_r_interval_calculation(participant_str, condition_str, rpeaks_dict, hr_dict, sampling_rate=2000, plot_r_r_interval_session=True):
+def r_r_interval_calculation(participant_str, condition_str, rpeaks_session_dict,  plot_r_r_interval_session=True):
     """"
     Function to calculate R-R intervals from R-peaks extracted from the QRS segment of an ECG trace. Takes identified R-peaks indices and converts the difference between peaks to a time, used to calculate the duration between peaks (R-R interval). Instantaneous HR is calculated as 60 divided by the interval.
 
     Parameters:
     - participant_str: string, identifier of participant number (set to 2 numbers)
     - condition_str: string, identifier of condition order (set to 2 numbers)
-    - rpeaks_dict: dictionary, contains keys referencing task session number. Each key contains an array with indices of identified R-peaks within the ECG signal. 
+    - rpeaks_dict: dictionary, contains keys referencing task session number. Each key contains a dataframe containing the indices of identified R-peaks within the ECG signal and the relative time of each r-peak. 
     - hr_dict: dictionary, contains keys referencing task session number. Each key contains a DataFrame which contains the raw ECG trace for that session, data point time stamps, data file number and a possibly a filtered version of the raw ECG trace.  
     - hr_dict: dictionary, contains the full ECG time series data for each task session.
     - sampling_rate: integer, sampling rate of the data in Hz.
@@ -786,57 +796,35 @@ def r_r_interval_calculation(participant_str, condition_str, rpeaks_dict, hr_dic
     Returns:
     - r_r_int_session_dict: dictionary, contains a DataFrame with the indices of detected R-peaks in the ECG trace, R-peak times, R-R intervals, and instantaneous HR for each task session.   
     """
-    r_r_int_session_dict = {}
-
     # Loop through the r-peaks dictionary
-    for session_key, rpeak_indices in rpeaks_dict.items():
-
-        # Access the ECG data from hr_dict to get time information
-        session_data = hr_dict[session_key]
-
-        # Extract the time of the detected R-peaks using the indices
-        rpeak_times = session_data.iloc[rpeak_indices].index.values / sampling_rate
-
-        # Initialize lists for R-R intervals and instantaneous HR
-        r_r_intervals = []
-        inst_hr = []
-
-        if len(rpeak_times) > 1:
-            # Calculate R-R intervals (time differences between consecutive R-peaks)
-            r_r_intervals = np.diff(rpeak_times)  # R-R intervals in seconds
-            inst_hr = 60 / r_r_intervals  # Instantaneous HR in bpm
-
-            # Store results in the dictionary
-            r_r_int_session_dict[session_key] = {
-                'rpeak_indices': rpeak_indices,
-                'rpeak_times': rpeak_times,
-                'r_r_intervals': r_r_intervals,
-                'instantaneous_hr': inst_hr
-            }
-
-            print(f"Task session {session_key}: {len(rpeak_indices)} R-peaks, {len(r_r_intervals)} R-R intervals calculated.")
-        else:
-            # Handle cases with insufficient R-peaks for interval calculation
-            print(f"No valid R-R intervals found in session {session_key}")
-            r_r_int_session_dict[session_key] = {
-                'rpeak_indices': rpeak_indices,
-                'rpeak_times': rpeak_times,
-                'r_r_intervals': [],
-                'instantaneous_hr': []
-            }
+    for session, df in rpeaks_session_dict.items():
+        # Calculate the R-R interval: time difference between consecutive R-peaks
+        r_r_intervals = df['rpeaks_time'].diff().iloc[1:].reset_index(drop=True)  
+        
+        # Calculate Instantaneous HR (bpm)
+        hr = 60 / r_r_intervals  
+        
+        # Add R-R interval and HR to the DataFrame
+        df['r_r_intervals'] = pd.Series([None] + r_r_intervals.tolist())  
+        df['instantaneous_hr'] = pd.Series([None] + hr.tolist())  
+        
+        # Update the dictionary with the modified dataframe
+        rpeaks_session_dict[session] = df
 
     if plot_r_r_interval_session:
-        num_sessions = len(r_r_int_session_dict)
+        num_sessions = len(rpeaks_session_dict)
         fig = make_subplots(
             rows=num_sessions, cols=1,
             shared_xaxes=False,
-            subplot_titles=[f"Task Session {key}" for key in r_r_int_session_dict.keys()]
+            subplot_titles=[f"Task Session {key}" for key in rpeaks_session_dict.keys()]
         )
 
-        for i, (session_key, session_data) in enumerate(r_r_int_session_dict.items(), start=1):
+        # Loop through each task session
+        for i, (session_key, session_data) in enumerate(rpeaks_session_dict.items(), start=1):
 
-            rpeak_times = session_data['rpeak_times']
-            r_r_intervals = session_data['r_r_intervals']
+            # Retrieve R-peaks times and R-R intervals for the session
+            rpeak_times = session_data['rpeaks_time']
+            r_r_intervals = session_data['r_r_intervals'][1:]  # Exclude first value (NaN)
 
             # Plot R-R intervals
             fig.add_trace(
@@ -851,18 +839,131 @@ def r_r_interval_calculation(participant_str, condition_str, rpeaks_dict, hr_dic
             )
 
             fig.update_xaxes(title_text="Time (s)", row=i, col=1)
-            fig.update_yaxes(title_text="R-R intervals (s)", row=i, col=1)
+            fig.update_yaxes(title_text="R-R Intervals (s)", row=i, col=1)
 
         # Layout adjustments
         fig.update_layout(
-            title_text=f"R-R intervals across each task session for participant {participant_str} in condition {condition_str}",
+            title_text=f"R-R Intervals Across Each Task Session for Participant {participant_str} in Condition {condition_str}",
             height=600 * num_sessions,
             showlegend=False,
         )
 
+        # Show the plot
         fig.show()
 
-    return r_r_int_session_dict
+    return rpeaks_session_dict
+
+
+
+
+def r_r_interval_by_change_point(participant_str, condition_str, rpeaks_session_dict, change_point_indices, pre=2, post=10, time_bin_size=0.5, plot_r_r_intervals_by_cp=False):
+    """
+    Computes R-R interval dynamics around change points using time bins.
+    """
+
+    r_r_intervals_by_cp = []
+
+    # Iterate over each row in change_point_indices
+    for idx, row in change_point_indices.iterrows():
+        task_session = row['task_session']
+        rel_time_cp = row['rel_time']  
+
+        # Check if task session exists in dictionary
+        if task_session not in rpeaks_session_dict:
+            print(f"Task session {task_session} not found in rpeaks dictionary. Skipping.")
+            continue
+
+        session_data = rpeaks_session_dict[task_session]
+
+        # Check if session data is not empty
+        if session_data.empty:
+            print(f"Session data for task session {task_session} is empty. Skipping.")
+            continue
+
+        # Filter the session data for r-r intervals within the specified time window
+        filtered_data = session_data[
+            (session_data['rpeak_rel_time'] >= rel_time_cp - pre) &
+            (session_data['rpeak_rel_time'] <= rel_time_cp + post)
+        ].copy()
+
+        # Check if filtered_data is not empty
+        if filtered_data.empty:
+            print(f"No data points found in the specified time window for task session {task_session}. Skipping.")
+            continue
+
+        # Adjust the time to be relative to the change point
+        filtered_data['rel_time_cp'] = filtered_data['rpeak_rel_time'] - rel_time_cp
+
+        # Add metadata columns
+        filtered_data['task_session'] = row['task_session']
+        filtered_data['outcome_num'] = row.get('outcome_num', np.nan) 
+        filtered_data['change_point_count'] = row.get('change_point_count', np.nan)
+
+        # Append to the list
+        r_r_intervals_by_cp.append(filtered_data)
+
+    # Concatenate the list into a DataFrame
+    if r_r_intervals_by_cp:
+        r_r_interval_by_cp_df = pd.concat(r_r_intervals_by_cp, ignore_index=True)
+    else:
+        print("No R-R interval data around change points found.")
+        return pd.DataFrame(), pd.DataFrame()
+
+    # Define time bins
+    time_bins = np.arange(-pre, post + time_bin_size, time_bin_size)
+
+    # Create a time_bin column
+    r_r_interval_by_cp_df['time_bin'] = pd.cut(r_r_interval_by_cp_df['rel_time_cp'], bins=time_bins, labels=time_bins[:-1])
+
+    # Aggregate data by time bins
+    binned_r_r_data = r_r_interval_by_cp_df.groupby(['time_bin']).agg(
+        mean_r_r_interval=('r_r_intervals', 'mean'),
+        std_r_r_interval=('r_r_intervals', 'std'),
+        count=('r_r_intervals', 'size')
+    ).reset_index()
+
+    binned_r_r_data['sem_r_r_interval'] = binned_r_r_data['std_r_r_interval'] / np.sqrt(binned_r_r_data['count'])
+    binned_r_r_data['time_bin'] = binned_r_r_data['time_bin'].astype(float)
+
+    # Optional Plot
+    if plot_r_r_intervals_by_cp:
+        fig = go.Figure()
+        fig.add_trace(go.Scatter(
+            x=binned_r_r_data['time_bin'],
+            y=binned_r_r_data['mean_r_r_interval'],
+            mode='lines',
+            line=dict(color='blue')
+        ))
+
+        fig.add_trace(go.Scatter(
+            x=binned_r_r_data['time_bin'],
+            y=binned_r_r_data['mean_r_r_interval'] + binned_r_r_data['sem_r_r_interval'],
+            mode='lines',
+            line=dict(color='lightblue'),
+            showlegend=False
+        ))
+
+        fig.add_trace(go.Scatter(
+            x=binned_r_r_data['time_bin'],
+            y=binned_r_r_data['mean_r_r_interval'] - binned_r_r_data['sem_r_r_interval'],
+            mode='lines',
+            fill='tonexty',
+            fillcolor='rgba(0, 0, 255, 0.2)',
+            line=dict(color='lightblue'),
+            showlegend=False
+        ))
+
+        fig.add_vline(x=0, line_dash="dash", line_color="black")
+
+        fig.update_layout(
+            title=f'R-R interval dynamics around change point for participant{participant_str} in condition {condition_str}',
+            xaxis_title='Time (s)',
+            yaxis_title='R-R Interval (ms)'
+        )
+        fig.show()
+
+    return r_r_interval_by_cp_df, binned_r_r_data
+
 
 
 def identify_vns_from_emg(emg_task_session_dict, vns_task_session_keys, sampling_rate = 2000, peak_window_size = 0.5, average_window_size = 2, threshold_increase = 1.2):
@@ -1001,116 +1102,3 @@ def identify_vns_from_emg(emg_task_session_dict, vns_task_session_keys, sampling
     })
 
     return vns_start_times
-
-
-
-def r_r_interval_by_change_point(hr_task_session_dict, change_point_indices, participant_str, condition_str, pre = 2, post = 10, time_bin_size = 0.5, plot_r_r_intervals_by_cp = False):
-    """
-    Function to compute the dynamics of R-R intervals around identified change points. The time range (from before a change point to after a change point) can be specified. Averaging is performed by using time bins (which can also be specified) to standardize the timing of R-R intervals. Option to plot the data to see visualise how R-R intervals change in response to a change point. 
-
-    Parameters
-    - hr_task_session_dict: dictionary, contains r-peak dataframe (value) for each task session (key).
-    - change_point_indices: pd.DataFrame, with columns 'index', 'relative_time', and 'task_session', containing the indices and relative times of the change points for each session. (*Note: Have removed identification of the first outcome of each task session as a new change point).
-    - participant_str: string, identifier of participant number (set to 2 numbers)
-    - condition: string, identifier of condition order (set to 2 numbers)
-    - pre: integer, defines the time in seconds before the change point (used to define the time range over wihich the time bins are computed) (default = -2 s)
-    - pre: integer, defines the time in seconds after the change point (used to define the time range over wihich the time bins are computed) (default = +10 s)
-    - time_bin_size: integer, defines the size of the time bin window (default = 0.5 s)
-    - plot_r_r_intervals_by_cp: boolean, if true with plot the mean R-R interval computed within each time bin (plus the sem) against time. (default = False)
-
-    Returns:
-    - r_r_interval_by_cp_df: pd.DataFrame, contains the filtered raw R-peaks within the specified time range (i.e. between 'pre' and 'post')
-    - binned_r_r_data: pd.DataFrame, containes the averaged R-R intervals across time bins plus measures of variance (std and sem) and a count of the number of data points contributing to each time bin
-    """
-
-    r_r_intervals_by_cp = []
-
-    # Iterate over each row in change_point_indices
-    for idx, row in change_point_indices.iterrows():
-        task_session = row['task_session']  # Get the task_session
-        rel_time_cp = row['rel_time']  # Get the relative time of the change point
-    
-        # Find the corresponding dictionary for the task session
-        session_data = hr_task_session_dict[task_session]  # Access the dictionary for the task session
-    
-        # Filter the session data for rr_interval between rel_time_cp - 2 and rel_time_cp + 10
-        filtered_data = session_data[
-            (session_data['rel_time'] >= rel_time_cp - pre) & 
-            (session_data['rel_time'] <= rel_time_cp + post)
-        ].copy()  # Use .copy() to avoid SettingWithCopyWarning
-
-        # Adjust the 'rel_time' column to be relative to the change point's 'rel_time'
-        filtered_data['rel_time'] = filtered_data['rel_time'] - rel_time_cp
-
-        # Add the relevant columns from the change point DataFrame
-        filtered_data['task_session'] = row['task_session']
-        filtered_data['outcome_num'] = row['outcome_num']
-        filtered_data['rel_time'] = row['rel_time']
-        filtered_data['change_point_count'] = row['change_point_count']
-
-        # Append the filtered data to the list
-        r_r_intervals_by_cp.append(filtered_data)
-
-    # Convert the results list to a DataFrame
-    r_r_interval_by_cp_df = pd.concat(r_r_intervals_by_cp, ignore_index=True)
-
-    # Generate time bins to compute average for a given time interval
-    # Define the bin edges for time 
-    time_bins = np.arange(-pre, post, time_bin_size)  
-
-    # Create a new column that assigns each row to a time bin
-    r_r_interval_by_cp_df['time_bin'] = pd.cut(r_r_interval_by_cp_df['rel_time'], bins=time_bins, labels=time_bins[:-1])
-
-    # Group by change_point_number and time_bin, and calculate mean rr_interval for each bin
-    binned_r_r_data = r_r_interval_by_cp_df.groupby(['time_bin']).agg(
-        mean_r_r_interval=('r_r_interval', 'mean'),
-        std_r_r_interval=('r_r_interval', 'std'),
-        count=('r_r_interval', 'size')  # To know how many data points contributed to each bin
-    ).reset_index()
-
-    binned_r_r_data['sem_r_r_interval'] = binned_r_r_data['std_r_r_interval'] / np.sqrt(binned_r_r_data['count'])
-
-    binned_r_r_data['time_bin'] = binned_r_r_data['time_bin'].astype(float)
-
-    # Plotting option for the dynamics of r-r intervals around change point
-    if plot_r_r_intervals_by_cp:
-        fig = go.Figure()
-
-        fig.add_trace(go.Scatter(
-            x=binned_r_r_data['time_bin'], 
-            y=binned_r_r_data['mean_r_r_interval'], 
-            mode='lines',
-            line=dict(color='rgba(0, 0, 255, 1)'), 
-            name='R-R Interval'
-        ))
-
-        fig.add_trace(go.Scatter(
-            x=binned_r_r_data['time_bin'], 
-            y=binned_r_r_data['mean_r_r_interval'] + binned_r_r_data['sem_r_r_interval'], 
-            mode='lines',
-            line=dict(color='rgba(0, 0, 255, 0.1)'), 
-            showlegend=False
-        ))
-
-        fig.add_trace(go.Scatter(
-            x=binned_r_r_data['time_bin'], 
-            y=binned_r_r_data['mean_r_r_interval'] - binned_r_r_data['sem_r_r_interval'], 
-            mode='lines',
-            fill='tonexty',
-            fillcolor='rgba(0, 0, 255, 0.2)',
-            line=dict(color='rgba(0, 0, 255, 0.1)'), 
-            showlegend=False
-        ))
-
-        fig.add_vline(x=0, line_width=3, line_dash="dash", line_color="black", opacity=0.5)
-
-        fig.update_layout(
-            title=f'Raw R-R interval time binned around change point for participant {participant_str} in condition {condition_str}',
-            xaxis_title='Time (s)',
-            yaxis_title='R-R interval' 
-        )       
-
-        fig.show()
-        
-
-    return r_r_interval_by_cp_df, binned_r_r_data
