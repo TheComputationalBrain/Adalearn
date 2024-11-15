@@ -15,9 +15,9 @@ import plotly.graph_objs as go
 from plotly.subplots import make_subplots
 pio.renderers.default='browser'
 
-from physiological_signal_functions import load_biopac_data, process_emg_data, biopac_trigger_extraction, extract_task_session_emg_data
 
-from vega_cardiac_function import process_ecg_data
+from physiological_signal_functions import load_biopac_data, process_emg_data, biopac_trigger_extraction, extract_task_session_emg_data, process_ecg_data, r_r_interval_by_change_point
+
 
 from participant_task_characteristics import participant_str, condition_1_str, condition_2_str, c1_run_ranges, c1_vns_task_session, c2_run_ranges, c2_vns_task_session
 
@@ -55,18 +55,9 @@ c2_ecg_file, c2_ecg_session, c2_r_r_interval_dict = process_ecg_data(participant
 
 
 
+c1_r_r_interval_by_cp, c1_r_r_intervals_time_binned_cp = r_r_interval_by_change_point(participant_str=participant_str, condition_str=condition_1_str, rpeaks_session_dict=c1_r_r_interval_dict, change_point_indices=c1_change_point_indices, pre = 2, post = 10, time_bin_size = 0.5, plot_r_r_intervals_by_cp=True)
 
-
-
-#c1_rpeaks_dict = process_ecg_data(biopac_data=c1_biopac_df, ecg_channels=ecg_channel, task_session_summary=c1_task_session_summary_df, plot_ecg = False)
-
-#c2_rpeaks_dict = process_ecg_data(biopac_data=c2_biopac_df, ecg_channels=ecg_channel, task_session_summary=c2_task_session_summary_df, plot_ecg = False)
-
-
-
-#c1_r_r_interval_by_cp, c1_r_r_intervals_time_binned_cp = r_r_interval_by_change_point(hr_task_session_dict=c1_rpeaks_dict, change_point_indices=c1_change_point_indices, participant_str=participant_str, condition_str=condition_1_str, pre = 2, post = 10, time_bin_size = 0.5, plot_r_r_intervals_by_cp=False)
-
-#c2_r_r_interval_by_cp, c2_r_r_intervals_time_binned_cp = r_r_interval_by_change_point(hr_task_session_dict=c2_rpeaks_dict, change_point_indices=c2_change_point_indices, participant_str=participant_str, condition_str=condition_2_str, pre = 2, post = 10, time_bin_size = 0.5, plot_r_r_intervals_by_cp=False)
+c2_r_r_interval_by_cp, c2_r_r_intervals_time_binned_cp = r_r_interval_by_change_point(participant_str=participant_str, condition_str=condition_2_str, rpeaks_session_dict=c2_r_r_interval_dict, change_point_indices=c2_change_point_indices, pre = 2, post = 10, time_bin_size = 0.5, plot_r_r_intervals_by_cp=True)
 
 
 

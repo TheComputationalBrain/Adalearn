@@ -15,16 +15,18 @@ from computational_analysis_test import c1_surprise, c2_surprise, c1_cpp_df, c2_
 
 
 
-def pupil_regression_analysis(comp_variable_df, outcome_epoched_pupil_df, outcome_epochs_to_remove, pupil_trig_df, outcome_parameter = False, variable = 'surprise'):
+def pupil_regression_analysis(comp_variable_df, outcome_epoched_pupil_df, pupil_trig_df, outcome_epochs_to_remove = None, outcome_parameter = False, variable = 'surprise'):
     """
     
     """
     comp_variable = comp_variable_df[variable]
-    comp_variable.drop(index=outcome_epochs_to_remove, inplace=True)
+    if outcome_epochs_to_remove is not None:
+        comp_variable.drop(index=outcome_epochs_to_remove, inplace=True)
 
 
     outcome = pupil_trig_df['outcome']
-    outcome.drop(index=outcome_epochs_to_remove, inplace=True)
+    if outcome_epochs_to_remove is not None:
+        outcome.drop(index=outcome_epochs_to_remove, inplace=True)
 
 
     epoched_pupil_data = outcome_epoched_pupil_df.copy()
@@ -146,10 +148,9 @@ def pupil_regression_analysis(comp_variable_df, outcome_epoched_pupil_df, outcom
 
 
 
-surprise_coef = pupil_regression_analysis(c1_surprise, c1_outcome_epoched_pupil_df, c1_outcome_epochs_to_remove, c1_pupil_trig_df, outcome_parameter=False, variable='surprise')
+surprise_coef = pupil_regression_analysis(comp_variable_df=c1_surprise, outcome_epoched_pupil_df=c1_outcome_epoched_pupil_df, pupil_trig_df=c1_pupil_trig_df, outcome_epochs_to_remove = c1_outcome_epochs_to_remove,outcome_parameter=False, variable='surprise')
 
-surprise_coef = pupil_regression_analysis(c2_surprise, c2_outcome_epoched_pupil_df, c2_outcome_epochs_to_remove, c2_pupil_trig_df, outcome_parameter=False, variable='surprise')
-
+surprise_coef = pupil_regression_analysis(comp_variable_df=c2_surprise, outcome_epoched_pupil_df=c2_outcome_epoched_pupil_df, pupil_trig_df=c2_pupil_trig_df, outcome_epochs_to_remove = c2_outcome_epochs_to_remove,outcome_parameter=False, variable='surprise')
 
 
 cpp_coef = pupil_regression_analysis(c1_cpp_df, c1_outcome_epoched_pupil_df, c1_outcome_epochs_to_remove, c1_pupil_trig_df, outcome_parameter=False, variable='cpp')

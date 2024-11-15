@@ -11,7 +11,7 @@ import plotly.graph_objs as go
 from plotly.subplots import make_subplots
 pio.renderers.default='browser'
 
-from behavioural_task_functions import load_behavioural_data, behavioural_change_point_analysis, behavioural_learning_rate_analysis, learning_rate_by_change_point
+from behavioural_task_functions import load_behavioural_data, behavioural_change_point_analysis
 
 from participant_task_characteristics import participant, participant_str, condition_1_str, condition_2_str, c1_task_sessions, c2_task_sessions
 
@@ -27,14 +27,3 @@ c1_change_point_num, c1_change_point_by_sess, c1_change_point_indices = behaviou
 
 c2_change_point_num, c2_change_point_by_sess, c2_change_point_indices = behavioural_change_point_analysis(behavioural_df=c2_behavioural_df)
 
-
-
-c1_behavioural_df = behavioural_learning_rate_analysis(behavioural_df=c1_behavioural_df, change_point_indices_df=c1_change_point_indices, participant_str=participant_str, condition_str=condition_1_str, plot_learning_rate_by_ses=False)
-
-c2_behavioural_df = behavioural_learning_rate_analysis(behavioural_df=c2_behavioural_df, change_point_indices_df=c2_change_point_indices, participant_str=participant_str, condition_str=condition_2_str, plot_learning_rate_by_ses=False)
-
-
-
-c1_learning_rate_by_cp, c1_avg_learning_rate_cp = learning_rate_by_change_point(behavioural_df=c1_behavioural_df, change_point_indices=c1_change_point_indices, participant=participant, condition=condition_1_str, pre=2, post=10, plot_learning_rate_by_cp=False)
-
-c2_learning_rate_by_cp, c2_avg_learning_rate_cp = learning_rate_by_change_point(behavioural_df=c2_behavioural_df, change_point_indices=c2_change_point_indices, participant=participant, condition=condition_2_str, pre=2, post = 10, plot_learning_rate_by_cp=False)
