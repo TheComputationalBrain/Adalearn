@@ -17,13 +17,13 @@ from participant_task_characteristics import participant, participant_str, condi
 
 
 
-c1_behavioural_df = load_behavioural_data(participant_str=participant_str, condition=condition_1_str, condition_task_sessions=c1_task_sessions, plot_behav_data=False, plot_estimate_v_ideal=False)
+c1_behavioural_df = load_behavioural_data(participant_str=participant_str, condition_str=condition_1_str, condition_task_sessions=c1_task_sessions, plot_behav_data=False, plot_estimate_v_ideal=False)
 
-c2_behavioural_df = load_behavioural_data(participant_str=participant_str, condition=condition_2_str, condition_task_sessions=c2_task_sessions, plot_behav_data=False, plot_estimate_v_ideal=False)
+c2_behavioural_df = load_behavioural_data(participant_str=participant_str, condition_str=condition_2_str, condition_task_sessions=c2_task_sessions, plot_behav_data=False, plot_estimate_v_ideal=False)
 
 
 
-c1_change_point_num, c1_change_point_by_sess, c1_change_point_indices = behavioural_change_point_analysis(behavioural_df=c1_behavioural_df)
+c1_change_point_num, c1_change_point_by_sess, c1_change_point_indices = behavioural_change_point_analysis(behavioural_df=c1_behavioural_df, condition_str=condition_1_str)
 
-c2_change_point_num, c2_change_point_by_sess, c2_change_point_indices = behavioural_change_point_analysis(behavioural_df=c2_behavioural_df)
+c2_change_point_num, c2_change_point_by_sess, c2_change_point_indices = behavioural_change_point_analysis(behavioural_df=c2_behavioural_df, condition_str=condition_2_str)
 

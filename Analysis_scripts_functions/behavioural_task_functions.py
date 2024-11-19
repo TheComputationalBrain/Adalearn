@@ -10,7 +10,7 @@ pio.renderers.default='browser'
 
 
 
-def load_behavioural_data(participant_str, condition, condition_task_sessions, plot_behav_data = False, plot_estimate_v_ideal = False):
+def load_behavioural_data(participant_str, condition_str, condition_task_sessions, plot_behav_data = False, plot_estimate_v_ideal = False):
     """
     Function to load adalearn .json files. Sets the working directory to the relevant file, before loading and storing the data for each task session for a given condition. Then unpacks parsed_json adalearn files into a dataframe. Returned dataframe contains only selected variables deemed most relevant from the full .json file. Diagnostics identify whether what is expected in the dataframe is in fact there. Options to plot the the behavioural data (participants estimation, ideal observer, true hidden estimates and outcome observations) from each task session, and also the participants estimates against ideal observer across all task sessions.  
 
@@ -21,7 +21,7 @@ def load_behavioural_data(participant_str, condition, condition_task_sessions, p
     
     Parameters:
     - participant_str: string, participant identifier (number; set to 2 digits)
-    - condition: string, identifier of condition order (set to 2 numbers) ** May need to change to denote actual condition in Adalearn VNS study **
+    - condition_str: string, identifier of condition order (set to 2 numbers) ** May need to change to denote actual condition in Adalearn VNS study **
     - condition_task_sessions: list, contains string variables (set to 2 numbers) denoting the individual task sessions completed by the participant in the condition
     - plot_behav_data: boolean, if true, will plot the raw behavioural data as subplots for each task session (default = False)
     - plot_estimate_v_ideal: boolean, if true, will plot the participants' estimates against the ideal observer across all task sessions (default = False)
@@ -32,7 +32,7 @@ def load_behavioural_data(participant_str, condition, condition_task_sessions, p
 
     # Setting the working directory of the files
     print(os.getcwd())
-    os.chdir(f'/home/aaron/Documents/Python/Ada_Learn/VNS Ada_Learn/Data/sub-{participant_str}/ses-{condition}/behav')
+    os.chdir(f'/home/aaron/Documents/Python/Ada_Learn/VNS Ada_Learn/Data/sub-{participant_str}/ses-{condition_str}/behav')
     print(os.getcwd())
 
     # Loading all adalearn task session data files
@@ -41,7 +41,7 @@ def load_behavioural_data(participant_str, condition, condition_task_sessions, p
     # Iterate across all files and append data to storage list
     for session in condition_task_sessions:
     
-        with open(f'sub-{participant_str}_ses-{condition}_task-AdalearnVNS_run-{session}_behav.json', 'rb') as ada_learn_file:
+        with open(f'sub-{participant_str}_ses-{condition_str}_task-AdalearnVNS_run-{session}_behav.json', 'rb') as ada_learn_file:
              parsed_json_con = json.load(ada_learn_file)
     
         adalearn_data.append(parsed_json_con)
@@ -102,18 +102,9 @@ def load_behavioural_data(participant_str, condition, condition_task_sessions, p
 
     for task_session, count in trial_count_per_session.items():
         if count == 75:
-            print(f"Task session {task_session} has exactly 75 trials.")
+            print(f"Task session {task_session} has exactly 75 outcome stimuli.")
         else:
-            print(f"Task session {task_session} does not have 75 trials, it has {count} trials.")
-
-    # Checking the number of change points within each task session data file
-    change_point_count_per_session = behavioural_df.groupby('task_session')['change_point'].sum()
-
-    # Remove the True value associated with trial number 0 in each task session then group by 'task_session' and count the number of True values in 'change_point' again
-    filtered_cp_df = behavioural_df[~((behavioural_df['outcome_num'] == 0) & (behavioural_df['change_point'] == True))]
-
-    filtered_change_point_count_per_session = filtered_cp_df.groupby('task_session')['change_point'].sum()
-    print(f"\nNumber of True values in 'change_point' for each task session (after removing 'True' value for the first observation of each session:\n{filtered_change_point_count_per_session}")
+            print(f"Task session {task_session} does not have 75 outcome stimuli, it has {count} outcomess.")
 
     # Option to plot the raw behavioural data across each task session separately
     if plot_behav_data:
@@ -155,7 +146,7 @@ def load_behavioural_data(participant_str, condition, condition_task_sessions, p
             fig.update_yaxes(range=[-0.09, 1], row=i, col=1)
 
         # Update overall layout
-        fig.update_layout(height=900*num_sessions, width=1200, title_text=f"Behavioural estimates (green), ideal observer (red) and hidden task structure (blue) in condition {condition} for participant {participant_str}",
+        fig.update_layout(height=900*num_sessions, width=1200, title_text=f"Behavioural estimates (green), ideal observer (red) and hidden task structure (blue) in condition {condition_str} for participant {participant_str}",
                       showlegend=False, title_x=0.5) 
 
         fig.update_xaxes(title_text='Time (s)', row=num_sessions, col=1)
@@ -173,10 +164,10 @@ def load_behavioural_data(participant_str, condition, condition_task_sessions, p
         fig = px.scatter(df, x="ideal_observer", y="estimate", color="task_session", symbol="task_session")
 
         fig.update_layout(
-        title_text=f"Ideal observer by subjective estimate for each task session for {participant_str}",
+        title_text=f"Ideal observer by subjective estimate for participant {participant_str} across all task sessions in condition {condition_str}.",
         showlegend=True,
         xaxis_title="Ideal Observer",
-        yaxis_title="Estimate"
+        yaxis_title="Participant Estimate"
         )
 
         fig.show()
@@ -184,7 +175,7 @@ def load_behavioural_data(participant_str, condition, condition_task_sessions, p
     return behavioural_df
 
 
-def behavioural_change_point_analysis(behavioural_df):
+def behavioural_change_point_analysis(behavioural_df, condition_str):
     """
     Function to identify change points within each task session from the respective adalearn data file.
     Takes the boolean variable 'change_point' and:
@@ -230,6 +221,10 @@ def behavioural_change_point_analysis(behavioural_df):
     # Create a running count of the number of change points in a condition
     change_point_indices['change_point_count'] = range(1, len(change_point_indices) + 1)
     
+    # Print the number of change points identified for each task session 
+    print(f"\nIn condition {condition_str} there were {change_point_indices['change_point_count'].max()} change points across taks sessions.")
+    print(f"Number of change points in each task session:\n{change_point_indices.groupby('task_session')['outcome_num'].count()}")
+
     return num_change_points, change_points_per_session, change_point_indices
 
     """ 
