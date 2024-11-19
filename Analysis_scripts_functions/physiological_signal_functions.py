@@ -810,6 +810,7 @@ def r_r_interval_calculation(participant_str, condition_str, rpeaks_session_dict
         # Add R-R interval and HR to the DataFrame
         df['r_r_intervals'] = pd.Series([None] + r_r_intervals.tolist())  
         df['instantaneous_hr'] = pd.Series([None] + hr.tolist()).fillna(0).round().astype(int)
+        df['instantaneous_hr'] = df['instantaneous_hr'].replace(0, pd.NA)
         
         # Update the dictionary with the modified dataframe
         rpeaks_session_dict[session] = df
