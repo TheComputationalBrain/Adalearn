@@ -550,14 +550,17 @@ def extract_task_session_emg_data(condition_str, emg_data_df, task_session_summa
     return emg_task_session_dict
 
 
-def process_ecg_data(participant_str, condition_str, biopac_data, ecg_channels, task_session_summary, ecg_trace = 'cardiac_cycles',apply_filter=True,  plot_raw_ecg_file=False):
+def process_ecg_data(participant_str, condition_str, biopac_data, ecg_channels, task_session_summary, ecg_trace = 'cardiac_cycles',apply_filter=True,  plot_raw_ecg_file=False, plot_rpeaks_session = True, plot_r_r_interval_session = True, plot_instant_hr_session = True):
     """ 
     Function to extract and plot recorded ECG data. From raw signal, r-peaks are identified and consecutive r-r intervals and instantaneous heart rate is recorded. The data is reduced to that recorded over each task session, based on identified triggers. There is the option to plot the r-r interval across time for each task session for visualisation. 
     
     Parameters:
     - biopac_data: list, contains the dictionaries storing the data extracted from the biopac files for each run of task sessions. 
     - ecg_channels: string, the ECG channel name containing the raw ECG data. 
-    - plot_raw_ecg_file: boolean, if true, creates subplots for each task session of consecutive r-r interval across time using Plotly. 
+    - plot_raw_ecg_file: boolean, if true, creates subplots for each task session of the raw ECG signal across time using Plotly.
+    - plot_rpeaks_session: boolean, if true, creates subplots for each task session of with identified r-peaks superimposed on the raw ECG signal across time using Plotly. 
+    - plot_r_r_interval_session: boolean, if true, creates subplots for each task session of consecutive r-r interval across time using Plotly. 
+    - plot_raw_instant_hr_file: boolean, if true, creates subplots for each task session of consecutive instant HR across time using Plotly.  
 
     Returns:
     - ecg_data_df: DataFrame, contains concatenated ECG data across files.
@@ -632,11 +635,11 @@ def process_ecg_data(participant_str, condition_str, biopac_data, ecg_channels, 
     
     print("Initalising r-peak detection...")
 
-    rpeaks_session_dict = rpeak_detection(participant_str=participant_str, condition_str=condition_str, hr_dict=hr_task_session_dict, ecg_trace=ecg_trace, height = None, threshold = None, distance = (20/60), prominence = 0.0005, sampling_rate = 2000, plot_rpeaks_session = True)
+    rpeaks_session_dict = rpeak_detection(participant_str=participant_str, condition_str=condition_str, hr_dict=hr_task_session_dict, ecg_trace=ecg_trace, height = None, threshold = None, distance = (20/60), prominence = 0.0005, sampling_rate = 2000, plot_rpeaks_session=plot_rpeaks_session)
 
     print("Calculating r-r intervals...")
 
-    r_r_int_session_dict = r_r_interval_calculation(participant_str=participant_str, condition_str=condition_str, rpeaks_session_dict=rpeaks_session_dict, plot_r_r_interval_session=True)
+    r_r_int_session_dict = r_r_interval_calculation(participant_str=participant_str, condition_str=condition_str, rpeaks_session_dict=rpeaks_session_dict, plot_r_r_interval_session=plot_r_r_interval_session, plot_instant_hr_session = plot_instant_hr_session)
 
     return ecg_data_df, hr_task_session_dict, r_r_int_session_dict
 
@@ -780,7 +783,7 @@ def rpeak_detection(participant_str, condition_str, hr_dict, ecg_trace = 'cardia
 
 
 
-def r_r_interval_calculation(participant_str, condition_str, rpeaks_session_dict,  plot_r_r_interval_session=True):
+def r_r_interval_calculation(participant_str, condition_str, rpeaks_session_dict, plot_r_r_interval_session=True, plot_instant_hr_session = True):
     """"
     Function to calculate R-R intervals from R-peaks extracted from the QRS segment of an ECG trace. Takes identified R-peaks indices and converts the difference between peaks to a time, used to calculate the duration between peaks (R-R interval). Instantaneous HR is calculated as 60 divided by the interval.
 
@@ -806,11 +809,12 @@ def r_r_interval_calculation(participant_str, condition_str, rpeaks_session_dict
         
         # Add R-R interval and HR to the DataFrame
         df['r_r_intervals'] = pd.Series([None] + r_r_intervals.tolist())  
-        df['instantaneous_hr'] = pd.Series([None] + hr.tolist())  
+        df['instantaneous_hr'] = pd.Series([None] + hr.tolist()).fillna(0).round().astype(int)
         
         # Update the dictionary with the modified dataframe
         rpeaks_session_dict[session] = df
 
+    # Option to plot the r-r interval by task session 
     if plot_r_r_interval_session:
         num_sessions = len(rpeaks_session_dict)
         fig = make_subplots(
@@ -844,6 +848,47 @@ def r_r_interval_calculation(participant_str, condition_str, rpeaks_session_dict
         # Layout adjustments
         fig.update_layout(
             title_text=f"R-R Intervals Across Each Task Session for Participant {participant_str} in Condition {condition_str}",
+            height=600 * num_sessions,
+            showlegend=False,
+        )
+
+        # Show the plot
+        fig.show()
+    
+    # Option to plot the instantaneous hr by task session 
+    if plot_instant_hr_session:
+        num_sessions = len(rpeaks_session_dict)
+        fig = make_subplots(
+            rows=num_sessions, cols=1,
+            shared_xaxes=False,
+            subplot_titles=[f"Task Session {key}" for key in rpeaks_session_dict.keys()]
+        )
+
+        # Loop through each task session
+        for i, (session_key, session_data) in enumerate(rpeaks_session_dict.items(), start=1):
+
+            # Retrieve R-peaks times and R-R intervals for the session
+            rpeak_times = session_data['rpeaks_time']
+            r_r_intervals = session_data['instantaneous_hr'][1:]  # Exclude first value (NaN)
+
+            # Plot R-R intervals
+            fig.add_trace(
+                go.Scatter(
+                    x=rpeak_times[1:],  # Exclude first time as it doesn't have an R-R interval
+                    y=r_r_intervals,
+                    mode='lines+markers',
+                    name=f"Instantaneous HR (bpm) - {session_key}",
+                    line=dict(color='blue')
+                ),
+                row=i, col=1,
+            )
+
+            fig.update_xaxes(title_text="Time (s)", row=i, col=1)
+            fig.update_yaxes(title_text="Instantaneous HR (bpm)", row=i, col=1)
+
+        # Layout adjustments
+        fig.update_layout(
+            title_text=f"Instantaneous HR Across Each Task Session for Participant {participant_str} in Condition {condition_str}",
             height=600 * num_sessions,
             showlegend=False,
         )
