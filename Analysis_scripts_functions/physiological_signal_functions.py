@@ -585,7 +585,7 @@ def process_ecg_data(participant_str, condition_str, biopac_data, ecg_channels, 
 
         # Apply filter if specified
         if apply_filter:
-            ecgdata_filtered = ecg_trace_filter(ecgdata, low_filter_cutoff = 40, high_filter_cutoff = None, sampling_rate = 2000, verbose = False)
+            ecgdata_filtered = ecg_trace_filter(ecgdata, low_filter_cutoff = 40, high_filter_cutoff = 0.5, sampling_rate = 2000, verbose = False)
             
             ecg_data['cardiac_cycles_filtered'] = np.squeeze(ecgdata_filtered)
 
@@ -811,6 +811,9 @@ def r_r_interval_calculation(participant_str, condition_str, rpeaks_session_dict
         df['r_r_intervals'] = pd.Series([None] + r_r_intervals.tolist())  
         df['instantaneous_hr'] = pd.Series([None] + hr.tolist()).fillna(0).round().astype(int)
         df['instantaneous_hr'] = df['instantaneous_hr'].replace(0, pd.NA)
+
+        # Filtering R-R intervals to ensure they are within the physiological range (0.3s - 2.0s)
+        df['cleaned_r_r_intervals'] = df['r_r_intervals'].where((df['r_r_intervals'] >= 0.3) & (df['r_r_intervals'] < 2.0), float('nan'))
         
         # Update the dictionary with the modified dataframe
         rpeaks_session_dict[session] = df
@@ -829,7 +832,7 @@ def r_r_interval_calculation(participant_str, condition_str, rpeaks_session_dict
 
             # Retrieve R-peaks times and R-R intervals for the session
             rpeak_times = session_data['rpeaks_time']
-            r_r_intervals = session_data['r_r_intervals'][1:]  # Exclude first value (NaN)
+            r_r_intervals = session_data['cleaned_r_r_intervals'][1:]  # Exclude first value (NaN)
 
             # Plot R-R intervals
             fig.add_trace(
@@ -898,7 +901,6 @@ def r_r_interval_calculation(participant_str, condition_str, rpeaks_session_dict
         fig.show()
 
     return rpeaks_session_dict
-
 
 
 

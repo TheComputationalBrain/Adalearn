@@ -49,7 +49,7 @@ c2_emg_task_sess_dict = extract_task_session_emg_data(condition_str=condition_2_
 
 
 
-c1_ecg_file, c1_ecg_session, c1_r_r_interval_dict = process_ecg_data(participant_str=participant_str, condition_str=condition_1_str, biopac_data=c1_biopac_df, ecg_channels=ecg_channel, task_session_summary=c1_task_session_summary_df, ecg_trace='cardiac_cycles', apply_filter=True, plot_raw_ecg_file=True, plot_rpeaks_session=True, plot_r_r_interval_session=True, plot_instant_hr_session=True)
+c1_ecg_file, c1_ecg_session, c1_r_r_interval_dict = process_ecg_data(participant_str=participant_str, condition_str=condition_1_str, biopac_data=c1_biopac_df, ecg_channels=ecg_channel, task_session_summary=c1_task_session_summary_df, ecg_trace='cardiac_cycles', apply_filter=True, plot_raw_ecg_file=False, plot_rpeaks_session=True, plot_r_r_interval_session=True, plot_instant_hr_session=True)
 
 c2_ecg_file, c2_ecg_session, c2_r_r_interval_dict = process_ecg_data(participant_str=participant_str, condition_str=condition_2_str, biopac_data=c2_biopac_df, ecg_channels=ecg_channel, task_session_summary=c2_task_session_summary_df, ecg_trace='cardiac_cycles', apply_filter=True, plot_raw_ecg_file=False, plot_rpeaks_session=False, plot_r_r_interval_session=False, plot_instant_hr_session=True)
 
