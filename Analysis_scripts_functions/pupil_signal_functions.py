@@ -567,7 +567,7 @@ def all_outcome_pupil_epochs(participant_str, list_subject_selected, condition_s
       print(f"In task session {session} there are {len(events)} outcome observations") 
 
     # Analysing pupil data based on identified outcome indices
-    preprocessed_pupil_df, pupil_trig_df, pupil_ses_df, blink_df, outcome_epoched_pupil_df, outcome_blink_ratio_df, outcome_epochs_to_remove = load_and_process_pupil_data(participant_str=participant_str, list_subject_selected=list_subject_selected, condition_str=condition_str, condition_task_sessions=condition_task_sessions, from_session=from_session, to_session=to_session, dict_onsets=outcome_onsets, dict_num=outcome_nums, window_start_before=0.2, window_end_after=1.45, blink_ratio_threshold=0.2, select_eye=select_eye, remove_epochs=remove_epochs, z_score=True, plot_interpolation_process=False)
+    preprocessed_pupil_df, pupil_trig_df, pupil_ses_df, blink_df, outcome_epoched_pupil_df, outcome_blink_ratio_df, outcome_epochs_to_remove = load_and_process_pupil_data(participant_str=participant_str, list_subject_selected=list_subject_selected, condition_str=condition_str, condition_task_sessions=condition_task_sessions, from_session=from_session, to_session=to_session, dict_onsets=outcome_onsets, dict_num=outcome_nums, window_start_before=0.2, window_end_after=1.2, blink_ratio_threshold=0.2, select_eye=select_eye, remove_epochs=remove_epochs, z_score=True, plot_interpolation_process=False)
 
     # Option to plot the average pupil response across all outcomes
     if plot_averaged_pupil_response:
@@ -685,9 +685,9 @@ def outcome_colour_pupil_epochs(participant_str, list_subject_selected, conditio
       print(f"In task session {session} there are {len(events)} outcomes = 0") 
 
     # Analysing pupil data based on outcome values indices
-    preprocessed_pupil_outcome_1_df, pupil_trig_outcome_1_df, pupil_ses_outcome_1_df, blink_outcome_1_df, outcome_1_epoched_pupil_df, outcome_1_blink_ratio_df, outcome_1_epochs_to_remove = load_and_process_pupil_data(participant_str=participant_str, list_subject_selected=list_subject_selected, condition_str=condition_str, condition_task_sessions=condition_task_sessions, from_session=from_session, to_session=to_session, dict_onsets=outcome_1_onsets, dict_num=outcome_1_nums, session_list=None, window_start_before=0.2, window_end_after=1.45, blink_ratio_threshold=0.2, select_eye=select_eye, remove_epochs=remove_epochs, z_score=True, plot_interpolation_process=False)
+    preprocessed_pupil_outcome_1_df, pupil_trig_outcome_1_df, pupil_ses_outcome_1_df, blink_outcome_1_df, outcome_1_epoched_pupil_df, outcome_1_blink_ratio_df, outcome_1_epochs_to_remove = load_and_process_pupil_data(participant_str=participant_str, list_subject_selected=list_subject_selected, condition_str=condition_str, condition_task_sessions=condition_task_sessions, from_session=from_session, to_session=to_session, dict_onsets=outcome_1_onsets, dict_num=outcome_1_nums, session_list=None, window_start_before=0.2, window_end_after=1.2, blink_ratio_threshold=0.2, select_eye=select_eye, remove_epochs=remove_epochs, z_score=True, plot_interpolation_process=False)
 
-    preprocessed_pupil_outcome_0_df, pupil_trig_outcome_0_df, pupil_ses_outcome_0_df, blink_outcome_0_df, outcome_0_epoched_pupil_df, outcome_0_blink_ratio_df, outcome_0_epochs_to_remove = load_and_process_pupil_data(participant_str=participant_str, list_subject_selected=list_subject_selected, condition_str=condition_str, condition_task_sessions=condition_task_sessions, from_session=from_session, to_session=to_session, dict_onsets=outcome_0_onsets, dict_num=outcome_0_nums, session_list=None, window_start_before=0.2, window_end_after=1.45, blink_ratio_threshold=0.2, select_eye=select_eye, remove_epochs=remove_epochs, z_score=True, plot_interpolation_process=False)
+    preprocessed_pupil_outcome_0_df, pupil_trig_outcome_0_df, pupil_ses_outcome_0_df, blink_outcome_0_df, outcome_0_epoched_pupil_df, outcome_0_blink_ratio_df, outcome_0_epochs_to_remove = load_and_process_pupil_data(participant_str=participant_str, list_subject_selected=list_subject_selected, condition_str=condition_str, condition_task_sessions=condition_task_sessions, from_session=from_session, to_session=to_session, dict_onsets=outcome_0_onsets, dict_num=outcome_0_nums, session_list=None, window_start_before=0.2, window_end_after=1.2, blink_ratio_threshold=0.2, select_eye=select_eye, remove_epochs=remove_epochs, z_score=True, plot_interpolation_process=False)
 
     # Option to plot the two average pupil responses to different outcome colours
     if plot_pupil_by_colour_response:
@@ -803,9 +803,9 @@ def change_point_pupil_epochs(participant_str, list_subject_selected, condition_
 
 
     # Analysing pupil data based on identified change point indices
-    preprocessed_pupil_cp_df, pupil_trig_cp_df, pupil_ses_cp_df, blink_cp_df, epoched_pupil_cp_df, blink_ratio_cp_df, cp_epochs_to_remove = load_and_process_pupil_data(participant_str=participant_str, list_subject_selected=list_subject_selected, condition_str=condition_str, condition_task_sessions=condition_task_sessions, from_session=from_session, to_session=to_session, dict_onsets=change_point_onsets, dict_num=change_point_nums, select_eye=select_eye, remove_epochs=remove_epochs)
+    preprocessed_pupil_cp_df, pupil_trig_cp_df, pupil_ses_cp_df, blink_cp_df, epoched_pupil_cp_df, blink_ratio_cp_df, cp_epochs_to_remove = load_and_process_pupil_data(participant_str=participant_str, list_subject_selected=list_subject_selected, condition_str=condition_str, condition_task_sessions=condition_task_sessions, from_session=from_session, to_session=to_session, dict_onsets=change_point_onsets, dict_num=change_point_nums, window_start_before=0.2, window_end_after=1.2, select_eye=select_eye, remove_epochs=remove_epochs)
 
-    preprocessed_pupil_non_cp_df, pupil_trig_non_cp_df, pupil_ses_non_cp_df, blink_non_cp_df, epoched_pupil_non_cp_df, blink_ratio_non_cp_df, non_cp_epochs_to_remove = load_and_process_pupil_data(participant_str=participant_str, list_subject_selected=list_subject_selected, condition_str=condition_str, condition_task_sessions=condition_task_sessions, from_session=from_session, to_session=to_session, dict_onsets=non_cp_onsets, dict_num=non_cp_nums, select_eye=select_eye, remove_epochs=remove_epochs)
+    preprocessed_pupil_non_cp_df, pupil_trig_non_cp_df, pupil_ses_non_cp_df, blink_non_cp_df, epoched_pupil_non_cp_df, blink_ratio_non_cp_df, non_cp_epochs_to_remove = load_and_process_pupil_data(participant_str=participant_str, list_subject_selected=list_subject_selected, condition_str=condition_str, condition_task_sessions=condition_task_sessions, from_session=from_session, to_session=to_session, dict_onsets=non_cp_onsets, dict_num=non_cp_nums,window_start_before=0.2, window_end_after=1.2, select_eye=select_eye, remove_epochs=remove_epochs)
 
     # Option to plot the average pupil response timelocked to change points
     if plot_pupil_by_cp:
@@ -881,7 +881,7 @@ def change_point_pupil_epochs(participant_str, list_subject_selected, condition_
 
 def surprise_pupil_epochs(participant_str, list_subject_selected, condition_str, condition_task_sessions, from_session, to_session, pupil_trig_df, surprise_df, select_eye = True, remove_epochs = True, plot_pupil_by_surprise=True):
     """"
-     Function to preprocess and then compute epoched pupil diameter response around modelled "high" and "low" suprising observations. Preprocessing taken from load_and_process_pupil_data method. Calculates the mean, std and sem  across each identified epoch for all task session. In addition to analysising the data around surprise, there is an option to plot the mean and sem derived from all instances across all task sessions. Parameters defining the preprocessing of the pupil data should be modified in the process_pupil_data function.
+     Function to preprocess and then compute epoched pupil diameter response around separate quartiles of suprising observations. Preprocessing taken from load_and_process_pupil_data method. Calculates the mean, std and sem  across each identified epoch for all task session. In addition to analysising the data around surprise, there is an option to plot the mean and sem derived from all instances across all task sessions. Parameters defining the preprocessing of the pupil data should be modified in the process_pupil_data function.
 
     Parameters:
     - participant_str: string, identifier of participant number (set to 2 numbers)
@@ -897,42 +897,76 @@ def surprise_pupil_epochs(participant_str, list_subject_selected, condition_str,
     - plot_pupil_by_surprise: boolean, option to plot the mean and standard deviation across epochs using Plotly. (Default = True). 
 
     Returns:
-    - surprise_low_onsets: dict, contains low surprise observation timestamps. Keys are task session and values are time stamps within that task session. 
-    - surprise_low_nums: dict, contains a cumulative count of the number of low surprise observations identified within each task session. Keys are task sessions and values are the cumulative count of the number of low surprise observations within that task session.
-    - surprise_high_onsets: dict, contains high surprise observation timestamps. Keys are task session and values are time stamps within that task session. 
-    - surprise_high_nums: dict, contains a cumulative count of the number of high surprise observations identified within each task session. Keys are task sessions and values are the cumulative count of the number of high surprise observations within that task session.
-    - epoched_pupil_low_surprise_df: pd.DataFrame, containing transposed epoched data for the low surprise condition (each column represents one epoch). Variables include the calculated mean and standard deviation epochs and the timestamp. 
-    - epoched_pupil_high_surprise_df: pd.DataFrame, containing transposed epoched data for the high surprise condition (each column represents one epoch). Variables include the calculated mean and standard deviation epochs and the timestamp. 
-    - low_surprise_blink_ratio_df: pd.DataFrame, contains the blink ratio inofrmation for each generated epoch around low surprise observations.
-    - high_surprise_blink_ratio_df: pd.DataFrame, contains the blink ratio inofrmation for each generated epoch around high surprise observations.
+    - surprise_first_quart_onsets: dict, contains the timetamps of outcomes within the first quartile of surprise. Keys are task session and values are timestamps within that task session. 
+    - surprise_first_quart_nums: dict, contains a cumulative count of the number of surprising observations within the first quartile identified within each task session. Keys are task sessions and values are the cumulative count of the number of surprising observations within that task session.
+    - epoched_pupil_first_surprise_df: pd.DataFrame, containing transposed epoched data for the first quartile of surprise (each column represents one epoch). Computed variables include the calculated mean and measures of variance (std and sem). 
+    - first_surprise_blink_ratio_df: pd.DataFrame, contains the blink ratio inofrmation for each generated epoch around the first quartile of surprise.
+    - first_surprise_epochs_to_remove: pd.index, indices of epochs within the epoched_pupil_first_surprise_df that have been removed due to an excessive blink ratio.
+    - surprise_second_quart_onsets: dict, contains the timetamps of outcomes within the second quartile of surprise. Keys are task session and values are timestamps within that task session. 
+    - surprise_second_quart_nums: dict, contains a cumulative count of the number of surprising observations within the second quartile identified within each task session. Keys are task sessions and values are the cumulative count of the number of surprising observations within that task session.
+    - epoched_pupil_second_surprise_df: pd.DataFrame, containing transposed epoched data for the second quartile of surprise (each column represents one epoch). Computed variables include the calculated mean and measures of variance (std and sem). 
+    - second_surprise_blink_ratio_df: pd.DataFrame, contains the blink ratio information for each generated epoch around the second quartile of surprise.
+    - second_surprise_epochs_to_remove: pd.index, indices of epochs within the epoched_pupil_second_surprise_df that have been removed due to an excessive blink ratio.
+    - surprise_third_quart_onsets: dict, contains the timetamps of outcomes within the third quartile of surprise. Keys are task session and values are timestamps within that task session. 
+    - surprise_third_quart_nums: dict, contains a cumulative count of the number of surprising observations within the third quartile identified within each task session. Keys are task sessions and values are the cumulative count of the number of surprising observations within that task session.
+    - epoched_pupil_third_surprise_df: pd.DataFrame, containing transposed epoched data for the third quartile of surprise (each column represents one epoch). Computed variables include the calculated mean and measures of variance (std and sem). 
+    - third_surprise_blink_ratio_df: pd.DataFrame, contains the blink ratio inofrmation for each generated epoch around the third quartile of surprise.
+    - third_surprise_epochs_to_remove: pd.index, indices of epochs within the epoched_pupil_third_surprise_df that have been removed due to an excessive blink ratio.
+    - surprise_fourth_quart_onsets: dict, contains the timetamps of outcomes within the fourth quartile of surprise. Keys are task session and values are timestamps within that task session. 
+    - surprise_fourth_quart_nums: dict, contains a cumulative count of the number of surprising observations within the fourth quartile identified within each task session. Keys are task sessions and values are the cumulative count of the number of surprising observations within that task session.
+    - epoched_pupil_fourth_surprise_df: pd.DataFrame, containing transposed epoched data for the fourth quartile of surprise (each column represents one epoch). Computed variables include the calculated mean and measures of variance (std and sem). 
+    - fourth_surprise_blink_ratio_df: pd.DataFrame, contains the blink ratio inofrmation for each generated epoch around the fourth quartile of surprise.
+    - fourth_surprise_epochs_to_remove: pd.index, indices of epochs within the epoched_pupil_fourth_surprise_df that have been removed due to an excessive blink ratio.
     """
-    # Filter for 'below_first_threshold' and 'above_third_threshold' based on surprise category
-    filtered_below_first = surprise_df[surprise_df['surprise_cat'] == 'below_first_quartile'].copy()
-    filtered_above_third = surprise_df[surprise_df['surprise_cat'] == 'above_third_quartile'].copy()
+    # Filter across quartiles within the surprise category
+    filtered_first_quartile = surprise_df[surprise_df['surprise_cat'] == 'first_quartile'].copy()
+    filtered_second_quartile = surprise_df[surprise_df['surprise_cat'] == 'second_quartile'].copy()
+    filtered_third_quartile = surprise_df[surprise_df['surprise_cat'] == 'third_quartile'].copy()
+    filtered_fourth_quartile = surprise_df[surprise_df['surprise_cat'] == 'fourth_quartile'].copy()
 
-    pupil_by_surprise_low = align_pupil_to_events(pupil_trig_df=pupil_trig_df, event_df=filtered_below_first, to_session=to_session, print_event_df_shape=True)
-    pupil_by_surprise_high = align_pupil_to_events(pupil_trig_df=pupil_trig_df, event_df=filtered_above_third, to_session=to_session, print_event_df_shape=True)
+    pupil_by_surprise_first_quart = align_pupil_to_events(pupil_trig_df=pupil_trig_df, event_df=filtered_first_quartile, to_session=to_session, print_event_df_shape=True)
+    pupil_by_surprise_second_quart = align_pupil_to_events(pupil_trig_df=pupil_trig_df, event_df=filtered_second_quartile, to_session=to_session, print_event_df_shape=True)
+    pupil_by_surprise_third_quart = align_pupil_to_events(pupil_trig_df=pupil_trig_df, event_df=filtered_third_quartile, to_session=to_session, print_event_df_shape=True)
+    pupil_by_surprise_fourth_quart = align_pupil_to_events(pupil_trig_df=pupil_trig_df, event_df=filtered_fourth_quartile, to_session=to_session, print_event_df_shape=True)
    
     # Creating dictionaries
-    surprise_low_onsets, surprise_low_nums = create_pupil_epoch_dicts(pupil_by_surprise_low)
-    surprise_high_onsets, surprise_high_nums = create_pupil_epoch_dicts(pupil_by_surprise_high)
+    surprise_first_quart_onsets, surprise_first_quart_nums = create_pupil_epoch_dicts(pupil_by_surprise_first_quart)
+    surprise_second_quart_onsets, surprise_second_quart_nums = create_pupil_epoch_dicts(pupil_by_surprise_second_quart)
+    surprise_third_quart_onsets, surprise_third_quart_nums = create_pupil_epoch_dicts(pupil_by_surprise_third_quart)
+    surprise_fourth_quart_onsets, surprise_fourth_quart_nums = create_pupil_epoch_dicts(pupil_by_surprise_fourth_quart)
 
-    # Checking the number of low and high surprising outcomes 
+    # Checking the number of surprising outcomes in each quartile 
     print(f"Condition {condition_str}:")
-    for session, events in surprise_low_nums.items():
-      print(f"In task session {session} there are {len(events)} low surprising outocmes") 
+    for session, events in surprise_first_quart_nums.items():
+      print(f"In task session {session} there are {len(events)} surprising outcomes in the first quartile") 
 
     print(f"Condition {condition_str}:")
-    for session, events in surprise_high_nums.items():
-      print(f"In task session {session} there are {len(events)} high surprising observations") 
+    for session, events in surprise_second_quart_nums.items():
+      print(f"In task session {session} there are {len(events)} surprising outcomes in the second quartile") 
 
-    # Generating session lists for low and high surprise events 
-    low_surp_ses_list = list(surprise_low_onsets.keys())
-    high_surp_ses_list = list(surprise_high_onsets.keys())
+    print(f"Condition {condition_str}:")
+    for session, events in surprise_third_quart_nums.items():
+      print(f"In task session {session} there are {len(events)} surprising outcomes in the third quartile") 
 
-    # Generating pupil response around surprising observations  
-    preprocessed_pupil_low_surp_df, pupil_trig_low_surp_df, pupil_ses_low_surp_df, blink_low_surp_df, epoched_pupil_low_surprise_df, low_surprise_blink_ratio_df, low_surprise_epochs_to_remove = load_and_process_pupil_data(participant_str=participant_str, list_subject_selected=list_subject_selected, condition_str=condition_str, condition_task_sessions=condition_task_sessions, from_session=from_session, to_session=to_session, dict_onsets=surprise_low_onsets, dict_num=surprise_low_onsets, session_list=low_surp_ses_list, select_eye=select_eye, remove_epochs=remove_epochs)
-    preprocessed_pupil_high_surp_df, pupil_trig_high_surp_df, pupil_ses_high_surp_df, blink_high_surp_df,epoched_pupil_high_surprise_df, high_surprise_blink_ratio_df, high_surprise_epochs_to_remove = load_and_process_pupil_data(participant_str=participant_str, list_subject_selected=list_subject_selected, condition_str=condition_str, condition_task_sessions=condition_task_sessions, from_session=from_session, to_session=to_session, dict_onsets=surprise_high_onsets, dict_num=surprise_high_nums, session_list=high_surp_ses_list, select_eye=select_eye, remove_epochs=remove_epochs)
+    print(f"Condition {condition_str}:")
+    for session, events in surprise_fourth_quart_nums.items():
+      print(f"In task session {session} there are {len(events)} surprising outcomes in the fourth quartile") 
+
+    # Generating session lists for surprise events within each quartile
+    first_quart_surp_ses_list = list(surprise_first_quart_onsets.keys())
+    second_quart_surp_ses_list = list(surprise_second_quart_onsets.keys())
+    third_quart_surp_ses_list = list(surprise_third_quart_onsets.keys())
+    fourth_quart_surp_ses_list = list(surprise_fourth_quart_onsets.keys())
+
+    # Generating pupil response around surprising observations 
+    print("Analysing first quartile of surprise. Processing...") 
+    preprocessed_pupil_first_surp_df, pupil_trig_first_surp_df, pupil_ses_first_surp_df, blink_first_surp_df, epoched_pupil_first_surprise_df, first_surprise_blink_ratio_df, first_surprise_epochs_to_remove = load_and_process_pupil_data(participant_str=participant_str, list_subject_selected=list_subject_selected, condition_str=condition_str, condition_task_sessions=condition_task_sessions, from_session=from_session, to_session=to_session, dict_onsets=surprise_first_quart_onsets, dict_num=surprise_first_quart_nums, window_start_before=0.2, window_end_after=1.2, session_list=first_quart_surp_ses_list, select_eye=select_eye, remove_epochs=remove_epochs)
+    print("Analysing second quartile of surprise. Processing...") 
+    preprocessed_pupil_second_surp_df, pupil_trig_second_surp_df, pupil_ses_second_surp_df, blink_second_surp_df, epoched_pupil_second_surprise_df, second_surprise_blink_ratio_df, second_surprise_epochs_to_remove = load_and_process_pupil_data(participant_str=participant_str, list_subject_selected=list_subject_selected, condition_str=condition_str, condition_task_sessions=condition_task_sessions, from_session=from_session, to_session=to_session, dict_onsets=surprise_second_quart_onsets, dict_num=surprise_second_quart_nums, window_start_before=0.2, window_end_after=1.2, session_list=second_quart_surp_ses_list, select_eye=select_eye, remove_epochs=remove_epochs)
+    print("Analysisng third quartile of surprise. Processing...") 
+    preprocessed_pupil_third_surp_df, pupil_trig_third_surp_df, pupil_ses_third_surp_df, blink_third_surp_df, epoched_pupil_third_surprise_df, third_surprise_blink_ratio_df, third_surprise_epochs_to_remove = load_and_process_pupil_data(participant_str=participant_str, list_subject_selected=list_subject_selected, condition_str=condition_str, condition_task_sessions=condition_task_sessions, from_session=from_session, to_session=to_session, dict_onsets=surprise_third_quart_onsets, dict_num=surprise_third_quart_nums, window_start_before=0.2, window_end_after=1.2, session_list=third_quart_surp_ses_list, select_eye=select_eye, remove_epochs=remove_epochs)
+    print("Analysing fourth quartile of surprise. Processing...") 
+    preprocessed_pupil_fourth_surp_df, pupil_trig_fourth_surp_df, pupil_ses_fourth_surp_df, blink_fourth_surp_df, epoched_pupil_fourth_surprise_df, fourth_surprise_blink_ratio_df, fourth_surprise_epochs_to_remove = load_and_process_pupil_data(participant_str=participant_str, list_subject_selected=list_subject_selected, condition_str=condition_str, condition_task_sessions=condition_task_sessions, from_session=from_session, to_session=to_session, dict_onsets=surprise_fourth_quart_onsets, dict_num=surprise_fourth_quart_nums, window_start_before=0.2, window_end_after=1.2, session_list=fourth_quart_surp_ses_list, select_eye=select_eye, remove_epochs=remove_epochs)
 
     # Option to plot pupil response of the pupil diameter timelocked to high and low surprising observations
     if plot_pupil_by_surprise:
@@ -940,65 +974,118 @@ def surprise_pupil_epochs(participant_str, list_subject_selected, condition_str,
         fig_epoch_avg = go.Figure()
 
         fig_epoch_avg.add_trace(go.Scatter(
-            x=epoched_pupil_high_surprise_df['time'],
-            y=epoched_pupil_high_surprise_df['mean'],
+            x=epoched_pupil_first_surprise_df['time'],
+            y=epoched_pupil_first_surprise_df['mean'],
             mode='lines',
-            line=dict(color='rgba(0, 0, 255, 1)'),
-            name='High Surprise'
+            line=dict(color='rgba(255, 211, 0, 1)'),
+            name='First Quartile'
         ))
 
         fig_epoch_avg.add_trace(go.Scatter(
-            x=epoched_pupil_high_surprise_df['time'],
-            y=epoched_pupil_high_surprise_df['mean'] + epoched_pupil_high_surprise_df['sem'],
+            x=epoched_pupil_first_surprise_df['time'],
+            y=epoched_pupil_first_surprise_df['mean'] + epoched_pupil_first_surprise_df['sem'],
             mode='lines',
-            line=dict(color='rgba(0, 0, 255, 0.1)'),
+            line=dict(color='rgba(255, 211, 0, 0.1)'),
             showlegend=False
         ))
 
         fig_epoch_avg.add_trace(go.Scatter(
-            x=epoched_pupil_high_surprise_df['time'],
-            y=epoched_pupil_high_surprise_df['mean'] - epoched_pupil_high_surprise_df['sem'],
+            x=epoched_pupil_first_surprise_df['time'],
+            y=epoched_pupil_first_surprise_df['mean'] - epoched_pupil_first_surprise_df['sem'],
             mode='lines',
             fill='tonexty',
-            fillcolor='rgba(0, 0, 255, 0.2)',
-            line=dict(color='rgba(0, 0, 255, 0.1)'),
+            fillcolor='rgba(255, 211, 0, 0.2)',
+            line=dict(color='rgba(255, 211, 0, 0.1)'),
             showlegend=False
         ))
 
         fig_epoch_avg.add_trace(go.Scatter(
-            x=epoched_pupil_low_surprise_df['time'],
-            y=epoched_pupil_low_surprise_df['mean'],
+            x=epoched_pupil_second_surprise_df['time'],
+            y=epoched_pupil_second_surprise_df['mean'],
             mode='lines',
-            line=dict(color='rgba(255, 0, 0, 1)'),
-            name='Low Surprise'
+            line=dict(color='rgba(0, 183, 235, 1)'),
+            name='Second Quartile'
         ))
 
         fig_epoch_avg.add_trace(go.Scatter(
-            x=epoched_pupil_low_surprise_df['time'],
-            y=epoched_pupil_low_surprise_df['mean'] + epoched_pupil_low_surprise_df['sem'],
+            x=epoched_pupil_second_surprise_df['time'],
+            y=epoched_pupil_second_surprise_df['mean'] + epoched_pupil_second_surprise_df['sem'],
             mode='lines',
-            line=dict(color='rgba(255, 0, 0, 0.1)'),
+            line=dict(color='rgba(0, 183, 235, 0.1)'),
             showlegend=False
         ))
 
         fig_epoch_avg.add_trace(go.Scatter(
-            x=epoched_pupil_low_surprise_df['time'],
-            y=epoched_pupil_low_surprise_df['mean'] - epoched_pupil_low_surprise_df['sem'],
+            x=epoched_pupil_second_surprise_df['time'],
+            y=epoched_pupil_second_surprise_df['mean'] - epoched_pupil_second_surprise_df['sem'],
             mode='lines',
             fill='tonexty',
-            fillcolor='rgba(255, 0, 0, 0.2)',
-            line=dict(color='rgba(255, 0, 0, 0.1)'),
+            fillcolor='rgba(0, 183, 235, 0.2)',
+            line=dict(color='rgba(0, 183, 235, 0.1)'),
+            showlegend=False
+        ))
+
+        fig_epoch_avg.add_trace(go.Scatter(
+            x=epoched_pupil_third_surprise_df['time'],
+            y=epoched_pupil_third_surprise_df['mean'],
+            mode='lines',
+            line=dict(color='rgba(213, 0, 249, 1)'),
+            name='Third Quartile'
+        ))
+
+        fig_epoch_avg.add_trace(go.Scatter(
+            x=epoched_pupil_third_surprise_df['time'],
+            y=epoched_pupil_third_surprise_df['mean'] + epoched_pupil_third_surprise_df['sem'],
+            mode='lines',
+            line=dict(color='rgba(213, 0, 249, 0.1)'),
+            showlegend=False
+        ))
+
+        fig_epoch_avg.add_trace(go.Scatter(
+            x=epoched_pupil_third_surprise_df['time'],
+            y=epoched_pupil_third_surprise_df['mean'] - epoched_pupil_third_surprise_df['sem'],
+            mode='lines',
+            fill='tonexty',
+            fillcolor='rgba(213, 0, 249, 0.2)',
+            line=dict(color='rgba(213, 0, 249, 0.1)'),
+            showlegend=False
+        ))
+
+
+        fig_epoch_avg.add_trace(go.Scatter(
+            x=epoched_pupil_fourth_surprise_df['time'],
+            y=epoched_pupil_fourth_surprise_df['mean'],
+            mode='lines',
+            line=dict(color='rgba(0, 204, 102, 1)'),
+            name='Fourth Quartile'
+        ))
+
+        fig_epoch_avg.add_trace(go.Scatter(
+            x=epoched_pupil_fourth_surprise_df['time'],
+            y=epoched_pupil_fourth_surprise_df['mean'] + epoched_pupil_fourth_surprise_df['sem'],
+            mode='lines',
+            line=dict(color='rgba(0, 204, 102, 0.1)'),
+            showlegend=False
+        ))
+
+        fig_epoch_avg.add_trace(go.Scatter(
+            x=epoched_pupil_fourth_surprise_df['time'],
+            y=epoched_pupil_fourth_surprise_df['mean'] - epoched_pupil_fourth_surprise_df['sem'],
+            mode='lines',
+            fill='tonexty',
+            fillcolor='rgba(0, 204, 102, 0.2)',
+            line=dict(color='rgba(0, 204, 102, 0.1)'),
             showlegend=False
         ))
 
         fig_epoch_avg.add_vline(x=0, line_width=3, line_dash="dash", line_color="black", opacity=0.5)
 
         fig_epoch_avg.update_layout(
-            title=f'Baseline corrected right pupil response epoched around observations of high and low surprise for participant {participant_str} in condition {condition_str} (Mean +/- SEM)',
+            title=f'Baseline corrected right pupil response epoched around surprising outcomes, split by quartile, for participant {participant_str} in condition {condition_str} (Mean +/- SEM)',
             xaxis_title='Time (s)',
             yaxis_title='Pupil diameter (z-score)'
         )       
 
         fig_epoch_avg.show()
 
-    return surprise_low_onsets, surprise_low_nums, surprise_high_onsets, surprise_high_nums, epoched_pupil_low_surprise_df, epoched_pupil_high_surprise_df, low_surprise_blink_ratio_df, high_surprise_blink_ratio_df, low_surprise_epochs_to_remove, high_surprise_epochs_to_remove
+    return surprise_first_quart_onsets, surprise_first_quart_nums, epoched_pupil_first_surprise_df, first_surprise_blink_ratio_df, first_surprise_epochs_to_remove, surprise_second_quart_onsets, surprise_second_quart_nums, epoched_pupil_second_surprise_df, second_surprise_blink_ratio_df, second_surprise_epochs_to_remove, surprise_third_quart_onsets, surprise_third_quart_nums, epoched_pupil_third_surprise_df, third_surprise_blink_ratio_df, third_surprise_epochs_to_remove, surprise_fourth_quart_onsets, surprise_fourth_quart_nums, epoched_pupil_fourth_surprise_df, fourth_surprise_blink_ratio_df, fourth_surprise_epochs_to_remove

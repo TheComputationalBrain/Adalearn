@@ -415,13 +415,23 @@ def compute_surprise_from_observations(participant_str, condition_str, behaviour
     surprise_df['cum_outcome_num'] = surprise_df.index
 
     # Categorizing the level of surprise for basic analysis
-    first_quartile = surprise_df['surprise'].quantile(0.25)
-    third_quartile = surprise_df['surprise'].quantile(0.75)
+    percent_25 = surprise_df['surprise'].quantile(0.25)
+    percent_50 = surprise_df['surprise'].quantile(0.50)  
+    percent_75 = surprise_df['surprise'].quantile(0.75)
 
-    surprise_df['surprise_cat'] = 'between_quartiles'
+    # Initialize a default category
+    surprise_df['surprise_cat'] = 'fourth_quartile'
 
-    surprise_df.loc[surprise_df['surprise'] < first_quartile, 'surprise_cat'] = 'below_first_quartile'
-    surprise_df.loc[surprise_df['surprise'] > third_quartile, 'surprise_cat'] = 'above_third_quartile'
+    # Assign categories based on quartile boundaries
+    surprise_df.loc[surprise_df['surprise'] < percent_25, 'surprise_cat'] = 'first_quartile'
+    surprise_df.loc[
+        (surprise_df['surprise'] >= percent_25) & (surprise_df['surprise'] < percent_50),
+        'surprise_cat'
+    ] = 'second_quartile'
+    surprise_df.loc[
+        (surprise_df['surprise'] >= percent_50) & (surprise_df['surprise'] < percent_75),
+        'surprise_cat'
+    ] = 'third_quartile'
 
     surprise_cat_counts = surprise_df.groupby(['task_session', 'surprise_cat']).size().reset_index(name='counts')
     surprise_cat_df = surprise_cat_counts.pivot(index='task_session', columns='surprise_cat', values='counts').fillna(0)

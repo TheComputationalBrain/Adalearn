@@ -11,7 +11,7 @@ pio.renderers.default='browser'
 
 from pupil_analysis_test import c1_pupil_trig_df, c1_outcome_epoched_pupil_df, c1_outcome_blink_ratio_df, c1_outcome_epochs_to_remove, c2_pupil_trig_df, c2_outcome_epoched_pupil_df, c2_outcome_blink_ratio_df, c2_outcome_epochs_to_remove
 
-from computational_analysis_test import c1_surprise, c2_surprise, c1_cpp_df, c2_cpp_df, c1_prior_conf_df, c2_prior_conf_df
+from computational_analysis_test import c1_surprise, c1_cpp_df, c1_prior_conf_df, c2_surprise, c2_cpp_df, c2_prior_conf_df
 
 
 
