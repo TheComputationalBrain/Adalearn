@@ -148,17 +148,16 @@ def pupil_regression_analysis(comp_variable_df, outcome_epoched_pupil_df, pupil_
 
 
 
-surprise_coef = pupil_regression_analysis(comp_variable_df=c1_surprise, outcome_epoched_pupil_df=c1_outcome_epoched_pupil_df, pupil_trig_df=c1_pupil_trig_df, outcome_epochs_to_remove = c1_outcome_epochs_to_remove,outcome_parameter=False, variable='surprise')
+surprise_coef = pupil_regression_analysis(comp_variable_df=c1_surprise, outcome_epoched_pupil_df=c1_outcome_epoched_pupil_df, pupil_trig_df=c1_pupil_trig_df, outcome_epochs_to_remove = c1_outcome_epochs_to_remove, outcome_parameter=False, variable='surprise')
 
-surprise_coef = pupil_regression_analysis(comp_variable_df=c2_surprise, outcome_epoched_pupil_df=c2_outcome_epoched_pupil_df, pupil_trig_df=c2_pupil_trig_df, outcome_epochs_to_remove = c2_outcome_epochs_to_remove,outcome_parameter=False, variable='surprise')
-
-
-cpp_coef = pupil_regression_analysis(c1_cpp_df, c1_outcome_epoched_pupil_df, c1_outcome_epochs_to_remove, c1_pupil_trig_df, outcome_parameter=False, variable='cpp')
-
-cpp_coef = pupil_regression_analysis(c2_cpp_df, c2_outcome_epoched_pupil_df, c2_outcome_epochs_to_remove, c2_pupil_trig_df, outcome_parameter=False, variable='cpp')
+surprise_coef = pupil_regression_analysis(comp_variable_df=c2_surprise, outcome_epoched_pupil_df=c2_outcome_epoched_pupil_df, pupil_trig_df=c2_pupil_trig_df, outcome_epochs_to_remove = c2_outcome_epochs_to_remove, outcome_parameter=False, variable='surprise')
 
 
+cpp_coef = pupil_regression_analysis(comp_variable_df=c1_cpp_df, outcome_epoched_pupil_df=c1_outcome_epoched_pupil_df, outcome_epochs_to_remove=c1_outcome_epochs_to_remove, pupil_trig_df=c1_pupil_trig_df, outcome_parameter=False, variable='cpp')
 
-prior_conf_coef = pupil_regression_analysis(c1_prior_conf_df, c1_outcome_epoched_pupil_df, c1_outcome_epochs_to_remove, c1_pupil_trig_df, outcome_parameter=True, variable='prior_conf')
+cpp_coef = pupil_regression_analysis(comp_variable_df=c2_cpp_df, outcome_epoched_pupil_df=c2_outcome_epoched_pupil_df, outcome_epochs_to_remove=c2_outcome_epochs_to_remove, pupil_trig_df=c2_pupil_trig_df, outcome_parameter=False, variable='cpp')
 
-prior_conf_coef = pupil_regression_analysis(c2_prior_conf_df, c2_outcome_epoched_pupil_df, c2_outcome_epochs_to_remove, c2_pupil_trig_df, outcome_parameter=True, variable='prior_conf')
+
+prior_conf_coef = pupil_regression_analysis(comp_variable_df=c1_prior_conf_df, outcome_epoched_pupil_df=c1_outcome_epoched_pupil_df, outcome_epochs_to_remove=c1_outcome_epochs_to_remove, pupil_trig_df=c1_pupil_trig_df, outcome_parameter=False, variable='prior_conf')
+
+prior_conf_coef = pupil_regression_analysis(comp_variable_df=c2_prior_conf_df, outcome_epoched_pupil_df=c2_outcome_epoched_pupil_df, outcome_epochs_to_remove=c2_outcome_epochs_to_remove, pupil_trig_df=c2_pupil_trig_df, outcome_parameter=False, variable='prior_conf')

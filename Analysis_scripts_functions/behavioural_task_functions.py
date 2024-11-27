@@ -222,7 +222,7 @@ def behavioural_change_point_analysis(behavioural_df, condition_str):
     change_point_indices['change_point_count'] = range(1, len(change_point_indices) + 1)
     
     # Print the number of change points identified for each task session 
-    print(f"\nIn condition {condition_str} there were {change_point_indices['change_point_count'].max()} change points across taks sessions.")
+    print(f"\nIn condition {condition_str} there were {change_point_indices['change_point_count'].max()} change points across task sessions.")
     print(f"Number of change points in each task session:\n{change_point_indices.groupby('task_session')['outcome_num'].count()}")
 
     return num_change_points, change_points_per_session, change_point_indices
