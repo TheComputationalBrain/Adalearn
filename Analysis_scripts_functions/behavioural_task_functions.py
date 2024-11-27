@@ -32,7 +32,7 @@ def load_behavioural_data(participant_str, condition_str, condition_task_session
 
     # Setting the working directory of the files
     print(os.getcwd())
-    os.chdir(f'/home/aaron/Documents/Python/Ada_Learn/VNS Ada_Learn/Data/sub-{participant_str}/ses-{condition_str}/behav')
+    os.chdir(f'/home/aaron/Documents/Python/Ada_Learn/VNS_Ada_Learn/Data/sub-{participant_str}/ses-{condition_str}/behav')
     print(os.getcwd())
 
     # Loading all adalearn task session data files

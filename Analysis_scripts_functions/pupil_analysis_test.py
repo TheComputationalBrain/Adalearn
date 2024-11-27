@@ -31,9 +31,9 @@ c2_preprocessed_pupil_df, c2_pupil_trig_df, c2_pupil_ses_df, c2_blink_df, c2_epo
 
 
 
-c1_outcome_onsets, c1_outcome_nums, c1_outcome_epoched_pupil_df, c1_outcome_blink_ratio_df, c1_outcome_epochs_to_remove = all_outcome_pupil_epochs(participant_str=participant_str, list_subject_selected=list_subject_selected, condition_str=condition_1_str, condition_task_sessions=c1_task_sessions, from_session=c1_from_session, to_session=c1_to_session, pupil_trig_df=c1_pupil_trig_df, select_eye=True, remove_epochs=True, plot_averaged_pupil_response=True, plot_raster_pupil_response=True)
+c1_outcome_onsets, c1_outcome_nums, c1_outcome_epoched_pupil_df, c1_outcome_blink_ratio_df, c1_outcome_epochs_to_remove = all_outcome_pupil_epochs(participant_str=participant_str, list_subject_selected=list_subject_selected, condition_str=condition_1_str, condition_task_sessions=c1_task_sessions, from_session=c1_from_session, to_session=c1_to_session, pupil_trig_df=c1_pupil_trig_df, variable_df=None, variable_column=None, select_eye=True, remove_epochs=True, plot_averaged_pupil_response=True, plot_raster_pupil_response=True)
 
-c2_outcome_onsets, c2_outcome_nums, c2_outcome_epoched_pupil_df, c2_outcome_blink_ratio_df, c2_outcome_epochs_to_remove = all_outcome_pupil_epochs(participant_str=participant_str, list_subject_selected=list_subject_selected, condition_str=condition_2_str, condition_task_sessions=c2_task_sessions, from_session=c2_from_session, to_session=c2_to_session, pupil_trig_df=c2_pupil_trig_df, select_eye=True, remove_epochs=True, plot_averaged_pupil_response=True, plot_raster_pupil_response=True)
+c2_outcome_onsets, c2_outcome_nums, c2_outcome_epoched_pupil_df, c2_outcome_blink_ratio_df, c2_outcome_epochs_to_remove = all_outcome_pupil_epochs(participant_str=participant_str, list_subject_selected=list_subject_selected, condition_str=condition_2_str, condition_task_sessions=c2_task_sessions, from_session=c2_from_session, to_session=c2_to_session, pupil_trig_df=c2_pupil_trig_df, variable_df=None, variable_column=None, select_eye=True, remove_epochs=True, plot_averaged_pupil_response=True, plot_raster_pupil_response=True)
 
 
 
