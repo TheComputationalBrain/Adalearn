@@ -19,21 +19,21 @@ pio.renderers.default='browser'
 from physiological_signal_functions import load_biopac_data, process_emg_data, biopac_trigger_extraction, extract_task_session_emg_data, process_ecg_data, r_r_interval_by_change_point
 
 
-from participant_task_characteristics import participant_str, condition_1_str, condition_2_str, c1_run_ranges, c1_vns_task_session, c2_run_ranges, c2_vns_task_session
+from participant_task_information import directory_path, participant_str, condition_1_str, condition_2_str, c1_run_ranges, c2_run_ranges
 
 from behavioural_analysis_test import c1_change_point_indices, c2_change_point_indices
 
 
 
-c1_biopac_df, stim_channel, ecg_channel, trig_channel = load_biopac_data(participant_str=participant_str, condition_str=condition_1_str, run_ranges=c1_run_ranges)
+c1_biopac_df, c1_stim_channel, c1_ecg_channel, c1_trig_channel = load_biopac_data(directory_path=directory_path, participant_str=participant_str, condition_str=condition_1_str, run_ranges=c1_run_ranges)
 
-c2_biopac_df, stim_channel, ecg_channel, trig_channel = load_biopac_data(participant_str=participant_str, condition_str=condition_2_str, run_ranges=c2_run_ranges)
+c2_biopac_df, c2_stim_channel, c2_ecg_channel, c2_trig_channel = load_biopac_data(directory_path=directory_path, participant_str=participant_str, condition_str=condition_2_str, run_ranges=c2_run_ranges)
 
 
 
-c1_processed_biopac = process_emg_data(biopac_data=c1_biopac_df, stim_channels=stim_channel, emg_by_file_plot = False)
+c1_processed_biopac = process_emg_data(biopac_data=c1_biopac_df, stim_channels=c1_stim_channel, emg_by_file_plot = False)
 
-c2_processed_biopac = process_emg_data(biopac_data=c2_biopac_df, stim_channels=stim_channel, emg_by_file_plot = False)
+c2_processed_biopac = process_emg_data(biopac_data=c2_biopac_df, stim_channels=c2_stim_channel, emg_by_file_plot = False)
 
 
 
@@ -49,9 +49,9 @@ c2_emg_task_sess_dict = extract_task_session_emg_data(condition_str=condition_2_
 
 
 
-c1_ecg_file, c1_ecg_session, c1_r_r_interval_dict = process_ecg_data(participant_str=participant_str, condition_str=condition_1_str, biopac_data=c1_biopac_df, ecg_channels=ecg_channel, task_session_summary=c1_task_session_summary_df, ecg_trace='cardiac_cycles', apply_filter=True, plot_raw_ecg_file=False, plot_rpeaks_session=False, plot_r_r_interval_session=False, plot_instant_hr_session=False)
+c1_ecg_file, c1_ecg_session, c1_r_r_interval_dict = process_ecg_data(participant_str=participant_str, condition_str=condition_1_str, biopac_data=c1_biopac_df, ecg_channels=c1_ecg_channel, task_session_summary=c1_task_session_summary_df, ecg_trace='cardiac_cycles', apply_filter=True, plot_raw_ecg_file=False, plot_rpeaks_session=False, plot_r_r_interval_session=False, plot_instant_hr_session=False)
 
-c2_ecg_file, c2_ecg_session, c2_r_r_interval_dict = process_ecg_data(participant_str=participant_str, condition_str=condition_2_str, biopac_data=c2_biopac_df, ecg_channels=ecg_channel, task_session_summary=c2_task_session_summary_df, ecg_trace='cardiac_cycles', apply_filter=True, plot_raw_ecg_file=False, plot_rpeaks_session=False, plot_r_r_interval_session=False, plot_instant_hr_session=False)
+c2_ecg_file, c2_ecg_session, c2_r_r_interval_dict = process_ecg_data(participant_str=participant_str, condition_str=condition_2_str, biopac_data=c2_biopac_df, ecg_channels=c2_ecg_channel, task_session_summary=c2_task_session_summary_df, ecg_trace='cardiac_cycles', apply_filter=True, plot_raw_ecg_file=False, plot_rpeaks_session=False, plot_r_r_interval_session=False, plot_instant_hr_session=False)
 
 
 

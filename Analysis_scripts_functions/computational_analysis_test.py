@@ -1,4 +1,4 @@
-""" Main analysis script of Ada-learn VNS computational model data. The model reuses the implementation of the Bayesian model for the probability learning task of Meyniel (2020) whose code is available online at https://github.com/florentmeyniel/TransitionProbModel.Analysis. Script runs methods to compute surprise around each outcome sequence, the prior confidence and change point probability. It also computes the model derived learning rate and its dynamics around change points. ****Data for each individual saved to a spreadsheet with each run through.****"""
+""" Main analysis script of Ada-learn VNS computational model data. The model reuses an implementation of the Bayesian model for the probability learning task of Meyniel (2020), whose code is available online at https://github.com/florentmeyniel/TransitionProbModel.Analysis. Script runs methods to compute surprise around each outcome sequence, the prior confidence and change point probability. It also computes the model derived learning rate and its dynamics around change points. ****Data for each individual saved to a spreadsheet with each run through.****"""
 
 import os
 import pandas as pd
@@ -11,13 +11,10 @@ pio.renderers.default='browser'
 
 from computational_analysis_functions import behavioural_learning_rate_analysis, ideal_observer_learning_rate_analysis,learning_rate_by_change_point, compute_surprise_from_observations, compute_prior_conf_and_cpp_from_observations
 
-from participant_task_characteristics import participant_str, condition_1_str, condition_2_str
+from participant_task_information import participant_str, condition_1_str, condition_2_str, P_C, P1_MIN, P1_MAX
 
 from behavioural_analysis_test import c1_behavioural_df, c1_change_point_indices, c2_behavioural_df, c2_change_point_indices
 
-P_C = 0.05
-P1_MIN = 0.1
-P1_MAX = 0.9
 
 
 c1_behavioural_df = behavioural_learning_rate_analysis(behavioural_df=c1_behavioural_df, change_point_indices_df=c1_change_point_indices, participant_str=participant_str, condition_str=condition_1_str, plot_learning_rate_by_ses=False)

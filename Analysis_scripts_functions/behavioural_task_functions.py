@@ -10,7 +10,7 @@ pio.renderers.default='browser'
 
 
 
-def load_behavioural_data(participant_str, condition_str, condition_task_sessions, plot_behav_data = False, plot_estimate_v_ideal = False):
+def load_behavioural_data(directory_path, participant_str, condition_str, condition_task_sessions, plot_behav_data = False, plot_estimate_v_ideal = False):
     """
     Function to load adalearn .json files. Sets the working directory to the relevant file, before loading and storing the data for each task session for a given condition. Then unpacks parsed_json adalearn files into a dataframe. Returned dataframe contains only selected variables deemed most relevant from the full .json file. Diagnostics identify whether what is expected in the dataframe is in fact there. Options to plot the the behavioural data (participants estimation, ideal observer, true hidden estimates and outcome observations) from each task session, and also the participants estimates against ideal observer across all task sessions.  
 
@@ -20,6 +20,7 @@ def load_behavioural_data(participant_str, condition_str, condition_task_session
     - number of change points per task session: Is there at least 2 change points per task session (2 because the first outcome of each task session is identified as a change point)?
     
     Parameters:
+    - directory_path: Path, path to the participant level directory
     - participant_str: string, participant identifier (number; set to 2 digits)
     - condition_str: string, identifier of condition order (set to 2 numbers) ** May need to change to denote actual condition in Adalearn VNS study **
     - condition_task_sessions: list, contains string variables (set to 2 numbers) denoting the individual task sessions completed by the participant in the condition
@@ -29,19 +30,13 @@ def load_behavioural_data(participant_str, condition_str, condition_task_session
     Returns:
     - behavioural_df: pd.DataFrame, contains parsed data from all .json adalearn data files for select variables. 
     """
-
-    # Setting the working directory of the files
-    print(os.getcwd())
-    os.chdir(f'/home/aaron/Documents/Python/Ada_Learn/VNS_Ada_Learn/Data/sub-{participant_str}/ses-{condition_str}/behav')
-    print(os.getcwd())
-
     # Loading all adalearn task session data files
     adalearn_data = []
 
     # Iterate across all files and append data to storage list
     for session in condition_task_sessions:
     
-        with open(f'sub-{participant_str}_ses-{condition_str}_task-AdalearnVNS_run-{session}_behav.json', 'rb') as ada_learn_file:
+        with open(f'{directory_path}/ses-{condition_str}/behav/sub-{participant_str}_ses-{condition_str}_task-AdalearnVNS_run-{session}_behav.json', 'rb') as ada_learn_file:
              parsed_json_con = json.load(ada_learn_file)
     
         adalearn_data.append(parsed_json_con)
@@ -90,7 +85,6 @@ def load_behavioural_data(participant_str, condition_str, condition_task_session
     # Checking whether the right number of task sessions are in the data frame
     unique_task_sessions = behavioural_df['task_session'].unique()
     number_of_unique_task_sessions = len(unique_task_sessions)
-    print(f'The task sessions in the data file are: {unique_task_sessions}')
 
     if number_of_unique_task_sessions == len(condition_task_sessions):
         print(f"There are the expected number of task sessions: {number_of_unique_task_sessions} / {len(condition_task_sessions)}")

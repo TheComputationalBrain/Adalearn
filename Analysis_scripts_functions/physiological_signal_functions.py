@@ -15,11 +15,12 @@ from plotly.subplots import make_subplots
 pio.renderers.default='browser'
 
 
-def load_biopac_data(participant_str, condition_str, run_ranges):
+def load_biopac_data(directory_path, participant_str, condition_str, run_ranges):
     """
     Function to load biopac .edf files. Sets the working directory to the relevant file, before loading and storing the data for each task session for a given condition. 
     
     Parameters:
+    - directory_path: Path, path to the participant level directory
     - participant_str: string, identifier of participant number (set to 2 numbers)
     - condition_str: string, identifier of condition order (set to 2 numbers)
     - run_ranges: list of dicts, each dict contains 'run_start' and 'run_end' denoting the range of task sessions in each file
@@ -30,9 +31,9 @@ def load_biopac_data(participant_str, condition_str, run_ranges):
     - trig_chan: string, the adalearn outcome trigger channel names
     """
     # Set the working directory of the files
-    base_dir = f'/home/aaron/Documents/Python/Ada_Learn/VNS_Ada_Learn/Data/sub-{participant_str}/ses-{condition_str}/physio'
-    os.chdir(base_dir)
-    print(f"Current working directory: {os.getcwd()}")
+    #base_dir = f'/home/aaron/Documents/Python/Ada_Learn/VNS_Ada_Learn/Data/sub-{participant_str}/ses-{condition_str}/physio'
+    #os.chdir(base_dir)
+    #print(f"Current working directory: {os.getcwd()}")
 
     # Create a list to store biopac data files
     biopac_data = []
@@ -51,10 +52,11 @@ def load_biopac_data(participant_str, condition_str, run_ranges):
         run_start = run_range['run_start']
         run_end = run_range['run_end']
         filename = f'sub-{participant_str}_ses-{condition_str}_task-AdalearnVNS_run-{run_start}to{run_end}_physio.edf'
+        filepath = f"{directory_path}/ses-{condition_str}/physio/{filename}"
         
-        if os.path.exists(filename):
+        if os.path.exists(filepath):
             print(f"Loading file: {filename}")
-            raw_biopac = mne.io.read_raw_edf(filename, preload=True)
+            raw_biopac = mne.io.read_raw_edf(filepath, preload=True)
             biopac_data.append(raw_biopac)
 
             # Check channel names
@@ -239,20 +241,38 @@ def biopac_trigger_extraction(biopac_data, run_ranges, plot_triggers_by_channel 
 
         id_trig_df = pd.DataFrame(identified_triggers)
 
-        # Defining the outcome associated with each channel. 
-        id_trig_df.loc[id_trig_df['channel'] == 'Digital (STP Inp-0', 'outcome'] = 1
-        id_trig_df.loc[id_trig_df['channel'] == 'Digital (STP Inp-1', 'outcome'] = 0
+        # Defining the outcome associated with each channel.
+        if len(trig_channels_in_file) == 3:
+            id_trig_df.loc[id_trig_df['channel'] == 'Digital (STP Inp-0', 'outcome'] = 1
+            id_trig_df.loc[id_trig_df['channel'] == 'Digital (STP Inp-1', 'outcome'] = 0
 
-        if 'Digital (STP Inp-2' in id_trig_df['channel'].unique():
-            channel_3_data = id_trig_df[id_trig_df['channel'] == 'Digital (STP Inp-2']
-            for idx, row in channel_3_data.iterrows():
-                if row['time'] in id_trig_df[(id_trig_df['channel'] == 'Digital (STP Inp-0')]['time'].values:
-                    id_trig_df.loc[idx, 'outcome'] = 1
-                elif row['time'] in id_trig_df[(id_trig_df['channel'] == 'Digital (STP Inp-1')]['time'].values:
-                    id_trig_df.loc[idx, 'outcome'] = 0
+            if 'Digital (STP Inp-2' in id_trig_df['channel'].unique():
+                channel_3_data = id_trig_df[id_trig_df['channel'] == 'Digital (STP Inp-2']
+                for idx, row in channel_3_data.iterrows():
+                    if row['time'] in id_trig_df[(id_trig_df['channel'] == 'Digital (STP Inp-0')]['time'].values:
+                        id_trig_df.loc[idx, 'outcome'] = 1
+                    elif row['time'] in id_trig_df[(id_trig_df['channel'] == 'Digital (STP Inp-1')]['time'].values:
+                        id_trig_df.loc[idx, 'outcome'] = 0
 
-        trig_by_file.append(id_trig_df)
+            trig_by_file.append(id_trig_df)
+        
+        elif len(trig_channels_in_file) == 4:
+            id_trig_df.loc[id_trig_df['channel'] == 'Digital (STP Inp-1', 'outcome'] = 1
+            id_trig_df.loc[id_trig_df['channel'] == 'Digital (STP Inp-2', 'outcome'] = 0
 
+            if 'Digital (STP Inp-3' in id_trig_df['channel'].unique():
+                channel_4_data = id_trig_df[id_trig_df['channel'] == 'Digital (STP Inp-3']
+                for idx, row in channel_4_data.iterrows():
+                    if row['time'] in id_trig_df[(id_trig_df['channel'] == 'Digital (STP Inp-1')]['time'].values:
+                        id_trig_df.loc[idx, 'outcome'] = 1
+                    elif row['time'] in id_trig_df[(id_trig_df['channel'] == 'Digital (STP Inp-2')]['time'].values:
+                        id_trig_df.loc[idx, 'outcome'] = 0
+
+            trig_by_file.append(id_trig_df)
+        
+        else:
+            print("ERROR: Could not determine outcomes from physiological data file")
+            
         # Option to plot the triggers identified across all trigger channels
         if plot_triggers_by_channel:
             num_channels = len(id_trig_df['channel'].unique())

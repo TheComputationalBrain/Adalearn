@@ -176,11 +176,12 @@ def identifying_best_eye (data_tob, file_name, file_dir, session):
 
 
 
-def load_and_process_pupil_data(participant_str, list_subject_selected, condition_str, condition_task_sessions, from_session, to_session, dict_onsets, dict_num, session_list = None, outlier_limit_std = 10, outlier_correct_average_amount = 15,  window_start_before = 0.2, window_end_after = 3, lpf = [5], blink_ratio_threshold = 0.20, select_eye = True, remove_epochs = True, z_score = True, plot_interpolation_process = False):
+def load_and_process_pupil_data(directory_path, participant_str, list_subject_selected, condition_str, condition_task_sessions, from_session, to_session, dict_onsets, dict_num, session_list = None, outlier_limit_std = 10, outlier_correct_average_amount = 15,  window_start_before = 0.2, window_end_after = 3, lpf = [5], blink_ratio_threshold = 0.20, select_eye = True, remove_epochs = True, z_score = True, plot_interpolation_process = False):
     """
     Function to load and preprocess pupil data. Preprocessing involves defining blinks, outliers and the interpolation of pupil data. Preprocessing taken from preprocess_eyedata script, created by Florent, Maëva, Aziza and Yannaël. Option to plot the raw and interpolated data. If dictionaries passed defining events of interest, will compute epochs around defined outcomes of interest (e.g. change points, high and low surprise, etc). If epochs computed, will calculate the mean, std, sem across each identified epoch for all task sessions.
 
     Parameters:
+    - directory_path: Path, path to the participant level directory
     - participant_str: string, identifier of participant number (set to 2 numbers)
     - list_subject_selected: list, identifier generated from participant number
     - condition: string, identifier of condition order (set to 2 numbers) ** May need to change to denote actual condition in Adalearn VNS study **
@@ -229,7 +230,7 @@ def load_and_process_pupil_data(participant_str, list_subject_selected, conditio
 
     # Loop over sessions to extract and process pupil data
     for session in sessions_to_process:
-        file_dir = f"/home/aaron/Documents/Python/Ada_Learn/VNS_Ada_Learn/Data/sub-{participant_str}/ses-{condition_str}/eye"
+        file_dir = f"{directory_path}/ses-{condition_str}/eye"
         file_name = f"sub-{participant_str}_ses-{condition_str}_task-AdalearnVNS_run-{session}_eyetracker.txt"
         file_path = f"{file_dir}/{file_name}"
 
@@ -536,11 +537,12 @@ def create_pupil_epoch_dicts(pupil_event_aligned_df):
     return onsets, nums
 
 
-def all_outcome_pupil_epochs(participant_str, list_subject_selected, condition_str, condition_task_sessions, from_session, to_session, pupil_trig_df, variable_df=None, variable_column=None, select_eye = True, remove_epochs = True, plot_averaged_pupil_response = False, plot_raster_pupil_response = False):
+def all_outcome_pupil_epochs(directory_path, participant_str, list_subject_selected, condition_str, condition_task_sessions, from_session, to_session, pupil_trig_df, variable_df=None, variable_column=None, select_eye = True, remove_epochs = True, plot_averaged_pupil_response = False, plot_raster_pupil_response = False):
     """
     Function to preprocess and analysis pupil data for each outcome across all task sessions. Uses load_and_process_pupil_data method to load and run the preporocessing analysis. There is an option to plot the mean response from all outcomes across all task sessions, as well as a raster plot from each outcome. Parameters defining the preprocessing of the pupil data should be modified in the process_pupil_data function directly. 
 
     Parameters:
+    - directory_path: Path, path to the participant level directory
     - participant_str: string, identifier of participant number (set to 2 numbers)
     - list_subject_selected: list, identifier generated from participant number
     - condition_str: string, identifier of condition order (set to 2 numbers) ** May need to change to denote actual condition in Adalearn VNS study **
@@ -570,7 +572,7 @@ def all_outcome_pupil_epochs(participant_str, list_subject_selected, condition_s
       print(f"In task session {session} there are {len(events)} outcome observations") 
 
     # Analysing pupil data based on identified outcome indices
-    preprocessed_pupil_df, pupil_trig_df, pupil_ses_df, blink_df, outcome_epoched_pupil_df, outcome_blink_ratio_df, outcome_epochs_to_remove = load_and_process_pupil_data(participant_str=participant_str, list_subject_selected=list_subject_selected, condition_str=condition_str, condition_task_sessions=condition_task_sessions, from_session=from_session, to_session=to_session, dict_onsets=outcome_onsets, dict_num=outcome_nums, window_start_before=0.2, window_end_after=1.2, lpf=[5], blink_ratio_threshold=0.2, select_eye=select_eye, remove_epochs=remove_epochs, z_score=True, plot_interpolation_process=False)
+    preprocessed_pupil_df, pupil_trig_df, pupil_ses_df, blink_df, outcome_epoched_pupil_df, outcome_blink_ratio_df, outcome_epochs_to_remove = load_and_process_pupil_data(directory_path=directory_path, participant_str=participant_str, list_subject_selected=list_subject_selected, condition_str=condition_str, condition_task_sessions=condition_task_sessions, from_session=from_session, to_session=to_session, dict_onsets=outcome_onsets, dict_num=outcome_nums, window_start_before=0.2, window_end_after=1.2, lpf=[5], blink_ratio_threshold=0.2, select_eye=select_eye, remove_epochs=remove_epochs, z_score=True, plot_interpolation_process=False)
 
     # Match outcomes to the input variable of interest
     if variable_df is not None and variable_column is not None:
@@ -666,11 +668,12 @@ def all_outcome_pupil_epochs(participant_str, list_subject_selected, condition_s
     return outcome_onsets, outcome_nums, outcome_epoched_pupil_df, outcome_blink_ratio_df, outcome_epochs_to_remove
 
 
-def outcome_colour_pupil_epochs(participant_str, list_subject_selected, condition_str, condition_task_sessions, from_session, to_session, pupil_trig_df, select_eye = True, remove_epochs = True, plot_pupil_by_colour_response = False):
+def outcome_colour_pupil_epochs(directory_path, participant_str, list_subject_selected, condition_str, condition_task_sessions, from_session, to_session, pupil_trig_df, select_eye = True, remove_epochs = True, plot_pupil_by_colour_response = False):
     """
     Function to preprocess and analysis pupil data based on the specific colour of the outcome. Uses load_and_process_pupil_data method to run the preporocessing analysis. Option to plot the mean and sem derived from all instances of 'blue' and 'yellow' outcomes across all trials. Parameters defining the preprocessing of the pupil data should be modified in the load_and_process_pupil_data function. 
 
     Parameters:
+    - directory_path: Path, path to the participant level directory
     - participant_str: string, identifier of participant number (set to 2 numbers)
     - list_subject_selected: list, identifier generated from participant number
     - condition_str: string, identifier of condition order (set to 2 numbers) ** May need to change to denote actual condition in Adalearn VNS study **
@@ -711,9 +714,9 @@ def outcome_colour_pupil_epochs(participant_str, list_subject_selected, conditio
       print(f"In task session {session} there are {len(events)} outcomes = 0") 
 
     # Analysing pupil data based on outcome values indices
-    preprocessed_pupil_outcome_1_df, pupil_trig_outcome_1_df, pupil_ses_outcome_1_df, blink_outcome_1_df, outcome_1_epoched_pupil_df, outcome_1_blink_ratio_df, outcome_1_epochs_to_remove = load_and_process_pupil_data(participant_str=participant_str, list_subject_selected=list_subject_selected, condition_str=condition_str, condition_task_sessions=condition_task_sessions, from_session=from_session, to_session=to_session, dict_onsets=outcome_1_onsets, dict_num=outcome_1_nums, session_list=None, window_start_before=0.2, window_end_after=1.2, lpf=[5], blink_ratio_threshold=0.2, select_eye=select_eye, remove_epochs=remove_epochs, z_score=True, plot_interpolation_process=False)
+    preprocessed_pupil_outcome_1_df, pupil_trig_outcome_1_df, pupil_ses_outcome_1_df, blink_outcome_1_df, outcome_1_epoched_pupil_df, outcome_1_blink_ratio_df, outcome_1_epochs_to_remove = load_and_process_pupil_data(directory_path=directory_path, participant_str=participant_str, list_subject_selected=list_subject_selected, condition_str=condition_str, condition_task_sessions=condition_task_sessions, from_session=from_session, to_session=to_session, dict_onsets=outcome_1_onsets, dict_num=outcome_1_nums, session_list=None, window_start_before=0.2, window_end_after=1.2, lpf=[5], blink_ratio_threshold=0.2, select_eye=select_eye, remove_epochs=remove_epochs, z_score=True, plot_interpolation_process=False)
 
-    preprocessed_pupil_outcome_0_df, pupil_trig_outcome_0_df, pupil_ses_outcome_0_df, blink_outcome_0_df, outcome_0_epoched_pupil_df, outcome_0_blink_ratio_df, outcome_0_epochs_to_remove = load_and_process_pupil_data(participant_str=participant_str, list_subject_selected=list_subject_selected, condition_str=condition_str, condition_task_sessions=condition_task_sessions, from_session=from_session, to_session=to_session, dict_onsets=outcome_0_onsets, dict_num=outcome_0_nums, session_list=None, window_start_before=0.2, window_end_after=1.2, lpf=[5], blink_ratio_threshold=0.2, select_eye=select_eye, remove_epochs=remove_epochs, z_score=True, plot_interpolation_process=False)
+    preprocessed_pupil_outcome_0_df, pupil_trig_outcome_0_df, pupil_ses_outcome_0_df, blink_outcome_0_df, outcome_0_epoched_pupil_df, outcome_0_blink_ratio_df, outcome_0_epochs_to_remove = load_and_process_pupil_data(directory_path=directory_path, participant_str=participant_str, list_subject_selected=list_subject_selected, condition_str=condition_str, condition_task_sessions=condition_task_sessions, from_session=from_session, to_session=to_session, dict_onsets=outcome_0_onsets, dict_num=outcome_0_nums, session_list=None, window_start_before=0.2, window_end_after=1.2, lpf=[5], blink_ratio_threshold=0.2, select_eye=select_eye, remove_epochs=remove_epochs, z_score=True, plot_interpolation_process=False)
 
     # Option to plot the two average pupil responses to different outcome colours
     if plot_pupil_by_colour_response:
@@ -789,11 +792,12 @@ def outcome_colour_pupil_epochs(participant_str, list_subject_selected, conditio
     return outcome_1_onsets, outcome_1_nums, outcome_1_epoched_pupil_df, outcome_1_blink_ratio_df, outcome_1_epochs_to_remove, outcome_0_onsets, outcome_0_nums, outcome_0_epoched_pupil_df, outcome_0_blink_ratio_df, outcome_0_epochs_to_remove
 
 
-def change_point_pupil_epochs(participant_str, list_subject_selected, condition_str, condition_task_sessions, from_session, to_session, pupil_trig_df, change_point_indices, select_eye = True, remove_epochs = True,  plot_pupil_by_cp=False):
+def change_point_pupil_epochs(directory_path, participant_str, list_subject_selected, condition_str, condition_task_sessions, from_session, to_session, pupil_trig_df, change_point_indices, select_eye = True, remove_epochs = True,  plot_pupil_by_cp=False):
     """
     Function to preprocess and analysis pupil data around change points in the hidden task structure. Uses load_and_process_pupil_data method to run the preporocessing analysis. In addition to analysising the data around change points, there is an option to plot the mean and sem derived from all instances across all task sessions. Parameters defining the preprocessing of the pupil data should be modified in the process_pupil_data function directly. 
 
     Parameters:
+    - directory_path: Path, path to the participant level directory
     - participant_str: string, identifier of participant number (set to 2 numbers)
     - list_subject_selected: list, identifier generated from participant number
     - condition_str: string, identifier of condition order (set to 2 numbers) ** May need to change to denote actual condition in Adalearn VNS study **
@@ -829,9 +833,9 @@ def change_point_pupil_epochs(participant_str, list_subject_selected, condition_
 
 
     # Analysing pupil data based on identified change point indices
-    preprocessed_pupil_cp_df, pupil_trig_cp_df, pupil_ses_cp_df, blink_cp_df, epoched_pupil_cp_df, blink_ratio_cp_df, cp_epochs_to_remove = load_and_process_pupil_data(participant_str=participant_str, list_subject_selected=list_subject_selected, condition_str=condition_str, condition_task_sessions=condition_task_sessions, from_session=from_session, to_session=to_session, dict_onsets=change_point_onsets, dict_num=change_point_nums, window_start_before=0.2, window_end_after=1.2, lpf=[5], select_eye=select_eye, remove_epochs=remove_epochs)
+    preprocessed_pupil_cp_df, pupil_trig_cp_df, pupil_ses_cp_df, blink_cp_df, epoched_pupil_cp_df, blink_ratio_cp_df, cp_epochs_to_remove = load_and_process_pupil_data(directory_path=directory_path, participant_str=participant_str, list_subject_selected=list_subject_selected, condition_str=condition_str, condition_task_sessions=condition_task_sessions, from_session=from_session, to_session=to_session, dict_onsets=change_point_onsets, dict_num=change_point_nums, window_start_before=0.2, window_end_after=1.2, lpf=[5], select_eye=select_eye, remove_epochs=remove_epochs)
 
-    preprocessed_pupil_non_cp_df, pupil_trig_non_cp_df, pupil_ses_non_cp_df, blink_non_cp_df, epoched_pupil_non_cp_df, blink_ratio_non_cp_df, non_cp_epochs_to_remove = load_and_process_pupil_data(participant_str=participant_str, list_subject_selected=list_subject_selected, condition_str=condition_str, condition_task_sessions=condition_task_sessions, from_session=from_session, to_session=to_session, dict_onsets=non_cp_onsets, dict_num=non_cp_nums,window_start_before=0.2, window_end_after=1.2, lpf=[5],select_eye=select_eye, remove_epochs=remove_epochs)
+    preprocessed_pupil_non_cp_df, pupil_trig_non_cp_df, pupil_ses_non_cp_df, blink_non_cp_df, epoched_pupil_non_cp_df, blink_ratio_non_cp_df, non_cp_epochs_to_remove = load_and_process_pupil_data(directory_path=directory_path, participant_str=participant_str, list_subject_selected=list_subject_selected, condition_str=condition_str, condition_task_sessions=condition_task_sessions, from_session=from_session, to_session=to_session, dict_onsets=non_cp_onsets, dict_num=non_cp_nums,window_start_before=0.2, window_end_after=1.2, lpf=[5],select_eye=select_eye, remove_epochs=remove_epochs)
 
     # Option to plot the average pupil response timelocked to change points
     if plot_pupil_by_cp:
@@ -905,11 +909,12 @@ def change_point_pupil_epochs(participant_str, list_subject_selected, condition_
     return change_point_onsets, change_point_nums, epoched_pupil_cp_df, blink_ratio_cp_df, cp_epochs_to_remove
 
 
-def surprise_pupil_epochs(participant_str, list_subject_selected, condition_str, condition_task_sessions, from_session, to_session, pupil_trig_df, surprise_df, select_eye = True, remove_epochs = True, plot_pupil_by_surprise=True):
+def surprise_pupil_epochs(directory_path, participant_str, list_subject_selected, condition_str, condition_task_sessions, from_session, to_session, pupil_trig_df, surprise_df, select_eye = True, remove_epochs = True, plot_pupil_by_surprise=True):
     """"
      Function to preprocess and then compute epoched pupil diameter response around separate quartiles of suprising observations. Preprocessing taken from load_and_process_pupil_data method. Calculates the mean, std and sem  across each identified epoch for all task session. In addition to analysising the data around surprise, there is an option to plot the mean and sem derived from all instances across all task sessions. Parameters defining the preprocessing of the pupil data should be modified in the process_pupil_data function.
 
     Parameters:
+    - directory_path: Path, path to the participant level directory
     - participant_str: string, identifier of participant number (set to 2 numbers)
     - list_subject_selected: list, identifier generated from participant number
     - condition_str: string, identifier of condition order (set to 2 numbers) ** May need to change to denote actual condition in Adalearn VNS study **
@@ -986,13 +991,13 @@ def surprise_pupil_epochs(participant_str, list_subject_selected, condition_str,
 
     # Generating pupil response around surprising observations 
     print("Analysing first quartile of surprise. Processing...") 
-    preprocessed_pupil_first_surp_df, pupil_trig_first_surp_df, pupil_ses_first_surp_df, blink_first_surp_df, epoched_pupil_first_surprise_df, first_surprise_blink_ratio_df, first_surprise_epochs_to_remove = load_and_process_pupil_data(participant_str=participant_str, list_subject_selected=list_subject_selected, condition_str=condition_str, condition_task_sessions=condition_task_sessions, from_session=from_session, to_session=to_session, dict_onsets=surprise_first_quart_onsets, dict_num=surprise_first_quart_nums, window_start_before=0.2, window_end_after=1.2, lpf=[5],session_list=first_quart_surp_ses_list, select_eye=select_eye, remove_epochs=remove_epochs)
+    preprocessed_pupil_first_surp_df, pupil_trig_first_surp_df, pupil_ses_first_surp_df, blink_first_surp_df, epoched_pupil_first_surprise_df, first_surprise_blink_ratio_df, first_surprise_epochs_to_remove = load_and_process_pupil_data(directory_path=directory_path, participant_str=participant_str, list_subject_selected=list_subject_selected, condition_str=condition_str, condition_task_sessions=condition_task_sessions, from_session=from_session, to_session=to_session, dict_onsets=surprise_first_quart_onsets, dict_num=surprise_first_quart_nums, window_start_before=0.2, window_end_after=1.2, lpf=[5],session_list=first_quart_surp_ses_list, select_eye=select_eye, remove_epochs=remove_epochs)
     print("Analysing second quartile of surprise. Processing...") 
-    preprocessed_pupil_second_surp_df, pupil_trig_second_surp_df, pupil_ses_second_surp_df, blink_second_surp_df, epoched_pupil_second_surprise_df, second_surprise_blink_ratio_df, second_surprise_epochs_to_remove = load_and_process_pupil_data(participant_str=participant_str, list_subject_selected=list_subject_selected, condition_str=condition_str, condition_task_sessions=condition_task_sessions, from_session=from_session, to_session=to_session, dict_onsets=surprise_second_quart_onsets, dict_num=surprise_second_quart_nums, window_start_before=0.2, window_end_after=1.2, lpf=[5],session_list=second_quart_surp_ses_list, select_eye=select_eye, remove_epochs=remove_epochs)
+    preprocessed_pupil_second_surp_df, pupil_trig_second_surp_df, pupil_ses_second_surp_df, blink_second_surp_df, epoched_pupil_second_surprise_df, second_surprise_blink_ratio_df, second_surprise_epochs_to_remove = load_and_process_pupil_data(directory_path=directory_path, participant_str=participant_str, list_subject_selected=list_subject_selected, condition_str=condition_str, condition_task_sessions=condition_task_sessions, from_session=from_session, to_session=to_session, dict_onsets=surprise_second_quart_onsets, dict_num=surprise_second_quart_nums, window_start_before=0.2, window_end_after=1.2, lpf=[5],session_list=second_quart_surp_ses_list, select_eye=select_eye, remove_epochs=remove_epochs)
     print("Analysisng third quartile of surprise. Processing...") 
-    preprocessed_pupil_third_surp_df, pupil_trig_third_surp_df, pupil_ses_third_surp_df, blink_third_surp_df, epoched_pupil_third_surprise_df, third_surprise_blink_ratio_df, third_surprise_epochs_to_remove = load_and_process_pupil_data(participant_str=participant_str, list_subject_selected=list_subject_selected, condition_str=condition_str, condition_task_sessions=condition_task_sessions, from_session=from_session, to_session=to_session, dict_onsets=surprise_third_quart_onsets, dict_num=surprise_third_quart_nums, window_start_before=0.2, window_end_after=1.2, lpf=[5],session_list=third_quart_surp_ses_list, select_eye=select_eye, remove_epochs=remove_epochs)
+    preprocessed_pupil_third_surp_df, pupil_trig_third_surp_df, pupil_ses_third_surp_df, blink_third_surp_df, epoched_pupil_third_surprise_df, third_surprise_blink_ratio_df, third_surprise_epochs_to_remove = load_and_process_pupil_data(directory_path=directory_path, participant_str=participant_str, list_subject_selected=list_subject_selected, condition_str=condition_str, condition_task_sessions=condition_task_sessions, from_session=from_session, to_session=to_session, dict_onsets=surprise_third_quart_onsets, dict_num=surprise_third_quart_nums, window_start_before=0.2, window_end_after=1.2, lpf=[5],session_list=third_quart_surp_ses_list, select_eye=select_eye, remove_epochs=remove_epochs)
     print("Analysing fourth quartile of surprise. Processing...") 
-    preprocessed_pupil_fourth_surp_df, pupil_trig_fourth_surp_df, pupil_ses_fourth_surp_df, blink_fourth_surp_df, epoched_pupil_fourth_surprise_df, fourth_surprise_blink_ratio_df, fourth_surprise_epochs_to_remove = load_and_process_pupil_data(participant_str=participant_str, list_subject_selected=list_subject_selected, condition_str=condition_str, condition_task_sessions=condition_task_sessions, from_session=from_session, to_session=to_session, dict_onsets=surprise_fourth_quart_onsets, dict_num=surprise_fourth_quart_nums, window_start_before=0.2, window_end_after=1.2, lpf=[5],session_list=fourth_quart_surp_ses_list, select_eye=select_eye, remove_epochs=remove_epochs)
+    preprocessed_pupil_fourth_surp_df, pupil_trig_fourth_surp_df, pupil_ses_fourth_surp_df, blink_fourth_surp_df, epoched_pupil_fourth_surprise_df, fourth_surprise_blink_ratio_df, fourth_surprise_epochs_to_remove = load_and_process_pupil_data(directory_path=directory_path, participant_str=participant_str, list_subject_selected=list_subject_selected, condition_str=condition_str, condition_task_sessions=condition_task_sessions, from_session=from_session, to_session=to_session, dict_onsets=surprise_fourth_quart_onsets, dict_num=surprise_fourth_quart_nums, window_start_before=0.2, window_end_after=1.2, lpf=[5],session_list=fourth_quart_surp_ses_list, select_eye=select_eye, remove_epochs=remove_epochs)
 
     # Option to plot pupil response of the pupil diameter timelocked to high and low surprising observations
     if plot_pupil_by_surprise:

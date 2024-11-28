@@ -13,13 +13,13 @@ pio.renderers.default='browser'
 
 from behavioural_task_functions import load_behavioural_data, behavioural_change_point_analysis
 
-from participant_task_characteristics import participant, participant_str, condition_1_str, condition_2_str, c1_task_sessions, c2_task_sessions
+from participant_task_information import directory_path, participant_str, condition_1_str, condition_2_str, c1_task_sessions, c2_task_sessions
 
 
 
-c1_behavioural_df = load_behavioural_data(participant_str=participant_str, condition_str=condition_1_str, condition_task_sessions=c1_task_sessions, plot_behav_data=False, plot_estimate_v_ideal=False)
+c1_behavioural_df = load_behavioural_data(directory_path=directory_path, participant_str=participant_str, condition_str=condition_1_str, condition_task_sessions=c1_task_sessions, plot_behav_data=False, plot_estimate_v_ideal=False)
 
-c2_behavioural_df = load_behavioural_data(participant_str=participant_str, condition_str=condition_2_str, condition_task_sessions=c2_task_sessions, plot_behav_data=False, plot_estimate_v_ideal=False)
+c2_behavioural_df = load_behavioural_data(directory_path=directory_path, participant_str=participant_str, condition_str=condition_2_str, condition_task_sessions=c2_task_sessions, plot_behav_data=False, plot_estimate_v_ideal=False)
 
 
 
