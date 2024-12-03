@@ -498,17 +498,18 @@ def biopac_trigger_extraction(biopac_data, run_ranges, plot_triggers_by_channel 
     return file_trig_df, trig_chan_df, task_session_summary_df, missing_trigger_df
 
 
-def extract_task_session_emg_data(condition_str, emg_data_df, task_session_summary,  plot_task_session_emg=False):
+def extract_task_session_emg_data(participant_str, condition_str, emg_data_df, task_session_summary, emg_signal = 'rectified_emg', plot_task_session_emg=False):
     """ 
 
-    Function to reduce the size of the data to only that within a task session. Creates a dictionary of stored dataframes housing the EMG data for each task session. Also creates a relative timestamp for each task session. Can plot rectified EMG against time for each task session for visualization.
+    Function to reduce the size of the data to only that within a task session. Creates a dictionary of stored dataframes housing the EMG data for each task session. Also creates a relative timestamp for each task session. Can plot various EMG signals against time for each task session for visualization.
 
     Parameters:
+    - participant_str: string, identifier of participant number (set to 2 numbers)
     - condition_str: string, identifier of condition order (set to 2 numbers)
     - emg_data_df: pd.DataFrame, contains EMG data, associated (relative) timestamp and data file number.  
     - task_session_summary: pd.DataFrame, contains broad summary statistics of the characteristics of task sessions identified through triggers.
-    - 
-    - plot_task_session_emg: boolean, if True, creates subplots for each task session of rectified EMG signal (default = False)
+    - emg_signal: string, defines which signal to plot. Can be the raw signal ('emg'), the rectified signal ('rectified_emg') or filtered signal ('lowpass_filtered')
+    - plot_task_session_emg: boolean, if true, creates subplots for each task session of specified EMG signal (default = False)
 
     Returns:
     - emg_task_session_dict: dict, contains EMG dataframe (value) for each task session (key).
@@ -546,7 +547,7 @@ def extract_task_session_emg_data(condition_str, emg_data_df, task_session_summa
         # Iterate over each key (task session) and its corresponding dataframe
         for i, (key, df) in enumerate(emg_task_session_dict.items(), start=1):
             # Add trace for rectified_emg against time
-            fig.add_trace(go.Scatter(x=df['rel_time'], y=df['rectified_emg'], mode='lines', name=f'Task Session {key}'),
+            fig.add_trace(go.Scatter(x=df['rel_time'], y=df[emg_signal], mode='lines', name=f'Task Session {key}'),
                           row=i, col=1)
 
             # Update x-axis and y-axis titles for each subplot
@@ -558,11 +559,10 @@ def extract_task_session_emg_data(condition_str, emg_data_df, task_session_summa
 
         # Update layout
         fig.update_layout(
-            title="Rectified EMG vs Time for Each Task Session",
-            height=4000  # Adjust the overall height of the figure if needed
+            title=f"EMG vs time across each task session for participant {participant_str} in condition {condition_str}",
+            height=4000 
         )
 
-        # Show the plot
         fig.show()
 
     print(f"In condition {condition_str} the number of task sessions is: {len(emg_task_session_dict)}") 
@@ -882,7 +882,7 @@ def r_r_interval_calculation(participant_str, condition_str, rpeaks_session_dict
 
         # Layout adjustments
         fig.update_layout(
-            title_text=f"R-R Intervals Across Each Task Session for Participant {participant_str} in Condition {condition_str}",
+            title_text=f"R-R intervals across each task session for participant {participant_str} in condition {condition_str}",
             height=600 * num_sessions,
             showlegend=False,
         )
@@ -923,7 +923,7 @@ def r_r_interval_calculation(participant_str, condition_str, rpeaks_session_dict
 
         # Layout adjustments
         fig.update_layout(
-            title_text=f"Instantaneous HR Across Each Task Session for Participant {participant_str} in Condition {condition_str}",
+            title_text=f"Instantaneous HR across each task session for participant {participant_str} in condition {condition_str}",
             height=600 * num_sessions,
             showlegend=False,
         )
@@ -996,9 +996,9 @@ def r_r_interval_by_change_point(participant_str, condition_str, rpeaks_session_
 
     # Aggregate data by time bins
     binned_r_r_data = r_r_interval_by_cp_df.groupby(['time_bin']).agg(
-        mean_r_r_interval=('r_r_intervals', 'mean'),
-        std_r_r_interval=('r_r_intervals', 'std'),
-        count=('r_r_intervals', 'size')
+        mean_r_r_interval=('interpol_r_r', 'mean'),
+        std_r_r_interval=('interpol_r_r', 'std'),
+        count=('interpol_r_r', 'size')
     ).reset_index()
 
     binned_r_r_data['sem_r_r_interval'] = binned_r_r_data['std_r_r_interval'] / np.sqrt(binned_r_r_data['count'])
@@ -1035,7 +1035,7 @@ def r_r_interval_by_change_point(participant_str, condition_str, rpeaks_session_
         fig.add_vline(x=0, line_dash="dash", line_color="black")
 
         fig.update_layout(
-            title=f'R-R interval dynamics around change point for participant{participant_str} in condition {condition_str}',
+            title=f'R-R interval dynamics around change points for participant {participant_str} in condition {condition_str}',
             xaxis_title='Time (s)',
             yaxis_title='R-R Interval (s)'
         )
