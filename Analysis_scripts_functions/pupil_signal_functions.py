@@ -25,7 +25,7 @@ def pupil_data_file_check(data_tob, pupil_trig_ses, blink_ses, pupil_ses, pupil_
     - pupil_end: list, contains the information of the last trigger inserted into the file. 
     - file_path: string, combined from the name of the directory and the file. 
     - session: string, session identifier (two numbers, e.g. '01') 
-    - file_size_threshold: integer, defines the size of file above which would be cause for concern, which should be raised and investigation into the file contents is needed (default = 2 mb).
+    - file_size_threshold: float, defines the size of file above which would be cause for concern, which should be raised and investigation into the file contents is needed (default = 2 mb).
     - plot_original_data: boolean, if true will plot the raw pupil diameter data taken from the file. 
     - plot_reduced_data: boolean, if true will plot the pupil data across the reduced time interval now defined within that file.
 
@@ -196,7 +196,7 @@ def load_and_process_pupil_data(directory_path, participant_str, list_subject_se
     - window_start_before: int, value defining the start of the epoch window in time (seconds). (Default = 1)
     - window_end_after: int, value defining the end of the epoch window in time (seconds). (Default = 3)
     - lpf: list, cutoff (Hz) to low pass filter the data with. If [], do nothing. (Default = 5 Hz)
-    - blink_ratio_threshold:, integer, value determining the threshold criteria for the removal of an epoch due to excessive blink ratio. (Default = 0.2)
+    - blink_ratio_threshold:, float, value determining the threshold criteria for the removal of an epoch due to excessive blink ratio. (Default = 0.2)
     - select_eye: boolean, if true, will use a predfined eye (Default = right). If false will run a function to identify the best eye (one with the least nan values) and collect data using that eye (Default = True)
     - remove_epochs: boolean, parameter determining whether epochs with an excessive blink ratio should be removed. (Default = True)
     - z_score: boolean, option to z_score data before computing epochs. Default = True.
@@ -562,6 +562,8 @@ def all_outcome_pupil_epochs(directory_path, participant_str, list_subject_selec
     - outcome_nums: dict, contains a cumulative count of the number of change points identified within each task session. Keys are task sessions and values are the cumulative count of the number of change points within that task session.
     - outcome_epoched_pupil_df: pd.DataFrame, containing transposed epoched data (each column represents one epoch), the calculated mean, standard deviation and sem across all outcome defined epochs. Includes the timestamp.
     - outcome_blink_ratio_cp_df: pd.DataFrame, contains the blink ratio information for each generated epoch around outcome observations
+    - outcome_epochs_to_remove: list, indices of the epochs that exceed the threshold for the amount of interpolation within. 
+
     """
     # Creating dictionaries for storage of each outcome time and number 
     outcome_onsets, outcome_nums = create_pupil_epoch_dicts(pupil_trig_df)

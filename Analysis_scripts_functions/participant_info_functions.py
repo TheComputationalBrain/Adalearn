@@ -10,7 +10,7 @@ def participant_characteristics(participant, base_dir, c1_vns_task_sessions=None
     Function to load and extract session information for a given participant. Presents stimulator information, and file numbers that can then be passed to other functions to load the data. 
 
     Parameters:
-    - participant: integer, participant identification number
+    - participant: float, participant identification number
     - base_dir: string, top-level directory path.
     - c1_vns_task_sessions, c2_vns_task_sessions: list, contains numbers of task session in which VNS was active during. 
 

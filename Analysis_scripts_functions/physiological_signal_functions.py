@@ -572,27 +572,21 @@ def extract_task_session_emg_data(participant_str, condition_str, emg_data_df, t
     return emg_task_session_dict
 
 
-def process_ecg_data(participant_str, condition_str, biopac_data, ecg_channels, task_session_summary, ecg_trace='cardiac_cycles', ectopic_removal_method='malik', interpolation_method='linear',apply_filter=True, plot_raw_ecg_file=False, plot_rpeaks_session = True, plot_r_r_interval_session = True, plot_instant_hr_session = True):
-    """ 
-    Function to extract and plot recorded ECG data. From raw signal, r-peaks are identified and consecutive r-r intervals and instantaneous heart rate is recorded. The data is reduced to that recorded over each task session, based on identified triggers. There is the option to plot the r-r interval across time for each task session for visualisation. 
-    
+
+def extract_ecg_signals(participant_str, condition_str, biopac_data, ecg_channels, plot_raw_ecg_file=False):
+    """
+    Function to extract ECG signal from raw biopac datafiles. Takes each file extracts the signal and returns a concatenated data frame across all data files
+
     Parameters:
+    - participant_str: string, identifier of participant number (set to 2 numbers)
+    - condition_str: string, identifier of condition order (set to 2 numbers)
     - biopac_data: list, contains the dictionaries storing the data extracted from the biopac files for each run of task sessions. 
     - ecg_channels: string, the ECG channel name containing the raw ECG data. 
-    - task_session_summary: pd.DataFrame, contains summary statistics of each calculated task session (time of first trigger, time of last trigger, duration of task session, number of triggers within each session). 
-    - ecg_trace: string, column name containing the ECG signal to be processed. Can be 'cardiac_cycles' or 'cardiac_cycles_filtered' (default = 'cardiac_cycles')
-    -ectopic_removal_method: string, method to use to clean outliers using hrvanalysis package. Can be 'malik', 'kamath', 'karlsson', 'acar' or 'custom' (default = 'malik').
-    - interpolation_method: string, method used to interpolate Nan values of ECG signal series, using hrvanalysis package (default = 'linear').
-    - apply_filter: boolean, if true, will apply filter to ECG signal, creating a filtered version of the raw signal(filter: low cutoff = 40 Hz, high cutoff = 0.5 Hz). 
     - plot_raw_ecg_file: boolean, if true, creates subplots for each task session of the raw ECG signal across time using Plotly.
-    - plot_rpeaks_session: boolean, if true, creates subplots for each task session of with identified r-peaks superimposed on the raw ECG signal across time using Plotly. 
-    - plot_r_r_interval_session: boolean, if true, creates subplots for each task session of consecutive r-r interval across time using Plotly. 
-    - plot_raw_instant_hr_file: boolean, if true, creates subplots for each task session of consecutive instant HR across time using Plotly.  
 
     Returns:
-    - ecg_data_df: DataFrame, contains concatenated ECG data across files.
+    - ecg_data_df: DataFrame, contains concatenated dataframe containing ECG data across files.
     """
-    
     all_ecg_data = [] 
     data_file_counter = 1 
 
@@ -605,16 +599,10 @@ def process_ecg_data(participant_str, condition_str, biopac_data, ecg_channels, 
         
         # Creating DataFrame for storage of ECG data from each file
         ecg_data = pd.DataFrame({
-            'cardiac_cycles': cardiac_cycles, 
+            'raw_ecg': cardiac_cycles, 
             'time': times,
-            'data_file': data_file_counter  # Add the data_file variable
+            'data_file': data_file_counter 
         })
-
-        # Apply filter if specified
-        if apply_filter:
-            ecgdata_filtered = ecg_trace_filter(ecgdata, low_filter_cutoff = 40, high_filter_cutoff = 0.5, sampling_rate = 2000, verbose = False)
-            
-            ecg_data['cardiac_cycles_filtered'] = np.squeeze(ecgdata_filtered)
 
         all_ecg_data.append(ecg_data)
         
@@ -628,227 +616,183 @@ def process_ecg_data(participant_str, condition_str, biopac_data, ecg_channels, 
                             subplot_titles=[f'File {i+1}' for i in range(len(all_ecg_data))])
 
         for idx, ecg_data in enumerate(all_ecg_data):
-            y_data = ecg_data['cardiac_cycles_filtered'] if 'cardiac_cycles_filtered' in ecg_data.columns else ecg_data['cardiac_cycles']
+            y_data = ecg_data['raw_ecg']
             fig.add_trace(
                 go.Scatter(x=ecg_data['time'], y=y_data, mode='lines', name=f'File {idx + 1}'),
                 row=idx + 1, col=1
             )
 
-        fig.update_layout(height=300 * len(all_ecg_data), title_text='ECG Data Across Files',
+        fig.update_layout(height=300 * len(all_ecg_data), title_text=f'ECG signals extracted across data files for participant {participant_str} in condition {condition_str}',
                           xaxis_title='Time (s)', yaxis_title='ECG')
 
         fig.show()
 
-    # Reducing ecg down to individual task sessions
-    hr_task_session_dict = {}
-
-    for index, row in task_session_summary.iterrows():
-        data_file = row['data_file']
-        start_time = row['first_trig']
-        end_time = row['last_trig'] 
-        
-        # Filter the ECG DataFrame to get the relevant rows
-        task_data = ecg_data_df[
-            (ecg_data_df['data_file'] == data_file) &
-            (ecg_data_df['time'] >= start_time) &
-            (ecg_data_df['time'] <= end_time)
-        ].copy()  
-        
-        # Calculate relative time starting from the beginning of each task session
-        task_data['rel_time'] = task_data['time'] - start_time
-        
-        # Store the filtered DataFrame in the dictionary with the index as the key
-        hr_task_session_dict[index +1] = task_data
-    
-    print("Initalising r-peak detection...")
-
-    rpeaks_session_dict = rpeak_detection(participant_str=participant_str, condition_str=condition_str, hr_dict=hr_task_session_dict, ecg_trace=ecg_trace, sampling_rate = 2000, plot_rpeaks_session=plot_rpeaks_session)
-
-    print("Calculating r-r intervals...")
-
-    r_r_int_session_dict = r_r_interval_calculation(participant_str=participant_str, condition_str=condition_str, rpeaks_session_dict=rpeaks_session_dict, ectopic_removal_method=ectopic_removal_method, interpolation_method=interpolation_method, plot_r_r_interval_session=plot_r_r_interval_session, plot_instant_hr_session = plot_instant_hr_session)
-
-    return ecg_data_df, hr_task_session_dict, r_r_int_session_dict
+    return ecg_data_df
 
 
 
-def ecg_trace_filter(ecgdata, low_filter_cutoff = 40, high_filter_cutoff = None, sampling_rate = 2000, verbose = False):
+def ecg_signal_filter(session_data, sampling_rate = 2000, low_cutoff = 40, high_cutoff = None):
     """
-    Function to apply bandpass filters to raw ECG trace using MNE filter function. Takes a copy of the raw ECG and returns an numpy array of the filtered signal. 
+    Function to apply high bandpass filter to raw ECG trace using neurokits signal_filter function (https://neuropsychology.github.io/NeuroKit/functions/signal.html#neurokit2.signal_filter). Takes a copy of the raw ECG and returns an numpy array of the filtered signal. 
 
     Parameters:
-    - ecgdata: mne.io.Raw, raw ECG data stored under the chosen ECG channel.
-    - low_filter_cutoff: integer, low-pass filter cutoff frequency in Hz. This sets the upper bound of the frequencies that will be retained in the filtered signal
-    - high_filter_cutoff: integer, high-pass filter cutoff frequency in Hz. This sets the lower bound of the frequencies that will be retained in the filtered signal.
-    - sampling_rate: integer, sampling rate of the data. 
-    - verbose:  If true, the function will print additional information about the filtering process (default = false).
+    - session_data: pd.Dataframe, contains the raw ECG trace for that session, data point time stamps, data file number and possibly a filtered version of the raw ECG trace.
+    - low_cutoff: float, low-pass filter cutoff frequency in Hz. This sets the upper bound of the frequencies that will be retained in the filtered signal.
+    - high_cutoff: float, high-pass filter cutoff frequency in Hz. This sets the lower bound of the frequencies that will be retained in the filtered signal.
+    - sampling_rate: float, sampling rate of the data. 
 
     Returns:
-    - ecgdata_filtered: NumPy array, the filtered ECG signal
-
+    - session_data: pd.DataFrame, updated dataframe now containing a column with the filtered ECG signal.
     """
-    ecgdata_filtered = mne.filter.filter_data(
-        data=ecgdata.get_data(), 
-        sfreq=sampling_rate, 
-        l_freq=high_filter_cutoff, 
-        h_freq=low_filter_cutoff, 
-        verbose=verbose
-            )
+
+    ecg_signal = np.array(session_data['raw_ecg'])
+
+    filtered_ecg_signal = nk.signal_filter(signal=ecg_signal, sampling_rate=sampling_rate, lowcut=low_cutoff, highcut=high_cutoff)
+
+    session_data['filtered_ecg'] = pd.Series(filtered_ecg_signal, index=session_data.index)
     
-    return ecgdata_filtered
+    return session_data
 
 
 
-def rpeak_detection(participant_str, condition_str, hr_dict, ecg_trace = 'cardiac_cycles', sampling_rate = 2000, plot_rpeaks_session = True):
+def rpeak_evaluation(participant_str, condition_str, ecg_session_dict, ecg_trace='raw_ecg', sampling_rate=2000, correct_artifacts=True, plot_rpeaks_session=False, plot_r_r_interval_session=False, plot_instant_hr_session=False):
     """
-    Function to detect r-peak of the QRS segment of an ECG trace. Uses neurokit2 'rpeaks' function (see: https://neuropsychology.github.io/NeuroKit/functions/ecg.html#ecg-peaks). QRS complexes are detected based on the steepness of the absolute gradient of the ECG signal. Subsequently, R-peaks are detected as local maxima in the QRS complexes. Returns a dictionary with the indices of identified r-peaks.
+    Function to detect r-peaks of the QRS segment of an ECG trace.;Uses neurokit2 'ecg_peaks' function. Returns a dictionary with the indices of identified r-peaks and their respective time intervals.
 
     Parameters:
     - participant_str: string, identifier of participant number (set to 2 numbers)
     - condition_str: string, identifier of condition order (set to 2 numbers)
-    - hr_dict: dictionary, contains keys referencing task session number. Each key contains a DataFrame which contains the raw ECG trace for that session, data point time stamps, data file number and possibly a filtered version of the raw ECG trace.
+    - ecg_session_dict: dictionary, contains keys referencing task session number. Each key contains a DataFrame which contains the raw ECG trace for that session, data point time stamps, and data file number.
     - ecg_trace: string, column identifier for the ECG trace to be used for r-peak detection.
-    - sampling_rate: integer: sampling rate of the data in Hz.
-    - plot_rpeaks_session: boolean, if true, option to plot the raw ECG trace for each task session with detected r-peaks overlaid.
+    - sampling_rate: float, sampling rate of the data in Hz.
+    - correct_artifacts: boolean, option to correct artifacts in r-peak detection.
 
     Returns:
-    - rpeaks_session_dict: dictionary, contains the indices of detected r-peaks in the ECG trace (values) for each task session (keys)
+    - rpeaks_session_dict: dictionary, contains the indices of detected r-peaks in the ECG trace (values) for each task session (keys).
     """
     rpeaks_session_dict = {}
+    
+    # Identifying r-peaks in each key held in the ECG trace-containing dictionary
+    for session_key, session_data in ecg_session_dict.items():
+        ecg_signal = session_data[ecg_trace]
 
-    # Identifying r-peaks in each key held in the ECG trace containing dictionary
-    for session_key, session_data in hr_dict.items():
+        # Baseline correcting and cleaning (de-noising) signal using neurokit2 ecg_clean function:
+        if ecg_trace == "raw_ecg":
+            ecg_signal = ecg_signal - np.mean(ecg_signal)
+            clean_ecg_signal = pd.Series(
+                nk.ecg_clean(ecg_signal=ecg_signal, sampling_rate=sampling_rate, method="neurokit")
+            )
+            session_data['clean_ecg_signal'] = clean_ecg_signal.values
 
-        ecg_signal = session_data[ecg_trace]  
-        fs = sampling_rate  
-        
-        # Baseline correcting ECG trace by mean response
-        ecg_signal = ecg_signal - np.mean(ecg_signal)
+            # Find peaks in the ECG signal (r-peaks) using neurokit2 r_peaks function:
+            rpeaks_indices = nk.ecg_peaks(clean_ecg_signal, sampling_rate=sampling_rate, correct_artifacts=correct_artifacts)[1]
+        else:
+            # Find peaks in the ECG signal (r-peaks) using neurokit2 r_peaks function:
+            rpeaks_indices = nk.ecg_peaks(ecg_signal, sampling_rate=sampling_rate, correct_artifacts=correct_artifacts)[1]
 
-        # Find peaks in the ECG signal (r-peaks) using neurokits2 r_peaks function:
-        _, rpeaks = nk.ecg_peaks(ecg_signal, sampling_rate=fs)
+        # Extracting the R-peaks indices and the associated timestamp
+        rpeaks = pd.Series(rpeaks_indices['ECG_R_Peaks'])
+        rpeaks_time = session_data['time'].iloc[rpeaks].reset_index(drop=True)
+        rpeak_rel_time = session_data['rel_time'].iloc[rpeaks].reset_index(drop=True)
+        print(f"In task session {session_key}: {len(rpeaks)} R-peaks identifed")
 
-        rpeak_indices = rpeaks['ECG_R_Peaks']
+        # Extract R-R intervals and handle erroneous peaks if artifacts are corrected
+        if correct_artifacts:
+            r_r_intervals = rpeaks_indices['ECG_fixpeaks_rr']
+            erroneous_peaks = {
+                'ectopic_beats': rpeaks_indices['ECG_fixpeaks_ectopic'], 
+                'missed_beats': rpeaks_indices['ECG_fixpeaks_missed'], 
+                'extra_beats': rpeaks_indices['ECG_fixpeaks_extra'],
+                'long_short_beats': rpeaks_indices['ECG_fixpeaks_longshort']
+            }
+            total_erroneous_peaks = sum(len(erroneous_peaks[key]) for key in erroneous_peaks.keys())
 
-        if len(rpeak_indices) == 0:
-            print(f"No r-peaks detected for session {session_key}", flush=True)
-            rpeaks_session_dict[session_key] = pd.DataFrame(columns=['rpeaks_indices', 'rpeak_rel_time'])
-            continue
+            print(f"Number of erroneous peaks/artifacts identified and corrected: {total_erroneous_peaks}")
+            print(f"Ectopic beats: {len(erroneous_peaks['ectopic_beats'])}")
+            print(f"Missed beats: {len(erroneous_peaks['missed_beats'])}")
+            print(f"Extra beats: {len(erroneous_peaks['extra_beats'])}")
+            print(f"Long/short beats: {len(erroneous_peaks['long_short_beats'])}")
+        else:
+            r_r_intervals = rpeaks.diff() / sampling_rate
 
-        rpeaks_time = session_data['time'].iloc[rpeak_indices].reset_index(drop=True)
-        
-        rpeak_rel_time = session_data['rel_time'].iloc[rpeak_indices].reset_index(drop=True)
+        # Calculate instantaneous HR
+        hr = nk.signal_rate(rpeaks, sampling_rate=sampling_rate)
 
+        # Store rpeaks in a dictionary
         rpeaks_session_dict[session_key] = pd.DataFrame({
-            'rpeaks_indices': rpeak_indices,
+            'rpeaks_indices': rpeaks,
+            'r_r_intervals': r_r_intervals,
+            'instant_hr': hr,
             'rpeaks_time': rpeaks_time,
-            'rpeak_rel_time': rpeak_rel_time
+            'rpeak_rel_time': rpeak_rel_time,
+            
         })
 
-        # Collect the time of the detected R-peaks
-        valid_rpeaks = session_data.iloc[rpeak_indices]
+        # Store the uncorrected peaks to check correction process
+        if correct_artifacts:
+            uncorrected_peaks = pd.Series(rpeaks_indices['ECG_R_Peaks_Uncorrected'])
 
-        if len(valid_rpeaks) > 1:
-            print(f"The number of r-peaks identified in session {session_key} is: {len(valid_rpeaks)}")
-        else:
-            print(f"No valid r-peaks found in channel {session_key}")
+            rpeaks_session_dict[session_key]['uncorrected_rpeaks'] = uncorrected_peaks
 
-        # Option to plot the raw ECG signal and detected r-peaks
+    # Option to plot the R-peaks (corrected and uncorrected) by task session 
     if plot_rpeaks_session:
-        num_subplots = len(hr_dict)
+        num_sessions = len(ecg_session_dict)
         fig = make_subplots(
-            rows=num_subplots,
+            rows=num_sessions,
             cols=1,
             shared_xaxes=False,
-            subplot_titles=[f"Task Session {session_key}" for session_key in hr_dict.keys()]
+            subplot_titles=[f"Task Session {session_key}" for session_key in ecg_session_dict.keys()]
         )
 
         # Loop through each key in ecg containing dictionary and then add the ECG signal and detected r-peaks to each subplot
-        for i, (session_key, session_data) in enumerate(hr_dict.items(), start=1):
+        for i, (session_key, session_data) in enumerate(ecg_session_dict.items(), start=1):
             ecg_signal = session_data[ecg_trace]
+            time = session_data['rel_time']
             rpeaks_data = rpeaks_session_dict[session_key]  
             
             # Add ECG signal trace
             fig.add_trace(
-                go.Scatter(x=session_data['rel_time'], y=ecg_signal, mode='lines', name='ECG Signal'),
+                go.Scatter(x=session_data['rel_time'], y=ecg_signal, mode='lines', line=dict(color='rgba(224,176,255,0.7)'), name='ECG Signal'),
                 row=i, col=1
             )
             
             # Add r-peak markers (use the actual ECG signal values corresponding to the r-peak indices)
             rpeak_values = ecg_signal.iloc[rpeaks_data['rpeaks_indices']].values
+            rpeak_times = time.iloc[rpeaks_data['rpeaks_indices']].values
             fig.add_trace(
-                go.Scatter(x=rpeaks_data['rpeak_rel_time'], 
+                go.Scatter(x=rpeak_times, 
                         y=rpeak_values, 
                         mode='markers', 
-                        marker=dict(color='red', size=10), 
-                        name='Detected R-peaks'),
+                        marker=dict(color='blue', size=8), 
+                        name='Detected R-peaks - Corrected'),
                 row=i, col=1
             )
 
-            fig.update_xaxes(title_text="Time (s)", row=i, col=1)
-            fig.update_yaxes(title_text="ECG Amplitude", row=i, col=1)
+            if correct_artifacts:
+                uncor_rpeak_values = ecg_signal.iloc[rpeaks_data['uncorrected_rpeaks']].values
+                uncor_rpeak_times = time.iloc[rpeaks_data['uncorrected_rpeaks']].values
+                fig.add_trace(
+                    go.Scatter(x=uncor_rpeak_times, 
+                            y=uncor_rpeak_values, 
+                            mode='markers', 
+                            marker=dict(color='red', size=8), 
+                            name='Detected R-peaks - Uncorrected'),
+                    row=i, col=1
+                )
 
+            fig.update_xaxes(title_text="Time (s)", row=i, col=1)
+            fig.update_yaxes(title_text="R-R Intervals (s)", row=i, col=1)
+
+        # Layout adjustments
         fig.update_layout(
-            title=f"ECG trace with detected r-peaks across each task session for participant {participant_str} in condition {condition_str}",
-            height=600 * num_subplots,  
-            showlegend=False  
+            title_text=f"Identified R-peaks across each task session for participant {participant_str} in condition {condition_str}",
+            height=600 * num_sessions,
+            showlegend=False,
         )
 
+        # Show the plot
         fig.show()
-
-    return rpeaks_session_dict
-
-
-
-def r_r_interval_calculation(participant_str, condition_str, rpeaks_session_dict, ectopic_removal_method='malik', interpolation_method='linear', plot_r_r_interval_session=True, plot_instant_hr_session = True):
-    """"
-    Function to calculate R-R intervals from R-peaks extracted from the QRS segment of an ECG trace. Takes identified R-peaks indices and converts the difference between peaks to a time, used to calculate the duration between peaks (R-R interval). Instantaneous HR is calculated as 60 divided by the interval.
-
-    Parameters:
-    - participant_str: string, identifier of participant number (set to 2 numbers)
-    - condition_str: string, identifier of condition order (set to 2 numbers)
-    - rpeaks_session_dict: dictionary, contains keys referencing task session number. Each key contains a dataframe containing the indices of identified R-peaks within the ECG signal and the relative time of each r-peak. 
-    - ectopic_removal_method: string, method to use to clean outliers using hrvanalysis package. Can be 'malik', 'kamath', 'karlsson', 'acar' or 'custom' (default = 'malik').
-    - interpolation_method: string, method used to interpolate Nan values of ECG signal series, using hrvanalysis package (default = 'linear').
-    - sampling_rate: integer, sampling rate of the data in Hz.
-    - plot_r_r_interval_session: boolean, if true, option to plot the calculated R-R interval for each task session.
-    - plot_instant_hr_session: boolean, if true, option to plot the calculated instantaneous HR for each task session.
-
-    Returns:
-    - r_r_int_session_dict: dictionary, contains a DataFrame with the indices of detected R-peaks in the ECG trace, R-peak times, R-R intervals, and instantaneous HR for each task session.   
-    """
-    # Loop through the r-peaks dictionary
-    for session, df in rpeaks_session_dict.items():
-
-        # Calculate the R-R interval: time difference between consecutive R-peaks
-        r_r_intervals = df['rpeaks_time'].diff().iloc[1:].reset_index(drop=True)  
-
-        # Add R-R interval and HR to the DataFrame
-        df['r_r_intervals'] = pd.Series([None] + r_r_intervals.tolist())  
-
-        # Preprocessing R-R intervals
-        print(f"Preprocessing R-R intervals in task session: {session}")
-
-        # Filtering R-R intervals to ensure they are within the physiological range (0.3s - 2.0s)
-        df['cleaned_r_r_intervals'] = df['r_r_intervals'].where((df['r_r_intervals'] >= 0.3) & (df['r_r_intervals'] < 2.0), float('nan'))
-
-        # Removing ectopic beats and interpoltaing across missing values. 
-        ectopic_removal = remove_ectopic_beats(rr_intervals=df['cleaned_r_r_intervals'], method=ectopic_removal_method)
-
-        interpol_r_r = interpolate_nan_values(rr_intervals=ectopic_removal, interpolation_method=interpolation_method)
-
-        df['ectopic_removal'] = ectopic_removal
-        df['interpol_r_r'] = interpol_r_r
-
-        # Calculate Instantaneous HR (bpm)
-        hr = 60 / df['interpol_r_r']
-
-        df['instantaneous_hr'] = pd.Series([None] + hr.tolist()).fillna(0).round().astype(int)
- 
-        
-        # Update the dictionary with the modified dataframe
-        rpeaks_session_dict[session] = df
-
+    
     # Option to plot the r-r interval by task session 
     if plot_r_r_interval_session:
         num_sessions = len(rpeaks_session_dict)
@@ -863,7 +807,7 @@ def r_r_interval_calculation(participant_str, condition_str, rpeaks_session_dict
 
             # Retrieve R-peaks times and R-R intervals for the session
             rpeak_times = session_data['rpeak_rel_time']
-            r_r_intervals = session_data['interpol_r_r']
+            r_r_intervals = session_data['r_r_intervals']
 
             # Plot R-R intervals
             fig.add_trace(
@@ -902,15 +846,15 @@ def r_r_interval_calculation(participant_str, condition_str, rpeaks_session_dict
         # Loop through each task session
         for i, (session_key, session_data) in enumerate(rpeaks_session_dict.items(), start=1):
 
-            # Retrieve R-peaks times and R-R intervals for the session
+            # Retrieve R-peaks times and instantaneous HR for the session
             rpeak_times = session_data['rpeak_rel_time']
-            r_r_intervals = session_data['instantaneous_hr'][1:]  # Exclude first value (NaN)
+            instant_hr = session_data['instant_hr'] 
 
             # Plot R-R intervals
             fig.add_trace(
                 go.Scatter(
                     x=rpeak_times[1:],  # Exclude first time as it doesn't have an R-R interval
-                    y=r_r_intervals,
+                    y=instant_hr,
                     mode='lines+markers',
                     name=f"Instantaneous HR (bpm) - {session_key}",
                     line=dict(color='blue')
@@ -934,41 +878,139 @@ def r_r_interval_calculation(participant_str, condition_str, rpeaks_session_dict
     return rpeaks_session_dict
 
 
+def process_ecg_data(participant_str, condition_str, biopac_data, ecg_channels, task_session_summary, sampling_rate = 2000, low_cutoff = 40, high_cutoff = None, ecg_trace='raw_ecg', rpeak_artifact_correction = True, plot_raw_ecg_file=False, plot_ecg_filter_process = False, plot_rpeaks_session = True, plot_r_r_interval_session = True, plot_instant_hr_session = True):
+    """ 
+    Wrapper function used to extract and plot recorded ECG data. From raw signal, r-peaks are identified and consecutive r-r intervals and instantaneous heart rate is recorded. The data is reduced to that recorded over each task session, based on identified triggers. There is the option to plot the the identified r-peaks, the calculated r-r intervals and instantaneous HR across each task session for visualisation. 
+    
+    Parameters:
+    - participant_str: string, identifier of participant number (set to 2 numbers)
+    - condition_str: string, identifier of condition order (set to 2 numbers)
+    - biopac_data: list, contains the dictionaries storing the data extracted from the biopac files for each run of task sessions. 
+    - ecg_channels: string, the ECG channel name containing the raw ECG data. 
+    - task_session_summary: pd.DataFrame, contains summary statistics of each calculated task session (time of first trigger, time of last trigger, duration of task session, number of triggers within each session). 
+    - sampling_rate: float, sampling rate of the data in Hz (default = 2000).
+    - low_cutoff: float, low-pass filter cutoff frequency in Hz. This sets the upper bound of the frequencies that will be retained in the filtered signal (default = 40 Hz).
+    - high_cutoff: float, high-pass filter cutoff frequency in Hz. This sets the lower bound of the frequencies that will be retained in the filtered signal (default = None).
+    - ecg_trace: string, column name containing the ECG signal to be processed. Can be 'raw_ecg' or 'filtered_ecg' (default = 'raw_ecg')
+    - rpeak_artifact_correction: boolean, if true, will apply artifact correction to r-peak detection using neurokits2 'ecg_peaks' function (https://neuropsychology.github.io/NeuroKit/functions/ecg.html#neurokit2.ecg.ecg_peaks).
+    - plot_raw_ecg_file: boolean, if true, creates subplots for each task session of the raw ECG signal across time using Plotly.
+    - plot_ecg_filter_process: boolean, if true, plots the raw ECG signal overlaid with the filtered ECG trace for visualisation of the improvement gained for R-peak detection using Plotly (default = false)
+    - plot_rpeaks_session: boolean, if true, creates subplots for each task session of with identified r-peaks superimposed on the raw ECG signal across time using Plotly. 
+    - plot_r_r_interval_session: boolean, if true, creates subplots for each task session of consecutive r-r interval across time using Plotly. 
+    - plot_raw_instant_hr_file: boolean, if true, creates subplots for each task session of consecutive instant HR across time using Plotly.  
 
-def r_r_interval_by_change_point(participant_str, condition_str, rpeaks_session_dict, change_point_indices, pre=2, post=10, time_bin_size=0.5, plot_r_r_intervals_by_cp=False):
+    Returns:
+    - ecg_data_df: DataFrame, contains concatenated ECG data across files.
+    - ecg_session_dict: dictionary, contains the raw and filtered ECG traces reduced down to the duration of each task session.  
+    - rpeaks_session_dict: dictionary, contains the indices of detected r-peaks in the ECG trace (values) for each task session (keys).
     """
-    Computes R-R interval dynamics around change points using time bins.
-    """
+    # Extract ecg signal from data files
+    ecg_data_df = extract_ecg_signals(participant_str=participant_str, condition_str=condition_str, biopac_data=biopac_data, ecg_channels=ecg_channels, plot_raw_ecg_file=plot_raw_ecg_file)
 
-    r_r_intervals_by_cp = []
+    # Reducing ECG signal down to that within individual task sessions
+    ecg_session_dict = {}
+
+    for index, row in task_session_summary.iterrows():
+        data_file = row['data_file']
+        start_time = row['first_trig']
+        end_time = row['last_trig'] 
+        
+        # Filter the ECG DataFrame to get the relevant rows
+        task_data = ecg_data_df[
+            (ecg_data_df['data_file'] == data_file) &
+            (ecg_data_df['time'] >= start_time) &
+            (ecg_data_df['time'] <= end_time)
+        ].copy()  
+        
+        # Calculate relative time starting from the beginning of each task session
+        task_data['rel_time'] = task_data['time'] - start_time
+        
+        # Store the filtered DataFrame in the dictionary with the index as the key
+        ecg_session_dict[index +1] = task_data
+
+    # Filter ECG data to improve peak detection 
+    for session_key, session_data in ecg_session_dict.items():
+        
+        session_data = ecg_signal_filter(session_data=session_data,sampling_rate=sampling_rate, low_cutoff=low_cutoff, high_cutoff=high_cutoff)
+
+    if plot_ecg_filter_process:
+        num_subplots = len(ecg_session_dict)
+        fig = make_subplots(
+            rows=num_subplots,
+            cols=1,
+            shared_xaxes=False,
+            subplot_titles=[f"Task Session {session_key}" for session_key in ecg_session_dict.keys()]
+        )
+
+        # Loop through each key in ecg containing dictionary and then add the raw and filtered ECG signal
+        for i, (session_key, session_data) in enumerate(ecg_session_dict.items(), start=1):
+            ecg_signal = session_data['raw_ecg']
+            filtered_ecg_signal = session_data['filtered_ecg'] 
+            
+            # Add raw ECG signal trace
+            fig.add_trace(
+                go.Scatter(x=session_data['rel_time'], y=ecg_signal, mode='lines', line=dict(color='rgba(0, 0, 255, 0.3)'), name='ECG Signal - Raw'),
+                row=i, col=1
+            )
+            
+            # Add cleaned ECG signal
+            fig.add_trace(
+                go.Scatter(x=session_data['rel_time'], y=filtered_ecg_signal, mode='lines', line=dict(color='rgba(255, 0, 0, 0.4)'), name='ECG Signal - Filtered'),
+                row=i, col=1
+            )
+            
+            fig.update_xaxes(title_text="Time (s)", row=i, col=1)
+            fig.update_yaxes(title_text="ECG Amplitude", row=i, col=1)
+
+        fig.update_layout(
+            title=f"Raw and cleaned ECG traces across each task session for participant {participant_str} in condition {condition_str}",
+            height=600 * num_subplots,  
+            showlegend=False  
+        )
+
+        fig.show()
+    
+    # Extract R-peaks and R-R intervals
+    print("Initalising R-peak detection and calculation of R-R intervals...")
+    rpeaks_session_dict = rpeak_evaluation(participant_str=participant_str, condition_str=condition_str, ecg_session_dict=ecg_session_dict, ecg_trace=ecg_trace, sampling_rate = sampling_rate, correct_artifacts=rpeak_artifact_correction, plot_rpeaks_session=plot_rpeaks_session, plot_r_r_interval_session=plot_r_r_interval_session, plot_instant_hr_session=plot_instant_hr_session)
+
+    return ecg_data_df, ecg_session_dict, rpeaks_session_dict
+
+
+
+def ecg_markers_by_change_point(participant_str, condition_str, rpeaks_session_dict, change_point_indices, ecg_parameter = 'r_r_intervals', pre=2, post=10, time_bin_size=0.5, plot_ecg_intervals_by_cp=False):
+    """
+    Function to computes R-R interval or instantaneous HR dynamics around change points using time bins. Returns a dataframe with the raw R-R intervals within the designated time window, then the averaged response across bins. 
+
+    Parameters:
+    - participant_str: string, identifier of participant number (set to 2 numbers)
+    - condition_str: string, identifier of condition order (set to 2 numbers)
+    - rpeaks_session_dict: dictionary, contains the indices of detected r-peaks in the ECG trace (values) for each task session (keys).
+    - change_point_indices: pd.DataFrame, with columns 'cum_outcome_num', 'rel_time', and 'task_session', containing the indices and relative times of the change points for each session. (*Note: Have removed identification of the first outcome of each task session as a new change point).
+    - ecg_parameter: string, column heading of ECG parameter that is to be evaluated around change points.  
+    - pre: float, time (in seconds) before the change point to start the window. 
+    - post: float, time (in seconds) after the change point to end the window. 
+    - time_bin_size: float, defines the size of the time bins within the window (default = 0.5 s)
+    - plot_ecg_intervals_by_cp: boolean, if true, will plot the mean a(plus variance) of the ECG parameter around change points. 
+
+    Returns:
+    - ecg_interval_by_cp_df: pd.DataFrame, contains the the extracted data within the window around change points. 
+    - binned_ecg_data: pd.DataFrame, contains the mean and variance measures of the data binned within the window around change points.
+    """
+    ecg_intervals_by_cp = []
 
     # Iterate over each row in change_point_indices
     for idx, row in change_point_indices.iterrows():
         task_session = row['task_session']
         rel_time_cp = row['rel_time']  
 
-        # Check if task session exists in dictionary
-        if task_session not in rpeaks_session_dict:
-            print(f"Task session {task_session} not found in rpeaks dictionary. Skipping.")
-            continue
-
         session_data = rpeaks_session_dict[task_session]
-
-        # Check if session data is not empty
-        if session_data.empty:
-            print(f"Session data for task session {task_session} is empty. Skipping.")
-            continue
 
         # Filter the session data for r-r intervals within the specified time window
         filtered_data = session_data[
             (session_data['rpeak_rel_time'] >= rel_time_cp - pre) &
             (session_data['rpeak_rel_time'] <= rel_time_cp + post)
         ].copy()
-
-        # Check if filtered_data is not empty
-        if filtered_data.empty:
-            print(f"No data points found in the specified time window for task session {task_session}. Skipping.")
-            continue
 
         # Adjust the time to be relative to the change point
         filtered_data['rel_time_cp'] = filtered_data['rpeak_rel_time'] - rel_time_cp
@@ -979,52 +1021,48 @@ def r_r_interval_by_change_point(participant_str, condition_str, rpeaks_session_
         filtered_data['change_point_count'] = row.get('change_point_count', np.nan)
 
         # Append to the list
-        r_r_intervals_by_cp.append(filtered_data)
+        ecg_intervals_by_cp.append(filtered_data)
 
     # Concatenate the list into a DataFrame
-    if r_r_intervals_by_cp:
-        r_r_interval_by_cp_df = pd.concat(r_r_intervals_by_cp, ignore_index=True)
-    else:
-        print("No R-R interval data around change points found.")
-        return pd.DataFrame(), pd.DataFrame()
+    ecg_interval_by_cp_df = pd.concat(ecg_intervals_by_cp, ignore_index=True)
 
     # Define time bins
     time_bins = np.arange(-pre, post + time_bin_size, time_bin_size)
 
     # Create a time_bin column
-    r_r_interval_by_cp_df['time_bin'] = pd.cut(r_r_interval_by_cp_df['rel_time_cp'], bins=time_bins, labels=time_bins[:-1])
+    ecg_interval_by_cp_df['time_bin'] = pd.cut(ecg_interval_by_cp_df['rel_time_cp'], bins=time_bins, labels=time_bins[:-1])
 
     # Aggregate data by time bins
-    binned_r_r_data = r_r_interval_by_cp_df.groupby(['time_bin']).agg(
-        mean_r_r_interval=('interpol_r_r', 'mean'),
-        std_r_r_interval=('interpol_r_r', 'std'),
-        count=('interpol_r_r', 'size')
+    binned_ecg_data = ecg_interval_by_cp_df.groupby(['time_bin']).agg(
+        mean_r_r_interval=(ecg_parameter, 'mean'),
+        std_r_r_interval=(ecg_parameter, 'std'),
+        count=(ecg_parameter, 'size')
     ).reset_index()
 
-    binned_r_r_data['sem_r_r_interval'] = binned_r_r_data['std_r_r_interval'] / np.sqrt(binned_r_r_data['count'])
-    binned_r_r_data['time_bin'] = binned_r_r_data['time_bin'].astype(float)
+    binned_ecg_data['sem_r_r_interval'] = binned_ecg_data['std_r_r_interval'] / np.sqrt(binned_ecg_data['count'])
+    binned_ecg_data['time_bin'] = binned_ecg_data['time_bin'].astype(float)
 
     # Optional Plot
-    if plot_r_r_intervals_by_cp:
+    if plot_ecg_intervals_by_cp:
         fig = go.Figure()
         fig.add_trace(go.Scatter(
-            x=binned_r_r_data['time_bin'],
-            y=binned_r_r_data['mean_r_r_interval'],
+            x=binned_ecg_data['time_bin'],
+            y=binned_ecg_data['mean_r_r_interval'],
             mode='lines',
             line=dict(color='blue')
         ))
 
         fig.add_trace(go.Scatter(
-            x=binned_r_r_data['time_bin'],
-            y=binned_r_r_data['mean_r_r_interval'] + binned_r_r_data['sem_r_r_interval'],
+            x=binned_ecg_data['time_bin'],
+            y=binned_ecg_data['mean_r_r_interval'] + binned_ecg_data['sem_r_r_interval'],
             mode='lines',
             line=dict(color='lightblue'),
             showlegend=False
         ))
 
         fig.add_trace(go.Scatter(
-            x=binned_r_r_data['time_bin'],
-            y=binned_r_r_data['mean_r_r_interval'] - binned_r_r_data['sem_r_r_interval'],
+            x=binned_ecg_data['time_bin'],
+            y=binned_ecg_data['mean_r_r_interval'] - binned_ecg_data['sem_r_r_interval'],
             mode='lines',
             fill='tonexty',
             fillcolor='rgba(0, 0, 255, 0.2)',
@@ -1035,13 +1073,14 @@ def r_r_interval_by_change_point(participant_str, condition_str, rpeaks_session_
         fig.add_vline(x=0, line_dash="dash", line_color="black")
 
         fig.update_layout(
-            title=f'R-R interval dynamics around change points for participant {participant_str} in condition {condition_str}',
+            title=f'{ecg_parameter} dynamics around change points for participant {participant_str} in condition {condition_str}',
             xaxis_title='Time (s)',
-            yaxis_title='R-R Interval (s)'
+            yaxis_title=f'{ecg_parameter}',
+            showlegend=False
         )
         fig.show()
 
-    return r_r_interval_by_cp_df, binned_r_r_data
+    return ecg_interval_by_cp_df, binned_ecg_data
 
 
 

@@ -40,10 +40,8 @@ def check_trig_sync_between_files(participant_str, condition_str, behavioural_df
         print(f"ERROR: Mismatch in outcomes derived from different files")
     else:
         print("MATCHED: Outcomes derived from different files are matched")
-
     
     combined_outcome_df_filled = combined_outcome_df.copy().fillna(-1)
-
 
     # Plot outcomes if requested
     if plot_outcomes_between_files:
