@@ -32,11 +32,6 @@ def load_biopac_data(directory_path, participant_str, condition_str, run_ranges)
     - stim_chan: string, the stimulation (emg) channel name
     - trig_chan: string, the adalearn outcome trigger channel names
     """
-    # Set the working directory of the files
-    #base_dir = f'/home/aaron/Documents/Python/Ada_Learn/VNS_Ada_Learn/Data/sub-{participant_str}/ses-{condition_str}/physio'
-    #os.chdir(base_dir)
-    #print(f"Current working directory: {os.getcwd()}")
-
     # Create a list to store biopac data files
     biopac_data = []
 
