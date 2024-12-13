@@ -158,12 +158,14 @@ def participant_characteristics(participant, base_dir, c1_vns_task_sessions=None
     else:
         print("No .tsv file found for condition 2")
 
-    # List of task sessions containing VNS
-    if c1_vns_task_sessions:
-        c1_vns_task_sessions = [f"{num:02}" for num in c1_vns_task_sessions]
-
-    if c2_vns_task_sessions:
-        c2_vns_task_sessions = [f"{num:02}" for num in c2_vns_task_sessions]
+    # List of task sessions containing VNS activations
+    if condition_1_str is not None:
+        c1_vns_task_sessions =  read_vns_task_ses_txt(directory_path=directory_path, condition_str=condition_1_str)
+    print(f"VNS task session in condition {condition_1_str} are: {c1_vns_task_sessions}")
+    
+    if condition_2_str is not None:
+        c2_vns_task_sessions =  read_vns_task_ses_txt(directory_path=directory_path, condition_str=condition_2_str)
+    print(f"VNS task session in condition {condition_2_str} are: {c2_vns_task_sessions}")
 
 
     return participant_str, list_subject_selected, directory_path, tsv_df, high_vns_condition, low_vns_condition, condition_1_str, condition_2_str, c1_task_sessions, c1_from_session, c1_to_session, c2_task_sessions, c2_from_session, c2_to_session, c1_run_ranges, c2_run_ranges, c1_vns_task_sessions, c2_vns_task_sessions 
@@ -247,3 +249,44 @@ def extract_phys_run_ranges(directory_path, condition_str):
     run_ranges = sorted(run_ranges, key=lambda x: int(x['run_start']))
 
     return run_ranges
+
+
+
+def read_vns_task_ses_txt(directory_path, condition_str):
+    """
+    Reads task session numbers for a given condition from a .txt file.
+    
+    Parameters:
+    - directory_path: string, participant level directory name. 
+    - condition_str: string, condition identifier (zero-padded number to two numbers).
+    
+    Returns:
+    - vns_task_sessions: list, containing task session numbers where VNS is active or None if no file is found.
+    """
+    vns_file_path = Path(directory_path) / f"ses-{condition_str}"
+    file_extension = '.txt'
+
+    if not vns_file_path.exists():
+        print(f"No directory found for condition {condition_str}: {vns_file_path}")
+        return None
+
+    vns_file_names = [
+        f for f in vns_file_path.iterdir() 
+        if f.is_file() and f.suffix == file_extension and not f.name.startswith("._")
+    ]
+
+    if not vns_file_names:
+        print(f"No VNS task session .txt file found in {vns_file_path}")
+        return None
+
+
+    if len(vns_file_names) > 1:
+        print(f"WARNING: Multiple .txt files found in {vns_file_path}. Reading the first one: {vns_file_names[0].name}")
+
+    # Read from the first file
+    with open(vns_file_names[0], "r") as file:
+        vns_task_sessions = [int(line.strip()) for line in file.readlines() if line.strip().isdigit()]
+
+
+    return vns_task_sessions
+   
