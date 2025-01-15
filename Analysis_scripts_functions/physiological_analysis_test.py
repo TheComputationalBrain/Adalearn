@@ -50,7 +50,7 @@ c2_emg_task_sess_dict = extract_task_session_emg_data(participant_str=participan
 
 
 
-c1_vns_start_end_markers = vns_activation_id(participant_str=participant_str, condition_str=condition_1_str, emg_task_sess_dict=c1_emg_task_sess_dict, sampling_rate=c1_sampling_rate, window_size_adjustment=1, vns_task_sessions=c1_vns_task_sessions, threshold=0.20, frequency='900.00-1000.00Hz', plot_start_end_vns_power=False, plot_start_end_vns_emg=False)
+c1_vns_start_end_markers = vns_activation_id(participant_str=participant_str, condition_str=condition_1_str, emg_task_sess_dict=c1_emg_task_sess_dict, sampling_rate=c1_sampling_rate, window_size_adjustment=1, vns_task_sessions=c1_vns_task_sessions, threshold=0.20, frequency='900.00-1000.00Hz', plot_start_end_vns_power=True, plot_start_end_vns_emg=True)
 
 
 c2_vns_start_end_markers = vns_activation_id(participant_str=participant_str, condition_str=condition_2_str, emg_task_sess_dict=c2_emg_task_sess_dict, sampling_rate=c2_sampling_rate, window_size_adjustment=1, vns_task_sessions=c2_vns_task_sessions, threshold=0.20, frequency='900.00-1000.00Hz', plot_start_end_vns_power=False, plot_start_end_vns_emg=False)
