@@ -910,8 +910,8 @@ def process_ecg_data(participant_str, condition_str, biopac_data, ecg_channels, 
 
     Returns:
     - ecg_data_df: DataFrame, contains concatenated ECG data across files.
-    - ecg_session_dict: dictionary, contains the raw and filtered ECG traces reduced down to the duration of each task session.  
-    - rpeaks_session_dict: dictionary, contains the indices of detected r-peaks in the ECG trace (values) for each task session (keys).
+    - ecg_session_dict: dict, contains the raw and filtered ECG traces reduced down to the duration of each task session.  
+    - rpeaks_session_dict: dict, contains the indices of detected r-peaks in the ECG trace (values) for each task session (keys).
     """
     # Extract ecg signal from data files
     ecg_data_df = extract_ecg_signals(participant_str=participant_str, condition_str=condition_str, biopac_data=biopac_data, ecg_channels=ecg_channels, plot_raw_ecg_file=plot_raw_ecg_file)
@@ -1322,3 +1322,129 @@ def vns_activation_id(participant_str, condition_str, emg_task_sess_dict, sampli
         fig.show()
 
     return vns_start_end_markers
+
+
+
+def ecg_response_to_vns(participant_str, condition_str, vns_start_end_markers, rpeak_session_dict, plot_hr_with_vns=False):
+    """
+    Function to calculate the heart rate response to VNS activation periods. Takes the identified VNS markers and the ECG data for each task session and calculates the mean and standard deviation of ECG parameters for the periods inside and outside the VNS activation per task session. Returns the raw ECG-related data for inside and outside VNS periods, and a summary DataFrame with the calculated statistics.
+
+    Parameters:
+    - participant_str: string, identifier of participant number (set to 2 numbers).
+    - condition_str: string, identifier of condition order (set to 2 numbers).
+    - vns_start_end_markers: dict, contains a dataframe (value) in which the start (index and relative time), end (index and relative time) and duration (absolute time) of the VNS activation is identified and stored for a given task session (keys).
+    - rpeak_session_dict: dict, contains the indices of detected r-peaks in the ECG trace (values) for each task session (keys).
+    - plot_hr_with_vns: boolean, if true, will plot instantaneous HR across each task session containing VNS, with the start and the end of VNS activation marked.  
+    """
+    inside_vns_dict = {}
+    outside_vns_dict = {}
+
+    # Check if the HR data exists for the task session
+    for task_session, events_df in vns_start_end_markers.items():
+        if task_session in rpeak_session_dict:  
+            hr_df = rpeak_session_dict[task_session].copy()  
+
+            hr_df['inside_event'] = False
+            for _, row in events_df.iterrows():
+                start, end = row['start_time'], row['end_time']
+
+                hr_df.loc[(hr_df['rpeak_rel_time'] >= start) & (hr_df['rpeak_rel_time'] <= end), 'inside_event'] = True
+            
+
+            inside_df = hr_df[hr_df['inside_event']].drop(columns=['inside_event'])
+            outside_df = hr_df[~hr_df['inside_event']].drop(columns=['inside_event'])
+            
+            # Store these DataFrames in respective dictionaries
+            inside_vns_dict[task_session] = inside_df
+            outside_vns_dict[task_session] = outside_df
+
+
+    hr_summary_stats = []
+
+    # Summary stats for inside VNS periods
+    for task_session, inside_df in inside_vns_dict.items():
+        
+        hr_summary_stats.append({
+            'task_session': task_session,
+            'type': 'inside',
+            'r_r_interval_mean': inside_df['r_r_intervals'].mean(),
+            'r_r_interval_std': inside_df['r_r_intervals'].std(),
+            'instant_hr_mean': inside_df['instant_hr'].mean(),
+            'instant_hr_std': inside_df['instant_hr'].std(),
+        })
+        
+        # Summary stats for outside VNS periods
+        if task_session in outside_vns_dict:
+            outside_df = outside_vns_dict[task_session]
+        
+            hr_summary_stats.append({
+                'task_session': task_session,
+                'type': 'outside',
+                'r_r_interval_mean': outside_df['r_r_intervals'].mean(),
+                'r_r_interval_std': outside_df['r_r_intervals'].std(),
+                'instant_hr_mean': outside_df['instant_hr'].mean(),
+                'instant_hr_std': outside_df['instant_hr'].std(),
+            })
+
+
+    vns_hr_summary_df = pd.DataFrame(hr_summary_stats)
+
+    avg_hr = (
+        vns_hr_summary_df
+        .groupby('type')['instant_hr_mean']
+        .agg(['mean', 'sem'])
+        .reset_index()
+    )
+
+    # Create a subplot figure for each task session in VNS list
+    if plot_hr_with_vns:
+        task_sessions = vns_start_end_markers.keys()
+
+        fig = make_subplots(rows=len(task_sessions), cols=1, 
+                            subplot_titles=[f"Task Session {ts}" for ts in task_sessions])
+
+
+        for i, task_session in enumerate(task_sessions, start=1):
+            if task_session in rpeak_session_dict: 
+                hr_df = rpeak_session_dict[task_session]
+                events_df = vns_start_end_markers[task_session]
+                
+                fig.add_trace(
+                    go.Scatter(x=hr_df['rpeak_rel_time'], y=hr_df['instant_hr'], mode='lines', line=dict(color='blue'),
+                            name=f"HR - Task Session {task_session}"),
+                    row=i, col=1
+                )
+                
+                # Add vertical lines for VNS start and end times
+                for _, row in events_df.iterrows():
+                    start, end = row['start_time'], row['end_time']
+                    
+                    fig.add_trace(
+                        go.Scatter(
+                            x=[start, start], y=[min(hr_df['instant_hr']), max(hr_df['instant_hr'])],
+                            mode='lines', line=dict(dash='dot', color='green'), 
+                            name=f"Start (Session {task_session})"
+                        ),
+                        row=i, col=1
+                    )
+
+                    fig.add_trace(
+                        go.Scatter(
+                            x=[end, end], y=[min(hr_df['instant_hr']), max(hr_df['instant_hr'])],
+                            mode='lines', line=dict(dash='dot', color='red'), 
+                            name=f"End (Session {task_session})"
+                        ),
+                        row=i, col=1
+                    )
+
+        fig.update_layout(
+            title=f"Instantaneous heart rate across task sessions with VNS activation markers for participant {participant_str} in condition {condition_str}",
+            xaxis_title="Time (s)",
+            yaxis_title="Heart Rate (bpm)",
+            height=500 * len(task_sessions), 
+            showlegend=False
+        )
+
+        fig.show()
+
+    return vns_hr_summary_df, inside_vns_dict, outside_vns_dict, avg_hr

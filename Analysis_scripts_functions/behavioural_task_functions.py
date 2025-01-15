@@ -82,6 +82,7 @@ def load_behavioural_data(directory_path, participant_str, condition_str, condit
     #behavioural_df['outcome_num'] = behavioural_df['outcome_num'] + 1
 
     # Behavioural data diagnostics
+
     # Checking whether the right number of task sessions are in the data frame
     unique_task_sessions = behavioural_df['task_session'].unique()
     number_of_unique_task_sessions = len(unique_task_sessions)
@@ -99,6 +100,12 @@ def load_behavioural_data(directory_path, participant_str, condition_str, condit
             print(f"Task session {task_session} has exactly 75 outcome stimuli.")
         else:
             print(f"Task session {task_session} does not have 75 outcome stimuli, it has {count} outcomess.")
+
+    # Correlational analysis
+
+    # Calculate correlation between participants' estimates and ideal observer model
+    estimate_io_cor = behavioural_df['estimate'].corr(behavioural_df['ideal_observer'])
+    print(f"The correlation coefficient between participant {participant_str}'s estimates and the ideal observer model was: {estimate_io_cor}")
 
     # Option to plot the raw behavioural data across each task session separately
     if plot_behav_data:

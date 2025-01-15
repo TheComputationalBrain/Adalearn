@@ -17,7 +17,7 @@ from plotly.subplots import make_subplots
 pio.renderers.default='browser'
 
 
-from physiological_signal_functions import load_biopac_data, process_emg_data, biopac_trigger_extraction, extract_task_session_emg_data, process_ecg_data, ecg_markers_by_change_point, vns_activation_id
+from physiological_signal_functions import load_biopac_data, process_emg_data, biopac_trigger_extraction, extract_task_session_emg_data, process_ecg_data, ecg_markers_by_change_point, vns_activation_id, ecg_response_to_vns
 
 
 from participant_task_information import directory_path, participant_str, condition_1_str, condition_2_str, c1_run_ranges, c2_run_ranges, c1_vns_task_sessions, c2_vns_task_sessions
@@ -50,6 +50,13 @@ c2_emg_task_sess_dict = extract_task_session_emg_data(participant_str=participan
 
 
 
+c1_vns_start_end_markers = vns_activation_id(participant_str=participant_str, condition_str=condition_1_str, emg_task_sess_dict=c1_emg_task_sess_dict, sampling_rate=c1_sampling_rate, window_size_adjustment=1, vns_task_sessions=c1_vns_task_sessions, threshold=0.20, frequency='900.00-1000.00Hz', plot_start_end_vns_power=False, plot_start_end_vns_emg=False)
+
+
+c2_vns_start_end_markers = vns_activation_id(participant_str=participant_str, condition_str=condition_2_str, emg_task_sess_dict=c2_emg_task_sess_dict, sampling_rate=c2_sampling_rate, window_size_adjustment=1, vns_task_sessions=c2_vns_task_sessions, threshold=0.20, frequency='900.00-1000.00Hz', plot_start_end_vns_power=False, plot_start_end_vns_emg=False)
+
+
+
 c1_ecg_file, c1_ecg_session, c1_rpeak_session_dict = process_ecg_data(participant_str=participant_str, condition_str=condition_1_str, biopac_data=c1_biopac_df, ecg_channels=c1_ecg_channel, task_session_summary=c1_task_session_summary_df, sampling_rate=c1_sampling_rate, low_cutoff=40, high_cutoff=None,  ecg_trace='filtered_ecg', rpeak_artifact_correction=False,  plot_raw_ecg_file=False, plot_ecg_filter_process=False, plot_rpeaks_session=False, plot_r_r_interval_session=False, plot_instant_hr_session=False)
 
 c2_ecg_file, c2_ecg_session, c2_rpeak_session_dict = process_ecg_data(participant_str=participant_str, condition_str=condition_2_str, biopac_data=c2_biopac_df, ecg_channels=c2_ecg_channel, task_session_summary=c2_task_session_summary_df, sampling_rate=c2_sampling_rate, low_cutoff=40, high_cutoff=None,  ecg_trace='filtered_ecg', rpeak_artifact_correction=False,  plot_raw_ecg_file=False, plot_ecg_filter_process=False, plot_rpeaks_session=False, plot_r_r_interval_session=False, plot_instant_hr_session=False)
@@ -62,7 +69,6 @@ c2_r_r_interval_by_cp, c2_r_r_intervals_time_binned_cp = ecg_markers_by_change_p
 
 
 
-c1_vns_start_end_markers = vns_activation_id(participant_str=participant_str, condition_str=condition_1_str, emg_task_sess_dict=c1_emg_task_sess_dict, sampling_rate=c1_sampling_rate, window_size_adjustment=1, vns_task_sessions=c1_vns_task_sessions, threshold=0.20, frequency='900.00-1000.00Hz', plot_start_end_vns_power=True, plot_start_end_vns_emg=False)
+c1_vns_hr_summary_df, c1_inside_vns_dict, c1_outside_vns_dict, c1_avg_hr = ecg_response_to_vns(participant_str=participant_str, condition_str=condition_1_str, vns_start_end_markers=c1_vns_start_end_markers, rpeak_session_dict=c1_rpeak_session_dict, plot_hr_with_vns=True)
 
-
-c2_vns_start_end_markers = vns_activation_id(participant_str=participant_str, condition_str=condition_2_str, emg_task_sess_dict=c2_emg_task_sess_dict, sampling_rate=c2_sampling_rate, window_size_adjustment=1, vns_task_sessions=c2_vns_task_sessions, threshold=0.20, frequency='900.00-1000.00Hz', plot_start_end_vns_power=False, plot_start_end_vns_emg=False)
+c2_vns_hr_summary_df, c2_inside_vns_dict, c2_outside_vns_dict, c2_avg_hr = ecg_response_to_vns(participant_str=participant_str, condition_str=condition_2_str, vns_start_end_markers=c2_vns_start_end_markers, rpeak_session_dict=c2_rpeak_session_dict, plot_hr_with_vns=True)
