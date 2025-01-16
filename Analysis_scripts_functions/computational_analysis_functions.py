@@ -594,6 +594,45 @@ def compute_prior_conf_and_cpp_from_observations(participant_str, condition_str,
     change_point_prob_df = pd.concat(cpp_df_list, ignore_index=True)
     change_point_prob_df['cum_outcome_num'] = change_point_prob_df.index
 
+    # Categorizing prior confidence and change point probability into quartiles for basic analysis
+    # Prior confidence
+    conf_percent_25 = prior_confidence_df['prior_conf'].quantile(0.25)
+    conf_percent_50 = prior_confidence_df['prior_conf'].quantile(0.50)  
+    conf_percent_75 = prior_confidence_df['prior_conf'].quantile(0.75)
+
+    # Initialize a default category
+    prior_confidence_df['prior_conf_cat'] = 'fourth_quartile'
+
+    # Assign categories based on quartile boundaries
+    prior_confidence_df.loc[prior_confidence_df['prior_conf'] < conf_percent_25, 'prior_conf_cat'] = 'first_quartile'
+    prior_confidence_df.loc[
+        (prior_confidence_df['prior_conf'] >= conf_percent_25) & (prior_confidence_df['prior_conf'] < conf_percent_50),
+        'prior_conf_cat'
+    ] = 'second_quartile'
+    prior_confidence_df.loc[
+        (prior_confidence_df['prior_conf'] >= conf_percent_50) & (prior_confidence_df['prior_conf'] < conf_percent_75),
+        'prior_conf_cat'
+    ] = 'third_quartile'
+
+    # Change point probability
+    cpp_percent_25 = change_point_prob_df['cpp'].quantile(0.25)
+    cpp_percent_50 = change_point_prob_df['cpp'].quantile(0.50)  
+    cpp_percent_75 = change_point_prob_df['cpp'].quantile(0.75)
+
+    # Initialize a default category
+    change_point_prob_df['cpp_cat'] = 'fourth_quartile'
+
+    # Assign categories based on quartile boundaries
+    change_point_prob_df.loc[change_point_prob_df['cpp'] < cpp_percent_25, 'cpp_cat'] = 'first_quartile'
+    change_point_prob_df.loc[
+        (change_point_prob_df['cpp'] >= cpp_percent_25) & (change_point_prob_df['cpp'] < cpp_percent_50),
+        'cpp_cat'
+    ] = 'second_quartile'
+    change_point_prob_df.loc[
+        (change_point_prob_df['cpp'] >= cpp_percent_50) & (change_point_prob_df['cpp'] < cpp_percent_75),
+        'cpp_cat'
+    ] = 'third_quartile'
+
     # Options to plots the the prior mean, prior confidence and change point probability
     if plot_distribution_mean:
         unique_sessions = prior_distribution_df['task_session'].unique()
