@@ -374,7 +374,7 @@ def compute_surprise_from_observations(participant_str, condition_str, behaviour
         'p1_max': the maximum value of the Bernoulli parameter (used to clip the Dirichlet prior distribution)
 
      Returns:
-    - surprise_df: pd.DataFrame, containing 'task_session' and 'surprise' columns for each task session. Also contains a variable that categorises the level of surprise per observation based on the interquartile range across all task sessions (used for basic analysis) and model calculated posterior distribution parameters (mean and SD of the posterior).
+    - computational_var_df: pd.DataFrame, contains computed variables from the ideal observer model.    With this function, 'task_session' and 'surprise' columns are added for each task session. Also contains a variable that categorises the level of surprise per observation based on the interquartile range across all task sessions (used for basic analysis) and model calculated posterior distribution parameters (mean and SD of the posterior).
     """
 
     # Define options for "run inference" function
@@ -401,40 +401,41 @@ def compute_surprise_from_observations(participant_str, condition_str, behaviour
         session_surprise_df['model_post_prob_var'] = output[(1,)]['SD']
         task_session_surprise_df.append(session_surprise_df)
          
-    surprise_df = pd.concat(task_session_surprise_df, ignore_index=True)
-    surprise_df['cum_outcome_num'] = surprise_df.index
+    computational_var_df = pd.concat(task_session_surprise_df, ignore_index=True)
+    computational_var_df['cum_outcome_num'] = computational_var_df.index
 
     # Categorizing the level of surprise for basic analysis
-    percent_25 = surprise_df['surprise'].quantile(0.25)
-    percent_50 = surprise_df['surprise'].quantile(0.50)  
-    percent_75 = surprise_df['surprise'].quantile(0.75)
+    percent_25 = computational_var_df['surprise'].quantile(0.25)
+    percent_50 = computational_var_df['surprise'].quantile(0.50)  
+    percent_75 = computational_var_df['surprise'].quantile(0.75)
 
     # Initialize a default category
-    surprise_df['surprise_cat'] = 'fourth_quartile'
+    computational_var_df['surprise_cat'] = None
 
     # Assign categories based on quartile boundaries
-    surprise_df.loc[surprise_df['surprise'] < percent_25, 'surprise_cat'] = 'first_quartile'
-    surprise_df.loc[
-        (surprise_df['surprise'] >= percent_25) & (surprise_df['surprise'] < percent_50),
+    computational_var_df.loc[computational_var_df['surprise'] < percent_25, 'surprise_cat'] = 'first_quartile'
+    computational_var_df.loc[
+        (computational_var_df['surprise'] >= percent_25) & (computational_var_df['surprise'] < percent_50),
         'surprise_cat'
     ] = 'second_quartile'
-    surprise_df.loc[
-        (surprise_df['surprise'] >= percent_50) & (surprise_df['surprise'] < percent_75),
+    computational_var_df.loc[
+        (computational_var_df['surprise'] >= percent_50) & (computational_var_df['surprise'] < percent_75),
         'surprise_cat'
     ] = 'third_quartile'
+    computational_var_df.loc[computational_var_df['surprise'] > percent_75, 'surprise_cat'] = 'fourth_quartile'
 
-    surprise_cat_counts = surprise_df.groupby(['task_session', 'surprise_cat']).size().reset_index(name='counts')
+    surprise_cat_counts = computational_var_df.groupby(['task_session', 'surprise_cat']).size().reset_index(name='counts')
     surprise_cat_df = surprise_cat_counts.pivot(index='task_session', columns='surprise_cat', values='counts').fillna(0)
 
     # Option to plot the data for surprise and posterior distribution parameters
     if plot_surprise:
-        unique_sessions = surprise_df['task_session'].unique()
+        unique_sessions = computational_var_df['task_session'].unique()
 
         fig = make_subplots(rows=len(unique_sessions), cols=1, shared_xaxes=True,
                     subplot_titles=[f'Task Session {session}' for session in unique_sessions])
 
         for i, session in enumerate(unique_sessions, start=1):
-            session_data = surprise_df[surprise_df['task_session'] == session]
+            session_data = computational_var_df[computational_var_df['task_session'] == session]
             fig.add_trace(go.Scatter(x=session_data['outcome_num'], y=session_data['surprise'], mode='lines', name=f'Surprise - Session {session}'), row=i, col=1)
 
             change_points = change_point_indices_df[change_point_indices_df['task_session'] == session]['outcome_num']
@@ -452,13 +453,13 @@ def compute_surprise_from_observations(participant_str, condition_str, behaviour
         fig.show()
 
     if plot_posterior_conf:
-        unique_task_sessions = surprise_df['task_session'].unique()
+        unique_task_sessions = computational_var_df['task_session'].unique()
 
         fig = make_subplots(rows=len(unique_task_sessions), cols=1, shared_xaxes=True,
                     subplot_titles=[f'Task Session {session}' for session in unique_task_sessions])
 
         for i, session in enumerate(unique_task_sessions, start=1):
-            session_data = surprise_df[surprise_df['task_session'] == session]
+            session_data = computational_var_df[computational_var_df['task_session'] == session]
             fig.add_trace(go.Scatter(x=session_data['outcome_num'], y=session_data['model_post_prob_var'], mode='lines', name=f'Posterior distribution SD (confidence) - Session {session}'), row=i, col=1)
 
             change_points = change_point_indices_df[change_point_indices_df['task_session'] == session]['outcome_num']
@@ -476,13 +477,13 @@ def compute_surprise_from_observations(participant_str, condition_str, behaviour
         fig.show()
 
     if plot_posterior_dist_means:
-        unique_task_sessions = surprise_df['task_session'].unique()
+        unique_task_sessions = computational_var_df['task_session'].unique()
 
         fig = make_subplots(rows=len(unique_task_sessions), cols=1, shared_xaxes=True,
                     subplot_titles=[f'Task Session {session}' for session in unique_task_sessions])
 
         for i, session in enumerate(unique_task_sessions, start=1):
-            session_data = surprise_df[surprise_df['task_session'] == session]
+            session_data = computational_var_df[computational_var_df['task_session'] == session]
             fig.add_trace(go.Scatter(x=session_data['outcome_num'], y=session_data['model_post_prob_0'], mode='lines', name=f'Posterior distribution mean (P(0)) - Session {session}', line_color = 'yellow'), row=i, col=1)
             fig.add_trace(go.Scatter(x=session_data['outcome_num'], y=session_data['model_post_prob_1'], mode='lines', name=f'Posterior distribution mean (P(1)) - Session {session}', line_color = 'blue'), row=i, col=1)
 
@@ -500,11 +501,11 @@ def compute_surprise_from_observations(participant_str, condition_str, behaviour
 
         fig.show()
 
-    return surprise_df, surprise_cat_df
+    return computational_var_df, surprise_cat_df
 
 
 
-def compute_prior_conf_and_cpp_from_observations(participant_str, condition_str, behavioural_df, change_point_indices_df, p_c, p1_min, p1_max, estimate_type, conf_type, plot_distribution_mean = False, plot_prior_conf = False, plot_cpp = False):
+def compute_prior_conf_and_cpp_from_observations(participant_str, condition_str, computational_var_df, behavioural_df, change_point_indices_df, p_c, p1_min, p1_max, estimate_type, conf_type, plot_distribution_mean = False, plot_prior_conf = False, plot_cpp = False):
     """
     Function computes the "confidence" in the prior and change point probability from each set of task session observations. Computes "confidence" and change point probability using functions within "model_learner" (created by Cedric Foucault and Florent Meyniel: https://github.com/florentmeyniel/Ada-Learn/blob/main/analysis). "Confidence" is the -log(sd) of the prior distribution, while change point probability is calculated from the conditional probability of an observation (at time t) given a change point has occurred multiplied by the true probability of a change point occurring, divided by the conditional probability of an observation (at time t) given a change point has occurred multiplied by the true probability of a change point occurring plus the conditional probability of an observation (at time t) given no change point has occurred multiplied by the true probability that a change point did not occur:
 
@@ -515,6 +516,7 @@ def compute_prior_conf_and_cpp_from_observations(participant_str, condition_str,
     Parameters:
     - participant_str: string, participant identifier (number; set to 2 digits)  
     - condition: string, identifier of condition order (set to 2 digits) ** May need to change to denote actual condition in Adalearn VNS study **
+    - computational_var_df: pd.DataFrame, contains computed variables from the ideal observer model.
     - behavioural_df: pd.DataFrame, contains the behavioural outputs of the adalearn data files for a given condition. 
     - change_point_indices_df: pd.DataFrame, contains outputs related to the presence of change points in the hidden task structure. The outcome number within each task session will be used in plot visualisation.
     - 'p_c': float, true change point probability (should be 0.05)
@@ -538,9 +540,7 @@ def compute_prior_conf_and_cpp_from_observations(participant_str, condition_str,
     - 'conf_type': string, parameter defining ideal_learner_prob_conf_from_outcomes function. Options are "prev-conf", "prev-conf-pred", "new-conf", "new-conf-pred". The "-pred" options accountfor volatility in the estimate. "Prev-conf" refers to prior variance while "new-conf" refers to posterior variance. 
 
      Returns:
-    - prior_outcome_df: pd.DataFrame, contains the selected inferred parameters of the prior distribution (typically, 'mean-pred', 'SD', 'dist') for each task session
-    - prior_conf_df: pd.DataFrame, contains the -log(SD) - "confidence"/precision - of prior distribution. Typically choose confidence type "prev-conf-pred" to account for volatility. "Confidence" is calculated for each task session
-    - cpp_df: pd.DataFrame, contains the computed change point probability for each task session
+    -  computational_var_df: pd.DataFrame, contains computed variables from the ideal observer model. With this function, 'prior_dist' (the prior distribution mean), 'prior_conf' (the variance in the prior distribution) and the 'cpp' (change point probability) are added as columns for each task session. Also contains a variable that categorises the prior_conf and cpp based on the interquartile range across all task sessions (used for basic analysis).
     """
     # Lists to store computed parameters for each task session
     prior_dist_df_list = []
@@ -550,98 +550,71 @@ def compute_prior_conf_and_cpp_from_observations(participant_str, condition_str,
     for task_session, session_data in behavioural_df.groupby('task_session'):
         seq = np.array(session_data['outcome'])
 
-        # Run functions to compute prior parameters, confidence and change point probability. Create data frames for each variable and then save the data frame for each task session in a list
-        outcome_inference = ideal_learner_prob_inference_from_outcomes(seq, p_c, keys=['mean', 'SD', 'dist'], p1_min=p1_min, p1_max=p1_max, do_inference_on_current_trial=True, resol=20)
+        # Run functions to compute prior parameters, confidence and change point probability. Add data to existing data frame computational_var_df  
+        prior_dist = ideal_learner_prob_estimates_from_outcomes(
+            seq, p_c, estimate_type=estimate_type, p1_min=p1_min, p1_max=p1_max
+        )
+        prior_conf = ideal_learner_prob_confidence_from_outcomes(
+            seq, p_c, conf_type=conf_type, p1_min=p1_min, p1_max=p1_max
+        )
+        cpp = ideal_learner_prob_cpp(seq, p_c, p1_min=p1_min, p1_max=p1_max)
 
-        prior_dist = ideal_learner_prob_estimates_from_outcomes(seq, p_c, estimate_type = estimate_type, p1_min = p1_min, p1_max = p1_max)
-        
-        mean_values = prior_dist
-        prior_dist_df = pd.DataFrame({
-            'mean': mean_values,
-        })
-        prior_dist_df['task_session'] = task_session
-        prior_dist_df['outcome_num'] = prior_dist_df.groupby('task_session').cumcount()
-        prior_dist_df_list.append(prior_dist_df)
-        
-
-        prior_conf = ideal_learner_prob_confidence_from_outcomes(seq, p_c, conf_type = conf_type, p1_min = p1_min, p1_max = p1_max)
-
-        conf_values = prior_conf
-        prior_conf_df = pd.DataFrame({
-            'prior_conf': conf_values
-        })
-        prior_conf_df['task_session'] = task_session
-        prior_conf_df['outcome_num'] = prior_conf_df.groupby('task_session').cumcount()
-        prior_conf_df_list.append(prior_conf_df)
-
-
-        cpp =  ideal_learner_prob_cpp(seq, p_c, p1_min = p1_min, p1_max = p1_max)
-        cpp_values = cpp
-        cpp_df = pd.DataFrame({
-            'cpp': cpp_values
-        })
-        cpp_df['task_session'] = task_session
-        cpp_df['outcome_num'] = cpp_df.groupby('task_session').cumcount() 
-        cpp_df_list.append(cpp_df)
-
-
-    prior_distribution_df = pd.concat(prior_dist_df_list, ignore_index=True)
-    prior_distribution_df['cum_outcome_num'] = prior_distribution_df.index
-
-    prior_confidence_df = pd.concat(prior_conf_df_list, ignore_index=True)
-    prior_confidence_df['cum_outcome_num'] = prior_confidence_df.index
-
-    change_point_prob_df = pd.concat(cpp_df_list, ignore_index=True)
-    change_point_prob_df['cum_outcome_num'] = change_point_prob_df.index
+        # Add new columns to computational_var_df
+        session_indices = session_data.index
+        computational_var_df.loc[session_indices, 'prior_dist'] = prior_dist
+        computational_var_df.loc[session_indices, 'prior_conf'] = prior_conf
+        computational_var_df.loc[session_indices, 'cpp'] = cpp
 
     # Categorizing prior confidence and change point probability into quartiles for basic analysis
     # Prior confidence
-    conf_percent_25 = prior_confidence_df['prior_conf'].quantile(0.25)
-    conf_percent_50 = prior_confidence_df['prior_conf'].quantile(0.50)  
-    conf_percent_75 = prior_confidence_df['prior_conf'].quantile(0.75)
+    conf_percent_25 = computational_var_df['prior_conf'].quantile(0.25)
+    conf_percent_50 = computational_var_df['prior_conf'].quantile(0.50)  
+    conf_percent_75 = computational_var_df['prior_conf'].quantile(0.75)
 
     # Initialize a default category
-    prior_confidence_df['prior_conf_cat'] = 'fourth_quartile'
+    computational_var_df['prior_conf_cat'] = None
 
     # Assign categories based on quartile boundaries
-    prior_confidence_df.loc[prior_confidence_df['prior_conf'] < conf_percent_25, 'prior_conf_cat'] = 'first_quartile'
-    prior_confidence_df.loc[
-        (prior_confidence_df['prior_conf'] >= conf_percent_25) & (prior_confidence_df['prior_conf'] < conf_percent_50),
+    computational_var_df.loc[computational_var_df['prior_conf'] < conf_percent_25, 'prior_conf_cat'] = 'first_quartile'
+    computational_var_df.loc[
+        (computational_var_df['prior_conf'] >= conf_percent_25) & (computational_var_df['prior_conf'] < conf_percent_50),
         'prior_conf_cat'
     ] = 'second_quartile'
-    prior_confidence_df.loc[
-        (prior_confidence_df['prior_conf'] >= conf_percent_50) & (prior_confidence_df['prior_conf'] < conf_percent_75),
+    computational_var_df.loc[
+        (computational_var_df['prior_conf'] >= conf_percent_50) & (computational_var_df['prior_conf'] < conf_percent_75),
         'prior_conf_cat'
     ] = 'third_quartile'
+    computational_var_df.loc[computational_var_df['prior_conf'] > conf_percent_75, 'prior_conf_cat'] = 'fourth_quartile'
 
     # Change point probability
-    cpp_percent_25 = change_point_prob_df['cpp'].quantile(0.25)
-    cpp_percent_50 = change_point_prob_df['cpp'].quantile(0.50)  
-    cpp_percent_75 = change_point_prob_df['cpp'].quantile(0.75)
+    cpp_percent_25 = computational_var_df['cpp'].quantile(0.25)
+    cpp_percent_50 = computational_var_df['cpp'].quantile(0.50)  
+    cpp_percent_75 = computational_var_df['cpp'].quantile(0.75)
 
     # Initialize a default category
-    change_point_prob_df['cpp_cat'] = 'fourth_quartile'
+    computational_var_df['cpp_cat'] = None
 
     # Assign categories based on quartile boundaries
-    change_point_prob_df.loc[change_point_prob_df['cpp'] < cpp_percent_25, 'cpp_cat'] = 'first_quartile'
-    change_point_prob_df.loc[
-        (change_point_prob_df['cpp'] >= cpp_percent_25) & (change_point_prob_df['cpp'] < cpp_percent_50),
+    computational_var_df.loc[computational_var_df['cpp'] < cpp_percent_25, 'cpp_cat'] = 'first_quartile'
+    computational_var_df.loc[
+        (computational_var_df['cpp'] >= cpp_percent_25) & (computational_var_df['cpp'] < cpp_percent_50),
         'cpp_cat'
     ] = 'second_quartile'
-    change_point_prob_df.loc[
-        (change_point_prob_df['cpp'] >= cpp_percent_50) & (change_point_prob_df['cpp'] < cpp_percent_75),
+    computational_var_df.loc[
+        (computational_var_df['cpp'] >= cpp_percent_50) & (computational_var_df['cpp'] < cpp_percent_75),
         'cpp_cat'
     ] = 'third_quartile'
+    computational_var_df.loc[computational_var_df['cpp'] > cpp_percent_75, 'cpp_cat'] = 'fourth_quartile'
 
     # Options to plots the the prior mean, prior confidence and change point probability
     if plot_distribution_mean:
-        unique_sessions = prior_distribution_df['task_session'].unique()
+        unique_sessions = computational_var_df['task_session'].unique()
 
         fig = make_subplots(rows=len(unique_sessions), cols=1, shared_xaxes=True,
                     subplot_titles=[f'Task Session {session}' for session in unique_sessions])
 
         for i, session in enumerate(unique_sessions, start=1):
-            session_data = prior_distribution_df[prior_distribution_df['task_session'] == session]
+            session_data = computational_var_df[computational_var_df['task_session'] == session]
             fig.add_trace(go.Scatter(x=session_data['outcome_num'], y=session_data['mean'], mode='lines', name=f'Prior distribution mean - Session {session}'), row=i, col=1)
 
             change_points = change_point_indices_df[change_point_indices_df['task_session'] == session]['outcome_num']
@@ -660,13 +633,13 @@ def compute_prior_conf_and_cpp_from_observations(participant_str, condition_str,
 
 
     if plot_prior_conf:
-        unique_sessions = prior_confidence_df['task_session'].unique()
+        unique_sessions = computational_var_df['task_session'].unique()
 
         fig = make_subplots(rows=len(unique_sessions), cols=1, shared_xaxes=True,
                     subplot_titles=[f'Task Session {session}' for session in unique_sessions])
 
         for i, session in enumerate(unique_sessions, start=1):
-            session_data = prior_confidence_df[prior_confidence_df['task_session'] == session]
+            session_data = computational_var_df[computational_var_df['task_session'] == session]
             fig.add_trace(go.Scatter(x=session_data['outcome_num'], y=session_data['prior_conf'], mode='lines', name=f'Prior confidence - Session {session}'), row=i, col=1)
 
             change_points = change_point_indices_df[change_point_indices_df['task_session'] == session]['outcome_num']
@@ -684,13 +657,13 @@ def compute_prior_conf_and_cpp_from_observations(participant_str, condition_str,
         fig.show()
 
     if plot_cpp:
-        unique_sessions = change_point_prob_df['task_session'].unique()
+        unique_sessions = computational_var_df['task_session'].unique()
 
         fig = make_subplots(rows=len(unique_sessions), cols=1, shared_xaxes=True,
                     subplot_titles=[f'Task Session {session}' for session in unique_sessions])
 
         for i, session in enumerate(unique_sessions, start=1):
-            session_data = change_point_prob_df[change_point_prob_df['task_session'] == session]
+            session_data = computational_var_df[computational_var_df['task_session'] == session]
             fig.add_trace(go.Scatter(x=session_data['outcome_num'], y=session_data['cpp'], mode='lines', name=f'Change point probability - Session {session}'), row=i, col=1)
 
             change_points = change_point_indices_df[change_point_indices_df['task_session'] == session]['outcome_num']
@@ -707,4 +680,4 @@ def compute_prior_conf_and_cpp_from_observations(participant_str, condition_str,
 
         fig.show()
 
-    return prior_distribution_df, prior_confidence_df, change_point_prob_df
+    return computational_var_df

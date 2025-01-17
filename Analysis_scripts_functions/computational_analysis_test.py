@@ -41,12 +41,12 @@ c2_model_estimate_learning_rate_by_cp, c2_model_estimate_learning_rate_by_cp = l
 
 
 
-c1_surprise, c1_surprise_cat_df = compute_surprise_from_observations(participant_str=participant_str, condition_str=condition_1_str, behavioural_df=c1_behavioural_df, change_point_indices_df=c1_change_point_indices, plot_surprise=False, plot_posterior_conf=False, plot_posterior_dist_means=False)
+c1_computational_var_df, c1_surprise_cat_df = compute_surprise_from_observations(participant_str=participant_str, condition_str=condition_1_str, behavioural_df=c1_behavioural_df, change_point_indices_df=c1_change_point_indices, plot_surprise=False, plot_posterior_conf=False, plot_posterior_dist_means=False)
 
-c2_surprise, c2_surprise_cat_df = compute_surprise_from_observations(participant_str=participant_str, condition_str=condition_2_str, behavioural_df=c2_behavioural_df, change_point_indices_df=c2_change_point_indices, plot_surprise=False, plot_posterior_conf=False, plot_posterior_dist_means=False)
+c2_computational_var_df, c2_surprise_cat_df = compute_surprise_from_observations(participant_str=participant_str, condition_str=condition_2_str, behavioural_df=c2_behavioural_df, change_point_indices_df=c2_change_point_indices, plot_surprise=False, plot_posterior_conf=False, plot_posterior_dist_means=False)
 
 
 
-c1_prior_dist_df, c1_prior_conf_df, c1_cpp_df = compute_prior_conf_and_cpp_from_observations(participant_str=participant_str, condition_str=condition_1_str, behavioural_df=c1_behavioural_df, change_point_indices_df=c1_change_point_indices, p_c=P_C, p1_min=P1_MIN, p1_max=P1_MAX, estimate_type='mean', conf_type='prev-conf-pred', plot_distribution_mean=False, plot_prior_conf=False, plot_cpp=False)
+c1_computational_var_df = compute_prior_conf_and_cpp_from_observations(participant_str=participant_str, condition_str=condition_1_str, computational_var_df=c1_computational_var_df, behavioural_df=c1_behavioural_df, change_point_indices_df=c1_change_point_indices, p_c=P_C, p1_min=P1_MIN, p1_max=P1_MAX, estimate_type='mean', conf_type='prev-conf-pred', plot_distribution_mean=False, plot_prior_conf=False, plot_cpp=False)
 
-c2_prior_dist_df, c2_prior_conf_df, c2_cpp_df = compute_prior_conf_and_cpp_from_observations(participant_str=participant_str, condition_str=condition_2_str, behavioural_df=c2_behavioural_df, change_point_indices_df=c2_change_point_indices, p_c=P_C, p1_min=P1_MIN, p1_max=P1_MAX, estimate_type='mean', conf_type='prev-conf-pred', plot_distribution_mean=False, plot_prior_conf=False, plot_cpp=False) 
+c2_computational_var_df = compute_prior_conf_and_cpp_from_observations(participant_str=participant_str, condition_str=condition_2_str, computational_var_df=c2_computational_var_df, behavioural_df=c2_behavioural_df, change_point_indices_df=c2_change_point_indices, p_c=P_C, p1_min=P1_MIN, p1_max=P1_MAX, estimate_type='mean', conf_type='prev-conf-pred', plot_distribution_mean=False, plot_prior_conf=False, plot_cpp=False)
