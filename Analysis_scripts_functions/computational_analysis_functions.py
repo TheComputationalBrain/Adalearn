@@ -404,6 +404,20 @@ def compute_surprise_from_observations(participant_str, condition_str, behaviour
     computational_var_df = pd.concat(task_session_surprise_df, ignore_index=True)
     computational_var_df['cum_outcome_num'] = computational_var_df.index
 
+    # Removing null values from the start of each task session and replacing with a surprise value of 1
+    null_values = computational_var_df['surprise'].isna()
+
+    indices = []
+
+    for i, val in enumerate(null_values):
+        if val: 
+            indices.append(i)
+
+    print(f"Number of NaN values in surprise column: {len(indices)}")
+    print("List of indices with NaN values:", indices)
+
+    computational_var_df.loc[null_values, 'surprise'] = 1
+ 
     # Categorizing the level of surprise for basic analysis
     percent_25 = computational_var_df['surprise'].quantile(0.25)
     percent_50 = computational_var_df['surprise'].quantile(0.50)  

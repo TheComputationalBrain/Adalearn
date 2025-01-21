@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 import json
 import os
+from scipy.stats import zscore
 import plotly.io as pio
 import plotly.express as px
 import plotly.graph_objs as go
@@ -227,3 +228,57 @@ def behavioural_change_point_analysis(behavioural_df, condition_str):
     print(f"Number of change points in each task session:\n{change_point_indices.groupby('task_session')['outcome_num'].count()}")
 
     return num_change_points, change_points_per_session, change_point_indices
+
+
+
+def categorise_change_points(participant_str, condition_str, behavioural_df, change_point_indices, plot_histogram_zscores = False):    
+    """
+    Function to categorise change points into 'non-obvious' and 'obvious' change points, based on the same criteria used by Jepma and colleagues (2016). 'Non-obvious' change points are defined as change point outcome <2 SDs from previous mean, whereas 'obvious' change points are defined as change point outcome >2 SDs from previous mean. Function adds a category to the change_point_indices DataFrame and returns the updated DataFrame.
+
+    Parameters:
+    - participant_str: string, participant identifier (number; set to 2 digits)
+    - condition_str: string, identifier of condition order (set to 2 numbers) ** May need to change to denote actual condition in Adalearn VNS study **
+    - behavioural_df: pd.DataFrame, contains parsed data from all .json adalearn data files for select variables.
+    - change_point_indices: pd.DataFrame, with columns 'cum_outcome_num', 'rel_time', and 'task_session', containing the indices and relative times of the change points for each session. (*Note: Have removed identification of the first outcome of each task session as a new change point)
+    - plot_histogram: boolean, if true, will plot a histogram of the z-score differences between change points (default = False)
+
+    Returns:
+    - change_point_indices: pd.DataFrame, with columns 'cum_outcome_num', 'rel_time', 'task_session', and 'change_point_cat', containing the indices, relative times, task session and category (non-obvious v obvious) of the change points for each session. 
+    """
+    change_points = behavioural_df.loc[behavioural_df['change_point'] == True]
+    cp_outcome_mean = change_points['P1'].mean()
+    cp_outcome_sd = change_points['P1'].std()
+    print(f"\nMean of change point outcomes: {cp_outcome_mean:.2f} +/- {cp_outcome_sd:.2f}")
+
+    cp_df = pd.DataFrame({
+        'task_session': change_points['task_session'],
+        'outcome_num': change_points['outcome_num'],
+        'hidden_value': change_points['P1'],
+        'cp_zscores': zscore(change_points['P1'])
+    })
+    cp_df['zscore_diff'] = cp_df['cp_zscores'].diff()
+
+    cp_df = cp_df[cp_df['outcome_num'] > 1]
+
+    cp_df['change_point_cat'] = None
+
+    cp_df.loc[(cp_df['zscore_diff'] < 2) & (cp_df['zscore_diff'] > -2), 'change_point_cat'] = 'non-obvious'
+    cp_df.loc[(cp_df['zscore_diff'] > 2) | (cp_df['zscore_diff'] < -2), 'change_point_cat'] = 'obvious'
+
+    value_counts = cp_df['change_point_cat'].value_counts()
+    print(f"Number of non-obvious change points: {value_counts['non-obvious']}")
+    print(f"Number of obvious change points: {value_counts['obvious']}")
+
+    obvious_range_indices = cp_df[cp_df['change_point_cat'] == 'obvious'].index
+    non_obvious_range_indices = cp_df[cp_df['change_point_cat'] == 'non-obvious'].index
+
+    change_point_indices['change_point_cat'] = change_point_indices['task_session'].map(
+        dict(zip(cp_df['task_session'], cp_df['change_point_cat']))
+    )
+
+    if plot_histogram_zscores:
+        fig = px.histogram(cp_df, x='zscore_diff', color='change_point_cat', nbins=20, title=f"Histogram of consecutive differences in change point outcome value z-scores for Participant {participant_str} in condition {condition_str}. Colours denote categorisation of 'obvious' and 'non-obvious' change points", labels={'x': 'Z-score difference', 'y': 'Frequency'})
+
+        fig.show()
+
+    return change_point_indices
