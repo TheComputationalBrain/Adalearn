@@ -177,23 +177,26 @@ def load_behavioural_data(directory_path, participant_str, condition_str, condit
     return behavioural_df
 
 
-def behavioural_change_point_analysis(behavioural_df, condition_str):
+def behavioural_change_point_analysis(participant_str, condition_str, behavioural_df, plot_histogram_zscores = False):
     """
     Function to identify change points within each task session from the respective adalearn data file.
     Takes the boolean variable 'change_point' and:
         1. identifies how many change points are in the data frame as a whole. 
         2. identifies how many change points are in each task session. 
         3. identifies the index and relative time stamp (relative to beginning of each respective task session) of each change point.
+        4. identifies the hidden value associated with each change point and uses this to categorise the 'obviousness' of the change, based on the criteria defined by Jepma et al (2016). 
     
     Parameters:
-    - behavioural_df: pd.DataFrame, contains parsed data from all .json adalearn data files for select variables.  
+    - participant_str: string, participant identifier (number; set to 2 digits)
+    - condition_str: string, identifier of condition order (set to 2 numbers) ** May need to change to denote actual condition in Adalearn VNS study **
+    - behavioural_df: pd.DataFrame, contains parsed data from all .json adalearn data files for select variables.
+    - plot_histogram_zscores: boolean, if true, will plot a histogram of the z-score differences between change points (default = False)
         
     Returns:
     - num_change_points: int, the total number of change points in the DataFrame.
     - change_points_per_session: pd.Series, the number of change points in each task session.
-    - change_point_indices: pd.DataFrame, with columns 'cum_outcome_num', 'rel_time', and 'task_session', containing the indices and relative times of the change points for each session. (*Note: Have removed identification of the first outcome of each task session as a new change point)
+    - change_point_indices: pd.DataFrame, with columns 'cum_outcome_num', 'rel_time', and 'task_session', containing the indices and relative times of the change points for each session, and z-score used to categorises the obvious of the change point ('change_point_cat'). (*Note: Have removed identification of the first outcome of each task session as a new change point)
     """
-
     # Calculate the number of change points
     num_change_points = (behavioural_df['change_point'] == True).sum()
     
@@ -208,14 +211,28 @@ def behavioural_change_point_analysis(behavioural_df, condition_str):
         indices = group.index[group['change_point']].tolist()
         outcome_num = group.loc[group['change_point'], 'outcome_num'].tolist()
         relative_times = group.loc[group['change_point'], 'rel_time'].tolist()
+        hidden_values = group.loc[group['change_point'], 'P1'].tolist()
         
         # Create a DataFrame for the current group and append to the list
-        change_point_indices_df = pd.DataFrame({'cum_outcome_num': indices, 'outcome_num': outcome_num,'rel_time': relative_times})
+        change_point_indices_df = pd.DataFrame({'cum_outcome_num': indices, 'outcome_num': outcome_num,'rel_time': relative_times, 'hidden_value': hidden_values})
         change_point_indices_df['task_session'] = task_session  # Add Task_session for identification
         change_point_indices_list.append(change_point_indices_df)
     
     # Concatenate all the DataFrames in the list into a single DataFrame
     change_point_indices = pd.concat(change_point_indices_list).reset_index(drop=True)
+
+    # Categorising change points into 'non-obvious' and 'obvious' change points
+    change_point_indices['z_score_P1'] =  zscore(change_point_indices['hidden_value'])
+   
+    change_point_indices['z_score_diff'] = change_point_indices['z_score_P1'].diff()
+
+    change_point_indices['change_point_cat'] = None
+
+    change_point_indices.loc[(change_point_indices['z_score_diff'] < 2) & (change_point_indices['z_score_diff'] > -2), 'change_point_cat'] = 'non-obvious'
+    change_point_indices.loc[(change_point_indices['z_score_diff'] > 2) | (change_point_indices['z_score_diff'] < -2), 'change_point_cat'] = 'obvious'
+
+    obvious_range_indices = change_point_indices[change_point_indices['change_point_cat'] == 'obvious'].index
+    non_obvious_range_indices = change_point_indices[change_point_indices['change_point_cat'] == 'non-obvious'].index
 
     # Identifying the change point numbers that are not associated with the start of a new task session
     change_point_indices = change_point_indices[change_point_indices['outcome_num'] > 1]
@@ -226,59 +243,14 @@ def behavioural_change_point_analysis(behavioural_df, condition_str):
     # Print the number of change points identified for each task session 
     print(f"\nIn condition {condition_str} there were {change_point_indices['change_point_count'].max()} change points across task sessions.")
     print(f"Number of change points in each task session:\n{change_point_indices.groupby('task_session')['outcome_num'].count()}")
-
-    return num_change_points, change_points_per_session, change_point_indices
-
-
-
-def categorise_change_points(participant_str, condition_str, behavioural_df, change_point_indices, plot_histogram_zscores = False):    
-    """
-    Function to categorise change points into 'non-obvious' and 'obvious' change points, based on the same criteria used by Jepma and colleagues (2016). 'Non-obvious' change points are defined as change point outcome <2 SDs from previous mean, whereas 'obvious' change points are defined as change point outcome >2 SDs from previous mean. Function adds a category to the change_point_indices DataFrame and returns the updated DataFrame.
-
-    Parameters:
-    - participant_str: string, participant identifier (number; set to 2 digits)
-    - condition_str: string, identifier of condition order (set to 2 numbers) ** May need to change to denote actual condition in Adalearn VNS study **
-    - behavioural_df: pd.DataFrame, contains parsed data from all .json adalearn data files for select variables.
-    - change_point_indices: pd.DataFrame, with columns 'cum_outcome_num', 'rel_time', and 'task_session', containing the indices and relative times of the change points for each session. (*Note: Have removed identification of the first outcome of each task session as a new change point)
-    - plot_histogram: boolean, if true, will plot a histogram of the z-score differences between change points (default = False)
-
-    Returns:
-    - change_point_indices: pd.DataFrame, with columns 'cum_outcome_num', 'rel_time', 'task_session', and 'change_point_cat', containing the indices, relative times, task session and category (non-obvious v obvious) of the change points for each session. 
-    """
-    change_points = behavioural_df.loc[behavioural_df['change_point'] == True]
-    cp_outcome_mean = change_points['P1'].mean()
-    cp_outcome_sd = change_points['P1'].std()
-    print(f"\nMean of change point outcomes: {cp_outcome_mean:.2f} +/- {cp_outcome_sd:.2f}")
-
-    cp_df = pd.DataFrame({
-        'task_session': change_points['task_session'],
-        'outcome_num': change_points['outcome_num'],
-        'hidden_value': change_points['P1'],
-        'cp_zscores': zscore(change_points['P1'])
-    })
-    cp_df['zscore_diff'] = cp_df['cp_zscores'].diff()
-
-    cp_df = cp_df[cp_df['outcome_num'] > 1]
-
-    cp_df['change_point_cat'] = None
-
-    cp_df.loc[(cp_df['zscore_diff'] < 2) & (cp_df['zscore_diff'] > -2), 'change_point_cat'] = 'non-obvious'
-    cp_df.loc[(cp_df['zscore_diff'] > 2) | (cp_df['zscore_diff'] < -2), 'change_point_cat'] = 'obvious'
-
-    value_counts = cp_df['change_point_cat'].value_counts()
+    value_counts = change_point_indices['change_point_cat'].value_counts()
     print(f"Number of non-obvious change points: {value_counts['non-obvious']}")
     print(f"Number of obvious change points: {value_counts['obvious']}")
 
-    obvious_range_indices = cp_df[cp_df['change_point_cat'] == 'obvious'].index
-    non_obvious_range_indices = cp_df[cp_df['change_point_cat'] == 'non-obvious'].index
-
-    change_point_indices['change_point_cat'] = change_point_indices['task_session'].map(
-        dict(zip(cp_df['task_session'], cp_df['change_point_cat']))
-    )
 
     if plot_histogram_zscores:
-        fig = px.histogram(cp_df, x='zscore_diff', color='change_point_cat', nbins=20, title=f"Histogram of consecutive differences in change point outcome value z-scores for Participant {participant_str} in condition {condition_str}. Colours denote categorisation of 'obvious' and 'non-obvious' change points", labels={'x': 'Z-score difference', 'y': 'Frequency'})
+        fig = px.histogram(change_point_indices, x='z_score_diff', color='change_point_cat', nbins=20, title=f"Histogram of consecutive differences in change point outcome value z-scores for Participant {participant_str} in condition {condition_str}. Colours denote categorisation of 'obvious' and 'non-obvious' change points", labels={'x': 'Z-score difference', 'y': 'Frequency'})
 
         fig.show()
 
-    return change_point_indices
+    return num_change_points, change_points_per_session, change_point_indices

@@ -11,7 +11,7 @@ import plotly.express as px
 from plotly.subplots import make_subplots
 pio.renderers.default='browser'
 
-from pupil_signal_functions import load_and_process_pupil_data, change_point_pupil_epochs, comp_var_pupil_quartile_epochs, all_outcome_pupil_epochs, average_pupil_diameter_calculation, outcome_colour_pupil_epochs
+from pupil_signal_functions import load_and_process_pupil_data, change_point_pupil_epochs, comp_var_pupil_quartile_epochs, all_outcome_pupil_epochs, average_pupil_diameter_calculation, outcome_colour_pupil_epochs, pupil_change_point_categories
 
 from computational_analysis_test import c1_computational_var_df, c2_computational_var_df
 
@@ -36,9 +36,9 @@ c2_outcome_onsets, c2_outcome_nums, c2_outcome_epoched_pupil_df, c2_outcome_blin
 
 
 
-c1_outcome_onsets_nobc, c1_outcome_nums_nobc, c1_outcome_epoched_pupil_df_nobc, c1_outcome_blink_ratio_df_nobc, c1_outcome_epochs_to_remove_nobc = all_outcome_pupil_epochs(directory_path=directory_path, participant_str=participant_str, list_subject_selected=list_subject_selected, condition_str=condition_1_str, condition_task_sessions=c1_task_sessions, from_session=c1_from_session, to_session=c1_to_session, pupil_trig_df=c1_pupil_trig_df, baseline_cor=[], variable_df=None, variable_column=None, select_eye=True, remove_epochs=True, plot_averaged_pupil_response=False, plot_raster_pupil_response=False)
+c1_outcome_onsets_nobc, c1_outcome_nums_nobc, c1_outcome_epoched_pupil_df_nobc, c1_outcome_blink_ratio_df_nobc, c1_outcome_epochs_to_remove_nobc = all_outcome_pupil_epochs(directory_path=directory_path, participant_str=participant_str, list_subject_selected=list_subject_selected, condition_str=condition_1_str, condition_task_sessions=c1_task_sessions, from_session=c1_from_session, to_session=c1_to_session, pupil_trig_df=c1_pupil_trig_df, baseline_cor=[-0.2, 0], variable_df=None, variable_column=None, select_eye=True, remove_epochs=True, plot_averaged_pupil_response=False, plot_raster_pupil_response=False)
 
-c2_outcome_onsets_nobc, c2_outcome_nums_nobc, c2_outcome_epoched_pupil_df_nobc, c2_outcome_blink_ratio_df_nobc, c2_outcome_epochs_to_remove_nobc = all_outcome_pupil_epochs(directory_path=directory_path, participant_str=participant_str, list_subject_selected=list_subject_selected, condition_str=condition_2_str, condition_task_sessions=c2_task_sessions, from_session=c2_from_session, to_session=c2_to_session, pupil_trig_df=c2_pupil_trig_df, baseline_cor=[], variable_df=None, variable_column=None, select_eye=True, remove_epochs=True, plot_averaged_pupil_response=False, plot_raster_pupil_response=False)
+c2_outcome_onsets_nobc, c2_outcome_nums_nobc, c2_outcome_epoched_pupil_df_nobc, c2_outcome_blink_ratio_df_nobc, c2_outcome_epochs_to_remove_nobc = all_outcome_pupil_epochs(directory_path=directory_path, participant_str=participant_str, list_subject_selected=list_subject_selected, condition_str=condition_2_str, condition_task_sessions=c2_task_sessions, from_session=c2_from_session, to_session=c2_to_session, pupil_trig_df=c2_pupil_trig_df, baseline_cor=[-0.2, 0], variable_df=None, variable_column=None, select_eye=True, remove_epochs=True, plot_averaged_pupil_response=False, plot_raster_pupil_response=False)
 
 
 
@@ -63,6 +63,12 @@ c2_outcome_1_onsets, c2_outcome_1_nums, c2_outcome_1_epoched_pupil_df, c2_outcom
 c1_change_point_onsets, c1_change_point_nums, c1_epoched_pupil_cp_df, c1_blink_ratio_cp_df, c1_epochs_to_remove = change_point_pupil_epochs(directory_path=directory_path, participant_str=participant_str, list_subject_selected=list_subject_selected, condition_str=condition_1_str, condition_task_sessions=c1_task_sessions, from_session=c1_from_session, to_session=c1_to_session, pupil_trig_df=c1_pupil_trig_df, change_point_indices=c1_change_point_indices, select_eye=True, remove_epochs=True, plot_pupil_by_cp=False)
 
 c2_change_point_onsets, c2_change_point_nums, c2_epoched_pupil_cp_df, c2_blink_ratio_cp_df, c2_epochs_to_remove = change_point_pupil_epochs(directory_path=directory_path, participant_str=participant_str, list_subject_selected=list_subject_selected, condition_str=condition_2_str, condition_task_sessions=c2_task_sessions, from_session=c2_from_session, to_session=c2_to_session, pupil_trig_df=c2_pupil_trig_df, change_point_indices=c2_change_point_indices, select_eye=True, remove_epochs=True, plot_pupil_by_cp=False)
+
+
+
+c1_non_obvious_cp_onsets, c1_non_obvious_cp_nums, c1_epoched_pupil_non_obvious_df, c1_non_obvious_blink_ratio_df, c1_non_obvious_epochs_to_remove, c1_obvious_cp_onsets, c1_obvious_cp_nums, c1_epoched_pupil_obvious_df, c1_obvious_blink_ratio_df, c1_obvious_epochs_to_remove = pupil_change_point_categories(directory_path=directory_path, participant_str=participant_str, list_subject_selected=list_subject_selected, condition_str=condition_1_str, condition_task_sessions=c1_task_sessions, from_session=c1_from_session, to_session=c1_to_session, pupil_trig_df=c1_pupil_trig_df, change_point_indices=c1_change_point_indices, baseline_cor=[-0.2, 0],select_eye=True, remove_epochs=True, plot_pupil_by_cp_cat=True)
+
+c2_non_obvious_cp_onsets, c2_non_obvious_cp_nums, c2_epoched_pupil_non_obvious_df, c2_non_obvious_blink_ratio_df, c2_non_obvious_epochs_to_remove, c2_obvious_cp_onsets, c2_obvious_cp_nums, c2_epoched_pupil_obvious_df, c2_obvious_blink_ratio_df, c2_obvious_epochs_to_remove = pupil_change_point_categories(directory_path=directory_path, participant_str=participant_str, list_subject_selected=list_subject_selected, condition_str=condition_2_str, condition_task_sessions=c2_task_sessions, from_session=c2_from_session, to_session=c2_to_session, pupil_trig_df=c2_pupil_trig_df, change_point_indices=c2_change_point_indices, baseline_cor=[-0.2, 0],select_eye=True, remove_epochs=True, plot_pupil_by_cp_cat=True)
 
 
 

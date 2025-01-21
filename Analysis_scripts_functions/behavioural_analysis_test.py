@@ -12,7 +12,7 @@ from scipy.stats import zscore
 from plotly.subplots import make_subplots
 pio.renderers.default='browser'
 
-from behavioural_task_functions import load_behavioural_data, behavioural_change_point_analysis, categorise_change_points
+from behavioural_task_functions import load_behavioural_data, behavioural_change_point_analysis
 
 from participant_task_information import directory_path, participant_str, condition_1_str, condition_2_str, c1_task_sessions, c2_task_sessions
 
@@ -24,12 +24,6 @@ c2_behavioural_df = load_behavioural_data(directory_path=directory_path, partici
 
 
 
-c1_change_point_num, c1_change_point_by_sess, c1_change_point_indices = behavioural_change_point_analysis(behavioural_df=c1_behavioural_df, condition_str=condition_1_str)
+c1_change_point_num, c1_change_point_by_sess, c1_change_point_indices = behavioural_change_point_analysis(participant_str=participant_str, condition_str= condition_1_str, behavioural_df=c1_behavioural_df, plot_histogram_zscores=False)
 
-c2_change_point_num, c2_change_point_by_sess, c2_change_point_indices = behavioural_change_point_analysis(behavioural_df=c2_behavioural_df, condition_str=condition_2_str)
-
-
-
-c1_change_point_indices = categorise_change_points(participant_str=participant_str, condition_str=condition_1_str, behavioural_df=c1_behavioural_df, change_point_indices=c1_change_point_indices, plot_histogram_zscores=False)
-
-c2_change_point_indices = categorise_change_points(participant_str=participant_str, condition_str=condition_2_str, behavioural_df=c2_behavioural_df, change_point_indices=c2_change_point_indices, plot_histogram_zscores=False)
+c2_change_point_num, c2_change_point_by_sess, c2_change_point_indices = behavioural_change_point_analysis(participant_str=participant_str, condition_str= condition_2_str, behavioural_df=c2_behavioural_df, plot_histogram_zscores=False)
