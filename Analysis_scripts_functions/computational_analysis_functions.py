@@ -32,7 +32,7 @@ def compute_learning_rate(computational_var_df, groupby_parameter = None, estima
     The function groups takes a dataframe which contains and 'outcome' and some estimate parameter. If there is a grouping variable column (e.g., 'task_session'), the function computes the learning rate for each group based on the provided estimate parameter. Returns the updated dataframe with a new 'learning_rate' column.
 
     Parameters:
-    - computational_var_df: pd.DataFrame, the input dataframe containing the estimates and outcomes.
+    - computational_var_df: pd.DataFrame, the input dataframe containing the estimates and select model derived outcomes. To be used to house additional computational variables.
     - groupby_parameter: string, the column name by which to group the dataframe (e.g., 'task_session').        
     - estimate_parameter: string, the column name representing the estimates from which the learning rate is to be derived. It can be a participant's estimate or the ideal observer model estimate.
 

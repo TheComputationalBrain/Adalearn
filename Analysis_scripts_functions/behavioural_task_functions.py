@@ -11,7 +11,7 @@ pio.renderers.default='browser'
 
 
 
-def load_behavioural_data(directory_path, participant_str, condition_str, condition_task_sessions, plot_behav_data = False, plot_estimate_v_ideal = False):
+def load_behavioural_data(directory_path, participant_str, condition_str, condition_task_sessions, plot_behav_data = False):
     """
     Function to load adalearn .json files. Sets the working directory to the relevant file, before loading and storing the data for each task session for a given condition. Then unpacks parsed_json adalearn files into a dataframe. Returned dataframe contains only selected variables deemed most relevant from the full .json file. Diagnostics identify whether what is expected in the dataframe is in fact there. Options to plot the the behavioural data (participants estimation, ideal observer, true hidden estimates and outcome observations) from each task session, and also the participants estimates against ideal observer across all task sessions.  
 
@@ -26,11 +26,10 @@ def load_behavioural_data(directory_path, participant_str, condition_str, condit
     - condition_str: string, identifier of condition order (set to 2 numbers) ** May need to change to denote actual condition in Adalearn VNS study **
     - condition_task_sessions: list, contains string variables (set to 2 numbers) denoting the individual task sessions completed by the participant in the condition
     - plot_behav_data: boolean, if true, will plot the raw behavioural data as subplots for each task session (default = False)
-    - plot_estimate_v_ideal: boolean, if true, will plot the participants' estimates against the ideal observer across all task sessions (default = False)
 
     Returns:
     - behavioural_df: pd.DataFrame, contains parsed data from all .json adalearn data files for select variables. 
-    - behav_v_model_estimate_corr: float, the correlation coefficient of the relationship between behavioural estimates and ideal observer model predictions.
+    - computational_var_df: pd.DataFrame, dataframe containing the estimates and select model derived outcomes. To be used to house additional computational variables.
     """
     # Loading all adalearn task session data files
     adalearn_data = []

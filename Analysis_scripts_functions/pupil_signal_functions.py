@@ -1160,7 +1160,7 @@ def comp_var_pupil_quartile_epochs(directory_path, participant_str, list_subject
 
 def pupil_change_point_categories(directory_path, participant_str, list_subject_selected, condition_str, condition_task_sessions, from_session, to_session, pupil_trig_df, change_point_indices, baseline_cor = [-0.2, 0], select_eye = True, remove_epochs = True, plot_pupil_by_cp_cat=True):
     """
-    
+    To complete.....
     """
      # Filter across change point category
     non_obvious_cp = change_point_indices[change_point_indices['change_point_cat'] == 'non-obvious'].copy()
