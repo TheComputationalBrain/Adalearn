@@ -2,6 +2,7 @@ import os
 import pandas as pd
 import numpy as np
 import sys
+from scipy.stats import linregress
 import plotly.io as pio
 import plotly.graph_objects as go
 import plotly.express as px
@@ -15,7 +16,7 @@ from model_learner import ideal_learner_prob_estimates_from_outcomes, ideal_lear
 
 
 
-def compute_learning_rate(behavioural_df, groupby_parameter = None, estimate_parameter=None):
+def compute_learning_rate(computational_var_df, groupby_parameter = None, estimate_parameter=None):
     """
     Function to compute learning rate for each outcome presentation across groups defined 
     by a specific parameter (e.g., task session). 
@@ -31,21 +32,21 @@ def compute_learning_rate(behavioural_df, groupby_parameter = None, estimate_par
     The function groups takes a dataframe which contains and 'outcome' and some estimate parameter. If there is a grouping variable column (e.g., 'task_session'), the function computes the learning rate for each group based on the provided estimate parameter. Returns the updated dataframe with a new 'learning_rate' column.
 
     Parameters:
-    - behavioural_df: pd.DataFrame, the input dataframe containing the estimates and outcomes.
+    - computational_var_df: pd.DataFrame, the input dataframe containing the estimates and outcomes.
     - groupby_parameter: string, the column name by which to group the dataframe (e.g., 'task_session').        
     - estimate_parameter: string, the column name representing the estimates from which the learning rate is to be derived. It can be a participant's estimate or the ideal observer model estimate.
 
     Returns:
-    - behavioural_df: pd.DataFrame, the input dataframe with an added 'learning_rate' column, containing the computed learning rates for each outcome presentation (within each group).
+    - computational_var_df: pd.DataFrame, the input dataframe with an added 'learning_rate' column, containing the computed learning rates for each outcome presentation (within each group).
     """
     learning_rate_col = f'learning_rate_{estimate_parameter}'
 
     # Initialize the learning rate column with NaN
-    behavioural_df[learning_rate_col] = float('nan')
+    computational_var_df[learning_rate_col] = float('nan')
     
     # Check if grouping is needed. If yes, group the dataframe by the specified parameter
-    if groupby_parameter and groupby_parameter in behavioural_df.columns:
-        grouped = behavioural_df.groupby(groupby_parameter)
+    if groupby_parameter and groupby_parameter in computational_var_df.columns:
+        grouped = computational_var_df.groupby(groupby_parameter)
 
         # Iterate through each group to compute the learning rate
         for _, group in grouped:
@@ -54,56 +55,56 @@ def compute_learning_rate(behavioural_df, groupby_parameter = None, estimate_par
                 vt_minus_1 = group.iloc[i-1][estimate_parameter]
                 xt = group.iloc[i]['outcome']
                                 
-                behavioural_df.at[group.index[i], learning_rate_col] = (vt - vt_minus_1) / (xt - vt_minus_1)
+                computational_var_df.at[group.index[i], learning_rate_col] = (vt - vt_minus_1) / (xt - vt_minus_1)
             
     else:
         # If no grouping is required, compute learning rate across the entire DataFrame
-        for i in range(1, len(behavioural_df)):
-            vt = behavioural_df.iloc[i][estimate_parameter]
-            vt_minus_1 = behavioural_df.iloc[i-1][estimate_parameter]
-            xt = behavioural_df.iloc[i]['outcome']
+        for i in range(1, len(computational_var_df)):
+            vt = computational_var_df.iloc[i][estimate_parameter]
+            vt_minus_1 = computational_var_df.iloc[i-1][estimate_parameter]
+            xt = computational_var_df.iloc[i]['outcome']
             
                 
             # Assign the learning rate
-            behavioural_df.at[behavioural_df.index[i], learning_rate_col] = (vt - vt_minus_1) / (xt - vt_minus_1)
+            computational_var_df.at[computational_var_df.index[i], learning_rate_col] = (vt - vt_minus_1) / (xt - vt_minus_1)
 
-    return behavioural_df
+    return computational_var_df
 
 
 
-def behavioural_learning_rate_analysis(behavioural_df, change_point_indices_df, participant_str, condition_str, plot_learning_rate_by_ses = False):
+def behavioural_learning_rate_analysis(computational_var_df, change_point_indices_df, participant_str, condition_str, plot_learning_rate_by_ses = False):
     """ 
     Function to calculate the behavioural learning rate based on participants estimates following each outcome presentation. Returns behavioural dataframe with new learning rate variable created. Option to plot learning rate across each task session. 
 
     Parameters:
-    - behavioural_df: pd.DataFrame, contains parsed data from json adalearn data file for select variables.
+    - computational_var_df: pd.DataFrame, contains parsed data from json adalearn data file for select variables to be used in/or provide context to model analysis.
     - change_point_indices_df: pd.DataFrame, with columns 'cum_outcome_num', 'rel_time', and 'task_session', containing the indices and relative times of the change points for each session. Used to mark the change points on plots (*Note: Have removed identification of the first outcome of each task session as a new change point)
     - participant_str: string, participant identifier (number; set to 2 digits)
     - condition_str: string, identifier of condition order (set to 2 numbers) ** May need to change to denote actual condition in Adalearn VNS study **
     - plot_learning_rate_by_ses: boolean, if true, will plot the calculated (and filtered) learning rate across each task session. Change points added as dotted horizontal lines for visualisation (default = false).
 
     Returns:
-    - behavioural_df: pd.DataFrame, contains parsed data from json adalearn data file for select variables with the new addition of learning rate variable. Final data frame contains a "cleaned learning rate", which removes values that exceed set thresholds (-0.6 and +1.3, which were determined a priori from a pilot study conducted before Foucault & Meyniel, 2024. Thresholding used to to avoid aberrant learning rate values due to very small denominators (error: estimate - outcome)).      
+    - computational_var_df: pd.DataFrame, contains parsed data from json adalearn data file for select variables with the new addition of learning rate variable. Final data frame contains a "cleaned learning rate", which removes values that exceed set thresholds (-0.6 and +1.3, which were determined a priori from a pilot study conducted before Foucault & Meyniel, 2024. Thresholding used to to avoid aberrant learning rate values due to very small denominators (error: estimate - outcome)).      
     """
     # Implementing learning rate equation
-    behavioural_df = compute_learning_rate(behavioural_df, groupby_parameter = 'task_session', estimate_parameter='estimate') 
+    computational_var_df = compute_learning_rate(computational_var_df, groupby_parameter = 'task_session', estimate_parameter='estimate') 
 
-    behavioural_df['cleaned_learning_rate_estimate'] = behavioural_df['learning_rate_estimate'].where((behavioural_df['learning_rate_estimate'] >= -0.6) & (behavioural_df['learning_rate_estimate'] < 1.3), float('nan'))
+    computational_var_df['cleaned_learning_rate_estimate'] = computational_var_df['learning_rate_estimate'].where((computational_var_df['learning_rate_estimate'] >= -0.6) & (computational_var_df['learning_rate_estimate'] < 1.3), float('nan'))
 
-    removed_data_points = behavioural_df['learning_rate_estimate'].notna().sum() - behavioural_df['cleaned_learning_rate_estimate'].notna().sum()
+    removed_data_points = computational_var_df['learning_rate_estimate'].notna().sum() - computational_var_df['cleaned_learning_rate_estimate'].notna().sum()
     print(f"Number of data points removed in cleaning step: {removed_data_points}")
 
     # Plotting learning rate data
     # Create subplots, one for each task session
     if plot_learning_rate_by_ses:
-        unique_sessions = behavioural_df['task_session'].unique()
+        unique_sessions = computational_var_df['task_session'].unique()
     
         fig = make_subplots(rows=len(unique_sessions), cols=1, shared_xaxes=True,
                         subplot_titles=[f'Beahvioural learning rate in task session {session}' for session in unique_sessions])
 
         # Add learning rate traces to each subplot
         for i, session in enumerate(unique_sessions, start=1):
-            session_data = behavioural_df[behavioural_df['task_session'] == session]
+            session_data = computational_var_df[computational_var_df['task_session'] == session]
             fig.add_trace(
                 go.Scatter(x=session_data['outcome_num'], y=session_data['cleaned_learning_rate_estimate'], mode='lines+markers', name=f'Beahvioural learning rate in task session {session}'), row=i, col=1)
 
@@ -129,43 +130,43 @@ def behavioural_learning_rate_analysis(behavioural_df, change_point_indices_df, 
         fig.show()
 
     
-    return behavioural_df
+    return computational_var_df
 
 
 
-def ideal_observer_learning_rate_analysis(behavioural_df, change_point_indices_df, participant_str, condition_str, plot_learning_rate_by_ses = False):
+def ideal_observer_learning_rate_analysis(computational_var_df, change_point_indices_df, participant_str, condition_str, plot_learning_rate_by_ses = False):
     """ 
     Function to calculate the learning rate based on the ideal observer model estimates following each outcome presentation. Returns behavioural dataframe with new learning rate variable created. Option to plot learning rate across each task session. 
 
     Parameters:
-    - behavioural_df: pd.DataFrame, contains parsed data from json adalearn data file for select variables.
+    -  computational_var_df: pd.DataFrame, contains parsed data from json adalearn data file for select variables to be used in/or provide context to model analysis.
     - change_point_indices_df: pd.DataFrame, with columns 'cum_outcome_num', 'rel_time', and 'task_session', containing the indices and relative times of the change points for each session. Used to mark the change points on plots (*Note: Have removed identification of the first outcome of each task session as a new change point)
     - participant_str: string, participant identifier (number; set to 2 digits)
     - condition_str: string, identifier of condition order (set to 2 numbers) ** May need to change to denote actual condition in Adalearn VNS study **
     - plot_learning_rate_by_ses: boolean, if true, will plot the calculated (and filtered) learning rate across each task session. Change points added as dotted horizontal lines for visualisation (default = false).
 
     Returns:
-    - behavioural_df: pd.DataFrame, contains parsed data from json adalearn data file for select variables with the new addition of learning rate variable. Final data frame contains a "cleaned learning rate", which removes values that exceed set thresholds (-0.6 and +1.3, which were determined a priori from a pilot study conducted before Foucault & Meyniel, 2024. Thresholding used to to avoid aberrant learning rate values due to very small denominators (error: estimate - outcome)).      
+    - computational_var_df: pd.DataFrame, contains parsed data from json adalearn data file for select variables with the new addition of learning rate variable. Final data frame contains a "cleaned learning rate", which removes values that exceed set thresholds (-0.6 and +1.3, which were determined a priori from a pilot study conducted before Foucault & Meyniel, 2024. Thresholding used to to avoid aberrant learning rate values due to very small denominators (error: estimate - outcome)).      
     """
     # Implementing learning rate equation
-    behavioural_df = compute_learning_rate(behavioural_df, groupby_parameter = 'task_session', estimate_parameter='ideal_observer') 
+    computational_var_df = compute_learning_rate(computational_var_df, groupby_parameter = 'task_session', estimate_parameter='ideal_observer') 
 
-    behavioural_df['cleaned_learning_rate_ideal_observer'] = behavioural_df['learning_rate_ideal_observer'].where((behavioural_df['learning_rate_ideal_observer'] >= -0.6) & (behavioural_df['learning_rate_ideal_observer'] < 1.3), float('nan'))
+    computational_var_df['cleaned_learning_rate_ideal_observer'] = computational_var_df['learning_rate_ideal_observer'].where((computational_var_df['learning_rate_ideal_observer'] >= -0.6) & (computational_var_df['learning_rate_ideal_observer'] < 1.3), float('nan'))
 
-    removed_data_points = behavioural_df['learning_rate_ideal_observer'].notna().sum() - behavioural_df['cleaned_learning_rate_ideal_observer'].notna().sum()
+    removed_data_points = computational_var_df['learning_rate_ideal_observer'].notna().sum() - computational_var_df['cleaned_learning_rate_ideal_observer'].notna().sum()
     print(f"Number of data points removed in cleaning step: {removed_data_points}")
 
     # Plotting learning rate data
     # Create subplots, one for each task session
     if plot_learning_rate_by_ses:
-        unique_sessions = behavioural_df['task_session'].unique()
+        unique_sessions = computational_var_df['task_session'].unique()
     
         fig = make_subplots(rows=len(unique_sessions), cols=1, shared_xaxes=True,
                         subplot_titles=[f'Ideal observer model learning rate in task session {session}' for session in unique_sessions])
 
         # Add learning rate traces to each subplot
         for i, session in enumerate(unique_sessions, start=1):
-            session_data = behavioural_df[behavioural_df['task_session'] == session]
+            session_data = computational_var_df[computational_var_df['task_session'] == session]
             fig.add_trace(
                 go.Scatter(x=session_data['outcome_num'], y=session_data['cleaned_learning_rate_ideal_observer'], mode='lines+markers', name=f'Ideal observer model learning rate in task session {session}'), row=i, col=1)
 
@@ -191,16 +192,16 @@ def ideal_observer_learning_rate_analysis(behavioural_df, change_point_indices_d
         fig.show()
 
     
-    return behavioural_df
+    return computational_var_df
 
 
 
-def learning_rate_by_change_point(behavioural_df, change_point_indices,participant_str, condition_str, learning_rate_parameter = 'estimate', pre=2, post=10, plot_learning_rate_by_cp = False):
+def learning_rate_by_change_point(computational_var_df, change_point_indices,participant_str, condition_str, learning_rate_parameter = 'estimate', pre=2, post=10, plot_learning_rate_by_cp = False):
     """ 
     Function to calculate the average learning rate around change points. Uses identified change point indices to derive learning rate dynamics before and after a change in task structure. Stores responses across all task sessions and then plots the average (plus standard deviation) learning rate. 
 
     Parameters:
-    - behavioural_df: pd.DataFrame, contains parsed data from json adalearn data file for select variables with the new addition of learning rate variable.
+    - computational_var_df: pd.DataFrame, contains parsed data from json adalearn data file for select variables to be used in/or provide context to model analysis.
     - change_point_indices: pd.DataFrame, with columns 'cum_outcome_num', 'rel_time', and 'task_session', containing the indices and relative times of the change points for each session. (*Note: Have removed identification of the first outcome of each task session as a new change point).
     - participant_str: string, identifier of participant number
     - condition_str: string, identifier of condition order (set to 2 numbers) ** May need to change to denote actual condition in Adalearn VNS study **
@@ -233,7 +234,7 @@ def learning_rate_by_change_point(behavioural_df, change_point_indices,participa
     expanded_change_points_df['relative_position'] = expanded_change_points_df['relative_position'] +1                      
 
     # Filter main behavioural dataframe to only contain values in defined range around change point  
-    filtered_learning_rate_by_cp = pd.merge(expanded_change_points_df, behavioural_df, 
+    filtered_learning_rate_by_cp = pd.merge(expanded_change_points_df, computational_var_df, 
                                             left_on=['task_session', 'outcome_num_rel_pos'], 
                                             right_on=['task_session', 'outcome_num'], 
                                             how='left', suffixes=('', '_y'))
@@ -340,8 +341,7 @@ def learning_rate_by_change_point(behavioural_df, change_point_indices,participa
 
 
 
-
-def compute_surprise_from_observations(participant_str, condition_str, behavioural_df, change_point_indices_df, plot_surprise = False, plot_posterior_conf = False, plot_posterior_dist_means = False):
+def compute_surprise_from_observations(participant_str, condition_str, computational_var_df, change_point_indices_df, plot_surprise = False, plot_posterior_conf = False, plot_posterior_dist_means = False):
     """
     Function computes the level of surprise of each set of task session observations. Achieves this using the "run_inference" function (created by Cedric Foucault and Florent Meyniel: https://github.com/florentmeyniel/Ada-Learn/blob/main/analysis) to generate posterior inferences of generative probabilities of the data sequence (seq). Surprise is calculated as:
 
@@ -359,7 +359,7 @@ def compute_surprise_from_observations(participant_str, condition_str, behaviour
     Parameters:
     - participant_str: string, participant identifier (set to 2 digits)  
     - condition: string, identifier of condition order (set to 2 digits) ** May need to change to denote actual condition in Adalearn VNS study **
-    - behavioural_df: pd.DataFrame, contains the behavioural outputs of the adalearn data files for a given condition. 
+    - computational_var_df: pd.DataFrame, contains parsed data from json adalearn data file for select variables to be used in/or provide context to model analysis.
     - change_point_indices_df: pd.DataFrame, contains outputs related to the presence of change points in the hidden task structure. The identified outcome number within each task session will be used in plot visualisation.
     - plot_surprise: boolean, if true, will plot the change in surprise per observation across each task session (default = False).
     - plot_posterior_conf: boolean, if true, will plot the change in posterior distribution SD (confidence) per observation across each task session (default = False). 
@@ -380,29 +380,27 @@ def compute_surprise_from_observations(participant_str, condition_str, behaviour
     # Define options for "run inference" function
     options = {'p_c': 0.05, 'resol': 20, 'p1_min': 0.1, 'p1_max': 0.9}
 
-    # Initialize lists to store task session data
-    task_session_surprise_df = []
+    task_session_surprise_list = []  # List to store session DataFrames
 
-    # Loop over task sessions and convert the outcome column to a sequence (np.array)
-    for task_session, session_data in behavioural_df.groupby('task_session'):
+    for task_session, session_data in computational_var_df.groupby('task_session'):
         seq = np.array(session_data['outcome'])
 
         # Run inference to compute surprise for the sequence of observations
         output = run_inference(seq, options=options)
 
-        # Creating dataframe to store for that task session
+        # Obtaining variables of interest
         surprise_values = output['surprise']
-        session_surprise_df = pd.DataFrame({'surprise': surprise_values})
-        session_surprise_df['task_session'] = task_session
-        session_surprise_df['outcome'] = seq
-        session_surprise_df['outcome_num'] = np.arange(0, len(session_surprise_df))
-        session_surprise_df['model_post_prob_1'] = output[(1,)]['mean']
-        session_surprise_df['model_post_prob_0'] = output[(0,)]['mean']
-        session_surprise_df['model_post_prob_var'] = output[(1,)]['SD']
-        task_session_surprise_df.append(session_surprise_df)
-         
-    computational_var_df = pd.concat(task_session_surprise_df, ignore_index=True)
-    computational_var_df['cum_outcome_num'] = computational_var_df.index
+        model_post_prob_1 = output[(1,)]['mean']
+        model_post_prob_0 = output[(0,)]['mean']
+        model_post_prob_var = output[(1,)]['SD']
+
+        # Add new columns to computational_var_df
+        session_indices = session_data.index
+        computational_var_df.loc[session_indices, 'surprise'] = surprise_values
+        computational_var_df.loc[session_indices, 'model_post_prob_1'] = model_post_prob_1
+        computational_var_df.loc[session_indices, 'model_post_prob_0'] = model_post_prob_0
+        computational_var_df.loc[session_indices, 'model_post_prob_var'] = model_post_prob_var
+
 
     # Removing null values from the start of each task session and replacing with a surprise value of 1
     null_values = computational_var_df['surprise'].isna()
@@ -519,7 +517,7 @@ def compute_surprise_from_observations(participant_str, condition_str, behaviour
 
 
 
-def compute_prior_conf_and_cpp_from_observations(participant_str, condition_str, computational_var_df, behavioural_df, change_point_indices_df, p_c, p1_min, p1_max, estimate_type, conf_type, plot_distribution_mean = False, plot_prior_conf = False, plot_cpp = False):
+def compute_prior_conf_and_cpp_from_observations(participant_str, condition_str, computational_var_df, change_point_indices_df, p_c, p1_min, p1_max, estimate_type, conf_type, plot_distribution_mean = False, plot_prior_conf = False, plot_cpp = False):
     """
     Function computes the "confidence" in the prior and change point probability from each set of task session observations. Computes "confidence" and change point probability using functions within "model_learner" (created by Cedric Foucault and Florent Meyniel: https://github.com/florentmeyniel/Ada-Learn/blob/main/analysis). "Confidence" is the -log(sd) of the prior distribution, while change point probability is calculated from the conditional probability of an observation (at time t) given a change point has occurred multiplied by the true probability of a change point occurring, divided by the conditional probability of an observation (at time t) given a change point has occurred multiplied by the true probability of a change point occurring plus the conditional probability of an observation (at time t) given no change point has occurred multiplied by the true probability that a change point did not occur:
 
@@ -531,7 +529,6 @@ def compute_prior_conf_and_cpp_from_observations(participant_str, condition_str,
     - participant_str: string, participant identifier (number; set to 2 digits)  
     - condition: string, identifier of condition order (set to 2 digits) ** May need to change to denote actual condition in Adalearn VNS study **
     - computational_var_df: pd.DataFrame, contains computed variables from the ideal observer model.
-    - behavioural_df: pd.DataFrame, contains the behavioural outputs of the adalearn data files for a given condition. 
     - change_point_indices_df: pd.DataFrame, contains outputs related to the presence of change points in the hidden task structure. The outcome number within each task session will be used in plot visualisation.
     - 'p_c': float, true change point probability (should be 0.05)
     - 'p1_min': float, the minimum value of the Bernoulli parameter (used to clip the Dirichlet prior distribution) (should be 0.1)
@@ -556,12 +553,7 @@ def compute_prior_conf_and_cpp_from_observations(participant_str, condition_str,
      Returns:
     -  computational_var_df: pd.DataFrame, contains computed variables from the ideal observer model. With this function, 'prior_dist' (the prior distribution mean), 'prior_conf' (the variance in the prior distribution) and the 'cpp' (change point probability) are added as columns for each task session. Also contains a variable that categorises the prior_conf and cpp based on the interquartile range across all task sessions (used for basic analysis).
     """
-    # Lists to store computed parameters for each task session
-    prior_dist_df_list = []
-    prior_conf_df_list =[]
-    cpp_df_list =[]
-
-    for task_session, session_data in behavioural_df.groupby('task_session'):
+    for task_session, session_data in computational_var_df.groupby('task_session'):
         seq = np.array(session_data['outcome'])
 
         # Run functions to compute prior parameters, confidence and change point probability. Add data to existing data frame computational_var_df  
@@ -629,7 +621,7 @@ def compute_prior_conf_and_cpp_from_observations(participant_str, condition_str,
 
         for i, session in enumerate(unique_sessions, start=1):
             session_data = computational_var_df[computational_var_df['task_session'] == session]
-            fig.add_trace(go.Scatter(x=session_data['outcome_num'], y=session_data['mean'], mode='lines', name=f'Prior distribution mean - Session {session}'), row=i, col=1)
+            fig.add_trace(go.Scatter(x=session_data['outcome_num'], y=session_data['prior_dist'], mode='lines', name=f'Prior distribution mean - Session {session}'), row=i, col=1)
 
             change_points = change_point_indices_df[change_point_indices_df['task_session'] == session]['outcome_num']
             for cp in change_points:
@@ -695,3 +687,78 @@ def compute_prior_conf_and_cpp_from_observations(participant_str, condition_str,
         fig.show()
 
     return computational_var_df
+
+
+
+def behav_v_model_linear_analysis(computational_var_df, participant_str, condition_str, model_var, behav_var, exclude_zero=False, plot_behav_v_model_scatter=False, add_regression=False):
+    """
+    Function to compute the correlation and optionally perform regression analysis 
+    between two variables in a DataFrame.
+
+    Parameters:
+    - computational_var_df: pd.DataFrame, the dataset containing the variables to be analysed.
+    - participant_str: string, participant identifier.
+    - condition_str: string, identifier of the condition.
+    - model_var: string, name of the column to be used as the predictor variable (x-axis).
+    - behav_var: string, name of the column to be used as the outcome variable (y-axis).
+    - exclude_zero: boolean, if true, will exclude rows where x_col is 0.
+    - plot_behav_v_model_scatter: boolean, if true, will plot the scattergram between the two variables.
+    - add_regression: boolean, if true, will compute and plot the regression line.
+
+    Returns:
+    - behav_v_model_corr: float, correlation coefficient between the two specified behavioual/model variables.
+    - behav_v_model_regress: dict, containing slope, intercept, r value, p value, and std error of the regression analysis between behavioural and model variables (if add_regression is True).
+    """
+    # Drop rows with missing values in the columns of interest
+    cleaned_df = computational_var_df[[model_var, behav_var, "task_session"]].dropna()
+    
+    # Optionally exclude rows where the predictor variable is 0
+    if exclude_zero:
+        cleaned_df = cleaned_df[cleaned_df[model_var] != 0]
+    
+    # Compute the correlation coefficient
+    behav_v_model_corr = cleaned_df[model_var].corr(cleaned_df[behav_var])
+    print(f"The correlation coefficient between {model_var} and {behav_var} for participant {participant_str} is: {behav_v_model_corr}")
+    
+    behav_v_model_regress = None
+
+    # Optionally perform regression
+    if add_regression:
+        regression = linregress(cleaned_df[model_var], cleaned_df[behav_var])
+        behav_v_model_regress = {
+            "slope": regression.slope,
+            "intercept": regression.intercept,
+            "r_value": regression.rvalue,
+            "p_value": regression.pvalue,
+            "std_err": regression.stderr
+        }
+        print(f"Linear regression results: {behav_v_model_regress}")
+    
+    # Optionally plot
+    if plot_behav_v_model_scatter:
+        df= cleaned_df.copy()
+        df['task_session'] = df['task_session'].astype('category')
+
+        fig = px.scatter(df, x=model_var, y=behav_var, color="task_session", symbol="task_session")
+
+        fig.update_layout(
+        title_text=f"Ideal observer model by behavioural response for participant {participant_str} across all task sessions in condition {condition_str}.",
+        showlegend=True,
+        xaxis_title=model_var,
+        yaxis_title=behav_var
+        )
+
+        if add_regression:
+            x_vals = np.linspace(cleaned_df[model_var].min(), cleaned_df[model_var].max(), 100)
+            y_vals = behav_v_model_regress["slope"] * x_vals + behav_v_model_regress["intercept"]
+            fig.add_scatter(x=x_vals, y=y_vals, mode="lines", name="Regression Line")
+
+        fig.update_layout(
+            title_text=f"Scatterplot of {behav_var} derived from behavioural and ideal observer for participant {participant_str} in condition {condition_str}",
+            xaxis_title=model_var,
+            yaxis_title=behav_var,
+            showlegend=True
+        )
+        fig.show()
+    
+    return behav_v_model_corr, behav_v_model_regress

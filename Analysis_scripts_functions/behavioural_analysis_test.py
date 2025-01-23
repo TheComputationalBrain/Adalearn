@@ -18,12 +18,17 @@ from participant_task_information import directory_path, participant_str, condit
 
 
 
-c1_behavioural_df = load_behavioural_data(directory_path=directory_path, participant_str=participant_str, condition_str=condition_1_str, condition_task_sessions=c1_task_sessions, plot_behav_data=False, plot_estimate_v_ideal=False)
+c1_behavioural_df, c1_computational_var_df = load_behavioural_data(directory_path=directory_path, participant_str=participant_str, condition_str=condition_1_str, condition_task_sessions=c1_task_sessions, plot_behav_data=False)
 
-c2_behavioural_df = load_behavioural_data(directory_path=directory_path, participant_str=participant_str, condition_str=condition_2_str, condition_task_sessions=c2_task_sessions, plot_behav_data=False, plot_estimate_v_ideal=False)
+c2_behavioural_df, c2_computational_var_df = load_behavioural_data(directory_path=directory_path, participant_str=participant_str, condition_str=condition_2_str, condition_task_sessions=c2_task_sessions, plot_behav_data=False)
 
 
 
 c1_change_point_num, c1_change_point_by_sess, c1_change_point_indices = behavioural_change_point_analysis(participant_str=participant_str, condition_str= condition_1_str, behavioural_df=c1_behavioural_df, plot_histogram_zscores=False)
 
 c2_change_point_num, c2_change_point_by_sess, c2_change_point_indices = behavioural_change_point_analysis(participant_str=participant_str, condition_str= condition_2_str, behavioural_df=c2_behavioural_df, plot_histogram_zscores=False)
+
+
+
+
+computational_var_df = c1_behavioural_df[['outcome', 'estimate', 'ideal_observer', 'outcome_num', 'time', 'rel_time']].copy()

@@ -30,6 +30,7 @@ def load_behavioural_data(directory_path, participant_str, condition_str, condit
 
     Returns:
     - behavioural_df: pd.DataFrame, contains parsed data from all .json adalearn data files for select variables. 
+    - behav_v_model_estimate_corr: float, the correlation coefficient of the relationship between behavioural estimates and ideal observer model predictions.
     """
     # Loading all adalearn task session data files
     adalearn_data = []
@@ -102,11 +103,13 @@ def load_behavioural_data(directory_path, participant_str, condition_str, condit
         else:
             print(f"Task session {task_session} does not have 75 outcome stimuli, it has {count} outcomess.")
 
-    # Correlational analysis
+    # Creating a computational variable data frame for subsequent model analysis
+    computational_var_df = behavioural_df[['outcome', 'estimate', 'ideal_observer', 'outcome_num', 'task_session', 'time', 'rel_time']].copy() 
 
-    # Calculate correlation between participants' estimates and ideal observer model
-    estimate_io_cor = behavioural_df['estimate'].corr(behavioural_df['ideal_observer'])
-    print(f"The correlation coefficient between participant {participant_str}'s estimates and the ideal observer model was: {estimate_io_cor}")
+    # Add session-specific cumulative count
+    computational_var_df['cum_outcome_num'] = (
+        computational_var_df.groupby('task_session').cumcount()
+    )
 
     # Option to plot the raw behavioural data across each task session separately
     if plot_behav_data:
@@ -158,23 +161,7 @@ def load_behavioural_data(directory_path, participant_str, condition_str, condit
 
         fig.show()
 
-    # Option for plotting subjective estimates versus ideal observer
-    if plot_estimate_v_ideal:
-        df= behavioural_df.copy()
-        df['task_session'] = df['task_session'].astype('category')
-
-        fig = px.scatter(df, x="ideal_observer", y="estimate", color="task_session", symbol="task_session")
-
-        fig.update_layout(
-        title_text=f"Ideal observer by subjective estimate for participant {participant_str} across all task sessions in condition {condition_str}.",
-        showlegend=True,
-        xaxis_title="Ideal Observer",
-        yaxis_title="Participant Estimate"
-        )
-
-        fig.show()
-
-    return behavioural_df
+    return behavioural_df, computational_var_df 
 
 
 def behavioural_change_point_analysis(participant_str, condition_str, behavioural_df, plot_histogram_zscores = False):
