@@ -11,9 +11,11 @@ pio.renderers.default='browser'
 
 from computational_analysis_functions import behavioural_learning_rate_analysis, ideal_observer_learning_rate_analysis,learning_rate_by_change_point, compute_surprise_from_observations, compute_prior_conf_and_cpp_from_observations, behav_v_model_linear_analysis
 
+from data_utility_functions import plot_session_behav_comp
+
 from participant_task_information import participant_str, condition_1_str, condition_2_str, P_C, P1_MIN, P1_MAX
 
-from behavioural_analysis_test import c1_computational_var_df, c1_change_point_indices, c2_computational_var_df, c2_change_point_indices
+from behavioural_analysis_test import c1_behavioural_df,c1_computational_var_df, c1_change_point_indices, c2_behavioural_df, c2_computational_var_df, c2_change_point_indices
 
 
 
@@ -65,3 +67,8 @@ c1_behav_v_model_lr_corr, c1_behav_v_model_lr_regress = behav_v_model_linear_ana
 
 c2_behav_v_model_lr_corr, c2_behav_v_model_lr_regress = behav_v_model_linear_analysis(computational_var_df=c2_computational_var_df, participant_str=participant_str, condition_str=condition_2_str, model_var='cleaned_learning_rate_ideal_observer', behav_var='cleaned_learning_rate_estimate', exclude_zero=False, plot_behav_v_model_scatter=True, add_regression=True)
 
+
+
+plot_session_behav_comp(participant_str=participant_str, condition_str=condition_1_str, behavioural_df=c1_behavioural_df, computational_df=c1_computational_var_df, change_point_indices=c1_change_point_indices, task_session=1)
+
+plot_session_behav_comp(participant_str=participant_str, condition_str=condition_2_str, behavioural_df=c2_behavioural_df, computational_df=c2_computational_var_df, change_point_indices=c2_change_point_indices, task_session=1)

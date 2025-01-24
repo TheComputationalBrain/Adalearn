@@ -105,6 +105,7 @@ def behavioural_learning_rate_analysis(computational_var_df, change_point_indice
         # Add learning rate traces to each subplot
         for i, session in enumerate(unique_sessions, start=1):
             session_data = computational_var_df[computational_var_df['task_session'] == session]
+            
             fig.add_trace(
                 go.Scatter(x=session_data['outcome_num'], y=session_data['cleaned_learning_rate_estimate'], mode='lines+markers', name=f'Beahvioural learning rate in task session {session}'), row=i, col=1)
 

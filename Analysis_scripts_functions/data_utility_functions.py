@@ -86,5 +86,194 @@ def check_trig_sync_between_files(participant_str, condition_str, behavioural_df
 
 
 
+def plot_session_behav_comp(participant_str, condition_str, behavioural_df, computational_df, change_point_indices, task_session=1):
+    """
+    Function to plot the behavioural and computational parameters from data of selected task sessions. 
 
+    Parameters:
+    - - participant_str: string, identifier of participant number (set to 2 numbers)
+    - condition_str: string, identifier of condition order (set to 2 numbers)
+    - behavioural_df: pd.DataFrame, contains parsed data from all .json adalearn data files for select variables.
+    - computational_df: pd.DataFrame, contains the computational-derived parameters of interest for each task session.
+    - change_point_indices: pd.DataFrame, with columns 'cum_outcome_num', 'rel_time', and 'task_session', containing the indices and relative times of the change points for each session, and z-score used to categorises the obvious of the change point ('change_point_cat'). (*Note: Have removed identification of the first outcome of each task session as a new change point)
+    - task_session: float, the specific task session to analyze (default: 1)
 
+    Returns:
+    - None
+    - Displays a Plotly figure with behavioural and computational subplots
+    """
+    # Select a task session from the dataframes
+    task_session_behav_df = behavioural_df[behavioural_df['task_session'] == task_session].copy()
+    task_session_comp_df = computational_df[computational_df['task_session'] == task_session].copy()
+    task_session_cp = change_point_indices[change_point_indices['task_session'] == task_session].copy()
+
+    fig = make_subplots(
+        rows=3, 
+        cols=2, 
+        shared_xaxes=False, 
+        vertical_spacing=0.1, 
+        subplot_titles=(
+            "Behavioural estimates (green), ideal observer estimates (red), hidden values (blue), and outcomes",
+            "Behavioural learning rate", 
+            "Ideal observer learning rate", 
+            "Change point probability", 
+            "Prior confidence"
+        )
+    )
+
+    # Subplot 1: Behavioural and computational estimates
+    fig.add_trace(
+        go.Scatter(
+            x=task_session_behav_df['outcome_num'],
+            y=task_session_behav_df['P1'],
+            mode='lines',
+            line=dict(color='blue'),
+            name='Hidden proportion'
+        ), row=1, col=1
+    )
+    fig.add_trace(
+        go.Scatter(
+            x=task_session_behav_df['outcome_num'],
+            y=task_session_behav_df['estimate'],
+            mode='lines',
+            line=dict(color='green'),
+            name='Participant estimate'
+        ), row=1, col=1
+    )
+    fig.add_trace(
+        go.Scatter(
+            x=task_session_behav_df['outcome_num'],
+            y=task_session_behav_df['ideal_observer'],
+            mode='lines',
+            line=dict(color='red'),
+            name='Ideal observer estimate'
+        ), row=1, col=1
+    )
+    outcome_colors = ['blue' if val == 1 else 'yellow' for val in task_session_behav_df['outcome']]
+    fig.add_trace(
+        go.Scatter(
+            x=task_session_behav_df['outcome_num'],
+            y=[0] * len(task_session_behav_df['outcome']),
+            mode='markers',
+            marker=dict(color=outcome_colors),
+            name='Outcomes'
+        ), row=1, col=1
+    )
+
+    # Subplot 2: Behavioural learning rate
+    fig.add_trace(
+        go.Scatter(
+            x=task_session_comp_df['outcome_num'], 
+            y=task_session_comp_df['cleaned_learning_rate_estimate'], 
+            mode='lines+markers', 
+            name='Behavioural learning rate'
+        ), row=1, col=2
+    )
+    for cp in task_session_cp['outcome_num']:
+        fig.add_shape(
+            type="line", 
+            x0=cp, x1=cp, 
+            y0=-0.6, y1=1.6, 
+            line=dict(color="grey", width=2, dash="dash"),
+            xref='x2', yref='y2'
+        )
+
+    # Subplot 3: Ideal observer learning rate
+    fig.add_trace(
+        go.Scatter(
+            x=task_session_comp_df['outcome_num'], 
+            y=task_session_comp_df['cleaned_learning_rate_ideal_observer'], 
+            mode='lines+markers', 
+            name='Ideal observer learning rate'
+        ), row=2, col=1
+    )
+    for cp in task_session_cp['outcome_num']:
+        fig.add_shape(
+            type="line", 
+            x0=cp, x1=cp, 
+            y0=-0.1, y1=1.0, 
+            line=dict(color="grey", width=2, dash="dash"),
+            xref='x3', yref='y3'
+        )
+
+    # Subplot 4: Change point probability
+    fig.add_trace(
+        go.Scatter(
+            x=task_session_comp_df['outcome_num'], 
+            y=task_session_comp_df['cpp'], 
+            mode='lines+markers', 
+            name='Change point probability'
+        ), row=2, col=2
+    )
+    for cp in task_session_cp['outcome_num']:
+        fig.add_shape(
+            type="line", 
+            x0=cp, x1=cp, 
+            y0=-0.1, y1=0.3, 
+            line=dict(color="grey", width=2, dash="dash"),
+            xref='x4', yref='y4'
+        )
+
+    # Subplot 5: Prior confidence
+    fig.add_trace(
+        go.Scatter(
+            x=task_session_comp_df['outcome_num'], 
+            y=task_session_comp_df['prior_conf'], 
+            mode='lines+markers', 
+            name='Prior confidence'
+        ), row=3, col=1
+    )
+    for cp in task_session_cp['outcome_num']:
+        fig.add_shape(
+            type="line", 
+            x0=cp, x1=cp, 
+            y0=-0.0, y1=2.1, 
+            line=dict(color="grey", width=2, dash="dash"),
+            xref='x5', yref='y5'
+        )
+
+    # Subplot 6: Surprise
+    fig.add_trace(
+        go.Scatter(
+            x=task_session_comp_df['outcome_num'], 
+            y=task_session_comp_df['surprise'], 
+            mode='lines+markers', 
+            name='Surprise'
+        ), row=3, col=2
+    )
+    for cp in task_session_cp['outcome_num']:
+        fig.add_shape(
+            type="line", 
+            x0=cp, x1=cp, 
+            y0=-0.1, y1=2.5, 
+            line=dict(color="grey", width=2, dash="dash"),
+            xref='x6', yref='y6'
+        )
+
+    # Update layout
+    fig.update_layout(
+        title=f"Behavioural and computationally-derived parameters obtained from task session {task_session} for participant {participant_str} in condition {condition_str}",
+        title_x=0.5,
+        title_font=dict(size=16, family="Arial"),
+        height=950,
+        width=1800,
+        showlegend=False,
+        margin=dict(l=50, r=50, t=50, b=50),
+        hovermode="closest"
+    )
+
+    # Add axis titles
+    fig.update_xaxes(title_text="Trial Number", row=1, col=1)
+    fig.update_xaxes(title_text="Trial Number", row=1, col=2)
+    fig.update_xaxes(title_text="Trial Number", row=2, col=1)
+    fig.update_xaxes(title_text="Trial Number", row=2, col=2)
+    fig.update_xaxes(title_text="Trial Number", row=3, col=1)
+    fig.update_xaxes(title_text="Trial Number", row=3, col=2)
+    fig.update_yaxes(title_text="Hidden Values / Estimates", row=1, col=1)
+    fig.update_yaxes(title_text="Learning Rate", row=1, col=2)
+    fig.update_yaxes(title_text="Learning Rate", row=2, col=1)
+    fig.update_yaxes(title_text="Change Point Probability", row=2, col=2)
+    fig.update_yaxes(title_text="Prior Confidence", row=3, col=1)
+    fig.update_yaxes(title_text="Surprise", row=3, col=2)
+
+    fig.show()
