@@ -1043,7 +1043,7 @@ def comp_var_pupil_quartile_epochs(directory_path, participant_str, list_subject
             x=epoched_pupil_first_quart_df['time'],
             y=epoched_pupil_first_quart_df['mean'],
             mode='lines',
-            line=dict(color='rgba(255, 211, 0, 1)'),
+            line=dict(color='rgba(255, 255, 0, 1)'),
             name='First Quartile'
         ))
 
@@ -1051,7 +1051,7 @@ def comp_var_pupil_quartile_epochs(directory_path, participant_str, list_subject
             x=epoched_pupil_first_quart_df['time'],
             y=epoched_pupil_first_quart_df['mean'] + epoched_pupil_first_quart_df['sem'],
             mode='lines',
-            line=dict(color='rgba(255, 211, 0, 0.1)'),
+            line=dict(color='rgba(255, 255, 0, 0.1)'),
             showlegend=False
         ))
 
@@ -1060,8 +1060,8 @@ def comp_var_pupil_quartile_epochs(directory_path, participant_str, list_subject
             y=epoched_pupil_first_quart_df['mean'] - epoched_pupil_first_quart_df['sem'],
             mode='lines',
             fill='tonexty',
-            fillcolor='rgba(255, 211, 0, 0.2)',
-            line=dict(color='rgba(255, 211, 0, 0.1)'),
+            fillcolor='rgba(255, 255, 0, 0.2)',
+            line=dict(color='rgba(255, 255, 0, 0.1)'),
             showlegend=False
         ))
 
@@ -1069,7 +1069,7 @@ def comp_var_pupil_quartile_epochs(directory_path, participant_str, list_subject
             x=epoched_pupil_second_quart_df['time'],
             y=epoched_pupil_second_quart_df['mean'],
             mode='lines',
-            line=dict(color='rgba(0, 183, 235, 1)'),
+            line=dict(color='rgba(255, 165, 0, 1)'),
             name='Second Quartile'
         ))
 
@@ -1077,7 +1077,7 @@ def comp_var_pupil_quartile_epochs(directory_path, participant_str, list_subject
             x=epoched_pupil_second_quart_df['time'],
             y=epoched_pupil_second_quart_df['mean'] + epoched_pupil_second_quart_df['sem'],
             mode='lines',
-            line=dict(color='rgba(0, 183, 235, 0.1)'),
+            line=dict(color='rgba(255, 165, 0, 0.1)'),
             showlegend=False
         ))
 
@@ -1086,8 +1086,8 @@ def comp_var_pupil_quartile_epochs(directory_path, participant_str, list_subject
             y=epoched_pupil_second_quart_df['mean'] - epoched_pupil_second_quart_df['sem'],
             mode='lines',
             fill='tonexty',
-            fillcolor='rgba(0, 183, 235, 0.2)',
-            line=dict(color='rgba(0, 183, 235, 0.1)'),
+            fillcolor='rgba(255, 165, 0, 0.2)',
+            line=dict(color='rgba(255, 165, 0, 0.1)'),
             showlegend=False
         ))
 
@@ -1095,7 +1095,7 @@ def comp_var_pupil_quartile_epochs(directory_path, participant_str, list_subject
             x=epoched_pupil_third_quart_df['time'],
             y=epoched_pupil_third_quart_df['mean'],
             mode='lines',
-            line=dict(color='rgba(213, 0, 249, 1)'),
+            line=dict(color='rgba(255, 102, 102, 1)'),
             name='Third Quartile'
         ))
 
@@ -1103,7 +1103,7 @@ def comp_var_pupil_quartile_epochs(directory_path, participant_str, list_subject
             x=epoched_pupil_third_quart_df['time'],
             y=epoched_pupil_third_quart_df['mean'] + epoched_pupil_third_quart_df['sem'],
             mode='lines',
-            line=dict(color='rgba(213, 0, 249, 0.1)'),
+            line=dict(color='rgba(255, 102, 102, 0.1)'),
             showlegend=False
         ))
 
@@ -1112,8 +1112,8 @@ def comp_var_pupil_quartile_epochs(directory_path, participant_str, list_subject
             y=epoched_pupil_third_quart_df['mean'] - epoched_pupil_third_quart_df['sem'],
             mode='lines',
             fill='tonexty',
-            fillcolor='rgba(213, 0, 249, 0.2)',
-            line=dict(color='rgba(213, 0, 249, 0.1)'),
+            fillcolor='rgba(255, 102, 102, 0.2)',
+            line=dict(color='rgba(255, 102, 102, 0.1)'),
             showlegend=False
         ))
 
@@ -1122,7 +1122,7 @@ def comp_var_pupil_quartile_epochs(directory_path, participant_str, list_subject
             x=epoched_pupil_fourth_quart_df['time'],
             y=epoched_pupil_fourth_quart_df['mean'],
             mode='lines',
-            line=dict(color='rgba(0, 204, 102, 1)'),
+            line=dict(color='rgba(139, 0, 0, 1)'),
             name='Fourth Quartile'
         ))
 
@@ -1130,7 +1130,7 @@ def comp_var_pupil_quartile_epochs(directory_path, participant_str, list_subject
             x=epoched_pupil_fourth_quart_df['time'],
             y=epoched_pupil_fourth_quart_df['mean'] + epoched_pupil_fourth_quart_df['sem'],
             mode='lines',
-            line=dict(color='rgba(0, 204, 102, 0.1)'),
+            line=dict(color='rgba(139, 0, 0, 0.1)'),
             showlegend=False
         ))
 
@@ -1139,8 +1139,8 @@ def comp_var_pupil_quartile_epochs(directory_path, participant_str, list_subject
             y=epoched_pupil_fourth_quart_df['mean'] - epoched_pupil_fourth_quart_df['sem'],
             mode='lines',
             fill='tonexty',
-            fillcolor='rgba(0, 204, 102, 0.2)',
-            line=dict(color='rgba(0, 204, 102, 0.1)'),
+            fillcolor='rgba(139, 0, 0, 0.2)',
+            line=dict(color='rgba(139, 0, 0, 0.1)'),
             showlegend=False
         ))
 

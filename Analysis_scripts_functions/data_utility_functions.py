@@ -117,7 +117,8 @@ def plot_session_behav_comp(participant_str, condition_str, behavioural_df, comp
             "Behavioural learning rate", 
             "Ideal observer learning rate", 
             "Change point probability", 
-            "Prior confidence"
+            "Prior confidence",
+            "Surprise"
         )
     )
 
