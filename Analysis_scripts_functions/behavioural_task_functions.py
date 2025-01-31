@@ -106,9 +106,7 @@ def load_behavioural_data(directory_path, participant_str, condition_str, condit
     computational_var_df = behavioural_df[['outcome', 'estimate', 'ideal_observer', 'outcome_num', 'task_session', 'time', 'rel_time']].copy() 
 
     # Add session-specific cumulative count
-    computational_var_df['cum_outcome_num'] = (
-        computational_var_df.groupby('task_session').cumcount()
-    )
+    computational_var_df['cum_outcome_num'] = range(len(computational_var_df))
 
     # Option to plot the raw behavioural data across each task session separately
     if plot_behav_data:
@@ -163,6 +161,7 @@ def load_behavioural_data(directory_path, participant_str, condition_str, condit
     return behavioural_df, computational_var_df 
 
 
+
 def behavioural_change_point_analysis(participant_str, condition_str, behavioural_df, plot_histogram_zscores = False):
     """
     Function to identify change points within each task session from the respective adalearn data file.
@@ -182,6 +181,7 @@ def behavioural_change_point_analysis(participant_str, condition_str, behavioura
     - num_change_points: int, the total number of change points in the DataFrame.
     - change_points_per_session: pd.Series, the number of change points in each task session.
     - change_point_indices: pd.DataFrame, with columns 'cum_outcome_num', 'rel_time', and 'task_session', containing the indices and relative times of the change points for each session, and z-score used to categorises the obvious of the change point ('change_point_cat'). (*Note: Have removed identification of the first outcome of each task session as a new change point)
+    - behavioural_df: pd.DataFrame, contains a new column 'outcome_dict_to_cp' that specifies the distance of each outcome to the last change point within a task session.
     """
     # Calculate the number of change points
     num_change_points = (behavioural_df['change_point'] == True).sum()
@@ -207,7 +207,7 @@ def behavioural_change_point_analysis(participant_str, condition_str, behavioura
     # Concatenate all the DataFrames in the list into a single DataFrame
     change_point_indices = pd.concat(change_point_indices_list).reset_index(drop=True)
 
-    # Categorising change points into 'non-obvious' and 'obvious' change points
+    # Categorising change points into 'non-obvious' and 'obvious' change points based on Jepma et al (2016) criteria
     change_point_indices['z_score_P1'] =  zscore(change_point_indices['hidden_value'])
    
     change_point_indices['z_score_diff'] = change_point_indices['z_score_P1'].diff()
@@ -219,6 +219,9 @@ def behavioural_change_point_analysis(participant_str, condition_str, behavioura
 
     obvious_range_indices = change_point_indices[change_point_indices['change_point_cat'] == 'obvious'].index
     non_obvious_range_indices = change_point_indices[change_point_indices['change_point_cat'] == 'non-obvious'].index
+
+    # Calculating the distance between change points
+    behavioural_df = distance_to_change_point(behavioural_df=behavioural_df, change_point_indices=change_point_indices)
 
     # Identifying the change point numbers that are not associated with the start of a new task session
     change_point_indices = change_point_indices[change_point_indices['outcome_num'] > 1]
@@ -232,11 +235,114 @@ def behavioural_change_point_analysis(participant_str, condition_str, behavioura
     value_counts = change_point_indices['change_point_cat'].value_counts()
     print(f"Number of non-obvious change points: {value_counts['non-obvious']}")
     print(f"Number of obvious change points: {value_counts['obvious']}")
-
-
+    
+    # Option to plot the histogram of the z-score differences between change points
     if plot_histogram_zscores:
         fig = px.histogram(change_point_indices, x='z_score_diff', color='change_point_cat', nbins=20, title=f"Histogram of consecutive differences in change point outcome value z-scores for Participant {participant_str} in condition {condition_str}. Colours denote categorisation of 'obvious' and 'non-obvious' change points", labels={'x': 'Z-score difference', 'y': 'Frequency'})
 
         fig.show()
 
-    return num_change_points, change_points_per_session, change_point_indices
+    return num_change_points, change_points_per_session, change_point_indices, behavioural_df
+
+
+
+def behavioural_performance_analysis(participant_str, condition_str, behavioural_df, plot_performance):
+    """
+    Function to compute primary perforamnce metric (the absolute error between the participant's estimate and the true hidden value) for each task session.
+
+    Parameters:
+    - participant_str: string, participant identifier (number; set to 2 digits)
+    - condition_str: string, identifier of condition order (set to 2 numbers) ** May need to change to denote actual condition in Adalearn VNS study **
+    - behavioural_df: pd.DataFrame, contains parsed data from all .json adalearn data files for select variables.
+    - plot_performance: boolean, if true, will plot the average error and the standard deviation in the error for each task session (default = False)
+
+    Returns:
+    - mean_abs_error_df: pd.DataFrame, contains the computed mean and standard deviation of the absolute error for each task session.
+    """
+    abs_error_list = []
+
+    for task_session, row in behavioural_df.groupby('task_session'):
+        performance_score = (row['estimate'] - row['P1'])
+        mean_abs_error = np.mean(performance_score)
+        std_abs_error = np.std(performance_score)
+
+        abs_error_df = pd.DataFrame({
+            'mean_abs_error': [mean_abs_error], 
+            'std_abs_error': [std_abs_error],
+            'score': np.mean(row['score']),   
+            'task_session': [task_session]                  
+        })
+
+        abs_error_list.append(abs_error_df) 
+
+    mean_abs_error_df = pd.concat(abs_error_list, ignore_index=True)
+
+    if plot_performance:
+        fig = go.Figure()
+
+        fig.add_trace(go.Scatter(x=mean_abs_error_df['task_session'], y=mean_abs_error_df['mean_abs_error'], mode='lines+markers', name='Mean absolute error'))
+        fig.add_trace(go.Scatter(x=mean_abs_error_df['task_session'], y=mean_abs_error_df['std_abs_error'], mode='lines+markers', name='Standard deviation in absolute error'))
+
+        fig.update_layout(title_text=f"Absolute error between subjective estimates and hidden values for participant {participant_str} in condition {condition_str}",
+                          xaxis=dict(
+                              tickmode='array',
+                              tickvals=mean_abs_error_df['task_session'].unique(),
+                              ticktext=[str(s) for s in mean_abs_error_df['task_session'].unique()]
+                          ),
+                          xaxis_title='Task session',
+                          yaxis_title='Absolute error', 
+                          showlegend=True)
+
+        fig.show()
+
+    return mean_abs_error_df
+
+
+
+def distance_to_change_point(behavioural_df, change_point_indices):
+    """
+    Funtion to define the distance each outcome is to the last change point (within a task session). 
+
+    Parameters:
+    - behavioural_df: pd.DataFrame, contains parsed data from all .json adalearn data files for select variables.
+    - change_point_indices: pd.DataFrame, with columns 'cum_outcome_num', 'rel_time', and 'task_session', containing the indices and relative times of the change points for each session.
+
+    Returns:
+    - behavioural_df: pd.DataFrame, contains a new column 'outcome_dict_to_cp' that specifies the distance of each outcome to the last change point within a task session.
+    """
+    cp_grouped = change_point_indices.groupby('task_session')
+
+    for task_session, group_data in cp_grouped:
+        print(task_session)
+        
+        task_session_outcome_trials = behavioural_df[behavioural_df["task_session"] == task_session]
+        n_trials = task_session_outcome_trials.shape[0]  
+
+        # Initialize an array for distance to change points
+        dist_to_cp = np.full(n_trials, np.iinfo(np.int32).max, dtype=int)
+
+        # Get the array of change point indices
+        cps = group_data['outcome_num'].values  
+        n_cps = cps.shape[0] 
+
+        for i_cp in range(n_cps):
+            last_cp = cps[i_cp]
+            if i_cp > 0:
+                print(f"Change point {i_cp}: Distance from last change point: {last_cp}")
+
+            if i_cp < (n_cps - 1):  
+                next_cp = cps[i_cp + 1] 
+                
+                dist_to_last = np.arange(next_cp - last_cp)   
+                dist_to_cp[last_cp:next_cp] = dist_to_last   
+
+            else:
+                dist_to_last = np.arange(n_trials - last_cp)   
+                dist_to_cp[last_cp:n_trials] = dist_to_last  
+
+
+
+        behavioural_df.loc[behavioural_df["task_session"] == task_session, "outcome_dist_to_cp"] = dist_to_cp
+
+
+    return behavioural_df

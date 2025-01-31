@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 import sys
 import os
 import plotly.io as pio
@@ -278,3 +279,203 @@ def plot_session_behav_comp(participant_str, condition_str, behavioural_df, comp
     fig.update_yaxes(title_text="Surprise", row=3, col=2)
 
     fig.show()
+
+
+
+import plotly.graph_objs as go
+from plotly.subplots import make_subplots
+pio.renderers.default='browser'
+
+def compute_avg_learning_rate_by_categories(computational_var_df, category_col, parameter_estimate):
+    """
+    Function to compute the average learning rate within computational parameters split into quartiles. 
+
+    Parameters:
+    - computational_var_df: pd.DataFrame, contains the computational-derived parameters of interest for each task session. Must have columns related to categories created for parameters of interest (e.g. 'surprise_cat').
+    - category_col: string, column name of category of interest (e.g. 'surprise_cat').
+    - parameter_estimate: string, options are 'estimate' or 'ideal_observer'. If 'estimate', the learning rate estimates from the participant are used. If 'ideal_observer', the learning rate estimates from the ideal observer are used.
+    
+    Returns:
+    - avg_lr_dict: dictionary, contains the average learning rate for each quartile.
+    """
+    quartiles = ['first_quartile', 'second_quartile', 'third_quartile', 'fourth_quartile']
+
+    avg_lr_dict = {}  
+    
+    for quartile in quartiles:
+        subset = computational_var_df[computational_var_df[category_col] == quartile]
+        avg_lr = np.nanmean(subset[f'cleaned_learning_rate_{parameter_estimate}'])
+        avg_lr_dict[quartile] = avg_lr 
+    
+    return avg_lr_dict 
+
+
+
+def evaluation_of_learning_rate(behavioural_df, computational_var_df, quantile_baseline = 0.2, parameter_estimate='estimate', baseline_method='quantile_over_sessions', plot_lr_evaluation = True):
+    """
+    Function to compute various metrics that enable closer inspection of the learning rate estimates in response to change points and latent parameters of uncertainty.
+
+    Parameters:
+    - behavioural_df: pd.DataFrame, contains parsed data from all .json adalearn data files for select variables. Must have column related to distance from change point ('outcome_dist_to_cp'). 
+    - computational_var_df: pd.DataFrame, contains the computational-derived parameters of interest for each task session. Must have columns related to learning rate estimates (e.g. 'cleaned_learning_rate_estimate') and whether updates occured (i.e. 'was_updated_estimate').
+    - parameter_estimate: string, options are 'estimate' or 'ideal_observer'. If 'estimate', the learning rate estimates from the participant are used. If 'ideal_observer', the learning rate estimates from the ideal observer are used.
+    - baseline_method: string, options are quantile_over_sessions or quantile_within_sessions. If quantile_over_sessions, the threshold distance from the change point is computed over all task sessions. If quantile_within_sessions, the threshold distance is computed within each task session.
+    - plot_lr_evaluation: boolean, if true, will plot subplots depicting the average learning computed across various parameters. 
+
+    Returns:
+    - lr_evaluation_dict: dictionary, contains average learning rate values derived across various parameters (i.e. distance from change point, computational markers of uncertainty)
+    """
+    # Definitions of comparators for average difference computations
+    close = [0, 7]
+    far = [8, 15]
+    before = [-2, -1]
+    
+    # Compute average update frequency and learning rate across task sessions
+    avg_lr_task_sess_df = pd.DataFrame()
+
+    for group, data in computational_var_df.groupby('task_session'):
+        update_freq = np.mean(data['was_updated_estimate'])
+        avg_lr = np.mean(data['cleaned_learning_rate_estimate'])
+
+        evaluation_df = pd.DataFrame({'task_session': [group], 'update_freq': [update_freq], 'avg_lr': [avg_lr]})
+
+        avg_lr_task_sess_df = pd.concat([avg_lr_task_sess_df, evaluation_df], ignore_index=True)
+
+
+    update_freq_over_sessions = avg_lr_task_sess_df['update_freq'].mean()
+
+    avg_lr_over_sessions = avg_lr_task_sess_df['avg_lr'].mean()
+
+
+    # Computing the baseline trials in those defined as the quartile-furthest away from a change point
+    if baseline_method == "quantile_over_sessions":
+        thresh_dist = np.quantile(behavioural_df['outcome_dist_to_cp'], (1 - quantile_baseline))
+        
+        baseline_trial_indices = np.nonzero(behavioural_df['outcome_dist_to_cp'] > thresh_dist)[0]
+       
+        # Compute average learning rate for over_sessions method
+        baseline_learning_rates = computational_var_df.iloc[baseline_trial_indices]['cleaned_learning_rate_estimate']
+
+        # Compute the mean
+        baseline_lr = np.mean(baseline_learning_rates)
+
+    if baseline_method == "quantile_within_sessions":
+        baseline_trial_indices_list = []
+        avg_lr_within_sessions_list = []
+
+        for group, data in behavioural_df.groupby('task_session'):
+
+            thresh_dist = np.quantile(data['outcome_dist_to_cp'], (1 - quantile_baseline))
+
+            baseline_trial_indices = np.nonzero(data['outcome_dist_to_cp'] > thresh_dist)[0]
+            
+            baseline_trial_indices_list.append(baseline_trial_indices)
+            
+            # Compute average learning rate within each session and store
+            avg_lr_within_sessions_list.append(computational_var_df.iloc[baseline_trial_indices]['cleaned_learning_rate_estimate'].mean())
+
+        baseline_lr = np.mean(avg_lr_within_sessions_list)
+
+
+    # Compute the average learning rate for the close and far trials around change points
+    # Identify change points
+    change_indices = behavioural_df[behavioural_df['outcome_dist_to_cp'] == 0].index
+
+    # Identify the first index of each task session
+    first_indices_per_session = behavioural_df.groupby('task_session').apply(lambda x: x.index[0]).values
+
+    # Filter out change points that are at the start of a task session
+    filtered_change_indices = [idx for idx in change_indices if idx not in first_indices_per_session]
+
+    # Store means per change point
+    close_means = []
+    far_means = []
+    before_means = []
+
+    for idx in filtered_change_indices:
+        # Define window ranges
+        close_window = computational_var_df[(idx <= computational_var_df.index) & (computational_var_df.index <= idx + close[1])]
+        far_window = computational_var_df[(idx + far[0] <= computational_var_df.index) & (computational_var_df.index <= idx + far[1])]
+        before_window = computational_var_df[(idx + before[0] <= computational_var_df.index) & (computational_var_df.index <= idx + before[1])]
+        
+        # Compute mean learning rates within each window
+        close_mean = close_window[f'cleaned_learning_rate_{parameter_estimate}'].mean()
+        far_mean = far_window[f'cleaned_learning_rate_{parameter_estimate}'].mean()
+        before_mean = before_window[f'cleaned_learning_rate_{parameter_estimate}'].mean()
+        
+        # Store results
+        close_means.append(close_mean)
+        far_means.append(far_mean)
+        before_means.append(before_mean)
+
+    # Compute overall means
+    overall_close_mean = np.nanmean(close_means)
+
+    overall_far_mean = np.nanmean(far_means)
+
+    overall_before_mean = np.nanmean(before_means)
+
+    # Computing mean learning rate across quartiles of computational parameters 
+    # Surprise
+    surprise_avg_lr_dict = compute_avg_learning_rate_by_categories(computational_var_df=computational_var_df, category_col='surprise_cat', parameter_estimate=parameter_estimate)
+
+
+    # Prior confidence
+    conf_avg_lr_dict = compute_avg_learning_rate_by_categories(computational_var_df=computational_var_df, category_col='prior_conf_cat', parameter_estimate=parameter_estimate)
+
+
+    # Change point probability
+    cpp_avg_lr_dict = compute_avg_learning_rate_by_categories(computational_var_df=computational_var_df, category_col='cpp_cat', parameter_estimate=parameter_estimate)
+
+
+    # Storing all averages within a dictionary
+    lr_evaluation_dict = {'avg_lr_session_df': avg_lr_task_sess_df, 'update_freq_mean': update_freq_over_sessions, 'lr_mean': avg_lr_over_sessions, 'baseline_lr': baseline_lr, 'lr_close_cp_mean': overall_close_mean, 'lr_far_cp_mean': overall_far_mean, 'lr_before_cp_mean': overall_before_mean, 'surprise_avg_lr_dict': surprise_avg_lr_dict, 'conf_avg_lr_dict': conf_avg_lr_dict, 'cpp_avg_lr_dict': cpp_avg_lr_dict}
+    
+    # Option to plot average learning rate across different parameters
+    if plot_lr_evaluation:
+        fig = make_subplots(
+            rows=2, 
+            cols=2, 
+            shared_xaxes=False, 
+            vertical_spacing=0.1, 
+            subplot_titles=(
+                "Average learning rate across all sessions and based on relative distance to change points",
+                "Average learning rate across surprise split by quartiles", 
+                "Average learning rate across change point probability split by quartiles", 
+                "Average learning rate across prior confidence split by quartiles"
+            )
+        )
+
+        list_quartiles = ['First quartile', 'Second quartile', 'Third quartile', 'Fourth quartile']
+        list_position_names = ['Average', 'Before CP', 'Close to CP', 'Far from CP', 'Baseline (q = 20%)']
+        list_position_values = [
+            lr_evaluation_dict.get('lr_mean', 0),
+            lr_evaluation_dict.get('lr_before_cp_mean', 0),
+            lr_evaluation_dict.get('lr_close_cp_mean', 0),
+            lr_evaluation_dict.get('lr_far_cp_mean', 0),
+            lr_evaluation_dict.get('baseline_lr', 0)
+        ]
+
+        fig.add_trace(go.Bar(x=list_position_names, y=list_position_values), row=1, col=1)
+
+        fig.add_trace(go.Bar(x=list_quartiles, y=tuple(lr_evaluation_dict['surprise_avg_lr_dict'].values())), row=1, col=2)
+                      
+        fig.add_trace(go.Bar(x=list_quartiles, y=tuple(lr_evaluation_dict['cpp_avg_lr_dict'].values())), row=2, col=1)
+                      
+        fig.add_trace(go.Bar(x=list_quartiles, y=tuple(lr_evaluation_dict['conf_avg_lr_dict'].values())), row=2, col=2)
+
+        fig.update_layout(
+            title="Average learning rate across different parameters",
+            title_x=0.5,
+            title_font=dict(size=16, family="Arial"),
+            height=950,
+            width=1800,
+            showlegend=False,
+            margin=dict(l=50, r=50, t=50, b=50),
+            hovermode="closest"
+        )
+
+        fig.show()
+
+
+    return lr_evaluation_dict

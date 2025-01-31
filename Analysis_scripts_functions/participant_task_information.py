@@ -10,3 +10,4 @@ participant_str, list_subject_selected, directory_path, tsv_df, high_vns_conditi
 P_C = 0.05
 P1_MIN = 0.1
 P1_MAX = 0.9
+ESTIMATE_PRIOR = 0.5

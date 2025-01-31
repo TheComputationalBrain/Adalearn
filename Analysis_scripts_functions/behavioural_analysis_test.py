@@ -12,7 +12,7 @@ from scipy.stats import zscore
 from plotly.subplots import make_subplots
 pio.renderers.default='browser'
 
-from behavioural_task_functions import load_behavioural_data, behavioural_change_point_analysis
+from behavioural_task_functions import load_behavioural_data, behavioural_change_point_analysis, behavioural_performance_analysis
 
 from participant_task_information import directory_path, participant_str, condition_1_str, condition_2_str, c1_task_sessions, c2_task_sessions
 
@@ -24,11 +24,12 @@ c2_behavioural_df, c2_computational_var_df = load_behavioural_data(directory_pat
 
 
 
-c1_change_point_num, c1_change_point_by_sess, c1_change_point_indices = behavioural_change_point_analysis(participant_str=participant_str, condition_str= condition_1_str, behavioural_df=c1_behavioural_df, plot_histogram_zscores=False)
+c1_change_point_num, c1_change_point_by_sess, c1_change_point_indices, c1_behavioural_df = behavioural_change_point_analysis(participant_str=participant_str, condition_str= condition_1_str, behavioural_df=c1_behavioural_df, plot_histogram_zscores=False)
 
-c2_change_point_num, c2_change_point_by_sess, c2_change_point_indices = behavioural_change_point_analysis(participant_str=participant_str, condition_str= condition_2_str, behavioural_df=c2_behavioural_df, plot_histogram_zscores=False)
-
-
+c2_change_point_num, c2_change_point_by_sess, c2_change_point_indices, c2_dist_to_change_point = behavioural_change_point_analysis(participant_str=participant_str, condition_str= condition_2_str, behavioural_df=c2_behavioural_df, plot_histogram_zscores=False)
 
 
-computational_var_df = c1_behavioural_df[['outcome', 'estimate', 'ideal_observer', 'outcome_num', 'time', 'rel_time']].copy()
+
+c1_mean_abs_error_df = behavioural_performance_analysis(participant_str=participant_str, condition_str=condition_1_str, behavioural_df=c1_behavioural_df, plot_performance=False)
+
+c2_mean_abs_error_df = behavioural_performance_analysis(participant_str=participant_str, condition_str=condition_2_str, behavioural_df=c2_behavioural_df, plot_performance=False)

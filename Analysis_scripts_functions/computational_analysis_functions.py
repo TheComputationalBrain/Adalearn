@@ -16,7 +16,7 @@ from model_learner import ideal_learner_prob_estimates_from_outcomes, ideal_lear
 
 
 
-def compute_learning_rate(computational_var_df, groupby_parameter = None, estimate_parameter=None):
+def compute_learning_rate(computational_var_df, estimate_parameter=None, estimate_prior=None):
     """
     Function to compute learning rate for each outcome presentation across groups defined 
     by a specific parameter (e.g., task session). 
@@ -29,50 +29,52 @@ def compute_learning_rate(computational_var_df, groupby_parameter = None, estima
         - vt-1 is the previous estimate at time t-1
         - xt is the observed outcome at time t (e.g., 1 for blue and 0 for yellow).
 
-    The function groups takes a dataframe which contains and 'outcome' and some estimate parameter. If there is a grouping variable column (e.g., 'task_session'), the function computes the learning rate for each group based on the provided estimate parameter. Returns the updated dataframe with a new 'learning_rate' column.
+    The function groups takes a dataframe which contains and 'outcome' and some estimate parameter. If there is a grouping variable column (e.g., 'task_session'), the function computes the learning rate for each group based on the provided estimate parameter. Returns the updated dataframe with a new 'learning_rate' column and associated estimate update and error columns.
 
     Parameters:
-    - computational_var_df: pd.DataFrame, the input dataframe containing the estimates and select model derived outcomes. To be used to house additional computational variables.
-    - groupby_parameter: string, the column name by which to group the dataframe (e.g., 'task_session').        
+    - computational_var_df: pd.DataFrame, the input dataframe containing the estimates and select model derived outcomes. To be used to house additional computational variables.    
     - estimate_parameter: string, the column name representing the estimates from which the learning rate is to be derived. It can be a participant's estimate or the ideal observer model estimate.
+    - estimate_prior: float, the prior estimate to be used in the learning rate calculation. Reflects the value where the estimate slider is positioned at the start of each session (i.e. 0.5)
 
     Returns:
-    - computational_var_df: pd.DataFrame, the input dataframe with an added 'learning_rate' column, containing the computed learning rates for each outcome presentation (within each group).
+    - computational_var_df: pd.DataFrame, the input dataframe with the following columns added for the respective estimate parameter used (i.e. participant's estimates or ideal observer estimates): 'learning_rate' (calculated learning rate indicating the size of the update as a proportion of the estimate error), 'estimate_updates' (the change in estimate at trial t from trial t-1), 'estimate_error' (difference between the outcome and subject's estimate at trial t-1) and 'was_updated' (boolean variable indicateing that the estimate_update differs from 0 with some tolerance).
     """
     learning_rate_col = f'learning_rate_{estimate_parameter}'
+    estimate_updates_col = f'{estimate_parameter}_updates'
+    estimate_errors_col = f'{estimate_parameter}_errors'
+    was_update_cat = f'was_updated_{estimate_parameter}'
 
-    # Initialize the learning rate column with NaN
-    computational_var_df[learning_rate_col] = float('nan')
-    
-    # Check if grouping is needed. If yes, group the dataframe by the specified parameter
-    if groupby_parameter and groupby_parameter in computational_var_df.columns:
-        grouped = computational_var_df.groupby(groupby_parameter)
+    # Group the DataFrame by the task session
+    grouped_lr_df = computational_var_df.groupby('task_session')
 
-        # Iterate through each group to compute the learning rate
-        for _, group in grouped:
-            for i in range(1, len(group)):
-                vt = group.iloc[i][estimate_parameter]
-                vt_minus_1 = group.iloc[i-1][estimate_parameter]
-                xt = group.iloc[i]['outcome']
-                                
-                computational_var_df.at[group.index[i], learning_rate_col] = (vt - vt_minus_1) / (xt - vt_minus_1)
-            
-    else:
-        # If no grouping is required, compute learning rate across the entire DataFrame
-        for i in range(1, len(computational_var_df)):
-            vt = computational_var_df.iloc[i][estimate_parameter]
-            vt_minus_1 = computational_var_df.iloc[i-1][estimate_parameter]
-            xt = computational_var_df.iloc[i]['outcome']
-            
-                
-            # Assign the learning rate
-            computational_var_df.at[computational_var_df.index[i], learning_rate_col] = (vt - vt_minus_1) / (xt - vt_minus_1)
+    # Iterate through each task session to compute the learning rate
+    for group, data in grouped_lr_df:
+
+        # Prepend the prior estimate to the 'estimate' column
+        estimates_with_prior = np.insert(data[estimate_parameter], 0, estimate_prior, axis=0)
+
+        # Compute the estimate updates and errors for learning rate calculation (estimate_updates = vt - vt-1; estimate_errors = xt - vt-1)
+        estimate_updates = estimates_with_prior[1:] - estimates_with_prior[:-1]
+
+        estimate_errors = data['outcome'] - estimates_with_prior[:-1]
+        
+        # Compute the raw learning rates (delta rule)
+        learning_rate = estimate_updates / estimate_errors
+
+        # Computing mask to check if an update occurred (tolerance around 0: relative = 1e-05; absolute = 1e-08)
+        was_updated = ~np.isclose(estimate_updates, 0.)  
+        
+        # Assign computed learning rates to the original DataFrame rows (except first row)
+        computational_var_df.loc[data.index, learning_rate_col] = learning_rate
+        computational_var_df.loc[data.index, estimate_updates_col] = estimate_updates
+        computational_var_df.loc[data.index, estimate_errors_col] = estimate_errors
+        computational_var_df.loc[data.index, was_update_cat] = was_updated
 
     return computational_var_df
 
 
 
-def behavioural_learning_rate_analysis(computational_var_df, change_point_indices_df, participant_str, condition_str, plot_learning_rate_by_ses = False):
+def behavioural_learning_rate_analysis(computational_var_df, change_point_indices_df, participant_str, condition_str, estimate_prior = None, plot_learning_rate_by_ses = False):
     """ 
     Function to calculate the behavioural learning rate based on participants estimates following each outcome presentation. Returns behavioural dataframe with new learning rate variable created. Option to plot learning rate across each task session. 
 
@@ -81,13 +83,14 @@ def behavioural_learning_rate_analysis(computational_var_df, change_point_indice
     - change_point_indices_df: pd.DataFrame, with columns 'cum_outcome_num', 'rel_time', and 'task_session', containing the indices and relative times of the change points for each session. Used to mark the change points on plots (*Note: Have removed identification of the first outcome of each task session as a new change point)
     - participant_str: string, participant identifier (number; set to 2 digits)
     - condition_str: string, identifier of condition order (set to 2 numbers) ** May need to change to denote actual condition in Adalearn VNS study **
+    - estimate_prior: float, the prior estimate to be used in the learning rate calculation. Reflects the value where the estimate slider is positioned at the start of each session (i.e. 0.5).
     - plot_learning_rate_by_ses: boolean, if true, will plot the calculated (and filtered) learning rate across each task session. Change points added as dotted horizontal lines for visualisation (default = false).
 
     Returns:
     - computational_var_df: pd.DataFrame, contains parsed data from json adalearn data file for select variables with the new addition of learning rate variable. Final data frame contains a "cleaned learning rate", which removes values that exceed set thresholds (-0.6 and +1.3, which were determined a priori from a pilot study conducted before Foucault & Meyniel, 2024. Thresholding used to to avoid aberrant learning rate values due to very small denominators (error: estimate - outcome)).      
     """
     # Implementing learning rate equation
-    computational_var_df = compute_learning_rate(computational_var_df, groupby_parameter = 'task_session', estimate_parameter='estimate') 
+    computational_var_df = compute_learning_rate(computational_var_df, estimate_parameter='estimate', estimate_prior=estimate_prior) 
 
     computational_var_df['cleaned_learning_rate_estimate'] = computational_var_df['learning_rate_estimate'].where((computational_var_df['learning_rate_estimate'] >= -0.6) & (computational_var_df['learning_rate_estimate'] < 1.3), float('nan'))
 
@@ -135,7 +138,7 @@ def behavioural_learning_rate_analysis(computational_var_df, change_point_indice
 
 
 
-def ideal_observer_learning_rate_analysis(computational_var_df, change_point_indices_df, participant_str, condition_str, plot_learning_rate_by_ses = False):
+def ideal_observer_learning_rate_analysis(computational_var_df, change_point_indices_df, participant_str, condition_str, estimate_prior = None, plot_learning_rate_by_ses = False):
     """ 
     Function to calculate the learning rate based on the ideal observer model estimates following each outcome presentation. Returns behavioural dataframe with new learning rate variable created. Option to plot learning rate across each task session. 
 
@@ -144,13 +147,14 @@ def ideal_observer_learning_rate_analysis(computational_var_df, change_point_ind
     - change_point_indices_df: pd.DataFrame, with columns 'cum_outcome_num', 'rel_time', and 'task_session', containing the indices and relative times of the change points for each session. Used to mark the change points on plots (*Note: Have removed identification of the first outcome of each task session as a new change point)
     - participant_str: string, participant identifier (number; set to 2 digits)
     - condition_str: string, identifier of condition order (set to 2 numbers) ** May need to change to denote actual condition in Adalearn VNS study **
+    - estimate_prior: float, the prior estimate to be used in the learning rate calculation. Reflects the value where the estimate slider is positioned at the start of each session (i.e. 0.5).
     - plot_learning_rate_by_ses: boolean, if true, will plot the calculated (and filtered) learning rate across each task session. Change points added as dotted horizontal lines for visualisation (default = false).
 
     Returns:
     - computational_var_df: pd.DataFrame, contains parsed data from json adalearn data file for select variables with the new addition of learning rate variable. Final data frame contains a "cleaned learning rate", which removes values that exceed set thresholds (-0.6 and +1.3, which were determined a priori from a pilot study conducted before Foucault & Meyniel, 2024. Thresholding used to to avoid aberrant learning rate values due to very small denominators (error: estimate - outcome)).      
     """
     # Implementing learning rate equation
-    computational_var_df = compute_learning_rate(computational_var_df, groupby_parameter = 'task_session', estimate_parameter='ideal_observer') 
+    computational_var_df = compute_learning_rate(computational_var_df, estimate_parameter='ideal_observer', estimate_prior=estimate_prior) 
 
     computational_var_df['cleaned_learning_rate_ideal_observer'] = computational_var_df['learning_rate_ideal_observer'].where((computational_var_df['learning_rate_ideal_observer'] >= -0.6) & (computational_var_df['learning_rate_ideal_observer'] < 1.3), float('nan'))
 
@@ -710,12 +714,22 @@ def behav_v_model_linear_analysis(computational_var_df, participant_str, conditi
     - behav_v_model_corr: float, correlation coefficient between the two specified behavioual/model variables.
     - behav_v_model_regress: dict, containing slope, intercept, r value, p value, and std error of the regression analysis between behavioural and model variables (if add_regression is True).
     """
+    # Get initial number of rows
+    initial_rows = len(computational_var_df)
+
     # Drop rows with missing values in the columns of interest
     cleaned_df = computational_var_df[[model_var, behav_var, "task_session"]].dropna()
-    
-    # Optionally exclude rows where the predictor variable is 0
+
+    # Print the number of rows removed due to missing values
+    removed_missing = initial_rows - len(cleaned_df)
+    print(f"Removed {removed_missing} rows due to missing values.")
+
+    # Optionally exclude rows where the behavioural variable shows no update (i.e.) value is 0).
     if exclude_zero:
-        cleaned_df = cleaned_df[cleaned_df[model_var] != 0]
+        before_zero_filter = len(cleaned_df)
+        cleaned_df = cleaned_df[cleaned_df[behav_var] != 0]
+        removed_zero = before_zero_filter - len(cleaned_df)
+        print(f"Removed {removed_zero} rows where {behav_var} was 0.")
     
     # Compute the correlation coefficient
     behav_v_model_corr = cleaned_df[model_var].corr(cleaned_df[behav_var])

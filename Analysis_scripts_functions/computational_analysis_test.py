@@ -13,21 +13,21 @@ from computational_analysis_functions import behavioural_learning_rate_analysis,
 
 from data_utility_functions import plot_session_behav_comp
 
-from participant_task_information import participant_str, condition_1_str, condition_2_str, P_C, P1_MIN, P1_MAX
+from participant_task_information import participant_str, condition_1_str, condition_2_str, P_C, P1_MIN, P1_MAX, ESTIMATE_PRIOR
 
 from behavioural_analysis_test import c1_behavioural_df,c1_computational_var_df, c1_change_point_indices, c2_behavioural_df, c2_computational_var_df, c2_change_point_indices
 
 
 
-c1_computational_var_df = behavioural_learning_rate_analysis(computational_var_df=c1_computational_var_df, change_point_indices_df=c1_change_point_indices, participant_str=participant_str, condition_str=condition_1_str, plot_learning_rate_by_ses=False)
+c1_computational_var_df = behavioural_learning_rate_analysis(computational_var_df=c1_computational_var_df, change_point_indices_df=c1_change_point_indices, participant_str=participant_str, condition_str=condition_1_str, estimate_prior=ESTIMATE_PRIOR, plot_learning_rate_by_ses=False)
 
-c2_computational_var_df = behavioural_learning_rate_analysis(computational_var_df=c2_computational_var_df, change_point_indices_df=c2_change_point_indices, participant_str=participant_str, condition_str=condition_2_str, plot_learning_rate_by_ses=False)
+c2_computational_var_df = behavioural_learning_rate_analysis(computational_var_df=c2_computational_var_df, change_point_indices_df=c2_change_point_indices, participant_str=participant_str, condition_str=condition_2_str, estimate_prior=ESTIMATE_PRIOR, plot_learning_rate_by_ses=False)
 
 
 
-c1_computational_var_df = ideal_observer_learning_rate_analysis(computational_var_df=c1_computational_var_df, change_point_indices_df=c1_change_point_indices, participant_str=participant_str, condition_str=condition_1_str, plot_learning_rate_by_ses=False)
+c1_computational_var_df = ideal_observer_learning_rate_analysis(computational_var_df=c1_computational_var_df, change_point_indices_df=c1_change_point_indices, participant_str=participant_str, condition_str=condition_1_str,                             estimate_prior=ESTIMATE_PRIOR, plot_learning_rate_by_ses=False)
 
-c2_computational_var_df = ideal_observer_learning_rate_analysis(computational_var_df=c2_computational_var_df, change_point_indices_df=c2_change_point_indices, participant_str=participant_str, condition_str=condition_2_str, plot_learning_rate_by_ses=False)
+c2_computational_var_df = ideal_observer_learning_rate_analysis(computational_var_df=c2_computational_var_df, change_point_indices_df=c2_change_point_indices, participant_str=participant_str, condition_str=condition_2_str, estimate_prior=ESTIMATE_PRIOR, plot_learning_rate_by_ses=False)
 
 
 
@@ -49,23 +49,21 @@ c2_computational_var_df, c2_surprise_cat_df = compute_surprise_from_observations
 
 
 
-c1_computational_var_df = compute_prior_conf_and_cpp_from_observations(participant_str=participant_str, condition_str=condition_1_str, computational_var_df=c1_computational_var_df, change_point_indices_df=c1_change_point_indices, p_c=P_C, p1_min=P1_MIN, p1_max=P1_MAX, estimate_type='mean', conf_type='prev-conf-pred', plot_distribution_mean=False, plot_prior_conf=False, plot_cpp=False)
+c1_computational_var_df = compute_prior_conf_and_cpp_from_observations(participant_str=participant_str, condition_str=condition_1_str, computational_var_df=c1_computational_var_df, change_point_indices_df=c1_change_point_indices, p_c=P_C, p1_min=P1_MIN, p1_max=P1_MAX, estimate_type='mean', conf_type='prev-conf', plot_distribution_mean=False, plot_prior_conf=False, plot_cpp=False)
 
-c2_computational_var_df = compute_prior_conf_and_cpp_from_observations(participant_str=participant_str, condition_str=condition_2_str, computational_var_df=c2_computational_var_df, change_point_indices_df=c2_change_point_indices, p_c=P_C, p1_min=P1_MIN, p1_max=P1_MAX, estimate_type='mean', conf_type='prev-conf-pred', plot_distribution_mean=False, plot_prior_conf=False, plot_cpp=False)
-
-
-
-
-c1_behav_v_model_estimate_corr, c1_behav_v_model_estimate_regress = behav_v_model_linear_analysis(computational_var_df=c1_computational_var_df, participant_str=participant_str, condition_str=condition_1_str, model_var='ideal_observer', behav_var='estimate', exclude_zero=False, plot_behav_v_model_scatter=True, add_regression=True)
-
-
-c2_behav_v_model_estimate_corr, c2_behav_v_model_estimate_regress = behav_v_model_linear_analysis(computational_var_df=c2_computational_var_df, participant_str=participant_str, condition_str=condition_2_str, model_var='ideal_observer', behav_var='estimate', exclude_zero=False, plot_behav_v_model_scatter=True, add_regression=True)
+c2_computational_var_df = compute_prior_conf_and_cpp_from_observations(participant_str=participant_str, condition_str=condition_2_str, computational_var_df=c2_computational_var_df, change_point_indices_df=c2_change_point_indices, p_c=P_C, p1_min=P1_MIN, p1_max=P1_MAX, estimate_type='mean', conf_type='prev-conf', plot_distribution_mean=False, plot_prior_conf=False, plot_cpp=False)
 
 
 
-c1_behav_v_model_lr_corr, c1_behav_v_model_lr_regress = behav_v_model_linear_analysis(computational_var_df=c1_computational_var_df, participant_str=participant_str, condition_str=condition_1_str, model_var='cleaned_learning_rate_ideal_observer', behav_var='cleaned_learning_rate_estimate', exclude_zero=False, plot_behav_v_model_scatter=True, add_regression=True)
+c1_behav_v_model_estimate_corr, c1_behav_v_model_estimate_regress = behav_v_model_linear_analysis(computational_var_df=c1_computational_var_df, participant_str=participant_str, condition_str=condition_1_str, model_var='ideal_observer', behav_var='estimate', exclude_zero=False, plot_behav_v_model_scatter=False, add_regression=True)
 
-c2_behav_v_model_lr_corr, c2_behav_v_model_lr_regress = behav_v_model_linear_analysis(computational_var_df=c2_computational_var_df, participant_str=participant_str, condition_str=condition_2_str, model_var='cleaned_learning_rate_ideal_observer', behav_var='cleaned_learning_rate_estimate', exclude_zero=False, plot_behav_v_model_scatter=True, add_regression=True)
+c2_behav_v_model_estimate_corr, c2_behav_v_model_estimate_regress = behav_v_model_linear_analysis(computational_var_df=c2_computational_var_df, participant_str=participant_str, condition_str=condition_2_str, model_var='ideal_observer', behav_var='estimate', exclude_zero=False, plot_behav_v_model_scatter=False, add_regression=True)
+
+
+
+c1_behav_v_model_lr_corr, c1_behav_v_model_lr_regress = behav_v_model_linear_analysis(computational_var_df=c1_computational_var_df, participant_str=participant_str, condition_str=condition_1_str, model_var='cleaned_learning_rate_ideal_observer', behav_var='cleaned_learning_rate_estimate', exclude_zero=True, plot_behav_v_model_scatter=False, add_regression=True)
+
+c2_behav_v_model_lr_corr, c2_behav_v_model_lr_regress = behav_v_model_linear_analysis(computational_var_df=c2_computational_var_df, participant_str=participant_str, condition_str=condition_2_str, model_var='cleaned_learning_rate_ideal_observer', behav_var='cleaned_learning_rate_estimate', exclude_zero=True, plot_behav_v_model_scatter=False, add_regression=True)
 
 
 
