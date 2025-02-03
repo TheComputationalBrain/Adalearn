@@ -2,6 +2,11 @@ import os
 import pandas as pd
 import numpy as np
 import sys
+from sklearn.preprocessing import StandardScaler
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import mean_squared_error
+from scipy.stats import pearsonr
+from scipy.stats import sem
 from scipy.stats import linregress
 import plotly.io as pio
 import plotly.graph_objects as go
@@ -777,3 +782,146 @@ def behav_v_model_linear_analysis(computational_var_df, participant_str, conditi
         fig.show()
     
     return behav_v_model_corr, behav_v_model_regress
+
+
+
+def uncertainty_on_learning_rate_participant_level(participant_str, condition_str, computational_var_df, n_bins = 6, parameter_estimate = 'estimate', exclude_zero = True, plot_corr_subplots = True):
+    """
+    Function to compute correlations and regression parameters for prior confidence and change point probability on learning rate. Returns analysis outputs and model parameters. 
+
+    Parameters:
+    - participant_str: string, participant identifier (number; set to 2 digits)
+    - condition_str: string, identifier of condition order (set to 2 numbers) ** May need to change to denote actual condition in Adalearn VNS study **
+    - computational_var_df: pd.DataFrame, contains parsed data from json adalearn data file for select variables to be used in/or provide context to model analysis.
+    - n_bins: float, number of bins the prior confidence variable shuld be split into. 
+    - parameter_estimate: string, column identifier of which parameter to use (can be 'estimate' for participants' estimates, or 'ideal_observer' for model estimates).
+    - exclude_zero: boolean, if true, will remove row in which no updates made (learning rate = 0) 
+    - plot_corr_subplots: boolean, if true, will plot the output of the correlations and linear regression weights assessing the association between parameters of uncertainty and learning rate. 
+
+    Returns:
+    - learning_rate_analysis_dict: dict, contains the a cleaned dataframe used for the analysis (with z-scores calculated for variables of interest), binned output and output coefficients of correlation and regression analysis.
+    """
+    # Calculating zscore for computational parameters used in analysis
+    scaler = StandardScaler()
+
+    computational_var_df[f'lr_zscore_{parameter_estimate}'] = scaler.fit_transform(computational_var_df[[f'cleaned_learning_rate_{parameter_estimate}']]).flatten()
+    computational_var_df['conf_zscore'] = scaler.fit_transform(computational_var_df[['prior_conf']]).flatten()
+
+    computational_var_df['cpp_zscore'] = scaler.fit_transform(computational_var_df[['cpp']]).flatten()
+
+    # Removing empty rows due to cleaning of learning rate
+    df_clean = computational_var_df.copy() 
+    df_clean = df_clean.dropna(subset=[f'lr_zscore_{parameter_estimate}'])
+
+    # Remove rows where no update was present
+    if exclude_zero:
+        before_zero_filter = len(df_clean)
+        df_clean = df_clean[df_clean[f'cleaned_learning_rate_{parameter_estimate}'] != 0]
+        removed_zero = before_zero_filter - len(df_clean)
+        print(f"Removed {removed_zero} rows where 'cleaned_learning_rate_{parameter_estimate}' was 0.")
+
+    # Correlation between parameters and learning rate
+    conf_lr_corr, _ = pearsonr(x = df_clean['conf_zscore'], y = df_clean[f'lr_zscore_{parameter_estimate}'])
+    cpp_lr_corr, _ = pearsonr(x = df_clean['cpp_zscore'], y = df_clean[f'lr_zscore_{parameter_estimate}'])
+
+    # Binned asscoiation between prior confidence and learning rate
+    n_bins = 6
+    _, bin_edges = pd.qcut(df_clean['conf_zscore'], n_bins, retbins=True)
+
+    binned_data = {'conf_avg': [], 'lr_avg': [], 'lr_sem': []}
+
+    for i in range(len(bin_edges) - 1):
+        mask = (df_clean['conf_zscore'] >= bin_edges[i]) & (df_clean['conf_zscore'] < bin_edges[i + 1])
+        bin_conf = df_clean['conf_zscore'][mask]
+        bin_lrs = df_clean[f'lr_zscore_{parameter_estimate}'][mask]
+            
+        # Calculate averages and SEM
+        if len(bin_conf) > 0:
+            binned_data['conf_avg'].append(np.mean(bin_conf))
+            binned_data['lr_avg'].append(np.mean(bin_lrs))
+            binned_data['lr_sem'].append(sem(bin_lrs))
+        
+    # Linear regression with prior confidence and change point probability predicting learning rate  
+    X = df_clean[['conf_zscore', 'cpp_zscore']]
+    y = df_clean[f'lr_zscore_{parameter_estimate}']
+
+    # Fit the linear regression model
+    model = LinearRegression()
+    model.fit(X, y)
+
+    #  Extract Beta estimates (coefficients) and intercept
+    coefficients = model.coef_
+    intercept = model.intercept_
+
+    # Estimate odel fit (R²)
+    r_squared = model.score(X, y)
+
+    # Calculate Mean Squared Error (MSE) and RMSE
+    y_pred = model.predict(X)
+    mse = mean_squared_error(y, y_pred)
+    rmse = np.sqrt(mse)
+
+    # Storing data in dictionary
+    learning_rate_analysis_dict = {'uncert_lr_part_df': df_clean, 'binned_conf_lr_dict': binned_data, 'conf_lr_corr': conf_lr_corr, 'cpp_lr_corr': cpp_lr_corr, 'reg_coefs': coefficients, 'reg_intercept': intercept, 'reg_rsquared': r_squared, 'reg_mse': mse, 'reg_rsme': rmse}
+
+    # Option to data across subplots
+    fig = make_subplots(
+        rows=2, 
+        cols=2, 
+        shared_xaxes=False, 
+        vertical_spacing=0.1, 
+        subplot_titles=(
+            "Correlation between learning rate and change point probability",
+            "Correlation between learning rate and prior confidence", 
+            "Regression weights for prior confidence and change point probability on learning rate", 
+            "Binned relationship between learning rate and prior confidence"
+        )
+    )
+
+    # Subplot 1.
+    fig.add_trace(go.Scatter(x=df_clean['cpp_zscore'], y=df_clean[f'lr_zscore_{parameter_estimate}'], mode='markers'), row=1, col=1
+    )
+
+    # Subplot 2.  
+    fig.add_trace(go.Scatter(x=df_clean['conf_zscore'], y=df_clean[f'lr_zscore_{parameter_estimate}'], mode='markers'), row=1, col=2)
+
+    # Subplot 3.
+    parameter_names = ['Prior Confidence (z-score)', 'Change Point Probability (z-score)']
+    fig.add_trace(go.Bar(x=parameter_names, y=coefficients), row=2, col=1)
+
+    # Subplot 4. 
+    fig.add_trace(go.Scatter(
+        x=binned_data['conf_avg'],
+        y=binned_data['lr_avg'],
+        mode='markers',
+        name='Average learning rate',
+        error_y=dict(
+            type='data',
+            array=binned_data['lr_sem'],
+            visible=True
+        )
+    ), row=2, col=2)
+
+    fig.update_layout(
+        title=f"Association between computationally-derived parameters and learning rate for participant {participant_str} in condition {condition_str}",
+        title_x=0.5,
+        title_font=dict(size=16, family="Arial"),
+        height=950,
+        width=1800,
+        showlegend=False,
+        margin=dict(l=50, r=50, t=50, b=50),
+        hovermode="closest"
+    )
+
+    fig.update_xaxes(title_text="Change Point Probability (z-score)", row=1, col=1)
+    fig.update_xaxes(title_text="Prior Confidence (z-score)", row=1, col=2)
+    fig.update_xaxes(title_text="Prior Confidence (z-score)", row=2, col=2)
+
+    fig.update_yaxes(title_text="Learning Rate (z-score)", row=1, col=1)
+    fig.update_yaxes(title_text="Learning Rate (z-score)", row=1, col=2)
+    fig.update_yaxes(title_text="Regression Coefficient", row=2, col=1)
+    fig.update_yaxes(title_text="Learning Rate Average (z-score)", row=2, col=2)
+
+    fig.show()
+
+    return learning_rate_analysis_dict

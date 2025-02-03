@@ -9,7 +9,7 @@ import plotly.graph_objects as go
 import plotly.express as px
 pio.renderers.default='browser'
 
-from computational_analysis_functions import behavioural_learning_rate_analysis, ideal_observer_learning_rate_analysis,learning_rate_by_change_point, compute_surprise_from_observations, compute_prior_conf_and_cpp_from_observations, behav_v_model_linear_analysis
+from computational_analysis_functions import behavioural_learning_rate_analysis, ideal_observer_learning_rate_analysis,learning_rate_by_change_point, compute_surprise_from_observations, compute_prior_conf_and_cpp_from_observations, behav_v_model_linear_analysis, uncertainty_on_learning_rate_participant_level
 
 from data_utility_functions import plot_session_behav_comp
 
@@ -67,6 +67,6 @@ c2_behav_v_model_lr_corr, c2_behav_v_model_lr_regress = behav_v_model_linear_ana
 
 
 
-plot_session_behav_comp(participant_str=participant_str, condition_str=condition_1_str, behavioural_df=c1_behavioural_df, computational_df=c1_computational_var_df, change_point_indices=c1_change_point_indices, task_session=1)
+c1_learning_rate_analysis_dict = uncertainty_on_learning_rate_participant_level(participant_str=participant_str, condition_str=condition_1_str, computational_var_df=c1_computational_var_df, n_bins=6, parameter_estimate='estimate', exclude_zero=True, plot_corr_subplots=True)
 
-plot_session_behav_comp(participant_str=participant_str, condition_str=condition_2_str, behavioural_df=c2_behavioural_df, computational_df=c2_computational_var_df, change_point_indices=c2_change_point_indices, task_session=1)
+c2_learning_rate_analysis_dict = uncertainty_on_learning_rate_participant_level(participant_str=participant_str, condition_str=condition_2_str, computational_var_df=c2_computational_var_df, n_bins=6, parameter_estimate='estimate', exclude_zero=True, plot_corr_subplots=True)
