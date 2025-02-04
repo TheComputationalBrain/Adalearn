@@ -865,63 +865,64 @@ def uncertainty_on_learning_rate_participant_level(participant_str, condition_st
     learning_rate_analysis_dict = {'uncert_lr_part_df': df_clean, 'binned_conf_lr_dict': binned_data, 'conf_lr_corr': conf_lr_corr, 'cpp_lr_corr': cpp_lr_corr, 'reg_coefs': coefficients, 'reg_intercept': intercept, 'reg_rsquared': r_squared, 'reg_mse': mse, 'reg_rsme': rmse}
 
     # Option to data across subplots
-    fig = make_subplots(
-        rows=2, 
-        cols=2, 
-        shared_xaxes=False, 
-        vertical_spacing=0.1, 
-        subplot_titles=(
-            "Correlation between learning rate and change point probability",
-            "Correlation between learning rate and prior confidence", 
-            "Regression weights for prior confidence and change point probability on learning rate", 
-            "Binned relationship between learning rate and prior confidence"
+    if plot_corr_subplots:
+        fig = make_subplots(
+            rows=2, 
+            cols=2, 
+            shared_xaxes=False, 
+            vertical_spacing=0.1, 
+            subplot_titles=(
+                "Correlation between learning rate and change point probability",
+                "Correlation between learning rate and prior confidence", 
+                "Regression weights for prior confidence and change point probability on learning rate", 
+                "Binned relationship between learning rate and prior confidence"
+            )
         )
-    )
 
-    # Subplot 1.
-    fig.add_trace(go.Scatter(x=df_clean['cpp_zscore'], y=df_clean[f'lr_zscore_{parameter_estimate}'], mode='markers'), row=1, col=1
-    )
-
-    # Subplot 2.  
-    fig.add_trace(go.Scatter(x=df_clean['conf_zscore'], y=df_clean[f'lr_zscore_{parameter_estimate}'], mode='markers'), row=1, col=2)
-
-    # Subplot 3.
-    parameter_names = ['Prior Confidence (z-score)', 'Change Point Probability (z-score)']
-    fig.add_trace(go.Bar(x=parameter_names, y=coefficients), row=2, col=1)
-
-    # Subplot 4. 
-    fig.add_trace(go.Scatter(
-        x=binned_data['conf_avg'],
-        y=binned_data['lr_avg'],
-        mode='markers',
-        name='Average learning rate',
-        error_y=dict(
-            type='data',
-            array=binned_data['lr_sem'],
-            visible=True
+        # Subplot 1.
+        fig.add_trace(go.Scatter(x=df_clean['cpp_zscore'], y=df_clean[f'lr_zscore_{parameter_estimate}'], mode='markers'), row=1, col=1
         )
-    ), row=2, col=2)
 
-    fig.update_layout(
-        title=f"Association between computationally-derived parameters and learning rate for participant {participant_str} in condition {condition_str}",
-        title_x=0.5,
-        title_font=dict(size=16, family="Arial"),
-        height=950,
-        width=1800,
-        showlegend=False,
-        margin=dict(l=50, r=50, t=50, b=50),
-        hovermode="closest"
-    )
+        # Subplot 2.  
+        fig.add_trace(go.Scatter(x=df_clean['conf_zscore'], y=df_clean[f'lr_zscore_{parameter_estimate}'], mode='markers'), row=1, col=2)
 
-    fig.update_xaxes(title_text="Change Point Probability (z-score)", row=1, col=1)
-    fig.update_xaxes(title_text="Prior Confidence (z-score)", row=1, col=2)
-    fig.update_xaxes(title_text="Prior Confidence (z-score)", row=2, col=2)
+        # Subplot 3.
+        parameter_names = ['Prior Confidence (z-score)', 'Change Point Probability (z-score)']
+        fig.add_trace(go.Bar(x=parameter_names, y=coefficients), row=2, col=1)
 
-    fig.update_yaxes(title_text="Learning Rate (z-score)", row=1, col=1)
-    fig.update_yaxes(title_text="Learning Rate (z-score)", row=1, col=2)
-    fig.update_yaxes(title_text="Regression Coefficient", row=2, col=1)
-    fig.update_yaxes(title_text="Learning Rate Average (z-score)", row=2, col=2)
+        # Subplot 4. 
+        fig.add_trace(go.Scatter(
+            x=binned_data['conf_avg'],
+            y=binned_data['lr_avg'],
+            mode='markers',
+            name='Average learning rate',
+            error_y=dict(
+                type='data',
+                array=binned_data['lr_sem'],
+                visible=True
+            )
+        ), row=2, col=2)
 
-    fig.show()
+        fig.update_layout(
+            title=f"Association between computationally-derived parameters and learning rate for participant {participant_str} in condition {condition_str}",
+            title_x=0.5,
+            title_font=dict(size=16, family="Arial"),
+            height=950,
+            width=1800,
+            showlegend=False,
+            margin=dict(l=50, r=50, t=50, b=50),
+            hovermode="closest"
+        )
+
+        fig.update_xaxes(title_text="Change Point Probability (z-score)", row=1, col=1)
+        fig.update_xaxes(title_text="Prior Confidence (z-score)", row=1, col=2)
+        fig.update_xaxes(title_text="Prior Confidence (z-score)", row=2, col=2)
+
+        fig.update_yaxes(title_text="Learning Rate (z-score)", row=1, col=1)
+        fig.update_yaxes(title_text="Learning Rate (z-score)", row=1, col=2)
+        fig.update_yaxes(title_text="Regression Coefficient", row=2, col=1)
+        fig.update_yaxes(title_text="Learning Rate Average (z-score)", row=2, col=2)
+
+        fig.show()
 
     return learning_rate_analysis_dict
