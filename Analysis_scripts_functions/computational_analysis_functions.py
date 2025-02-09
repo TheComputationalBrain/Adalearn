@@ -136,6 +136,11 @@ def behavioural_learning_rate_analysis(computational_var_df, change_point_indice
         for i in range(1, len(unique_sessions)+1):
             fig.update_yaxes(title_text='Learning Rate', row=i, col=1)
 
+        # Save the figure to the desktop
+        desktop_path = os.path.join(os.path.expanduser("~"), "Desktop")
+        file_name = f"sub-{participant_str}_ses-{condition_str}_behav-learning-rate-by-task-session.png"
+        fig.write_image(os.path.join(desktop_path, file_name))
+
         fig.show()
 
     
@@ -198,6 +203,11 @@ def ideal_observer_learning_rate_analysis(computational_var_df, change_point_ind
 
         for i in range(1, len(unique_sessions)+1):
             fig.update_yaxes(title_text='Learning Rate', row=i, col=1)
+
+        # Save the figure to the desktop
+        desktop_path = os.path.join(os.path.expanduser("~"), "Desktop")
+        file_name = f"sub-{participant_str}_ses-{condition_str}_model-learning-rate-by-task-session.png"
+        fig.write_image(os.path.join(desktop_path, file_name))
 
         fig.show()
 
@@ -268,28 +278,7 @@ def learning_rate_by_change_point(computational_var_df, change_point_indices,par
 
     # Option to plot averaged behavioural learning rate in relation to change points 
     if plot_learning_rate_by_cp:
-        fig = make_subplots(rows=2, cols=1, shared_xaxes=True, vertical_spacing=0.1, subplot_titles=("Individual Learning Rates", "Average Learning Rate"))
-
-        num_traces = 0
-
-        # Add individual learning rates
-        for idx, row in change_point_indices.iterrows():
-            session_data = filtered_learning_rate_by_cp[(filtered_learning_rate_by_cp['task_session'] == row['task_session']) & 
-                                                    (filtered_learning_rate_by_cp['outcome_num'] == row['outcome_num'])]
-
-            if len(session_data) == (pre + post + 1):
-                num_traces += 1
-                fig.add_trace(go.Scatter(
-                    x=session_data['relative_position'],
-                    y=session_data[learning_rate_col],
-                    mode='lines',
-                    name=f'Trace {num_traces}',
-                    line=dict(width=1),
-                    opacity=0.5,
-                    showlegend = False
-                ), row=1, col=1)
-
-        print(f"Total number of traces added to the individual plot: {num_traces}")
+        fig = go.Figure()
 
         # Add mean learning rate 
         fig.add_trace(go.Scatter(
@@ -298,7 +287,8 @@ def learning_rate_by_change_point(computational_var_df, change_point_indices,par
             mode='lines',
             name=learning_rate_col,
             line=dict(color='blue')
-        ), row=2, col=1)
+        ),
+        )
 
         # Add standard error of the mean as a shaded area around the mean
         fig.add_trace(go.Scatter(
@@ -309,40 +299,34 @@ def learning_rate_by_change_point(computational_var_df, change_point_indices,par
             line=dict(color='rgba(255,255,255,0)'),
             hoverinfo="skip",
             showlegend=False
-        ), row=2, col=1)
+        ),
+        )
 
         # Add dashed line at change point
-        for i in [1, 2]:
-            fig.add_shape(type="line",
-                x0=0, y0=-5, x1=0, y1=5,
-                line=dict(
-                    color="Red",
-                    width=2,
-                    dash="dash",
-                ),
-                row=i, col=1
-            )
+        fig.add_shape(type="line",
+            x0=0, y0=-0.1, x1=0, y1=0.5,
+            line=dict(
+                color="Red",
+                width=2,
+                dash="dash",
+            ),
+        )
 
         # Update layout
         fig.update_layout(
             title=f"Learning rate relative to change points for participant {participant_str} in condition {condition_str}",
-            xaxis2_title="Trial number after change point",
-            yaxis1_title="Learning Rate (Individual)",
-            yaxis2_title="Learning Rate (Average)",
-            xaxis1=dict(
-                tickmode='linear',
-                dtick=1,
-                tickvals=[i for i in range(1, post + 1)]
-            ),
-            xaxis2=dict(
-                tickmode='linear',
-                dtick=1,
-                tickvals=[i for i in range(1, post + 1)]
-            ),
-            yaxis2=dict(
+            xaxis_title='Outcome relative to change point',
+            yaxis_title='Learning rate',
+            yaxis=dict(
                 range=[averaged_learning_rate_by_cp['mean'].min() - averaged_learning_rate_by_cp['sem'].max(), averaged_learning_rate_by_cp['mean'].max() + averaged_learning_rate_by_cp['sem'].max()]
             ),
+            showlegend=False
         )
+
+        # Save the figure to the desktop
+        desktop_path = os.path.join(os.path.expanduser("~"), "Desktop")
+        file_name = f"sub-{participant_str}_ses-{condition_str}_{learning_rate_parameter}-learning-rate-by-change-point.png"
+        fig.write_image(os.path.join(desktop_path, file_name))
 
         fig.show()
 
@@ -472,6 +456,11 @@ def compute_surprise_from_observations(participant_str, condition_str, computati
 
         fig.update_layout(height=300 * len(unique_sessions), title_text=f"Surprise across task sessions for participant {participant_str} in condition {condition_str}", showlegend=False)
 
+        # Save the figure to the desktop
+        desktop_path = os.path.join(os.path.expanduser("~"), "Desktop")
+        file_name = f"sub-{participant_str}_ses-{condition_str}_surprise-by-task-session.png"
+        fig.write_image(os.path.join(desktop_path, file_name))
+
         fig.show()
 
     if plot_posterior_conf:
@@ -495,6 +484,11 @@ def compute_surprise_from_observations(participant_str, condition_str, computati
                 )  
 
         fig.update_layout(height=300 * len(unique_task_sessions), title_text=f"Posterior distribution SD ('confidence') across task sessions for participant {participant_str} in condition {condition_str}", showlegend=False)
+
+        # Save the figure to the desktop
+        desktop_path = os.path.join(os.path.expanduser("~"), "Desktop")
+        file_name = f"sub-{participant_str}_ses-{condition_str}_post-conf-by-task-session.png"
+        fig.write_image(os.path.join(desktop_path, file_name))
 
         fig.show()
 
@@ -520,6 +514,11 @@ def compute_surprise_from_observations(participant_str, condition_str, computati
                 )  
 
         fig.update_layout(height=300 * len(unique_task_sessions), title_text=f"Posterior distribution mean across task sessions for participant {participant_str} in condition {condition_str}", showlegend=False)
+
+        # Save the figure to the desktop
+        desktop_path = os.path.join(os.path.expanduser("~"), "Desktop")
+        file_name = f"sub-{participant_str}_ses-{condition_str}_post-dist-by-task-session.png"
+        fig.write_image(os.path.join(desktop_path, file_name))
 
         fig.show()
 
@@ -645,6 +644,11 @@ def compute_prior_conf_and_cpp_from_observations(participant_str, condition_str,
 
         fig.update_layout(height=300 * len(unique_sessions), title_text=f"Prior distribution mean across task sessions for participant {participant_str} in condition {condition_str}", showlegend=False)
 
+        # Save the figure to the desktop
+        desktop_path = os.path.join(os.path.expanduser("~"), "Desktop")
+        file_name = f"sub-{participant_str}_ses-{condition_str}_prior-dist-by-task-session.png"
+        fig.write_image(os.path.join(desktop_path, file_name))
+
         fig.show()
 
 
@@ -670,6 +674,11 @@ def compute_prior_conf_and_cpp_from_observations(participant_str, condition_str,
 
         fig.update_layout(height=300 * len(unique_sessions), title_text=f"Prior confidence across task sessions for participant {participant_str} in condition {condition_str}", showlegend=False)
 
+        # Save the figure to the desktop
+        desktop_path = os.path.join(os.path.expanduser("~"), "Desktop")
+        file_name = f"sub-{participant_str}_ses-{condition_str}_prior-conf-by-task-session.png"
+        fig.write_image(os.path.join(desktop_path, file_name))
+
         fig.show()
 
     if plot_cpp:
@@ -693,6 +702,11 @@ def compute_prior_conf_and_cpp_from_observations(participant_str, condition_str,
                 )  
 
         fig.update_layout(height=300 * len(unique_sessions), title_text=f"Change point probability across task sessions for participant {participant_str} in condition {condition_str}", showlegend=False)
+
+        # Save the figure to the desktop
+        desktop_path = os.path.join(os.path.expanduser("~"), "Desktop")
+        file_name = f"sub-{participant_str}_ses-{condition_str}_cpp-by-task-session.png"
+        fig.write_image(os.path.join(desktop_path, file_name))
 
         fig.show()
 
@@ -735,6 +749,10 @@ def behav_v_model_linear_analysis(computational_var_df, participant_str, conditi
         cleaned_df = cleaned_df[cleaned_df[behav_var] != 0]
         removed_zero = before_zero_filter - len(cleaned_df)
         print(f"Removed {removed_zero} rows where {behav_var} was 0.")
+        title = "-(no-update-removed)"
+    else:
+        title = "-(all-outcomes)"
+
     
     # Compute the correlation coefficient
     behav_v_model_corr = cleaned_df[model_var].corr(cleaned_df[behav_var])
@@ -773,12 +791,44 @@ def behav_v_model_linear_analysis(computational_var_df, participant_str, conditi
             y_vals = behav_v_model_regress["slope"] * x_vals + behav_v_model_regress["intercept"]
             fig.add_scatter(x=x_vals, y=y_vals, mode="lines", name="Regression Line")
 
+
+        # Create annotation text
+        annotation_text = f"r = {behav_v_model_corr:.2f}"
+        if add_regression:
+            annotation_text += (
+                f"<br>Slope = {behav_v_model_regress['slope']:.2f}"
+                f"<br>Intercept = {behav_v_model_regress['intercept']:.2f}"
+                f"<br>p-value = {behav_v_model_regress['p_value']:.3f}"
+            )
+
+        # Add annotation box to the plot
+        fig.add_annotation(
+            x=0.05,  # Adjust position as needed
+            y=0.95,
+            xref="paper",
+            yref="paper",
+            text=annotation_text,
+            showarrow=False,
+            font=dict(size=14),
+            bordercolor="black",
+            borderwidth=1,
+            borderpad=4,
+            bgcolor="white",
+            opacity=0.8
+        )
+
         fig.update_layout(
             title_text=f"Scatterplot of {behav_var} derived from behavioural and ideal observer for participant {participant_str} in condition {condition_str}",
             xaxis_title=model_var,
             yaxis_title=behav_var,
             showlegend=True
         )
+
+        # Save the figure to the desktop
+        desktop_path = os.path.join(os.path.expanduser("~"), "Desktop")
+        file_name = f"sub-{participant_str}_ses-{condition_str}_linear-analysis-of-{behav_var}{title}.png"
+        fig.write_image(os.path.join(desktop_path, file_name))
+
         fig.show()
     
     return behav_v_model_corr, behav_v_model_regress
@@ -819,6 +869,9 @@ def uncertainty_on_learning_rate_participant_level(participant_str, condition_st
         df_clean = df_clean[df_clean[f'cleaned_learning_rate_{parameter_estimate}'] != 0]
         removed_zero = before_zero_filter - len(df_clean)
         print(f"Removed {removed_zero} rows where 'cleaned_learning_rate_{parameter_estimate}' was 0.")
+        title = "-(no-update-removed)"
+    else:
+        title = "-(all-outcomes)"
 
     # Correlation between parameters and learning rate
     conf_lr_corr, _ = pearsonr(x = df_clean['conf_zscore'], y = df_clean[f'lr_zscore_{parameter_estimate}'])
@@ -922,6 +975,11 @@ def uncertainty_on_learning_rate_participant_level(participant_str, condition_st
         fig.update_yaxes(title_text="Learning Rate (z-score)", row=1, col=2)
         fig.update_yaxes(title_text="Regression Coefficient", row=2, col=1)
         fig.update_yaxes(title_text="Learning Rate Average (z-score)", row=2, col=2)
+
+        # Save the figure to the desktop
+        desktop_path = os.path.join(os.path.expanduser("~"), "Desktop")
+        file_name = f"sub-{participant_str}_ses-{condition_str}_uncertainty-parameters-on-learning-rate{title}.png"
+        fig.write_image(os.path.join(desktop_path, file_name))
 
         fig.show()
 

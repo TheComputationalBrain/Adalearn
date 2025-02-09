@@ -424,6 +424,11 @@ def load_and_process_pupil_data(directory_path, participant_str, list_subject_se
                         title_text=f'Preprocessed pupil diameter and x/y position across task sessions for participant {participant_str} in condition {condition_str}',
                         xaxis_title='Time (s)',
                         yaxis_title='Pupil Diameter (a.u)')
+        
+        # Save the figure to the desktop
+        desktop_path = os.path.join(os.path.expanduser("~"), "Desktop")
+        file_name = f"sub-{participant_str}_ses-{condition_str}_pupil-interpolation-by-task-session.png"
+        fig.write_image(os.path.join(desktop_path, file_name))
 
         fig.show()
 
@@ -639,20 +644,17 @@ def all_outcome_pupil_epochs(directory_path, participant_str, list_subject_selec
 
         fig_pupil_avg.add_vline(x=0, line_width=3, line_dash="dash", line_color="black", opacity=0.5)
 
-        #for col in outcome_epoched_pupil_df.columns[:1499]:
-        #    fig_pupil_avg.add_trace(go.Scatter(
-        #    x=outcome_epoched_pupil_df['time'],
-        #    y=outcome_epoched_pupil_df[col],  
-        #    mode='lines',
-        #    line=dict(color='rgba(0, 0, 255, 0.1)', dash='dot'),
-        #    showlegend=False
-        #))
 
         fig_pupil_avg.update_layout(
             title=title,
             xaxis_title='Time (s)',
             yaxis_title='Pupil diameter (z-score)'
-        )       
+        )
+
+        # Save the figure to the desktop
+        desktop_path = os.path.join(os.path.expanduser("~"), "Desktop")
+        file_name = f"sub-{participant_str}_ses-{condition_str}_pupil-all-outcomes.png"
+        fig_pupil_avg.write_image(os.path.join(desktop_path, file_name))       
 
         fig_pupil_avg.show()
 
@@ -670,33 +672,15 @@ def all_outcome_pupil_epochs(directory_path, participant_str, list_subject_selec
 
         fig.update_layout(title=title)
 
+        # Save the figure to the desktop
+        desktop_path = os.path.join(os.path.expanduser("~"), "Desktop")
+        file_name = f"sub-{participant_str}_ses-{condition_str}_pupil-all-outcomes-heatmap.png"
+        fig.write_image(os.path.join(desktop_path, file_name))  
+
         fig.show()
 
     return outcome_onsets, outcome_nums, outcome_epoched_pupil_df, outcome_blink_ratio_df, outcome_epochs_to_remove
 
-
-def average_pupil_diameter_calculation(outcome_epoched_pupil_df, start_time = 0, end_time = 1.2):
-    """
-    Function to calculate the average diameter of the pupil across a defined period after outcome presentation. 
-
-    Parameters:
-    - outcome_epoched_pupil_df: pd.DataFrame, containing transposed epoched data (each column represents one epoch), the calculated mean, standard deviation and sem across all outcome defined epochs. Includes the timestamp. (Note* Does not contain the epochs removed due to excessive interpolation).
-    - start_time: float, the start time of the period after outcome presentation to calculate the average pupil diameter. (Default is 0).
-    - end_time: float, the end time of the period after outcome presentation to calculate the average pupil diameter. (Default is 1.2).
-
-    Returns:
-    - pupil_means: pd.Series, containing the average pupil diameter for each epoch across the defined window.
-    """
-    # Filter rows of the epoched pupil dataframe to only include the rows that are within the time range
-    time_filtered_df = outcome_epoched_pupil_df[(outcome_epoched_pupil_df['time'] >= start_time) & (outcome_epoched_pupil_df['time'] <= end_time)]
-
-    # Remove the computed statistics
-    data_columns = outcome_epoched_pupil_df.columns.difference(['mean', 'std', 'sem', 'time'])
-
-    # Calculate the mean for each column in the filtered rows
-    pupil_means = time_filtered_df[data_columns].mean()
-
-    return pupil_means
 
 
 def outcome_colour_pupil_epochs(directory_path, participant_str, list_subject_selected, condition_str, condition_task_sessions, from_session, to_session, pupil_trig_df, baseline_cor = [-0.2, 0], select_eye = True, remove_epochs = True, plot_pupil_by_colour_response = False):
@@ -816,7 +800,12 @@ def outcome_colour_pupil_epochs(directory_path, participant_str, list_subject_se
             title=f'Baseline corrected pupil response to each outcome colour presentation for participant {participant_str} in condition {condition_str} (Mean +/- SEM)',
             xaxis_title='Time (s)',
             yaxis_title='Pupil diameter (z-score)'
-        )       
+        )
+
+        # Save the figure to the desktop
+        desktop_path = os.path.join(os.path.expanduser("~"), "Desktop")
+        file_name = f"sub-{participant_str}_ses-{condition_str}_pupil-by-colour.png"
+        fig_pupil_avg.write_image(os.path.join(desktop_path, file_name))         
 
         fig_pupil_avg.show()
 
@@ -935,14 +924,19 @@ def change_point_pupil_epochs(directory_path, participant_str, list_subject_sele
             title=f'Baseline corrected right pupil response epoched around change points for participant {participant_str} in condition {condition_str} (Mean +/- SEM)',
             xaxis_title='Time (s)',
             yaxis_title='Pupil diameter (z-score)'
-        )       
+        )
+
+        # Save the figure to the desktop
+        desktop_path = os.path.join(os.path.expanduser("~"), "Desktop")
+        file_name = f"sub-{participant_str}_ses-{condition_str}_pupil-by-change-point.png"
+        fig_epoch_avg.write_image(os.path.join(desktop_path, file_name))         
 
         fig_epoch_avg.show()
 
     return change_point_onsets, change_point_nums, epoched_pupil_cp_df, blink_ratio_cp_df, cp_epochs_to_remove
 
 
-def comp_var_pupil_quartile_epochs(directory_path, participant_str, list_subject_selected, condition_str, condition_task_sessions, from_session, to_session, pupil_trig_df, computational_var_df, baseline_cor = [-0.2, 0], variable_cat = None, select_eye = True, remove_epochs = True, plot_pupil_by_surprise=True):
+def comp_var_pupil_quartile_epochs(directory_path, participant_str, list_subject_selected, condition_str, condition_task_sessions, from_session, to_session, pupil_trig_df, computational_var_df, baseline_cor = [-0.2, 0], variable_cat = None, select_eye = True, remove_epochs = True, plot_pupil_by_quartile=True):
     """"
      Function to preprocess and then compute epoched pupil diameter response around separate quartiles of a computational variable of interest. Preprocessing taken from load_and_process_pupil_data method. Calculates the mean, std and sem  across each identified epoch for all task sessions. In addition to analysising the data around the computational variable, there is an option to plot the mean and sem derived from all instances across all task sessions. Parameters defining the preprocessing of the pupil data should be modified in the process_pupil_data function.
 
@@ -960,7 +954,7 @@ def comp_var_pupil_quartile_epochs(directory_path, participant_str, list_subject
     - variable_cat: string, column header of the categorized computational variable of interest. 
     - select_eye: boolean, if true, will use a predfined eye (default = right). If false will run a function to identify the best eye (one with the least nan values) and collect data using that eye (default = True)
     - remove_epochs: boolean, parameter determining whether epochs with an excessive blink ratio should be removed. (Default = True)
-    - plot_pupil_by_surprise: boolean, option to plot the mean and standard deviation across epochs using Plotly. (Default = True). 
+    - plot_pupil_by_quartile: boolean, option to plot the mean and standard deviation across epochs using Plotly. (Default = True). 
 
     Returns:
     - first_quartile_onsets: dict, contains the timetamps of outcomes within the first quartile for the computational variable of interest. Keys are task session and values are timestamps within that task session. 
@@ -1035,7 +1029,7 @@ def comp_var_pupil_quartile_epochs(directory_path, participant_str, list_subject
     preprocessed_pupil_fourth_quart_df, pupil_trig_fourth_quart_df, pupil_ses_fourth_quart_df, blink_fourth_quart_df, epoched_pupil_fourth_quart_df, fourth_quart_blink_ratio_df, fourth_quart_epochs_to_remove = load_and_process_pupil_data(directory_path=directory_path, participant_str=participant_str, list_subject_selected=list_subject_selected, condition_str=condition_str, condition_task_sessions=condition_task_sessions, from_session=from_session, to_session=to_session, dict_onsets=fourth_quartile_onsets, dict_num=fourth_quartile_nums, window_start_before=0.2, window_end_after=1.4, baseline_cor=baseline_cor, lpf=[5],session_list=fourth_quart_ses_list, select_eye=select_eye, remove_epochs=remove_epochs)
 
     # Option to plot pupil response of the pupil diameter timelocked to quartiles of computational variable of interest
-    if plot_pupil_by_surprise:
+    if plot_pupil_by_quartile:
               
         fig_epoch_avg = go.Figure()
 
@@ -1150,122 +1144,13 @@ def comp_var_pupil_quartile_epochs(directory_path, participant_str, list_subject
             title=f'Baseline corrected right pupil response epoched around outcomes relating to {variable_cat}, split by quartile, for participant {participant_str} in condition {condition_str} (Mean +/- SEM)',
             xaxis_title='Time (s)',
             yaxis_title='Pupil diameter (z-score)'
-        )       
+        )
+
+        # Save the figure to the desktop
+        desktop_path = os.path.join(os.path.expanduser("~"), "Desktop")
+        file_name = f"sub-{participant_str}_ses-{condition_str}_pupil-by{variable_cat}.png"
+        fig_epoch_avg.write_image(os.path.join(desktop_path, file_name))         
 
         fig_epoch_avg.show()
 
     return first_quartile_onsets, first_quartile_nums, epoched_pupil_first_quart_df, first_quart_blink_ratio_df, first_quart_epochs_to_remove, second_quartile_onsets, second_quartile_nums, epoched_pupil_second_quart_df, second_quart_blink_ratio_df, second_quart_epochs_to_remove, third_quartile_onsets, third_quartile_nums, epoched_pupil_third_quart_df, third_quart_blink_ratio_df, third_quart_epochs_to_remove, fourth_quartile_onsets, fourth_quartile_nums, epoched_pupil_fourth_quart_df, fourth_quart_blink_ratio_df, fourth_quart_epochs_to_remove
-
-
-
-def pupil_change_point_categories(directory_path, participant_str, list_subject_selected, condition_str, condition_task_sessions, from_session, to_session, pupil_trig_df, change_point_indices, baseline_cor = [-0.2, 0], select_eye = True, remove_epochs = True, plot_pupil_by_cp_cat=True):
-    """
-    To complete.....
-    """
-     # Filter across change point category
-    non_obvious_cp = change_point_indices[change_point_indices['change_point_cat'] == 'non-obvious'].copy()
-    obvious_cp = change_point_indices[change_point_indices['change_point_cat'] == 'obvious'].copy()
-    
-    
-    # Align change point category indices and pupil data
-    pupil_by_non_obvious_cp = align_pupil_to_events(pupil_trig_df=pupil_trig_df, event_df=non_obvious_cp, to_session=to_session, print_event_df_shape=True)
-    pupil_by_obvious_cp = align_pupil_to_events(pupil_trig_df=pupil_trig_df, event_df=obvious_cp, to_session=to_session, print_event_df_shape=True)
-   
-
-    # Creating dictionaries
-    non_obvious_cp_onsets, non_obvious_cp_nums = create_pupil_epoch_dicts(pupil_by_non_obvious_cp)
-    obvious_cp_onsets, obvious_cp_nums = create_pupil_epoch_dicts(pupil_by_obvious_cp)
-   
-
-    # Checking the number of outcomes in each change point category
-    #print(f"Condition {condition_str}:")
-    #for session, events in non_obvious_cp_nums.items():
-    #  print(f"In task session {session} there are {len(events)} outcomes in the first quartile") 
-
-    #print(f"Condition {condition_str}:")
-    #for session, events in obvious_cp_nums.items():
-    #  print(f"In task session {session} there are {len(events)} outcomes in the second quartile") 
-
-
-    # Generating session lists for events within each quartile
-    non_obvious_ses_list = list(non_obvious_cp_onsets.keys())
-    obvious_ses_list = list(obvious_cp_onsets.keys())
-   
-
-    # Generating pupil response around observations for the variable of interest 
-    print("Analysing non-obvious change points. Processing...") 
-    preprocessed_pupil_non_obvious_df, pupil_trig_non_obvious_df, pupil_ses_non_obvious_df, blink_non_obvious_df, epoched_pupil_non_obvious_df, non_obvious_blink_ratio_df, non_obvious_epochs_to_remove = load_and_process_pupil_data(directory_path=directory_path, participant_str=participant_str, list_subject_selected=list_subject_selected, condition_str=condition_str, condition_task_sessions=condition_task_sessions, from_session=from_session, to_session=to_session, dict_onsets=non_obvious_cp_onsets, dict_num=non_obvious_cp_nums, window_start_before=0.2, window_end_after=1.4, baseline_cor=baseline_cor, lpf=[5], session_list=non_obvious_ses_list, select_eye=select_eye, remove_epochs=remove_epochs)
-    print("Analysing obvious change points. Processing...") 
-    preprocessed_pupil_obvious_df, pupil_trig_obvious_df, pupil_ses_obvious_df, blink_obvious_df, epoched_pupil_obvious_df, obvious_blink_ratio_df, obvious_epochs_to_remove = load_and_process_pupil_data(directory_path=directory_path, participant_str=participant_str, list_subject_selected=list_subject_selected, condition_str=condition_str, condition_task_sessions=condition_task_sessions, from_session=from_session, to_session=to_session, dict_onsets=obvious_cp_onsets, dict_num=obvious_cp_nums, window_start_before=0.2, window_end_after=1.4, baseline_cor=baseline_cor, lpf=[5],session_list=obvious_ses_list, select_eye=select_eye, remove_epochs=remove_epochs)
-
-
-    # Option to plot the average pupil response timelocked to change point categories
-    if plot_pupil_by_cp_cat:
-        
-        fig_epoch_avg = go.Figure()
-
-        fig_epoch_avg.add_trace(go.Scatter(
-            x=epoched_pupil_non_obvious_df['time'],
-            y=epoched_pupil_non_obvious_df['mean'],
-            mode='lines',
-            line=dict(color='rgba(0, 0, 255, 1)'),
-            name='Non-obvious change point',
-            showlegend=True 
-        ))
-
-        fig_epoch_avg.add_trace(go.Scatter(
-            x=epoched_pupil_non_obvious_df['time'],
-            y=epoched_pupil_non_obvious_df['mean'] + epoched_pupil_non_obvious_df['sem'],
-            mode='lines',
-            line=dict(color='rgba(0, 0, 255, 0.1)'),
-            showlegend=False
-        ))
-
-        fig_epoch_avg.add_trace(go.Scatter(
-            x=epoched_pupil_non_obvious_df['time'],
-            y=epoched_pupil_non_obvious_df['mean'] - epoched_pupil_non_obvious_df['sem'],
-            mode='lines',
-            fill='tonexty',
-            fillcolor='rgba(0, 0, 255, 0.2)',
-            line=dict(color='rgba(0, 0, 255, 0.1)'),
-            showlegend=False
-        ))
-
-        fig_epoch_avg.add_trace(go.Scatter(
-            x=epoched_pupil_obvious_df['time'],
-            y=epoched_pupil_obvious_df['mean'],
-            mode='lines',
-            line=dict(color='rgba(0, 255, 0, 1)'),
-            name='Obvious change point',
-            showlegend=True 
-        ))
-
-        fig_epoch_avg.add_trace(go.Scatter(
-            x=epoched_pupil_obvious_df['time'],
-            y=epoched_pupil_obvious_df['mean'] + epoched_pupil_obvious_df['sem'],
-            mode='lines',
-            line=dict(color='rgba(0, 255, 0, 0.1)'),
-            showlegend=False
-        ))
-
-        fig_epoch_avg.add_trace(go.Scatter(
-            x=epoched_pupil_obvious_df['time'],
-            y=epoched_pupil_obvious_df['mean'] - epoched_pupil_obvious_df['sem'],
-            mode='lines',
-            fill='tonexty',
-            fillcolor='rgba(0, 255, 0, 0.2)',
-            line=dict(color='rgba(0, 255, 0, 0.1)'),
-            showlegend=False
-        ))
-
-        fig_epoch_avg.add_vline(x=0, line_width=3, line_dash="dash", line_color="black", opacity=0.5)
-
-        fig_epoch_avg.update_layout(
-            title=f'Baseline corrected right pupil response epoched around change points categorised as either "obvious" or "non-obvious" for participant {participant_str} in condition {condition_str} (Mean +/- SEM)',
-            xaxis_title='Time (s)',
-            yaxis_title='Pupil diameter (z-score)'
-        )       
-
-        fig_epoch_avg.show()
-
-    return non_obvious_cp_onsets, non_obvious_cp_nums, epoched_pupil_non_obvious_df, non_obvious_blink_ratio_df, non_obvious_epochs_to_remove, obvious_cp_onsets, obvious_cp_nums, epoched_pupil_obvious_df, obvious_blink_ratio_df, obvious_epochs_to_remove

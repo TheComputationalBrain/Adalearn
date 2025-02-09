@@ -97,6 +97,11 @@ def pupil_regression_analysis(participant_str, condition_str, comp_variable_df, 
             legend_title="Predictors"
         )
 
+        # Save the figure to the desktop
+        desktop_path = os.path.join(os.path.expanduser("~"), "Desktop")
+        file_name = f"sub-{participant_str}_ses-{condition_str}_pupil-by-{variables}-regression.png"
+        fig.write_image(os.path.join(desktop_path, file_name))  
+
         fig.show()
 
     return coefficients_df

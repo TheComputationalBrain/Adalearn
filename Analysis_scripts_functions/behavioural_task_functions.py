@@ -156,6 +156,11 @@ def load_behavioural_data(directory_path, participant_str, condition_str, condit
         for i in range(1, num_sessions+1):
             fig.update_yaxes(title_text='Proportion blue', row=i, col=1)
 
+        # Save the figure to the desktop
+        desktop_path = os.path.join(os.path.expanduser("~"), "Desktop")
+        file_name = f"sub-{participant_str}_ses-{condition_str}_behav-by-task-session.png"
+        fig.write_image(os.path.join(desktop_path, file_name))
+
         fig.show()
 
     return behavioural_df, computational_var_df 
@@ -240,6 +245,11 @@ def behavioural_change_point_analysis(participant_str, condition_str, behavioura
     if plot_histogram_zscores:
         fig = px.histogram(change_point_indices, x='z_score_diff', color='change_point_cat', nbins=20, title=f"Histogram of consecutive differences in change point outcome value z-scores for Participant {participant_str} in condition {condition_str}. Colours denote categorisation of 'obvious' and 'non-obvious' change points", labels={'x': 'Z-score difference', 'y': 'Frequency'})
 
+        # Save the figure to the desktop
+        desktop_path = os.path.join(os.path.expanduser("~"), "Desktop")
+        file_name = f"sub-{participant_str}_ses-{condition_str}_histogram-of-z-score-difference-in-change-points.png"
+        fig.write_image(os.path.join(desktop_path, file_name))
+
         fig.show()
 
     return num_change_points, change_points_per_session, change_point_indices, behavioural_df
@@ -283,7 +293,7 @@ def behavioural_performance_analysis(participant_str, condition_str, behavioural
         fig.add_trace(go.Scatter(x=mean_abs_error_df['task_session'], y=mean_abs_error_df['mean_abs_error'], mode='lines+markers', name='Mean absolute error'))
         fig.add_trace(go.Scatter(x=mean_abs_error_df['task_session'], y=mean_abs_error_df['std_abs_error'], mode='lines+markers', name='Standard deviation in absolute error'))
 
-        fig.update_layout(title_text=f"Absolute error between subjective estimates and hidden values for participant {participant_str} in condition {condition_str}",
+        fig.update_layout(title_text=f"Absolute error (and the variation in the absolute error) between subjective estimates and hidden values within each task session for participant {participant_str} in condition {condition_str}",
                           xaxis=dict(
                               tickmode='array',
                               tickvals=mean_abs_error_df['task_session'].unique(),
@@ -292,6 +302,12 @@ def behavioural_performance_analysis(participant_str, condition_str, behavioural
                           xaxis_title='Task session',
                           yaxis_title='Absolute error', 
                           showlegend=True)
+
+        # Save the figure to the desktop
+        desktop_path = os.path.join(os.path.expanduser("~"), "Desktop")
+        file_name = f"sub-{participant_str}_ses-{condition_str}_absolute-error-axcross-task-sessions.png"
+        fig.write_image(os.path.join(desktop_path, file_name))
+
 
         fig.show()
 

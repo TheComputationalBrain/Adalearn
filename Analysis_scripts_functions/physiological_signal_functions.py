@@ -103,11 +103,13 @@ def load_biopac_data(directory_path, participant_str, condition_str, run_ranges)
     return biopac_data, stim_chan, ecg_chan, trig_chan, sampling_rate
 
 
-def process_emg_data(biopac_data, stim_channels, emg_by_file_plot = False):
+def process_emg_data(participant_str, condition_str, biopac_data, stim_channels, emg_by_file_plot = False):
     """ 
     Function to process the loaded emg data. It creates and returns a dataframe with the emg data and (relative) timestamp (from beginning of file recording). EMG signal is rectified and enveloped. Plots of the emg data are generated from each data file to enable quality check of data.
 
     Parameters:
+    - participant_str: string, identifier of participant number (set to 2 numbers)
+    - condition_str: string, identifier of condition order (set to 2 numbers)
     - bipoac_data: list, contains the dictionaries storing the data extracted from the biopac files for each run of task sessions. 
     - stim_channels: string, the stim channel name (used to extract the EMG data).
     - emg_by_file_plot: boolean, if True, plots the emg signal for each file as subplots (default  =  False;  as uses lots of memory.)
@@ -168,6 +170,11 @@ def process_emg_data(biopac_data, stim_channels, emg_by_file_plot = False):
 
         fig.update_layout(height=300 * len(all_emg_data), title_text='EMG Data Across Files',
                       xaxis_title='Time (s)', yaxis_title='EMG')
+        
+        # Save the figure to the desktop
+        desktop_path = os.path.join(os.path.expanduser("~"), "Desktop")
+        file_name = f"sub-{participant_str}_ses-{condition_str}_emg-by-file.png"
+        fig.write_image(os.path.join(desktop_path, file_name))
 
         fig.show()
 
@@ -175,11 +182,13 @@ def process_emg_data(biopac_data, stim_channels, emg_by_file_plot = False):
 
 
 
-def biopac_trigger_extraction(biopac_data, run_ranges, plot_triggers_by_channel = True, plot_trigs_by_task_session = True):
+def biopac_trigger_extraction(participant_str, condition_str, biopac_data, run_ranges, plot_triggers_by_channel = True, plot_trigs_by_task_session = True):
     """
     Function to assess and extract the trigger data from the bipoac file. First it checks whether one "stimulation" channel contains all of the expected triggers. If it does not then it will look to integrate triggersfound across two channels. The value associated with that channel (i.e. 0 or 1; yellow or blue) is also generated based on the channel the trigger came from, before using the triggers to characterise the task sessions within each file. 
     
     Parameters:
+    - participant_str: string, identifier of participant number (set to 2 numbers)
+    - condition_str: string, identifier of condition order (set to 2 numbers)
     - bipoac_data: list, contains the dictionaries storing the data extracted from the biopac files for each run of task sessions. 
     - run_ranges: list of dicts, each dictionary contains 'run_start' and 'run_end' denoting the range of task sessions in each file
     - plot_triggers_by_channel: boolean, option to plot the identified triggers in each trigger channel contained within the biopac file.
@@ -307,6 +316,11 @@ def biopac_trigger_extraction(biopac_data, run_ranges, plot_triggers_by_channel 
                 height=300*num_channels, width=1000,
                 title_text=f"Triggers within stimulation channels for file {data_file_count}"
             )
+
+            # Save the figure to the desktop
+            desktop_path = os.path.join(os.path.expanduser("~"), "Desktop")
+            file_name = f"sub-{participant_str}_ses-{condition_str}_biopac-triggers-by-file.png"
+            fig.write_image(os.path.join(desktop_path, file_name))
 
             fig.show()
 
@@ -499,6 +513,11 @@ def biopac_trigger_extraction(biopac_data, run_ranges, plot_triggers_by_channel 
             showlegend=False
         )
 
+        # Save the figure to the desktop
+        desktop_path = os.path.join(os.path.expanduser("~"), "Desktop")
+        file_name = f"sub-{participant_str}_ses-{condition_str}_biopac-triggers-by-task-session.png"
+        fig.write_image(os.path.join(desktop_path, file_name))
+
         fig.show()
 
     # Convert the list of dictionaries into a DataFrame
@@ -572,6 +591,11 @@ def extract_task_session_emg_data(participant_str, condition_str, emg_data_df, t
             height=4000 
         )
 
+        # Save the figure to the desktop
+        desktop_path = os.path.join(os.path.expanduser("~"), "Desktop")
+        file_name = f"sub-{participant_str}_ses-{condition_str}_emg-by-task-session.png"
+        fig.write_image(os.path.join(desktop_path, file_name))
+
         fig.show()
 
     print(f"In condition {condition_str} the number of task sessions is: {len(emg_task_session_dict)}") 
@@ -633,6 +657,11 @@ def extract_ecg_signals(participant_str, condition_str, biopac_data, ecg_channel
 
         fig.update_layout(height=300 * len(all_ecg_data), title_text=f'ECG signals extracted across data files for participant {participant_str} in condition {condition_str}',
                           xaxis_title='Time (s)', yaxis_title='ECG')
+        
+        # Save the figure to the desktop
+        desktop_path = os.path.join(os.path.expanduser("~"), "Desktop")
+        file_name = f"sub-{participant_str}_ses-{condition_str}_ecg-by-data-files.png"
+        fig.write_image(os.path.join(desktop_path, file_name))
 
         fig.show()
 
@@ -799,6 +828,11 @@ def rpeak_evaluation(participant_str, condition_str, ecg_session_dict, ecg_trace
             showlegend=False,
         )
 
+        # Save the figure to the desktop
+        desktop_path = os.path.join(os.path.expanduser("~"), "Desktop")
+        file_name = f"sub-{participant_str}_ses-{condition_str}_r-peaks-by-task-session.png"
+        fig.write_image(os.path.join(desktop_path, file_name))
+
         # Show the plot
         fig.show()
     
@@ -840,6 +874,11 @@ def rpeak_evaluation(participant_str, condition_str, ecg_session_dict, ecg_trace
             showlegend=False,
         )
 
+        # Save the figure to the desktop
+        desktop_path = os.path.join(os.path.expanduser("~"), "Desktop")
+        file_name = f"sub-{participant_str}_ses-{condition_str}_r-r-intervals-by-task-session.png"
+        fig.write_image(os.path.join(desktop_path, file_name))
+
         # Show the plot
         fig.show()
     
@@ -880,6 +919,11 @@ def rpeak_evaluation(participant_str, condition_str, ecg_session_dict, ecg_trace
             height=600 * num_sessions,
             showlegend=False,
         )
+
+        # Save the figure to the desktop
+        desktop_path = os.path.join(os.path.expanduser("~"), "Desktop")
+        file_name = f"sub-{participant_str}_ses-{condition_str}_instant-hr-by-task-session.png"
+        fig.write_image(os.path.join(desktop_path, file_name))
 
         # Show the plot
         fig.show()
@@ -1087,6 +1131,12 @@ def ecg_markers_by_change_point(participant_str, condition_str, rpeaks_session_d
             yaxis_title=f'{ecg_parameter}',
             showlegend=False
         )
+
+        # Save the figure to the desktop
+        desktop_path = os.path.join(os.path.expanduser("~"), "Desktop")
+        file_name = f"sub-{participant_str}_ses-{condition_str}_ecg-by-change-point.png"
+        fig.write_image(os.path.join(desktop_path, file_name))
+
         fig.show()
 
     return ecg_interval_by_cp_df, binned_ecg_data
@@ -1255,6 +1305,11 @@ def vns_activation_id(participant_str, condition_str, emg_task_sess_dict, sampli
             showlegend=False
         )
 
+        # Save the figure to the desktop
+        desktop_path = os.path.join(os.path.expanduser("~"), "Desktop")
+        file_name = f"sub-{participant_str}_ses-{condition_str}_vns-activation-on-power-by-task-session.png"
+        fig.write_image(os.path.join(desktop_path, file_name))
+
         fig.show()
     
     # Option to plot the identified start and end times of VNS activation for each task session, overlaid on top of rectified EMG signal.
@@ -1318,6 +1373,11 @@ def vns_activation_id(participant_str, condition_str, emg_task_sess_dict, sampli
             yaxis_title='EMG', 
             showlegend=False
         )
+
+        # Save the figure to the desktop
+        desktop_path = os.path.join(os.path.expanduser("~"), "Desktop")
+        file_name = f"sub-{participant_str}_ses-{condition_str}_vns-activation-on-emg-by-task-session.png"
+        fig.write_image(os.path.join(desktop_path, file_name))
 
         fig.show()
 
@@ -1444,6 +1504,11 @@ def ecg_response_to_vns(participant_str, condition_str, vns_start_end_markers, r
             height=500 * len(task_sessions), 
             showlegend=False
         )
+
+        # Save the figure to the desktop
+        desktop_path = os.path.join(os.path.expanduser("~"), "Desktop")
+        file_name = f"sub-{participant_str}_ses-{condition_str}_ecg-by vns-activation-by-task-session.png"
+        fig.write_image(os.path.join(desktop_path, file_name))
 
         fig.show()
 

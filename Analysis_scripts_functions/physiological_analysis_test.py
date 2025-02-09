@@ -32,15 +32,15 @@ c2_biopac_df, c2_stim_channel, c2_ecg_channel, c2_trig_channel, c2_sampling_rate
 
 
 
-c1_processed_biopac = process_emg_data(biopac_data=c1_biopac_df, stim_channels=c1_stim_channel, emg_by_file_plot = False)
+c1_processed_biopac = process_emg_data(participant_str=participant_str, condition_str=condition_1_str, biopac_data=c1_biopac_df, stim_channels=c1_stim_channel, emg_by_file_plot = False)
 
-c2_processed_biopac = process_emg_data(biopac_data=c2_biopac_df, stim_channels=c2_stim_channel, emg_by_file_plot = False)
+c2_processed_biopac = process_emg_data(participant_str=participant_str, condition_str=condition_2_str, biopac_data=c2_biopac_df, stim_channels=c2_stim_channel, emg_by_file_plot = False)
 
 
 
-c1_raw_trig_file_df, c1_trig_chan_df, c1_task_session_summary_df, c1_missing_triggers = biopac_trigger_extraction(biopac_data=c1_biopac_df, run_ranges=c1_run_ranges, plot_triggers_by_channel=False, plot_trigs_by_task_session=False)
+c1_raw_trig_file_df, c1_trig_chan_df, c1_task_session_summary_df, c1_missing_triggers = biopac_trigger_extraction(participant_str=participant_str, condition_str=condition_1_str,biopac_data=c1_biopac_df, run_ranges=c1_run_ranges, plot_triggers_by_channel=False, plot_trigs_by_task_session=False)
 
-c2_raw_trig_file_df, c2_trig_chan_df, c2_task_session_summary_df, c2_missing_triggers = biopac_trigger_extraction(biopac_data=c2_biopac_df, run_ranges=c2_run_ranges, plot_triggers_by_channel=False, plot_trigs_by_task_session=False)
+c2_raw_trig_file_df, c2_trig_chan_df, c2_task_session_summary_df, c2_missing_triggers = biopac_trigger_extraction(participant_str=participant_str, condition_str=condition_2_str,biopac_data=c2_biopac_df, run_ranges=c2_run_ranges, plot_triggers_by_channel=False, plot_trigs_by_task_session=False)
 
 
 

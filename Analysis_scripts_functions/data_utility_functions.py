@@ -82,6 +82,11 @@ def check_trig_sync_between_files(participant_str, condition_str, behavioural_df
         fig.update_yaxes(title_text="Pupil Outcome", row=2, col=1)
         fig.update_yaxes(title_text="Physiological Outcome", row=3, col=1)
 
+        # Save the figure to the desktop
+        desktop_path = os.path.join(os.path.expanduser("~"), "Desktop")
+        file_name = f"sub-{participant_str}_ses-{condition_str}_triggers-across-different-file-types.png"
+        fig.write_image(os.path.join(desktop_path, file_name))
+
         fig.show()
 
     return combined_outcome_df
@@ -93,7 +98,7 @@ def plot_session_behav_comp(participant_str, condition_str, behavioural_df, comp
     Function to plot the behavioural and computational parameters from data of selected task sessions. 
 
     Parameters:
-    - - participant_str: string, identifier of participant number (set to 2 numbers)
+    - participant_str: string, identifier of participant number (set to 2 numbers)
     - condition_str: string, identifier of condition order (set to 2 numbers)
     - behavioural_df: pd.DataFrame, contains parsed data from all .json adalearn data files for select variables.
     - computational_df: pd.DataFrame, contains the computational-derived parameters of interest for each task session.
@@ -279,6 +284,11 @@ def plot_session_behav_comp(participant_str, condition_str, behavioural_df, comp
     fig.update_yaxes(title_text="Prior Confidence", row=3, col=1)
     fig.update_yaxes(title_text="Surprise", row=3, col=2)
 
+    # Save the figure to the desktop
+    desktop_path = os.path.join(os.path.expanduser("~"), "Desktop")
+    file_name = f"sub-{participant_str}_ses-{condition_str}_task-session-behav-model-variables.png"
+    fig.write_image(os.path.join(desktop_path, file_name))
+
     fig.show()
 
 
@@ -308,11 +318,13 @@ def compute_avg_learning_rate_by_categories(computational_var_df, category_col, 
 
 
 
-def evaluation_of_learning_rate(behavioural_df, computational_var_df, change_point_indices, quantile_baseline = 0.2, parameter_estimate='estimate', baseline_method='quantile_over_sessions', plot_lr_evaluation = True):
+def evaluation_of_learning_rate(participant_str, condition_str, behavioural_df, computational_var_df, change_point_indices, quantile_baseline = 0.2, parameter_estimate='estimate', baseline_method='quantile_over_sessions', plot_lr_evaluation = True):
     """
     Function to compute various metrics that enable closer inspection of the learning rate estimates in response to change points and latent parameters of uncertainty.
 
     Parameters:
+    - participant_str: string, identifier of participant number (set to 2 numbers)
+    - condition_str: string, identifier of condition order (set to 2 numbers)
     - behavioural_df: pd.DataFrame, contains parsed data from all .json adalearn data files for select variables. Must have column related to distance from change point ('outcome_dist_to_cp'). 
     - computational_var_df: pd.DataFrame, contains the computational-derived parameters of interest for each task session. Must have columns related to learning rate estimates (e.g. 'cleaned_learning_rate_estimate') and whether updates occured (i.e. 'was_updated_estimate').
     - change_point_indices: pd.Dataframe, with columns 'cum_outcome_num', 'rel_time', and 'task_session', containing the indices and relative times of the change points for each session, and z-score used to categorises the obvious of the change point ('change_point_cat'). (*Note: Have removed identification of the first outcome of each task session as a new change point)
@@ -495,6 +507,11 @@ def evaluation_of_learning_rate(behavioural_df, computational_var_df, change_poi
             margin=dict(l=50, r=50, t=50, b=50),
             hovermode="closest"
         )
+
+        # Save the figure to the desktop
+        desktop_path = os.path.join(os.path.expanduser("~"), "Desktop")
+        file_name = f"sub-{participant_str}_ses-{condition_str}_evaluation-of-learning-rate.png"
+        fig.write_image(os.path.join(desktop_path, file_name))
 
         fig.show()
 

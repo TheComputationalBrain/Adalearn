@@ -27,9 +27,9 @@ c2_trig_check = check_trig_sync_between_files(participant_str=participant_str, c
 
 
 
-c1_lr_evaluation_dict = evaluation_of_learning_rate(behavioural_df=c1_behavioural_df, computational_var_df=c1_computational_var_df, change_point_indices=c1_change_point_indices, quantile_baseline=0.2, parameter_estimate='estimate', baseline_method='quantile_over_sessions', plot_lr_evaluation=True)
+c1_lr_evaluation_dict = evaluation_of_learning_rate(participant_str = participant_str, condition_str=condition_1_str, behavioural_df=c1_behavioural_df, computational_var_df=c1_computational_var_df, change_point_indices=c1_change_point_indices, quantile_baseline=0.2, parameter_estimate='estimate', baseline_method='quantile_over_sessions', plot_lr_evaluation=True)
 
-c2_lr_evaluation_dict = evaluation_of_learning_rate(behavioural_df=c2_behavioural_df, computational_var_df=c2_computational_var_df, change_point_indices=c2_change_point_indices, quantile_baseline=0.2, parameter_estimate='estimate', baseline_method='quantile_over_sessions', plot_lr_evaluation=True)
+c2_lr_evaluation_dict = evaluation_of_learning_rate(participant_str=participant_str, condition_str=condition_2_str, behavioural_df=c2_behavioural_df, computational_var_df=c2_computational_var_df, change_point_indices=c2_change_point_indices, quantile_baseline=0.2, parameter_estimate='estimate', baseline_method='quantile_over_sessions', plot_lr_evaluation=True)
 
 
 

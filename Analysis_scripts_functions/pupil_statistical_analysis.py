@@ -19,18 +19,10 @@ from computational_analysis_test import c1_computational_var_df, c2_computationa
 
 
 
-c1_surprise_coef = pupil_regression_analysis(participant_str=participant_str, condition_str = condition_1_str, comp_variable_df=c1_computational_var_df, outcome_epoched_pupil_df=c1_outcome_epoched_pupil_df, outcome_epochs_to_remove=c1_outcome_epochs_to_remove, variables='surprise')
+c1_conf_cpp_coef = pupil_regression_analysis(participant_str=participant_str, condition_str = condition_1_str, comp_variable_df=c1_computational_var_df, outcome_epoched_pupil_df=c1_outcome_epoched_pupil_df, outcome_epochs_to_remove=c1_outcome_epochs_to_remove, variables=['conf_zscore', 'cpp_zscore'], plot_regression_analysis=True)
 
-c2_surprise_coef = pupil_regression_analysis(participant_str=participant_str, condition_str = condition_2_str, comp_variable_df=c2_computational_var_df, outcome_epoched_pupil_df=c2_outcome_epoched_pupil_df, outcome_epochs_to_remove=c2_outcome_epochs_to_remove, variables='surprise')
+c2_conf_cpp_coef = pupil_regression_analysis(participant_str=participant_str, condition_str = condition_2_str, comp_variable_df=c2_computational_var_df, outcome_epoched_pupil_df=c2_outcome_epoched_pupil_df, outcome_epochs_to_remove=c2_outcome_epochs_to_remove, variables=['conf_zscore', 'cpp_zscore'], plot_regression_analysis=True)
 
-c1_surprise_coef_nobc = pupil_regression_analysis(participant_str=participant_str, condition_str = condition_1_str, comp_variable_df=c1_computational_var_df, outcome_epoched_pupil_df=c1_outcome_epoched_pupil_df_nobc, outcome_epochs_to_remove=c1_outcome_epochs_to_remove, variables='surprise')
+c1_conf_cpp_coef_nobc = pupil_regression_analysis(participant_str=participant_str, condition_str = condition_1_str, comp_variable_df=c1_computational_var_df, outcome_epoched_pupil_df=c1_outcome_epoched_pupil_df_nobc, outcome_epochs_to_remove=c1_outcome_epochs_to_remove, variables=['conf_zscore', 'cpp_zscore'])
 
-c2_surprise_coef_nobc = pupil_regression_analysis(participant_str=participant_str, condition_str = condition_2_str, comp_variable_df=c2_computational_var_df, outcome_epoched_pupil_df=c2_outcome_epoched_pupil_df_nobc, outcome_epochs_to_remove=c2_outcome_epochs_to_remove, variables='surprise')
-
-c1_prior_conf_coef = pupil_regression_analysis(participant_str=participant_str, condition_str = condition_1_str, comp_variable_df=c1_computational_var_df, outcome_epoched_pupil_df=c1_outcome_epoched_pupil_df, outcome_epochs_to_remove=c1_outcome_epochs_to_remove, variables='prior_conf')
-
-c2_prior_conf_coef = pupil_regression_analysis(participant_str=participant_str, condition_str = condition_2_str, comp_variable_df=c2_computational_var_df, outcome_epoched_pupil_df=c2_outcome_epoched_pupil_df, outcome_epochs_to_remove=c2_outcome_epochs_to_remove, variables='prior_conf')
-
-c1_cpp_coef = pupil_regression_analysis(participant_str=participant_str, condition_str = condition_1_str, comp_variable_df=c1_computational_var_df, outcome_epoched_pupil_df=c1_outcome_epoched_pupil_df, outcome_epochs_to_remove=c1_outcome_epochs_to_remove, variables='cpp')
-
-c2_cpp_coef = pupil_regression_analysis(participant_str=participant_str, condition_str = condition_2_str, comp_variable_df=c2_computational_var_df, outcome_epoched_pupil_df=c2_outcome_epoched_pupil_df, outcome_epochs_to_remove=c2_outcome_epochs_to_remove, variables='cpp')
+c2_conf_cpp_coef_nobc = pupil_regression_analysis(participant_str=participant_str, condition_str = condition_2_str, comp_variable_df=c2_computational_var_df, outcome_epoched_pupil_df=c2_outcome_epoched_pupil_df_nobc, outcome_epochs_to_remove=c2_outcome_epochs_to_remove, variables=['conf_zscore', 'cpp_zscore'])
