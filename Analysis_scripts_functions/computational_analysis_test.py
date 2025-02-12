@@ -61,12 +61,12 @@ c2_behav_v_model_estimate_corr, c2_behav_v_model_estimate_regress = behav_v_mode
 
 
 
-c1_behav_v_model_lr_corr, c1_behav_v_model_lr_regress = behav_v_model_linear_analysis(computational_var_df=c1_computational_var_df, participant_str=participant_str, condition_str=condition_1_str, model_var='cleaned_learning_rate_ideal_observer', behav_var='cleaned_learning_rate_estimate', exclude_zero=True, plot_behav_v_model_scatter=False, add_regression=True)
+c1_behav_v_model_lr_corr, c1_behav_v_model_lr_regress = behav_v_model_linear_analysis(computational_var_df=c1_computational_var_df, participant_str=participant_str, condition_str=condition_1_str, model_var='cleaned_learning_rate_ideal_observer', behav_var='cleaned_learning_rate_estimate', exclude_zero=False, plot_behav_v_model_scatter=False, add_regression=True)
 
-c2_behav_v_model_lr_corr, c2_behav_v_model_lr_regress = behav_v_model_linear_analysis(computational_var_df=c2_computational_var_df, participant_str=participant_str, condition_str=condition_2_str, model_var='cleaned_learning_rate_ideal_observer', behav_var='cleaned_learning_rate_estimate', exclude_zero=True, plot_behav_v_model_scatter=False, add_regression=True)
+c2_behav_v_model_lr_corr, c2_behav_v_model_lr_regress = behav_v_model_linear_analysis(computational_var_df=c2_computational_var_df, participant_str=participant_str, condition_str=condition_2_str, model_var='cleaned_learning_rate_ideal_observer', behav_var='cleaned_learning_rate_estimate', exclude_zero=False, plot_behav_v_model_scatter=False, add_regression=True)
 
 
 
-c1_learning_rate_analysis_dict = uncertainty_on_learning_rate_participant_level(participant_str=participant_str, condition_str=condition_1_str, computational_var_df=c1_computational_var_df, n_bins=6, parameter_estimate='estimate', exclude_zero=True, plot_corr_subplots=True)
+c1_learning_rate_analysis_dict = uncertainty_on_learning_rate_participant_level(participant_str=participant_str, condition_str=condition_1_str, computational_var_df=c1_computational_var_df, n_bins=6, parameter_estimate='estimate', exclude_zero=False, plot_corr_subplots=False)
 
-c2_learning_rate_analysis_dict = uncertainty_on_learning_rate_participant_level(participant_str=participant_str, condition_str=condition_2_str, computational_var_df=c2_computational_var_df, n_bins=6, parameter_estimate='estimate', exclude_zero=True, plot_corr_subplots=True)
+c2_learning_rate_analysis_dict = uncertainty_on_learning_rate_participant_level(participant_str=participant_str, condition_str=condition_2_str, computational_var_df=c2_computational_var_df, n_bins=6, parameter_estimate='estimate', exclude_zero=False, plot_corr_subplots=False)

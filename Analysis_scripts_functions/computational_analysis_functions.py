@@ -314,13 +314,16 @@ def learning_rate_by_change_point(computational_var_df, change_point_indices,par
 
         # Update layout
         fig.update_layout(
-            title=f"Learning rate relative to change points for participant {participant_str} in condition {condition_str}",
+            title=f"{learning_rate_parameter} learning rate relative to change points for participant {participant_str} in condition {condition_str}",
             xaxis_title='Outcome relative to change point',
             yaxis_title='Learning rate',
             yaxis=dict(
                 range=[averaged_learning_rate_by_cp['mean'].min() - averaged_learning_rate_by_cp['sem'].max(), averaged_learning_rate_by_cp['mean'].max() + averaged_learning_rate_by_cp['sem'].max()]
             ),
-            showlegend=False
+            height=950,
+            width=1800,
+            showlegend=False,
+            margin=dict(l=50, r=50, t=50, b=50)
         )
 
         # Save the figure to the desktop
@@ -821,7 +824,10 @@ def behav_v_model_linear_analysis(computational_var_df, participant_str, conditi
             title_text=f"Scatterplot of {behav_var} derived from behavioural and ideal observer for participant {participant_str} in condition {condition_str}",
             xaxis_title=model_var,
             yaxis_title=behav_var,
-            showlegend=True
+            height=950,
+            width=1800,
+            showlegend=True,
+            margin=dict(l=50, r=50, t=50, b=50)
         )
 
         # Save the figure to the desktop

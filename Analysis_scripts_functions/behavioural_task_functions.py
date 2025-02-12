@@ -34,13 +34,23 @@ def load_behavioural_data(directory_path, participant_str, condition_str, condit
     # Loading all adalearn task session data files
     adalearn_data = []
 
+    # Define possible task names
+    task_names = ["AdalearnVNS", "AdalearnPupil"]
+
     # Iterate across all files and append data to storage list
     for session in condition_task_sessions:
-    
-        with open(f'{directory_path}/ses-{condition_str}/behav/sub-{participant_str}_ses-{condition_str}_task-AdalearnVNS_run-{session}_behav.json', 'rb') as ada_learn_file:
-             parsed_json_con = json.load(ada_learn_file)
-    
-        adalearn_data.append(parsed_json_con)
+        # Check for the correct file dynamically
+        for task in task_names:
+            file_path = f'{directory_path}/ses-{condition_str}/behav/sub-{participant_str}_ses-{condition_str}_task-{task}_run-{session}_behav.json'
+            
+            if os.path.exists(file_path):
+                with open(file_path, 'rb') as ada_learn_file:
+                    parsed_json_con = json.load(ada_learn_file)
+                adalearn_data.append(parsed_json_con)
+                break  # Exit loop once the correct file is found
+        else:
+            # This block runs only if no file is found for this session
+            print(f"No file found for session {session}")
     
     # Creating data frame to store the unpacked data
     unpack_dfs = []
@@ -272,7 +282,7 @@ def behavioural_performance_analysis(participant_str, condition_str, behavioural
     abs_error_list = []
 
     for task_session, row in behavioural_df.groupby('task_session'):
-        performance_score = (row['estimate'] - row['P1'])
+        performance_score = abs(row['estimate'] - row['P1'])
         mean_abs_error = np.mean(performance_score)
         std_abs_error = np.std(performance_score)
 
@@ -291,7 +301,22 @@ def behavioural_performance_analysis(participant_str, condition_str, behavioural
         fig = go.Figure()
 
         fig.add_trace(go.Scatter(x=mean_abs_error_df['task_session'], y=mean_abs_error_df['mean_abs_error'], mode='lines+markers', name='Mean absolute error'))
-        fig.add_trace(go.Scatter(x=mean_abs_error_df['task_session'], y=mean_abs_error_df['std_abs_error'], mode='lines+markers', name='Standard deviation in absolute error'))
+
+        fig.add_trace(go.Scatter(x=mean_abs_error_df['task_session'],
+            y=mean_abs_error_df['mean_abs_error'] + mean_abs_error_df['std_abs_error'],
+            mode='lines',
+            line=dict(color='rgba(0, 0, 250, 0.1)'),
+            showlegend=False
+        ))
+
+        fig.add_trace(go.Scatter(x=mean_abs_error_df['task_session'],
+            y=mean_abs_error_df['mean_abs_error'] - mean_abs_error_df['std_abs_error'],
+            mode='lines',
+            fill='tonexty',
+            fillcolor='rgba(0, 0, 250, 0.2)',
+            line=dict(color='rgba(0, 0, 250, 0.1)'),
+            showlegend=False
+        ))
 
         fig.update_layout(title_text=f"Absolute error (and the variation in the absolute error) between subjective estimates and hidden values within each task session for participant {participant_str} in condition {condition_str}",
                           xaxis=dict(
@@ -300,12 +325,16 @@ def behavioural_performance_analysis(participant_str, condition_str, behavioural
                               ticktext=[str(s) for s in mean_abs_error_df['task_session'].unique()]
                           ),
                           xaxis_title='Task session',
-                          yaxis_title='Absolute error', 
-                          showlegend=True)
+                          yaxis_title='Absolute error',
+                          height=950,
+                          width=1800,
+                          showlegend=False,
+                          margin=dict(l=50, r=50, t=50, b=50)
+                          )
 
         # Save the figure to the desktop
         desktop_path = os.path.join(os.path.expanduser("~"), "Desktop")
-        file_name = f"sub-{participant_str}_ses-{condition_str}_absolute-error-axcross-task-sessions.png"
+        file_name = f"sub-{participant_str}_ses-{condition_str}_absolute-error-across-task-sessions.png"
         fig.write_image(os.path.join(desktop_path, file_name))
 
 

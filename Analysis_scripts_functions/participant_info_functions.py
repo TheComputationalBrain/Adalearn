@@ -2,6 +2,51 @@ import csv
 import pandas as pd
 from pathlib import Path
 import re
+from charset_normalizer import detect
+from io import StringIO
+
+
+
+def read_tsv_files(directory_path):
+    """
+    Reads all .tsv files in the given directory and returns a dictionary of DataFrames.
+
+    Parameters:
+    - directory_path: Path, path to the participant-level directory
+
+    Returns:
+    - tsv_df: dict, contains DataFrames from .tsv files
+    """
+    tsv_df = {}
+
+    if directory_path.exists():
+        print("Checking for .tsv files...")
+        # Filter out hidden files
+        tsv_files = [f for f in directory_path.rglob('*.tsv') if not f.name.startswith('._')]
+        
+        for idx, tsv_file in enumerate(tsv_files, start=1):
+            with open(tsv_file, 'rb') as f:
+                result = detect(f.read(50000))  # Detect encoding
+                encoding = result['encoding']
+                print(f"Detected encoding for {tsv_file.name}: {encoding}")
+
+            if encoding:
+                try:
+                    # Handle compatibility for pandas without 'errors' argument
+                    with open(tsv_file, 'r', encoding=encoding, errors='replace') as f:
+                        content = f.read()
+                    df = pd.read_csv(StringIO(content), sep='\t')
+                    tsv_df[idx] = df
+                except Exception as e:
+                    print(f"Failed to read {tsv_file.name}: {e}")
+            else:
+                print(f"Failed to detect encoding for {tsv_file.name}.")
+        print(f"Found {len(tsv_df)} .tsv files.")
+    else:
+        print(f"Path {directory_path} does not exist.")
+
+    return tsv_df
+
 
 
 
@@ -38,20 +83,9 @@ def participant_characteristics(participant, base_dir, c1_vns_task_sessions=None
     c1_run_ranges, c2_run_ranges = None, None
     high_vns_condition, low_vns_condition = None, None 
 
-    tsv_df = {}
+    tsv_df = read_tsv_files(directory_path=directory_path)
 
     print(f"Participant: {participant_str}")
-
-    # Read .tsv files
-    if directory_path.exists():
-        print("Checking for .tsv files...")
-        for idx, tsv_file in enumerate(directory_path.rglob('*.tsv'), start=1): 
-            df = pd.read_csv(tsv_file, sep='\t')
-            tsv_df[idx] = df
-        print(f"Found files. Reading files....")
-        print(f"The number of .tsv files found was: {len(tsv_df)}")
-    else:
-        print(f"Path {directory_path} does not exist.")
 
     # Initialize condition strings
     condition_1_str, condition_2_str = None, None

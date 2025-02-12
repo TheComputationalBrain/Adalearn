@@ -33,6 +33,6 @@ c2_lr_evaluation_dict = evaluation_of_learning_rate(participant_str=participant_
 
 
 
-plot_session_behav_comp(participant_str=participant_str, condition_str=condition_1_str, behavioural_df=c1_behavioural_df, computational_df=c1_computational_var_df, change_point_indices=c1_change_point_indices, task_session=1)
+plot_session_behav_comp(participant_str=participant_str, condition_str=condition_1_str, behavioural_df=c1_behavioural_df, computational_df=c1_computational_var_df, change_point_indices=c1_change_point_indices, task_session=6, turn_on_plotting=True)
 
-plot_session_behav_comp(participant_str=participant_str, condition_str=condition_2_str, behavioural_df=c2_behavioural_df, computational_df=c2_computational_var_df, change_point_indices=c2_change_point_indices, task_session=1)   
+plot_session_behav_comp(participant_str=participant_str, condition_str=condition_2_str, behavioural_df=c2_behavioural_df, computational_df=c2_computational_var_df, change_point_indices=c2_change_point_indices, task_session=10, turn_on_plotting=True)   

@@ -10,21 +10,24 @@ from plotly.subplots import make_subplots
 pio.renderers.default='browser'
 
 
-def pupil_regression_analysis(participant_str, condition_str, comp_variable_df, outcome_epoched_pupil_df, outcome_epochs_to_remove=None, variables=None, plot_regression_analysis=True):
+def pupil_regression_analysis(participant_str, condition_str, comp_variable_df, outcome_epoched_pupil_df, 
+                              outcome_epochs_to_remove=None, variables=None, include_outcome=False, 
+                              plot_regression_analysis=True):
     """
     Function that analyses the relationship between pupil response and a set of computational predictor variables using multiple linear regression for each peri-stimulus timepoint within defined epochs in the pupil analysis.
 
     Parameters:
     - participant_str: string, identifier of participant number (set to 2 numbers)
-    - condition_str: string, identifier of condition order (set to 2 numbers) ** May need to change to denote actual condition in Adalearn VNS study **
-    - comp_variable_df: pd.DataFrame, containis the computational variables (e.g. surprise, prior_conf, cpp) to be used as predictors in regression analysis.
-    - outcome_epoched_pupil_df: pd.DataFrame, contains transposed epoched data (each column represents one epoch), the calculated mean, variance metrics and timestamp across epochs.
+    - condition_str: string, identifier of condition order (set to 2 numbers)
+    - comp_variable_df: pd.DataFrame, contains the computational variables (e.g. surprise, prior_conf, cpp) to be used as predictors.
+    - outcome_epoched_pupil_df: pd.DataFrame, contains transposed epoched data (each column represents one epoch), the calculated mean, variance metrics, and timestamp across epochs.
     - outcome_epochs_to_remove: list, indices of the epochs that exceed the threshold for the amount of interpolation within.
     - variables: list, names of the variables to be used as predictors in the regression analysis.
-    - plot_regression_analysis: boolean, if true, plots the regression coefficients at each peri-stimulus timepoint.
+    - include_outcome: boolean, if True, includes the 'outcome' variable as an additional predictor in the regression analysis.
+    - plot_regression_analysis: boolean, if True, plots the regression coefficients at each peri-stimulus timepoint.
 
     Returns:
-    - coefficients_df: pd.DataFrame, contains the coefficients of the regression analysis for each predictor variable at each peri-stimulius timepoint. 
+    - coefficients_df: pd.DataFrame, contains the coefficients of the regression analysis for each predictor variable at each peri-stimulus timepoint. 
     """
     if variables is None:
         raise ValueError("You must provide at least one variable as a predictor.")
@@ -34,7 +37,14 @@ def pupil_regression_analysis(participant_str, condition_str, comp_variable_df, 
         variables = [variables]
 
     # Prepare predictors
-    predictors = comp_variable_df[variables]
+    predictors = comp_variable_df[variables].copy()
+
+    # Optionally include 'outcome' as a predictor
+    if include_outcome:
+        if 'outcome' not in comp_variable_df.columns:
+            raise ValueError("The 'outcome' variable is not present in comp_variable_df.")
+        predictors['outcome'] = comp_variable_df['outcome']
+
     if outcome_epochs_to_remove is not None:
         predictors.drop(index=outcome_epochs_to_remove, inplace=True)
 
@@ -51,18 +61,18 @@ def pupil_regression_analysis(participant_str, condition_str, comp_variable_df, 
     epoched_pupil_data_long = epoched_pupil_data_long[~epoched_pupil_data_long['epoch'].isin(nan_epochs)]
 
     # Map predictors to the long-format DataFrame
-    for var in variables:
+    for var in predictors.columns:
         epoched_pupil_data_long[var] = epoched_pupil_data_long['epoch'].map(predictors[var])
 
     # Prepare storage for regression results
-    coefficients = {var: [] for var in variables}
+    coefficients = {var: [] for var in predictors.columns}
 
     # Run regression for each time point
     for t in time_points:
         data_at_time = epoched_pupil_data_long.loc[t]
 
         # Define predictors and target variable
-        X = data_at_time[variables].values
+        X = data_at_time[predictors.columns].values
         y = data_at_time['pupil']
 
         # Initialize and fit the linear regression model
@@ -70,7 +80,7 @@ def pupil_regression_analysis(participant_str, condition_str, comp_variable_df, 
         model.fit(X, y)
 
         # Store coefficients for each predictor
-        for idx, var in enumerate(variables):
+        for idx, var in enumerate(predictors.columns):
             coefficients[var].append(model.coef_[idx])
 
     # Create a DataFrame for coefficients
@@ -80,7 +90,7 @@ def pupil_regression_analysis(participant_str, condition_str, comp_variable_df, 
     # Option to plot regression coefficients at each peri-stimulus timepoint
     if plot_regression_analysis:
         fig = go.Figure()
-        for var in variables:
+        for var in predictors.columns:
             fig.add_trace(go.Scatter(
                 x=coefficients_df['time'], 
                 y=coefficients_df[var],
@@ -94,7 +104,11 @@ def pupil_regression_analysis(participant_str, condition_str, comp_variable_df, 
             title=f"Regression coefficients describing pupil response relationships with {variables} over time for participant {participant_str} in condition {condition_str}",
             xaxis_title="Time (s)",
             yaxis_title="Coefficient value",
-            legend_title="Predictors"
+            legend_title="Predictors",
+            height=950,
+            width=1800,
+            showlegend=True,
+            margin=dict(l=50, r=50, t=50, b=50)
         )
 
         # Save the figure to the desktop

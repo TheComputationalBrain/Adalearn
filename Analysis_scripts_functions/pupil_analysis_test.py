@@ -12,6 +12,7 @@ from plotly.subplots import make_subplots
 pio.renderers.default='browser'
 
 from pupil_signal_functions import load_and_process_pupil_data, change_point_pupil_epochs, comp_var_pupil_quartile_epochs, all_outcome_pupil_epochs, outcome_colour_pupil_epochs
+
 from computational_analysis_test import c1_computational_var_df, c2_computational_var_df
 
 from behavioural_analysis_test import c1_change_point_indices,  c1_behavioural_df, c2_change_point_indices, c2_behavioural_df
