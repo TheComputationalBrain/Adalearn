@@ -12,9 +12,9 @@ from scipy.stats import zscore
 from plotly.subplots import make_subplots
 pio.renderers.default='browser'
 
-from behavioural_task_functions import load_behavioural_data, behavioural_change_point_analysis, behavioural_performance_analysis
+from adalearn_analysis_participant_level_functions_behav import load_behavioural_data, behavioural_change_point_analysis, behavioural_performance_analysis
 
-from participant_task_information import directory_path, participant_str, condition_1_str, condition_2_str, c1_task_sessions, c2_task_sessions
+from adalearn_VNS_participant_characteristics import directory_path, participant_str, condition_1_str, condition_2_str, c1_task_sessions, c2_task_sessions
 
 
 

@@ -17,12 +17,11 @@ from plotly.subplots import make_subplots
 pio.renderers.default='browser'
 
 
-from physiological_signal_functions import load_biopac_data, process_emg_data, biopac_trigger_extraction, extract_task_session_emg_data, process_ecg_data, ecg_markers_by_change_point, vns_activation_id, ecg_response_to_vns
+from adalearn_analysis_participant_level_functions_physio import load_biopac_data, process_emg_data, biopac_trigger_extraction, extract_task_session_emg_data, process_ecg_data, ecg_markers_by_change_point, vns_activation_id, ecg_response_to_vns
 
+from adalearn_VNS_participant_characteristics import directory_path, participant_str, condition_1_str, condition_2_str, c1_run_ranges, c2_run_ranges, c1_vns_task_sessions, c2_vns_task_sessions
 
-from participant_task_information import directory_path, participant_str, condition_1_str, condition_2_str, c1_run_ranges, c2_run_ranges, c1_vns_task_sessions, c2_vns_task_sessions
-
-from behavioural_analysis_test import c1_change_point_indices, c2_change_point_indices
+from adalearn_VNS_participant_level_analysis_behav import c1_change_point_indices, c2_change_point_indices
 
 
 

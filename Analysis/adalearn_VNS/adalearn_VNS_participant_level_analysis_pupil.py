@@ -11,13 +11,13 @@ import plotly.express as px
 from plotly.subplots import make_subplots
 pio.renderers.default='browser'
 
-from pupil_signal_functions import load_and_process_pupil_data, change_point_pupil_epochs, comp_var_pupil_quartile_epochs, all_outcome_pupil_epochs, outcome_colour_pupil_epochs
+from adalearn_analysis_participant_level_functions_pupil import load_and_process_pupil_data, change_point_pupil_epochs, comp_var_pupil_quartile_epochs, all_outcome_pupil_epochs, outcome_colour_pupil_epochs
 
-from computational_analysis_test import c1_computational_var_df, c2_computational_var_df
+from adalearn_VNS_participant_level_analysis_comp import c1_computational_var_df, c2_computational_var_df
 
-from behavioural_analysis_test import c1_change_point_indices,  c1_behavioural_df, c2_change_point_indices, c2_behavioural_df
+from adalearn_VNS_participant_level_analysis_behav import c1_change_point_indices,  c1_behavioural_df, c2_change_point_indices, c2_behavioural_df
 
-from participant_task_information import directory_path, participant_str, list_subject_selected, condition_1_str, condition_2_str, c1_from_session, c1_to_session, c1_task_sessions, c2_from_session, c2_to_session, c2_task_sessions
+from adalearn_VNS_participant_characteristics import directory_path, participant_str, list_subject_selected, condition_1_str, condition_2_str, c1_from_session, c1_to_session, c1_task_sessions, c2_from_session, c2_to_session, c2_task_sessions
 
 sys.path.append('/home/aaron/Documents/Python/Ada_Learn/Analysis/Misc')
 from preprocess_eyedata import pupil

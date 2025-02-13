@@ -10,7 +10,7 @@ from plotly.subplots import make_subplots
 pio.renderers.default='browser'
 
 
-from pupil_statistical_analysis_functions import pupil_regression_analysis
+from adalearn_analysis_participant_level_functions_regression_pupil import pupil_regression_analysis
 
 from adalearn_pupil_participant_level_analysis_pupil import pupil_trig_df, outcome_epoched_pupil_df, outcome_blink_ratio_df, outcome_epochs_to_remove, outcome_epoched_pupil_df_nobc, outcome_blink_ratio_df_nobc, outcome_epochs_to_remove_nobc
 

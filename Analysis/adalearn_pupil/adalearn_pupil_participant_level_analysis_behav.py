@@ -3,7 +3,7 @@ pio.renderers.default='browser'
 
 from adalearn_pupil_participant_characteristics import participant_str, directory_path, condition_str, task_sessions
 
-from behavioural_task_functions import load_behavioural_data, behavioural_change_point_analysis, behavioural_performance_analysis
+from adalearn_analysis_participant_level_functions_behav import load_behavioural_data, behavioural_change_point_analysis, behavioural_performance_analysis
 
 
 
@@ -16,4 +16,3 @@ num_change_points, change_points_per_session, change_point_indices, behavioural_
 
 
 mean_abs_error_df = behavioural_performance_analysis(participant_str=participant_str, condition_str=condition_str, behavioural_df=behavioural_df, plot_performance=False)
-

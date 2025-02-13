@@ -1,6 +1,8 @@
 from pathlib import Path
 
-from participant_info_functions import read_tsv_files, participant_characteristics
+from adalearn_analysis_participant_level_functions_participant_info import read_tsv_files, participant_characteristics
+
+
 
 base_dir = '/home/aaron/Documents/Python/Ada_Learn/VNS_Ada_Learn/Data'
 
