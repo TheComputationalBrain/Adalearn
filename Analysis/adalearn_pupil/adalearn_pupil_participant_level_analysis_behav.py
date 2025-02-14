@@ -1,7 +1,7 @@
 import plotly.io as pio
 pio.renderers.default='browser'
 
-from adalearn_pupil_participant_characteristics import participant_str, directory_path, condition_str, task_sessions
+from adalearn_pupil.adalearn_pupil_participant_characteristics import participant_str, directory_path, condition_str, task_sessions
 
 from adalearn_analysis_participant_level_functions_behav import load_behavioural_data, behavioural_change_point_analysis, behavioural_performance_analysis
 

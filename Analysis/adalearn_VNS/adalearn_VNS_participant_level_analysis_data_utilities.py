@@ -7,17 +7,17 @@ import plotly.graph_objs as go
 from plotly.subplots import make_subplots
 pio.renderers.default='browser'
 
-from adalearn_VNS_participant_level_analysis_physio import c1_trig_chan_df, c2_trig_chan_df
-
-from adalearn_VNS_participant_level_analysis_pupil import c1_pupil_trig_df, c2_pupil_trig_df
-
-from adalearn_VNS_participant_level_analysis_behav import c1_behavioural_df, c2_behavioural_df, c1_change_point_indices, c2_change_point_indices
-
-from adalearn_VNS_participant_level_analysis_comp import c1_computational_var_df, c2_computational_var_df
-
-from adalearn_VNS_participant_characteristics import participant_str, condition_1_str, condition_2_str
-
 from adalearn_analysis_participant_level_functions_data_utilities import check_trig_sync_between_files, evaluation_of_learning_rate, plot_session_behav_comp
+
+from adalearn_VNS.adalearn_VNS_participant_level_analysis_physio import c1_trig_chan_df, c2_trig_chan_df
+
+from adalearn_VNS.adalearn_VNS_participant_level_analysis_pupil import c1_pupil_trig_df, c2_pupil_trig_df
+
+from adalearn_VNS.adalearn_VNS_participant_level_analysis_behav import c1_behavioural_df, c2_behavioural_df, c1_change_point_indices, c2_change_point_indices
+
+from adalearn_VNS.adalearn_VNS_participant_level_analysis_comp import c1_computational_var_df, c2_computational_var_df
+
+from adalearn_VNS.adalearn_VNS_participant_characteristics import participant_str, condition_1_str, condition_2_str
 
 
 

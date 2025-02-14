@@ -13,9 +13,9 @@ from adalearn_analysis_participant_level_functions_comp import behavioural_learn
 
 from adalearn_analysis_participant_level_functions_data_utilities import plot_session_behav_comp
 
-from adalearn_VNS_participant_characteristics import participant_str, condition_1_str, condition_2_str, P_C, P1_MIN, P1_MAX, ESTIMATE_PRIOR
+from adalearn_VNS.adalearn_VNS_participant_characteristics import participant_str, condition_1_str, condition_2_str, P_C, P1_MIN, P1_MAX, ESTIMATE_PRIOR
 
-from adalearn_VNS_participant_level_analysis_behav import c1_behavioural_df,c1_computational_var_df, c1_change_point_indices, c2_behavioural_df, c2_computational_var_df, c2_change_point_indices
+from adalearn_VNS.adalearn_VNS_participant_level_analysis_behav import c1_behavioural_df,c1_computational_var_df, c1_change_point_indices, c2_behavioural_df, c2_computational_var_df, c2_change_point_indices
 
 
 

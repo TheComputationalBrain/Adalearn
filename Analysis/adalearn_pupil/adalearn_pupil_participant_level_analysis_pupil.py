@@ -10,11 +10,11 @@ pio.renderers.default='browser'
 
 from adalearn_analysis_participant_level_functions_pupil import load_and_process_pupil_data, change_point_pupil_epochs, comp_var_pupil_quartile_epochs, all_outcome_pupil_epochs, outcome_colour_pupil_epochs
 
-from adalearn_pupil_participant_level_analysis_comp import computational_var_df
+from adalearn_pupil.adalearn_pupil_participant_level_analysis_comp import computational_var_df
 
-from adalearn_pupil_participant_level_analysis_behav import change_point_indices, behavioural_df
+from adalearn_pupil.adalearn_pupil_participant_level_analysis_behav import change_point_indices, behavioural_df
 
-from adalearn_pupil_participant_characteristics import directory_path, participant_str, list_subject_selected, condition_str, task_sessions, from_session, to_session
+from adalearn_pupil.adalearn_pupil_participant_characteristics import directory_path, participant_str, list_subject_selected, condition_str, task_sessions, from_session, to_session
 
 
 sys.path.append('/home/aaron/Documents/Python/Ada_Learn/Analysis/Misc')
