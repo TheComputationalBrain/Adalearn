@@ -183,7 +183,7 @@ def plot_session_behav_comp(participant_str, condition_str, behavioural_df, comp
             fig.add_shape(
                 type="line", 
                 x0=cp, x1=cp, 
-                y0=-0.6, y1=1.6, 
+                y0=task_session_comp_df['cleaned_learning_rate_estimate'].min(), y1=task_session_comp_df['cleaned_learning_rate_estimate'].max(), 
                 line=dict(color="grey", width=2, dash="dash"),
                 xref='x2', yref='y2'
             )
@@ -201,7 +201,7 @@ def plot_session_behav_comp(participant_str, condition_str, behavioural_df, comp
             fig.add_shape(
                 type="line", 
                 x0=cp, x1=cp, 
-                y0=-0.1, y1=1.0, 
+                y0=task_session_comp_df['cleaned_learning_rate_ideal_observer'].min(), y1=task_session_comp_df['cleaned_learning_rate_ideal_observer'].max(), 
                 line=dict(color="grey", width=2, dash="dash"),
                 xref='x3', yref='y3'
             )
@@ -219,7 +219,7 @@ def plot_session_behav_comp(participant_str, condition_str, behavioural_df, comp
             fig.add_shape(
                 type="line", 
                 x0=cp, x1=cp, 
-                y0=-0.1, y1=0.3, 
+                y0=0, y1=task_session_comp_df['cpp'].max(), 
                 line=dict(color="grey", width=2, dash="dash"),
                 xref='x4', yref='y4'
             )
@@ -237,7 +237,7 @@ def plot_session_behav_comp(participant_str, condition_str, behavioural_df, comp
             fig.add_shape(
                 type="line", 
                 x0=cp, x1=cp, 
-                y0=-0.0, y1=2.1, 
+                y0=0, y1=task_session_comp_df['prior_conf'].max(), 
                 line=dict(color="grey", width=2, dash="dash"),
                 xref='x5', yref='y5'
             )
@@ -255,7 +255,7 @@ def plot_session_behav_comp(participant_str, condition_str, behavioural_df, comp
             fig.add_shape(
                 type="line", 
                 x0=cp, x1=cp, 
-                y0=-0.1, y1=2.5, 
+                y0=0, y1=task_session_comp_df['surprise'].max(), 
                 line=dict(color="grey", width=2, dash="dash"),
                 xref='x6', yref='y6'
             )

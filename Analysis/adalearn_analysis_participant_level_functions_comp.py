@@ -122,7 +122,7 @@ def behavioural_learning_rate_analysis(computational_var_df, change_point_indice
                 fig.add_shape(
                     type="line", 
                     x0=cp, x1=cp, 
-                    y0=-0.8, y1=1.5, 
+                    y0=session_data['cleaned_learning_rate_estimate'].min(), y1=session_data['cleaned_learning_rate_estimate'].max(), 
                     line=dict(color="grey", width=2, dash="dash"),
                     xref=f'x{i}', yref=f'y{i}'
                 )  
@@ -190,7 +190,7 @@ def ideal_observer_learning_rate_analysis(computational_var_df, change_point_ind
                 fig.add_shape(
                     type="line", 
                     x0=cp, x1=cp, 
-                    y0=-0.8, y1=1.5, 
+                    y0=session_data['cleaned_learning_rate_ideal_observer'].min(), y1=session_data['cleaned_learning_rate_ideal_observer'].max(), 
                     line=dict(color="grey", width=2, dash="dash"),
                     xref=f'x{i}', yref=f'y{i}'
                 )  
@@ -452,7 +452,7 @@ def compute_surprise_from_observations(participant_str, condition_str, computati
                 fig.add_shape(
                     type="line", 
                     x0=cp, x1=cp, 
-                    y0=0, y1=5, 
+                    y0=0, y1=session_data['surprise'].max(), 
                     line=dict(color="grey", width=2, dash="dash"),
                     xref=f'x{i}', yref=f'y{i}'
                 )  
@@ -481,7 +481,7 @@ def compute_surprise_from_observations(participant_str, condition_str, computati
                 fig.add_shape(
                     type="line", 
                     x0=cp, x1=cp, 
-                    y0=0, y1=0.5, 
+                    y0=0, y1=session_data['model_post_prob_var'].max(), 
                     line=dict(color="grey", width=2, dash="dash"),
                     xref=f'x{i}', yref=f'y{i}'
                 )  
@@ -511,7 +511,7 @@ def compute_surprise_from_observations(participant_str, condition_str, computati
                 fig.add_shape(
                     type="line", 
                     x0=cp, x1=cp, 
-                    y0=0, y1=1, 
+                    y0=0, y1=session_data['model_post_prob_1'].max(), 
                     line=dict(color="grey", width=2, dash="dash"),
                     xref=f'x{i}', yref=f'y{i}'
                 )  
@@ -640,7 +640,7 @@ def compute_prior_conf_and_cpp_from_observations(participant_str, condition_str,
                 fig.add_shape(
                     type="line", 
                     x0=cp, x1=cp, 
-                    y0=0, y1=1, 
+                    y0=0, y1=session_data['prior_dist'].max(), 
                     line=dict(color="grey", width=2, dash="dash"),
                     xref=f'x{i}', yref=f'y{i}'
                 )  
@@ -670,7 +670,7 @@ def compute_prior_conf_and_cpp_from_observations(participant_str, condition_str,
                 fig.add_shape(
                     type="line", 
                     x0=cp, x1=cp, 
-                    y0=0, y1=2.25, 
+                    y0=0, y1=session_data['prior_conf'].max(), 
                     line=dict(color="grey", width=2, dash="dash"),
                     xref=f'x{i}', yref=f'y{i}'
                 )  
@@ -699,7 +699,7 @@ def compute_prior_conf_and_cpp_from_observations(participant_str, condition_str,
                 fig.add_shape(
                     type="line", 
                     x0=cp, x1=cp, 
-                    y0=0, y1=0.5, 
+                    y0=0, y1=session_data['cpp'].max(), 
                     line=dict(color="grey", width=2, dash="dash"),
                     xref=f'x{i}', yref=f'y{i}'
                 )  
@@ -709,6 +709,171 @@ def compute_prior_conf_and_cpp_from_observations(participant_str, condition_str,
         # Save the figure to the desktop
         desktop_path = os.path.join(os.path.expanduser("~"), "Desktop")
         file_name = f"sub-{participant_str}_ses-{condition_str}_cpp-by-task-session.png"
+        fig.write_image(os.path.join(desktop_path, file_name))
+
+        fig.show()
+
+    return computational_var_df
+
+
+
+def calculate_dkl_grid(posterior_grid, prior_grid):
+    """
+    Function to calculate the Kullback-Leibler divergence (DKL) for each stimulus in the grid. It quantifies how much one probability distribution differs from another. Specifically, it measures the amount of information lost when using one distribution to approximate another. The larger the DKL, the more different the two distributions are. Here, we calculate the DKL between the prior and posterior for each outcome stimulus in the task session. 
+
+    Parameters:
+    - posterior_grid: np.array, 2D array of posterior probabilities for each outcome stimulus (rows) and each grid point (columns).
+    - prior_grid: np.array, 2D array of prior probabilities for each outcome stimulus (rows) and each grid point (columns).
+
+    Returns:
+    - dkl_values: np.array, 1D array of DKL values for each outcome stimulus in the task session.
+    """
+    # Ensure no division by zero or log of zero
+    epsilon = 1e-10
+    prior_grid = np.clip(prior_grid, epsilon, 1)  # Avoid log(0)
+    posterior_grid = np.clip(posterior_grid, epsilon, 1)  # Avoid division by 0
+
+
+    prior_grid = prior_grid / np.sum(prior_grid, axis=0)  # Normalize prior
+    posterior_grid = posterior_grid / np.sum(posterior_grid, axis=0)  # Normalize posterior
+
+    # Calculate DKL for each stimulus (sum across grid points)
+    dkl_values = np.sum(prior_grid * np.log2(prior_grid / posterior_grid), axis=0)  # Sum over grid points
+
+    return dkl_values
+
+
+
+def compute_information_gain(participant_str, condition_str,computational_var_df, change_point_indices_df, p_c = 0.05, resol = 20, p1_min = 0.1, p1_max = 0.9, plot_dkl = False, add_surprise_and_conf = False):
+    """
+    Function to compute the information gain (DKL) for each task session. Data is stored within the computational_var_df and option to plot the calculated DKL values (alongside other computational variables) is available. 
+
+    Parameters:
+    - participant_str: string, participant identifier (number; set to 2 digits)  
+    - condition_str: string, identifier of condition order (set to 2 digits) ** May need to change to denote actual condition in Adalearn VNS study **
+    - computational_var_df: pd.DataFrame, contains computed variables from the ideal observer model.
+    - change_point_indices_df: pd.DataFrame, contains outputs related to the presence of change points in the hidden task structure. The outcome number within each task session will be used in plot visualisation.
+    - p_c: float, true change point probability (should be 0.05)
+    - resol: float, number of bins used for discretization (for hmm). Set to 20.
+    - p1_min: float, the minimum value of the Bernoulli parameter (used to clip the Dirichlet prior distribution) (should be 0.1)
+    - p1_max: float, the maximum value of the Bernoulli parameter (used to clip the Dirichlet prior distribution) (should be 0.9)
+    - plot_dkl: boolean, if true, will plot the DKL values per task session (default = False)
+    - add_surprise_and_conf: boolean, if true, will add the traces for surprise and prior confidence to the plot to aid visualisation (default = False)
+
+    Returns:
+    - computational_var_df: pd.DataFrame, contains computed variables from the ideal observer model. With this function, 'dkl' (information gain) is added as a column.
+    """
+
+    # Define options for "run inference" function
+    options = {'p_c': p_c, 'resol': resol, 'p1_min': p1_min, 'p1_max': p1_max}
+
+    # Loop through each task session
+    for task_session, session_data in computational_var_df.groupby('task_session'):
+
+        # Extract the sequence of outcomes for the current task session
+        seq = np.array(session_data['outcome'])
+
+        # Compute prior distributions
+        # Initialise a uniform prior before an observation is seen
+        uniform_prior = np.ones(resol) / resol
+
+        initial_prior = uniform_prior[:, np.newaxis]
+
+        # Derive prior distribution grid for each trial 
+        prior_grid = ideal_learner_prob_inference_from_outcomes(
+            outcomes=seq, p_c=p_c, keys=['mean', 'SD', 'dist'], p1_min=p1_min, p1_max=p1_max, do_inference_on_current_trial=True, resol=resol)
+
+        prior_grid = prior_grid['dist'].T
+
+        # Add uniform prior to the prior grid
+        prior_grid_with_uniform = np.hstack([initial_prior, prior_grid])
+
+        prior_grid_array = prior_grid_with_uniform[:, :-1]
+
+        #prior_grid_array = prior_grid_transposed[:, :-1]
+
+        # Compute posterior distributions
+        output = run_inference(seq, options=options)
+
+        post_grid_array = output[(1,)]['dist']
+
+        #post_grid_array = post_grid[:, 1:]
+        
+        # Calculate DKL for the current task session
+        dkl = calculate_dkl_grid(post_grid_array, prior_grid_array)
+
+        # Add new columns to computational_var_df
+        session_indices = session_data.index
+        computational_var_df.loc[session_indices, 'dkl'] = dkl
+        
+
+    # Option to plot the DKL values per task session 
+    if plot_dkl:
+        unique_sessions = computational_var_df['task_session'].unique()
+
+        fig = make_subplots(
+            rows=len(unique_sessions), cols=1, shared_xaxes=True,
+            subplot_titles=[f'Information gain (DKL) in task session {session}' for session in unique_sessions]
+        )
+
+        # Add DKL traces to each subplot
+        for session in unique_sessions:
+            session_data = computational_var_df[computational_var_df['task_session'] == session]
+            
+            fig.add_trace(go.Scatter(
+                x=np.arange(len(session_data['dkl'])),  
+                y=session_data['dkl'],  
+                mode='lines+markers',
+                line_color = 'blue',
+                name=f'Information gain (DKL)',
+            ),
+            row=session,  
+            col=1
+            )
+
+            change_points = change_point_indices_df[change_point_indices_df['task_session'] == session]['outcome_num']
+            for cp in change_points:
+                fig.add_shape(
+                    type="line", 
+                    x0=cp, x1=cp, 
+                    y0=0, y1=session_data['dkl'].max(), 
+                    line=dict(color="grey", width=2, dash="dash"),
+                    xref=f'x{session}', yref=f'y{session}'
+            )  
+
+            # Option to add surprise and conf to the plot to aid visualisation. 
+            if add_surprise_and_conf:
+                fig.add_trace(go.Scatter(
+                    x=np.arange(len(session_data['surprise'])),  
+                    y=session_data['surprise'],  
+                    mode='lines+markers',
+                    line_color = 'red',
+                    name=f'Surprise',
+                ),
+                row=session,  
+                col=1
+                )
+
+                fig.add_trace(go.Scatter(
+                    x=np.arange(len(session_data['prior_conf'])),
+                    y = session_data['prior_conf'], 
+                    mode='lines+markers',
+                    line_color= 'green',
+                    name=f'Prior confidence',
+                ),
+                row=session,
+                col=1
+                )
+
+        fig.update_layout(
+            title='DKL Information Gain across Task Sessions',
+            height=10000,
+            showlegend=True 
+        )
+
+        # Save the figure to the desktop
+        desktop_path = os.path.join(os.path.expanduser("~"), "Desktop")
+        file_name = f"sub-{participant_str}_ses-{condition_str}_dkl-by-task-session.png"
         fig.write_image(os.path.join(desktop_path, file_name))
 
         fig.show()
