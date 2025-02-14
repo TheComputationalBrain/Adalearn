@@ -187,19 +187,3 @@ fig.update_layout(
 )
 
 fig.show()
-
-
-
-
-null_values = computational_var_df['surprise'].isna()
-
-    indices = []
-
-    for i, val in enumerate(null_values):
-        if val: 
-            indices.append(i)
-
-    print(f"Number of NaN values in surprise column: {len(indices)}")
-    print("List of indices with NaN values:", indices)
-
-    computational_var_df.loc[null_values, 'surprise'] = 1
