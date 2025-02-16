@@ -17,8 +17,8 @@ from adalearn_pupil.adalearn_pupil_participant_level_analysis_behav import chang
 from adalearn_pupil.adalearn_pupil_participant_characteristics import directory_path, participant_str, list_subject_selected, condition_str, task_sessions, from_session, to_session
 
 
-sys.path.append('/home/aaron/Documents/Python/Ada_Learn/Analysis/Misc')
-from preprocess_eyedata import pupil
+#sys.path.append('/home/aarongreenhouse-tucknott/Documents/Python/Ada_Learn/Analysis/Misc')
+#from preprocess_eyedata import pupil
 
 
 

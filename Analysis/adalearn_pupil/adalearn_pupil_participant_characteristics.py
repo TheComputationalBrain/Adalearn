@@ -3,7 +3,7 @@ from pathlib import Path
 from adalearn_analysis_participant_level_functions_participant_info import read_tsv_files
 
 
-base_dir = '/home/aaron/Documents/Python/Ada_Learn/Pupil_Ada_Learn/Data/Study'
+base_dir = '/home/aarongreenhouse-tucknott/Documents/Python/Ada_Learn/Pupil_Ada_Learn/Data/Study'
 
 selected_participant = 17
 
