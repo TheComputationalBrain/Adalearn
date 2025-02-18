@@ -15,7 +15,6 @@ from_session =  1
 to_session =  22
 task_sessions = [str(session).zfill(2) for session in range(from_session, to_session + 1)]
 
-
 # Read demogrpahic .tsv file
 tsv_df = read_tsv_files(directory_path=directory_path)
 

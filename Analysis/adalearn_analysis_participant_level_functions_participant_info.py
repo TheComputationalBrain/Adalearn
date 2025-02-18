@@ -17,14 +17,14 @@ def read_tsv_files(directory_path):
     Returns:
     - tsv_df: dict, contains DataFrames from .tsv files
     """
-    tsv_df = {}
+    tsv_df_list = []
 
     if directory_path.exists():
         print("Checking for .tsv files...")
         # Filter out hidden files
         tsv_files = [f for f in directory_path.rglob('*.tsv') if not f.name.startswith('._')]
         
-        for idx, tsv_file in enumerate(tsv_files, start=1):
+        for tsv_file in tsv_files:
             with open(tsv_file, 'rb') as f:
                 result = detect(f.read(50000))  # Detect encoding
                 encoding = result['encoding']
@@ -32,21 +32,27 @@ def read_tsv_files(directory_path):
 
             if encoding:
                 try:
-                    # Handle compatibility for pandas without 'errors' argument
                     with open(tsv_file, 'r', encoding=encoding, errors='replace') as f:
                         content = f.read()
                     df = pd.read_csv(StringIO(content), sep='\t')
-                    tsv_df[idx] = df
+                    df['source_file'] = tsv_file.name  
+                    tsv_df_list.append(df)
                 except Exception as e:
                     print(f"Failed to read {tsv_file.name}: {e}")
             else:
                 print(f"Failed to detect encoding for {tsv_file.name}.")
-        print(f"Found {len(tsv_df)} .tsv files.")
+        
+        if tsv_df_list:
+            tsv_df = pd.concat(tsv_df_list, ignore_index=True)
+            print(f"Successfully loaded {len(tsv_files)} .tsv files.")
+        else:
+            tsv_df = pd.DataFrame()  
+            print("No .tsv files were loaded.")
     else:
         print(f"Path {directory_path} does not exist.")
+        tsv_df = pd.DataFrame()
 
     return tsv_df
-
 
 
 
@@ -91,34 +97,66 @@ def participant_characteristics(participant, base_dir, c1_vns_task_sessions=None
     condition_1_str, condition_2_str = None, None
 
     # Create condition strings
-    if tsv_df:
-        for key, df in tsv_df.items():
-            variable_name = f"condition_{key}_str"
-            globals()[variable_name] = f"{int(key):02d}"
-            if key == 1 and condition_1_str is None:
-                condition_1_str = globals()[variable_name]
-            elif key == 2 and condition_2_str is None:
-                condition_2_str = globals()[variable_name]
-            print(f"Condition string created: {variable_name}")
+    #if tsv_df:
+    #        variable_name = f"condition_{key}_str"
+    #        globals()[variable_name] = f"{int(key):02d}"
+    #        if key == 1 and condition_1_str is None:
+     #           condition_1_str = globals()[variable_name]
+     #       elif key == 2 and condition_2_str is None:
+     #           condition_2_str = globals()[variable_name]
+     #       print(f"Condition string created: {variable_name}")
 
         # Print key information about VNS parameters
-        for key, df in tsv_df.items():
-            print(f"For session {df['SessionNumber'].iloc[0]}, the VNS parameters were:")
-            print(f"Stimulation intensity: {df['StimulationIntensity'].iloc[0]} mA")
-            print(f"Stimulation frequency: {df['StimulationFrequency'].iloc[0]} Hz")
-            print(f"Stimulation pulse width: {df['PulseWidth'].iloc[0]} µs")
-            print(f"ON duration: {df['DurationON'].iloc[0]} s")
-            print(f"OFF duration: {df['DurationOFF'].iloc[0]} s")
+    #    for key, df in tsv_df.items():
+    #        print(f"For session {df['SessionNumber'].iloc[0]}, the VNS parameters were:")
+    #        print(f"Stimulation intensity: {df['StimulationIntensity'].iloc[0]} mA")
+    #        print(f"Stimulation frequency: {df['StimulationFrequency'].iloc[0]} Hz")
+    #        print(f"Stimulation pulse width: {df['PulseWidth'].iloc[0]} µs")
+    #        print(f"ON duration: {df['DurationON'].iloc[0]} s")
+    #        print(f"OFF duration: {df['DurationOFF'].iloc[0]} s")
 
         # Define high vs low VNS conditions
-        if tsv_df[1]['StimulationIntensity'].iloc[0] > tsv_df[2]['StimulationIntensity'].iloc[0]:
+    #    if tsv_df[1]['StimulationIntensity'].iloc[0] > tsv_df[2]['StimulationIntensity'].iloc[0]:
+    #        print("The high VNS intensity condition is condition 1 and the low VNS intensity condition is condition 2")
+    #        high_vns_condition = f"{1:02d}"
+    #        low_vns_condition = f"{2:02d}"
+    #    elif tsv_df[1]['StimulationIntensity'].iloc[0] < tsv_df[2]['StimulationIntensity'].iloc[0]:
+    #        print("The low VNS intensity condition is condition 1 and the low VNS intensity condition is condition 2")
+    #        high_vns_condition = f"{2:02d}"
+    #        low_vns_condition = f"{1:02d}"
+
+    if not tsv_df.empty:
+        # Print key information about VNS parameters
+        for session_num in tsv_df['SessionNumber'].unique():
+            session_data = tsv_df[tsv_df['SessionNumber'] == session_num]
+            print(f"For session {session_num}, the VNS parameters were:")
+            print(f"Stimulation intensity: {session_data['StimulationIntensity'].iloc[0]} mA")
+            print(f"Stimulation frequency: {session_data['StimulationFrequency'].iloc[0]} Hz")
+            print(f"Stimulation pulse width: {session_data['PulseWidth'].iloc[0]} µs")
+            print(f"ON duration: {session_data['DurationON'].iloc[0]} s")
+            print(f"OFF duration: {session_data['DurationOFF'].iloc[0]} s")
+
+        # Define high vs low VNS conditions
+        session_1_data = tsv_df[tsv_df['SessionNumber'] == 1]
+        if session_1_data is not None:
+            condition_1_str = "01"
+        else:
+            condition_1_str = None
+
+        session_2_data = tsv_df[tsv_df['SessionNumber'] == 2]
+        if session_2_data is not None:
+            condition_2_str = "02"
+        else:
+            condition_2_str = None
+
+        if session_1_data['StimulationIntensity'].iloc[0] > session_2_data['StimulationIntensity'].iloc[0]:
             print("The high VNS intensity condition is condition 1 and the low VNS intensity condition is condition 2")
-            high_vns_condition = f"{1:02d}"
-            low_vns_condition = f"{2:02d}"
-        elif tsv_df[1]['StimulationIntensity'].iloc[0] < tsv_df[2]['StimulationIntensity'].iloc[0]:
-            print("The low VNS intensity condition is condition 1 and the low VNS intensity condition is condition 2")
-            high_vns_condition = f"{2:02d}"
-            low_vns_condition = f"{1:02d}"
+            high_vns_condition = "01"
+            low_vns_condition = "02"
+        elif session_1_data['StimulationIntensity'].iloc[0] < session_2_data['StimulationIntensity'].iloc[0]:
+            print("The low VNS intensity condition is condition 1 and the high VNS intensity condition is condition 2")
+            high_vns_condition = "02"
+            low_vns_condition = "01"
 
     # Extract task session information for condition 1
     if condition_1_str is not None:

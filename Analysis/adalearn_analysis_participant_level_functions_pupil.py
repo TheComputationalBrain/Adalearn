@@ -363,6 +363,7 @@ def load_and_process_pupil_data(directory_path, participant_str, list_subject_se
     pupil_trig_df = pd.concat(pupil_trig_ses_list, ignore_index=True)
     pupil_trig_df['outcome_num'] = pupil_trig_df.groupby('task_session').cumcount() 
     pupil_trig_df['cum_outcome_num'] = range(len(pupil_trig_df))
+    pupil_trig_df['time_stamp'] = pupil_trig_df['time_stamp'].astype('int64')
  
     pupil_ses_df = pd.concat(pupil_ses_list, ignore_index=True)
     pupil_ses_df['duration'] = (pupil_ses_df['end'].astype(int) - pupil_ses_df['start'].astype(int)) / 1000000
@@ -775,6 +776,23 @@ def outcome_colour_pupil_epochs(directory_path, participant_str, list_subject_se
 
     preprocessed_pupil_outcome_0_df, pupil_trig_outcome_0_df, pupil_ses_outcome_0_df, blink_outcome_0_df, outcome_0_epoched_pupil_df, outcome_0_blink_ratio_df, outcome_0_epochs_to_remove = load_and_process_pupil_data(directory_path=directory_path, participant_str=participant_str, list_subject_selected=list_subject_selected, condition_str=condition_str, condition_task_sessions=condition_task_sessions, from_session=from_session, to_session=to_session, dict_onsets=outcome_0_onsets, dict_num=outcome_0_nums, session_list=None, baseline_cor=baseline_cor, lpf=[5], blink_ratio_threshold=0.2, select_eye=select_eye, remove_epochs=remove_epochs, z_score=True, plot_interpolation_process=False)
 
+
+    print(f'Number of epochs added for outcome 1: {len(range(outcome_1_epoched_pupil_df.shape[1] - 4))}')
+    print(f'Number of epochs added for outcome 0: {len(range(outcome_0_epoched_pupil_df.shape[1] - 4))}')
+
+    outcome_pupil_dict = {
+        'outcome_1_onsets': outcome_1_onsets,
+        'outcome_1_nums': outcome_1_nums,
+        'outcome_1_epoched_pupil_df': outcome_1_epoched_pupil_df,
+        'outcome_1_blink_ratio_df': outcome_1_blink_ratio_df,
+        'outcome_1_epochs_to_remove': outcome_1_epochs_to_remove,
+        'outcome_0_onsets': outcome_0_onsets,
+        'outcome_0_nums': outcome_0_nums,
+        'outcome_0_epoched_pupil_df': outcome_0_epoched_pupil_df,
+        'outcome_0_blink_ratio_df': outcome_0_blink_ratio_df,
+        'outcome_0_epochs_to_remove': outcome_0_epochs_to_remove
+    }
+
     # Option to plot the two average pupil responses to different outcome colours
     if plot_pupil_by_colour_response:
               
@@ -855,7 +873,8 @@ def outcome_colour_pupil_epochs(directory_path, participant_str, list_subject_se
         fig_pupil_avg.show()
 
 
-    return outcome_1_onsets, outcome_1_nums, outcome_1_epoched_pupil_df, outcome_1_blink_ratio_df, outcome_1_epochs_to_remove, outcome_0_onsets, outcome_0_nums, outcome_0_epoched_pupil_df, outcome_0_blink_ratio_df, outcome_0_epochs_to_remove
+    return outcome_pupil_dict
+
 
 
 def change_point_pupil_epochs(directory_path, participant_str, list_subject_selected, condition_str, condition_task_sessions, from_session, to_session, pupil_trig_df, change_point_indices, baseline_cor = [-0.2, 0], select_eye = True, remove_epochs = True,  plot_pupil_by_cp=False):
@@ -903,6 +922,18 @@ def change_point_pupil_epochs(directory_path, participant_str, list_subject_sele
     preprocessed_pupil_cp_df, pupil_trig_cp_df, pupil_ses_cp_df, blink_cp_df, epoched_pupil_cp_df, blink_ratio_cp_df, cp_epochs_to_remove = load_and_process_pupil_data(directory_path=directory_path, participant_str=participant_str, list_subject_selected=list_subject_selected, condition_str=condition_str, condition_task_sessions=condition_task_sessions, from_session=from_session, to_session=to_session, dict_onsets=change_point_onsets, dict_num=change_point_nums, baseline_cor=baseline_cor, lpf=[5], select_eye=select_eye, remove_epochs=remove_epochs)
 
     preprocessed_pupil_non_cp_df, pupil_trig_non_cp_df, pupil_ses_non_cp_df, blink_non_cp_df, epoched_pupil_non_cp_df, blink_ratio_non_cp_df, non_cp_epochs_to_remove = load_and_process_pupil_data(directory_path=directory_path, participant_str=participant_str, list_subject_selected=list_subject_selected, condition_str=condition_str, condition_task_sessions=condition_task_sessions, from_session=from_session, to_session=to_session, dict_onsets=non_cp_onsets, dict_num=non_cp_nums,baseline_cor=baseline_cor, lpf=[5],select_eye=select_eye, remove_epochs=remove_epochs)
+
+
+    change_point_pupil_dict = {
+        'change_point_onsets': change_point_onsets,
+        'change_point_nums': change_point_nums,
+        'epoched_pupil_cp_df': epoched_pupil_cp_df,
+        'blink_ratio_cp_df': blink_ratio_cp_df,
+        'cp_epochs_to_remove': cp_epochs_to_remove
+    }
+
+    print(f'Number of epochs added for change points: {len(range(epoched_pupil_cp_df.shape[1] - 4))}')
+    print(f'Number of epochs added for non change points: {len(range(epoched_pupil_non_cp_df.shape[1] - 4))}')
 
     # Option to plot the average pupil response timelocked to change points
     if plot_pupil_by_cp:
@@ -982,7 +1013,8 @@ def change_point_pupil_epochs(directory_path, participant_str, list_subject_sele
 
         fig_epoch_avg.show()
 
-    return change_point_onsets, change_point_nums, epoched_pupil_cp_df, blink_ratio_cp_df, cp_epochs_to_remove
+    return change_point_pupil_dict
+
 
 
 def comp_var_pupil_quartile_epochs(directory_path, participant_str, list_subject_selected, condition_str, condition_task_sessions, from_session, to_session, pupil_trig_df, computational_var_df, baseline_cor = [-0.2, 0], variable_cat = None, select_eye = True, remove_epochs = True, plot_pupil_by_quartile=True):
@@ -1076,6 +1108,36 @@ def comp_var_pupil_quartile_epochs(directory_path, participant_str, list_subject
     preprocessed_pupil_third_quart_df, pupil_trig_third_quart_df, pupil_ses_third_quart_df, blink_third_quart_df, epoched_pupil_third_quart_df, third_quart_blink_ratio_df, third_quart_epochs_to_remove = load_and_process_pupil_data(directory_path=directory_path, participant_str=participant_str, list_subject_selected=list_subject_selected, condition_str=condition_str, condition_task_sessions=condition_task_sessions, from_session=from_session, to_session=to_session, dict_onsets=third_quartile_onsets, dict_num=third_quartile_nums, baseline_cor=baseline_cor, lpf=[5],session_list=third_quart_ses_list, select_eye=select_eye, remove_epochs=remove_epochs)
     print("Analysing fourth quartile. Processing...") 
     preprocessed_pupil_fourth_quart_df, pupil_trig_fourth_quart_df, pupil_ses_fourth_quart_df, blink_fourth_quart_df, epoched_pupil_fourth_quart_df, fourth_quart_blink_ratio_df, fourth_quart_epochs_to_remove = load_and_process_pupil_data(directory_path=directory_path, participant_str=participant_str, list_subject_selected=list_subject_selected, condition_str=condition_str, condition_task_sessions=condition_task_sessions, from_session=from_session, to_session=to_session, dict_onsets=fourth_quartile_onsets, dict_num=fourth_quartile_nums, baseline_cor=baseline_cor, lpf=[5],session_list=fourth_quart_ses_list, select_eye=select_eye, remove_epochs=remove_epochs)
+
+
+    print(f'Number of epochs added for the first quartile: {len(range(epoched_pupil_first_quart_df.shape[1] - 4))}')
+    print(f'Number of epochs added for the second quartile: {len(range(epoched_pupil_second_quart_df.shape[1] - 4))}')
+    print(f'Number of epochs added for the third quartile: {len(range(epoched_pupil_third_quart_df.shape[1] - 4))}')
+    print(f'Number of epochs added for the fourth quartile: {len(range(epoched_pupil_fourth_quart_df.shape[1] - 4))}')
+
+
+    com_var_pupil_quartile_dict = {
+        'first_quartile_onsets': first_quartile_onsets,
+        'first_quartile_nums': first_quartile_nums,
+        'epoched_pupil_first_quart_df': epoched_pupil_first_quart_df,
+        'first_quart_blink_ratio': first_quart_blink_ratio_df,
+        'first_quart_epochs_to_remove': first_quart_epochs_to_remove,
+        'second_quartile_onsets': second_quartile_onsets,
+        'second_quartile_nums':  second_quartile_nums,
+        'epoched_pupil_second_quart_df': epoched_pupil_second_quart_df,
+        'second_quart_blink_ratio_df': second_quart_blink_ratio_df,
+        'second_quart_epochs_to_remove': second_quart_epochs_to_remove,
+        'third_quartile_onsets': third_quartile_onsets,
+        'third_quartile_nums': third_quartile_nums,
+        'epoched_pupil_third_quart_df': epoched_pupil_third_quart_df,
+        'third_quart_blink_ratio': third_quart_blink_ratio_df, 
+        'third_quart_epochs_to_remove':third_quart_epochs_to_remove,
+        'fourth_quartile_onsets': fourth_quartile_onsets,
+        'fourth_quartile_nums': fourth_quartile_nums,
+        'epoched_pupil_fourth_quart_df': epoched_pupil_fourth_quart_df,
+        'fourth_quart_blink_ratio': fourth_quart_blink_ratio_df,
+        'fourth_quart_epochs_to_remove':fourth_quart_epochs_to_remove
+        }
 
     # Option to plot pupil response of the pupil diameter timelocked to quartiles of computational variable of interest
     if plot_pupil_by_quartile:
@@ -1206,4 +1268,4 @@ def comp_var_pupil_quartile_epochs(directory_path, participant_str, list_subject
 
         fig_epoch_avg.show()
 
-    return first_quartile_onsets, first_quartile_nums, epoched_pupil_first_quart_df, first_quart_blink_ratio_df, first_quart_epochs_to_remove, second_quartile_onsets, second_quartile_nums, epoched_pupil_second_quart_df, second_quart_blink_ratio_df, second_quart_epochs_to_remove, third_quartile_onsets, third_quartile_nums, epoched_pupil_third_quart_df, third_quart_blink_ratio_df, third_quart_epochs_to_remove, fourth_quartile_onsets, fourth_quartile_nums, epoched_pupil_fourth_quart_df, fourth_quart_blink_ratio_df, fourth_quart_epochs_to_remove
+    return com_var_pupil_quartile_dict

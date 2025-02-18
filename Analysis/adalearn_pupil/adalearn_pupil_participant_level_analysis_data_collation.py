@@ -24,7 +24,7 @@ def save_dfs_to_csv(participant_str, condition_str, directory_path):
     
     # Dictionary mapping variable names to their corresponding DataFrames
     dataframes = {
-        f"sub-{participant_str}_ses-{condition_str}_tsv-df": tsv_df, # Not a dataframe
+        f"sub-{participant_str}_ses-{condition_str}_tsv-df": tsv_df, 
         f"sub-{participant_str}_ses-{condition_str}_behavioural-df": behavioural_df,
         f"sub-{participant_str}_ses-{condition_str}_mean-abs-error-df": mean_abs_error_df,
         f"sub-{participant_str}_ses-{condition_str}_computational-var-df": computational_var_df,
