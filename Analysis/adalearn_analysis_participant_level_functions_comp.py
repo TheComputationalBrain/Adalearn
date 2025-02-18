@@ -738,9 +738,39 @@ def calculate_dkl_grid(posterior_grid, prior_grid):
     posterior_grid = posterior_grid / np.sum(posterior_grid, axis=0)  # Normalize posterior
 
     # Calculate DKL for each stimulus (sum across grid points)
-    dkl_values = np.sum(prior_grid * np.log2(prior_grid / posterior_grid), axis=0)  # Sum over grid points
+    dkl_values = np.sum(prior_grid * np.log2(prior_grid / posterior_grid), axis=0)  
 
     return dkl_values
+
+
+
+def create_generalized_initial_prior(resol = 20, p1_min = 0.1, p1_max = 0.9):
+    """
+    Function to create an initial prior before an observation has been seen.
+
+    Parameters:
+    - resol: float, number of bins used for discretization (for hmm). Set to 20.
+    - p1_min: float, the minimum value of the Bernoulli parameter (used to clip the Dirichlet prior distribution) (should be 0.1)
+    - p1_max: float, the maximum value of the Bernoulli parameter (used to clip the Dirichlet prior distribution) (should be 0.9)
+
+    Returns:
+    - prior: np.array, provides a "uniform" prior within the observable range of the prior (i.e. 0.1 to 0.9)  
+    """
+    # Ensure valid limits
+    assert 0 <= p1_min < p1_max <= 1, "p1_min and p1_max must be between 0 and 1"
+    
+    # Calculate the number of bins for the extremes
+    extreme_bins = int(np.ceil(resol * (1 - (p1_max - p1_min)) / 2))
+    
+    # Create a prior array
+    prior = np.zeros(resol)
+    
+    # Assign uniform probability mass to the estimable bins
+    estimable_bins = resol - 2 * extreme_bins
+    if estimable_bins > 0:
+        prior[extreme_bins:-extreme_bins] = 1 / estimable_bins
+    
+    return prior
 
 
 
@@ -763,7 +793,6 @@ def compute_information_gain(participant_str, condition_str,computational_var_df
     Returns:
     - computational_var_df: pd.DataFrame, contains computed variables from the ideal observer model. With this function, 'dkl' (information gain) is added as a column.
     """
-
     # Define options for "run inference" function
     options = {'p_c': p_c, 'resol': resol, 'p1_min': p1_min, 'p1_max': p1_max}
 
@@ -774,8 +803,8 @@ def compute_information_gain(participant_str, condition_str,computational_var_df
         seq = np.array(session_data['outcome'])
 
         # Compute prior distributions
-        # Initialise a uniform prior before an observation is seen
-        uniform_prior = np.ones(resol) / resol
+        # Initialise a uniform prior before an observation is seen (takes into account that prior is limited to within p1_min and p1_max)
+        uniform_prior = create_generalized_initial_prior(resol=resol, p1_min=p1_min, p1_max=p1_max)
 
         initial_prior = uniform_prior[:, np.newaxis]
 
@@ -813,7 +842,7 @@ def compute_information_gain(participant_str, condition_str,computational_var_df
 
         fig = make_subplots(
             rows=len(unique_sessions), cols=1, shared_xaxes=True,
-            subplot_titles=[f'Information gain (DKL) in task session {session}' for session in unique_sessions]
+            subplot_titles=[f'Information gain (DKL - blue) in task session {session}' for session in unique_sessions]
         )
 
         # Add DKL traces to each subplot
@@ -831,15 +860,6 @@ def compute_information_gain(participant_str, condition_str,computational_var_df
             col=1
             )
 
-            change_points = change_point_indices_df[change_point_indices_df['task_session'] == session]['outcome_num']
-            for cp in change_points:
-                fig.add_shape(
-                    type="line", 
-                    x0=cp, x1=cp, 
-                    y0=0, y1=session_data['dkl'].max(), 
-                    line=dict(color="grey", width=2, dash="dash"),
-                    xref=f'x{session}', yref=f'y{session}'
-            )  
 
             # Option to add surprise and conf to the plot to aid visualisation. 
             if add_surprise_and_conf:
@@ -865,10 +885,20 @@ def compute_information_gain(participant_str, condition_str,computational_var_df
                 col=1
                 )
 
+                change_points = change_point_indices_df[change_point_indices_df['task_session'] == session]['outcome_num']
+                for cp in change_points:
+                    fig.add_shape(
+                        type="line", 
+                        x0=cp, x1=cp, 
+                        y0=0, y1=session_data['prior_conf'].max(), 
+                        line=dict(color="grey", width=2, dash="dash"),
+                        xref=f'x{session}', yref=f'y{session}'
+                )  
+
         fig.update_layout(
             title='DKL Information Gain across Task Sessions',
             height=10000,
-            showlegend=True 
+            showlegend=False
         )
 
         # Save the figure to the desktop
