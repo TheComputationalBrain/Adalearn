@@ -896,7 +896,7 @@ def compute_information_gain(participant_str, condition_str,computational_var_df
                 )  
 
         fig.update_layout(
-            title='DKL Information Gain across Task Sessions',
+            title=f'Information gain (DKL) across task sessions for participant {participant_str} in condition ({condition_str})',
             height=10000,
             showlegend=False
         )
@@ -1056,6 +1056,7 @@ def uncertainty_on_learning_rate_participant_level(participant_str, condition_st
     scaler = StandardScaler()
 
     computational_var_df[f'lr_zscore_{parameter_estimate}'] = scaler.fit_transform(computational_var_df[[f'cleaned_learning_rate_{parameter_estimate}']]).flatten()
+    
     computational_var_df['conf_zscore'] = scaler.fit_transform(computational_var_df[['prior_conf']]).flatten()
 
     computational_var_df['cpp_zscore'] = scaler.fit_transform(computational_var_df[['cpp']]).flatten()
@@ -1185,3 +1186,173 @@ def uncertainty_on_learning_rate_participant_level(participant_str, condition_st
         fig.show()
 
     return learning_rate_analysis_dict
+
+
+
+def comp_parameters_on_info_gain(participant_str, condition_str, computational_var_df, plot_dkl_regression = True):
+    """
+    Function to run regression analysis evaluating the main effects of prior confidence and change point proabability on information gain. EXtracts the residuals of the model and indexes the amount of variation explained by the two computational parameters.
+
+    Parameters:
+    - participant_str: string, participant identifier (number; set to 2 digits) 
+    - condition_str: string, identifier of condition order (set to 2 digits) ** May need to change to denote actual condition in Adalearn VNS study **
+    - computational_var_df: pd.DataFrame, contains computed variables from the ideal observer model.
+    - plot_dkl_regression: boolean, if true, will plot the outputs of the regression analysis for information gain (DKL)
+
+    Returns:
+    - computational_var_df: pd.DataFrame, contains computed variables from the ideal observer model. With this function, the residuals of the rgession analysis is added as a column ['dkl_regress_residuals'].
+    - dkl_regress_df: pd.DataFrame, contains the outputs of the regression analysis for information gain (DKL).  
+    """
+    scaler = StandardScaler()
+
+    # Z-score dkl values
+    computational_var_df[f'dkl_zscore'] = scaler.fit_transform(computational_var_df[['dkl']]).flatten()
+
+    # Evaluating correlation between compuational parameters and information gain (DKL)
+    conf_dkl_corr, _ = pearsonr(x = computational_var_df['conf_zscore'], y = computational_var_df['dkl_zscore'])
+    cpp_dkl_corr, _ = pearsonr(x = computational_var_df['cpp_zscore'], y = computational_var_df['dkl_zscore'])
+            
+    # Linear regression with prior confidence and change point probability predicting information gain (DKL) 
+    X = computational_var_df[['conf_zscore', 'cpp_zscore']]
+    y = computational_var_df['dkl_zscore']
+
+    # Fit the linear regression model
+    model = LinearRegression()
+    model.fit(X, y)
+
+    #  Extract Beta estimates (coefficients) and intercept
+    coefficients = model.coef_
+    intercept = model.intercept_
+
+    # Estimate model fit, error and residuals
+    r_squared = model.score(X, y)
+    y_pred = model.predict(X)
+    mse = mean_squared_error(y, y_pred)
+    rmse = np.sqrt(mse)
+    residuals = y - y_pred
+
+    # Adding residuals to compuational_var_df and creating dataframe to store regression outputs
+    computational_var_df['dkl_regress_residuals'] = residuals
+
+    dkl_regress_df = pd.DataFrame({
+        'conf_dkl_corr': [conf_dkl_corr],
+        'cpp_dkl_corr': [cpp_dkl_corr],
+        'conf_coef': [coefficients[0]],
+        'cpp_coef': [coefficients[1]],
+        'intercept': [intercept],
+        'r_squared': [r_squared],
+        'mean_squared_error': [mse],
+        'root_mean_squared_error': [rmse]
+    })
+
+    # Option to plot DKL regression outputs
+    if plot_dkl_regression:
+        fig = make_subplots(
+            rows=3, 
+            cols=2, 
+            shared_xaxes=False, 
+            vertical_spacing=0.1,
+            specs=[[{}, {}], [{}, {}], [{}, None]],         
+            subplot_titles=(
+                "Main effect of prior confidence on information gain (DKL)",
+                "Main effect of change point probability on information gain (DKL)", 
+                "Regression weights for prior confidence and change point probability on information gain (DKL)", 
+                "Model residuals vs predicted values",
+                "Model R squared"
+            )
+        )
+
+        # Subplot 1.
+        fig.add_trace(go.Scatter(
+            x=computational_var_df['conf_zscore'], 
+            y=computational_var_df['dkl_zscore'], 
+            mode='markers', 
+            name='Prior confidence data (z-score)', 
+            marker=dict(color='rgba(0, 0, 255, 0.5)', size=4)
+        ), row=1, col=1)
+
+        # Plot the regression line for conf_zscore
+        conf_x_range = np.linspace(computational_var_df['conf_zscore'].min(), computational_var_df['conf_zscore'].max(), 100)
+        conf_predict_df = pd.DataFrame({'conf_zscore': conf_x_range, 'cpp_zscore': np.zeros_like(conf_x_range)})
+        conf_y_pred = model.predict(conf_predict_df)  
+        fig.add_trace(go.Scatter(
+            x=conf_x_range, 
+            y=conf_y_pred, 
+            mode='lines', 
+            name='Prior confidence regression line',
+            line=dict(color='rgba(255, 0, 0, 1)', dash='dash')
+        ), row=1, col=1)
+
+
+        # Subplot 2.  
+        fig.add_trace(go.Scatter(
+            x=computational_var_df['cpp_zscore'], 
+            y=computational_var_df['dkl_zscore'], 
+            mode='markers', 
+            name='Change point probability data (z-score)', 
+            marker=dict(color='rgba(0, 0, 255, 0.5)', size=4)
+        ), row=1, col=2)
+
+        # Plot the regression line for conf_zscore
+        cpp_x_range = np.linspace(computational_var_df['cpp_zscore'].min(), computational_var_df['cpp_zscore'].max(), 100)
+        cpp_predict_df = pd.DataFrame({'conf_zscore': np.zeros_like(cpp_x_range), 'cpp_zscore': cpp_x_range})
+        cpp_y_pred = model.predict(cpp_predict_df)
+        fig.add_trace(go.Scatter(
+            x=cpp_x_range, 
+            y=cpp_y_pred, 
+            mode='lines', 
+            name='Change point probability regression line',
+            line=dict(color='rgba(255, 0, 0, 1)', dash='dash')
+        ), row=1, col=2)
+
+
+        # Subplot 3.
+        parameter_names = ['Prior Confidence (z-score)', 'Change Point Probability (z-score)']
+        fig.add_trace(go.Bar(x=parameter_names, y=coefficients), row=2, col=1)
+
+
+        # Subplot 4. 
+        fig.add_trace(go.Scatter(
+            x=residuals,
+            y=y_pred,
+            mode='markers',
+            name='Model residuals',
+            marker=dict(color='rgba(0, 0, 255, 0.8)', size=4)
+        ), row=2, col=2) 
+
+
+        # Subplot 5. 
+        r_squared_name = ['Model R squared']
+        fig.add_trace(go.Bar(x=r_squared_name, y=[r_squared]), row=3, col=1)
+
+
+        fig.update_layout(
+            title=f"Prediction of information gain (DKL) from prior confidence and change point proabability for participant {participant_str} in condition {condition_str}",
+            title_x=0.5,
+            title_font=dict(size=16, family="Arial"),
+            height=950,
+            width=1800,
+            showlegend=False,
+            margin=dict(l=50, r=50, t=50, b=50),
+            hovermode="closest"
+        )
+
+
+        fig.update_xaxes(title_text="Prior Confidence (z-score)", row=1, col=1)
+        fig.update_xaxes(title_text="Change Point Probability (z-score)", row=1, col=2)
+        fig.update_xaxes(title_text="Model Residuals", row=2, col=2)
+
+        fig.update_yaxes(title_text="Information Gain (DKL) (z-score)", row=1, col=1)
+        fig.update_yaxes(title_text="Information Gain (DKL) (z-score)", row=1, col=2)
+        fig.update_yaxes(title_text="Regression Coefficient", row=2, col=1)
+        fig.update_yaxes(title_text="Model Predictions", row=2, col=2)
+        fig.update_yaxes(title_text="Model R Squared", row=3, col=1)
+
+        # Save the figure to the desktop
+        desktop_path = os.path.join(os.path.expanduser("~"), "Desktop")
+        file_name = f"sub-{participant_str}_ses-{condition_str}_uncertainty_parameters_on_info_gain.png"
+        fig.write_image(os.path.join(desktop_path, file_name))
+
+        fig.show()
+
+    return computational_var_df, dkl_regress_df

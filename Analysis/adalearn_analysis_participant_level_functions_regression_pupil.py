@@ -2,7 +2,9 @@ import pandas as pd
 import numpy as np
 import os
 import sys
+from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import LinearRegression
+from sklearn.metrics import mean_squared_error
 import plotly.io as pio
 import plotly.graph_objects as go
 import plotly.express as px
@@ -10,7 +12,7 @@ from plotly.subplots import make_subplots
 pio.renderers.default='browser'
 
 
-def pupil_regression_analysis(participant_str, condition_str, comp_variable_df, outcome_epoched_pupil_df, 
+def pupil_regression_analysis(participant_str, condition_str, computational_var_df, outcome_epoched_pupil_df, 
                               outcome_epochs_to_remove=None, variables=None, include_outcome=False, 
                               plot_regression_analysis=True):
     """
@@ -19,7 +21,7 @@ def pupil_regression_analysis(participant_str, condition_str, comp_variable_df, 
     Parameters:
     - participant_str: string, identifier of participant number (set to 2 numbers)
     - condition_str: string, identifier of condition order (set to 2 numbers)
-    - comp_variable_df: pd.DataFrame, contains the computational variables (e.g. surprise, prior_conf, cpp) to be used as predictors.
+    - computational_var_df: pd.DataFrame, contains the computational variables (e.g. surprise, prior_conf, cpp) to be used as predictors.
     - outcome_epoched_pupil_df: pd.DataFrame, contains transposed epoched data (each column represents one epoch), the calculated mean, variance metrics, and timestamp across epochs.
     - outcome_epochs_to_remove: list, indices of the epochs that exceed the threshold for the amount of interpolation within.
     - variables: list, names of the variables to be used as predictors in the regression analysis.
@@ -37,13 +39,18 @@ def pupil_regression_analysis(participant_str, condition_str, comp_variable_df, 
         variables = [variables]
 
     # Prepare predictors
-    predictors = comp_variable_df[variables].copy()
+    predictors = computational_var_df[variables].copy()
 
     # Optionally include 'outcome' as a predictor
     if include_outcome:
-        if 'outcome' not in comp_variable_df.columns:
+        if 'outcome' not in computational_var_df.columns:
             raise ValueError("The 'outcome' variable is not present in comp_variable_df.")
-        predictors['outcome'] = comp_variable_df['outcome']
+        
+        scaler = StandardScaler()
+
+        computational_var_df['outcome_zscore'] = scaler.fit_transform(computational_var_df[['outcome']]).flatten()
+
+        predictors['outcome'] = computational_var_df['outcome_zscore']
 
     if outcome_epochs_to_remove is not None:
         predictors.drop(index=outcome_epochs_to_remove, inplace=True)
@@ -66,6 +73,7 @@ def pupil_regression_analysis(participant_str, condition_str, comp_variable_df, 
 
     # Prepare storage for regression results
     coefficients = {var: [] for var in predictors.columns}
+    residuals_by_time = []
 
     # Run regression for each time point
     for t in time_points:
@@ -83,9 +91,30 @@ def pupil_regression_analysis(participant_str, condition_str, comp_variable_df, 
         for idx, var in enumerate(predictors.columns):
             coefficients[var].append(model.coef_[idx])
 
+        # Calculate predicted values and residuals
+        y_pred = model.predict(X)
+        residuals = y - y_pred  # Residuals: actual - predicted
+
+        # Store residuals for this time point (these are residuals across all epochs for a single time point)
+        residuals_by_time.append(residuals.reset_index(drop=True).values)
+
     # Create a DataFrame for coefficients
     coefficients_df = pd.DataFrame(coefficients)
     coefficients_df['time'] = time
+
+    # Extract model outputs
+    intercept = model.intercept_
+    r_squared = model.score(X, y)
+    y_pred = model.predict(X)
+    mse = mean_squared_error(y, y_pred)
+    rmse = np.sqrt(mse)
+   
+    pupil_regress_df = pd.DataFrame({
+        'intercept': [intercept],
+        'r_squared': [r_squared],
+        'mean_squared_error': [mse],
+        'root_mean_squared_error': [rmse]
+    })
 
     # Option to plot regression coefficients at each peri-stimulus timepoint
     if plot_regression_analysis:
@@ -118,4 +147,4 @@ def pupil_regression_analysis(participant_str, condition_str, comp_variable_df, 
 
         fig.show()
 
-    return coefficients_df
+    return coefficients_df, pupil_regress_df

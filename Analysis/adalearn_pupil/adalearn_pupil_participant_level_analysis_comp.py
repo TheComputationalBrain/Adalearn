@@ -1,7 +1,7 @@
 import plotly.io as pio
 pio.renderers.default='browser'
 
-from adalearn_analysis_participant_level_functions_comp import compute_surprise_from_observations, compute_prior_conf_and_cpp_from_observations, compute_information_gain, behavioural_learning_rate_analysis, ideal_observer_learning_rate_analysis, learning_rate_by_change_point, behav_v_model_linear_analysis, uncertainty_on_learning_rate_participant_level
+from adalearn_analysis_participant_level_functions_comp import compute_surprise_from_observations, compute_prior_conf_and_cpp_from_observations, compute_information_gain, behavioural_learning_rate_analysis, ideal_observer_learning_rate_analysis, learning_rate_by_change_point, behav_v_model_linear_analysis, uncertainty_on_learning_rate_participant_level, comp_parameters_on_info_gain
 
 from adalearn_analysis_participant_level_functions_data_utilities import plot_session_behav_comp, evaluation_of_learning_rate
 
@@ -35,7 +35,7 @@ computational_var_df = compute_prior_conf_and_cpp_from_observations(participant_
 
 
 
-computational_var_df = compute_information_gain(participant_str=participant_str, condition_str=condition_str,computational_var_df=computational_var_df, change_point_indices_df=change_point_indices,  p_c=P_C, resol=20, p1_min=P1_MIN, p1_max=P1_MAX, plot_dkl=False, add_surprise_and_conf=True)
+computational_var_df = compute_information_gain(participant_str=participant_str, condition_str=condition_str,computational_var_df=computational_var_df, change_point_indices_df=change_point_indices,  p_c=P_C, resol=20, p1_min=P1_MIN, p1_max=P1_MAX, plot_dkl=True, add_surprise_and_conf=True)
 
 
 
@@ -56,3 +56,8 @@ lr_evaluation_dict = evaluation_of_learning_rate(participant_str=participant_str
 
 
 learning_rate_analysis_dict = uncertainty_on_learning_rate_participant_level(participant_str=participant_str, condition_str=condition_str, computational_var_df=computational_var_df, n_bins=6, parameter_estimate='estimate', exclude_zero=False, plot_corr_subplots=False)
+
+
+
+computational_var_df, dkl_regression_df = comp_parameters_on_info_gain(participant_str=participant_str, condition_str=condition_str, computational_var_df=computational_var_df, plot_dkl_regression=True)
+
