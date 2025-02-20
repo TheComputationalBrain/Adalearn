@@ -16,7 +16,7 @@ def pupil_regression_analysis(participant_str, condition_str, computational_var_
                               outcome_epochs_to_remove=None, variables=None, include_outcome=False, 
                               plot_regression_analysis=True):
     """
-    Function that analyses the relationship between pupil response and a set of computational predictor variables using multiple linear regression for each peri-stimulus timepoint within defined epochs in the pupil analysis.
+    Function to analyse the relationship between pupil response and a set of computational predictor variables using multiple linear regression at each peri-stimulus timepoint across defined epochs (defined within the pupil analysis).
 
     Parameters:
     - participant_str: string, identifier of participant number (set to 2 numbers)
@@ -29,7 +29,9 @@ def pupil_regression_analysis(participant_str, condition_str, computational_var_
     - plot_regression_analysis: boolean, if True, plots the regression coefficients at each peri-stimulus timepoint.
 
     Returns:
-    - coefficients_df: pd.DataFrame, contains the coefficients of the regression analysis for each predictor variable at each peri-stimulus timepoint. 
+    - coefficients_df: pd.DataFrame, contains the coefficients of the regression analysis for each predictor variable at each peri-stimulus timepoint.
+    - pupil_regress_df: pd.DataFrame, contains model evaluation outputs (e.g. intercept, R^2, mse, rmse) for each peristimulus time point.
+    - residuals_df: pd.DataFrame, contains model residuals for each peristimulus timepoint. 
     """
     if variables is None:
         raise ValueError("You must provide at least one variable as a predictor.")
@@ -52,9 +54,11 @@ def pupil_regression_analysis(participant_str, condition_str, computational_var_
 
         predictors['outcome'] = computational_var_df['outcome_zscore']
 
+    # Option to remove the epochs containing too much interpolated data (should in most instances be True)
     if outcome_epochs_to_remove is not None:
         predictors.drop(index=outcome_epochs_to_remove, inplace=True)
 
+    # Removing the mean, std, sem and time to just have the raw epoched data
     epoched_pupil_data = outcome_epoched_pupil_df.copy()
     time = epoched_pupil_data['time']
     time_points = epoched_pupil_data.index
@@ -74,6 +78,13 @@ def pupil_regression_analysis(participant_str, condition_str, computational_var_
     # Prepare storage for regression results
     coefficients = {var: [] for var in predictors.columns}
     residuals_by_time = []
+    model_outputs = {  
+    'time': [],
+    'intercept': [],
+    'r_squared': [],
+    'mean_squared_error': [],
+    'root_mean_squared_error': []
+    }
 
     # Run regression for each time point
     for t in time_points:
@@ -93,28 +104,40 @@ def pupil_regression_analysis(participant_str, condition_str, computational_var_
 
         # Calculate predicted values and residuals
         y_pred = model.predict(X)
-        residuals = y - y_pred  # Residuals: actual - predicted
+        residuals = residuals = pd.Series(y - y_pred, index=data_at_time.index)  # Residuals: actual - predicted
+
+        # Changing to unique indexing to allow stroage in a dataframe
+        residuals = residuals.reset_index(drop=True)
 
         # Store residuals for this time point (these are residuals across all epochs for a single time point)
-        residuals_by_time.append(residuals.reset_index(drop=True).values)
+        residuals_by_time.append(residuals)
+
+        # Storing model outputs
+        intercept = model.intercept_
+        r_squared = model.score(X, y)  
+        mse = mean_squared_error(y, y_pred)  
+        rmse = np.sqrt(mse)  
+
+        model_outputs['time'].append(t)        # Store model outputs for this time point
+        model_outputs['intercept'].append(intercept)
+        model_outputs['r_squared'].append(r_squared)
+        model_outputs['mean_squared_error'].append(mse)
+        model_outputs['root_mean_squared_error'].append(rmse)
+
+    residuals_df = pd.DataFrame(residuals_by_time, index=time_points)
 
     # Create a DataFrame for coefficients
     coefficients_df = pd.DataFrame(coefficients)
     coefficients_df['time'] = time
 
-    # Extract model outputs
-    intercept = model.intercept_
-    r_squared = model.score(X, y)
-    y_pred = model.predict(X)
-    mse = mean_squared_error(y, y_pred)
-    rmse = np.sqrt(mse)
-   
-    pupil_regress_df = pd.DataFrame({
-        'intercept': [intercept],
-        'r_squared': [r_squared],
-        'mean_squared_error': [mse],
-        'root_mean_squared_error': [rmse]
-    })
+    # Create Dataframe for model outputs for each time t
+    pupil_regress_df = pd.DataFrame(model_outputs)
+
+    avg_r_squared = pupil_regress_df['r_squared'].mean()
+    avg_rmse = pupil_regress_df['root_mean_squared_error'].mean()
+
+    print(f"Average R^2 across time points within the model: {avg_r_squared:.4f}")
+    print(f"Average RMSE across time points within the model: {avg_rmse:.4f}")
 
     # Option to plot regression coefficients at each peri-stimulus timepoint
     if plot_regression_analysis:
@@ -147,4 +170,4 @@ def pupil_regression_analysis(participant_str, condition_str, computational_var_
 
         fig.show()
 
-    return coefficients_df, pupil_regress_df
+    return coefficients_df, pupil_regress_df, residuals_df
