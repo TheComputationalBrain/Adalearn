@@ -35,7 +35,7 @@ computational_var_df = compute_prior_conf_and_cpp_from_observations(participant_
 
 
 
-computational_var_df = compute_information_gain(participant_str=participant_str, condition_str=condition_str,computational_var_df=computational_var_df, change_point_indices_df=change_point_indices,  p_c=P_C, resol=20, p1_min=P1_MIN, p1_max=P1_MAX, plot_dkl=True, add_surprise_and_conf=True)
+computational_var_df = compute_information_gain(participant_str=participant_str, condition_str=condition_str,computational_var_df=computational_var_df, change_point_indices_df=change_point_indices,  p_c=P_C, resol=20, p1_min=P1_MIN, p1_max=P1_MAX, plot_dkl=False, add_surprise_and_conf=True)
 
 
 
@@ -47,7 +47,7 @@ behav_v_model_lr_corr, behav_v_model_lr_regress = behav_v_model_linear_analysis(
 
 
 
-plot_session_behav_comp(participant_str=participant_str, condition_str=condition_str, behavioural_df=behavioural_df, computational_df=computational_var_df, change_point_indices=change_point_indices, task_session=7, turn_on_plotting=False)
+plot_session_behav_comp(participant_str=participant_str, condition_str=condition_str, behavioural_df=behavioural_df, computational_df=computational_var_df, change_point_indices=change_point_indices, task_session=9, turn_on_plotting=False)
 
 
 
@@ -59,5 +59,5 @@ learning_rate_analysis_dict = uncertainty_on_learning_rate_participant_level(par
 
 
 
-computational_var_df, dkl_regression_df = comp_parameters_on_info_gain(participant_str=participant_str, condition_str=condition_str, computational_var_df=computational_var_df, plot_dkl_regression=True)
+computational_var_df, dkl_regression_df = comp_parameters_on_info_gain(participant_str=participant_str, condition_str=condition_str, computational_var_df=computational_var_df, plot_dkl_regression=False)
 
