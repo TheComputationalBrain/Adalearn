@@ -1252,13 +1252,14 @@ def comp_parameters_on_info_gain(participant_str, condition_str, computational_v
             cols=2, 
             shared_xaxes=False, 
             vertical_spacing=0.1,
-            specs=[[{}, {}], [{}, {}], [{}, None]],         
+            specs=[[{}, {}], [{}, {}], [{}, {}]],         
             subplot_titles=(
                 "Main effect of prior confidence on information gain (DKL)",
                 "Main effect of change point probability on information gain (DKL)", 
                 "Regression weights for prior confidence and change point probability on information gain (DKL)", 
                 "Model residuals vs predicted values",
-                "Model R squared"
+                "Model R squared",
+                "Predicted information gain against computed information gain"
             )
         )
 
@@ -1326,6 +1327,16 @@ def comp_parameters_on_info_gain(participant_str, condition_str, computational_v
         fig.add_trace(go.Bar(x=r_squared_name, y=[r_squared]), row=3, col=1)
 
 
+        # Subplot 6.
+        fig.add_trace(go.Scatter(
+            x=y_pred,
+            y=computational_var_df['dkl_zscore'],
+            mode='markers',
+            name='Predicted vs. computed information gain',
+            marker=dict(color='rgba(0, 0, 255, 0.8)', size=4)
+        ), row=3, col=2) 
+
+
         fig.update_layout(
             title=f"Prediction of information gain (DKL) from prior confidence and change point proabability for participant {participant_str} in condition {condition_str}",
             title_x=0.5,
@@ -1341,12 +1352,15 @@ def comp_parameters_on_info_gain(participant_str, condition_str, computational_v
         fig.update_xaxes(title_text="Prior Confidence (z-score)", row=1, col=1)
         fig.update_xaxes(title_text="Change Point Probability (z-score)", row=1, col=2)
         fig.update_xaxes(title_text="Model Residuals", row=2, col=2)
+        fig.update_xaxes(title_text="Predicted DKL (z-score)", row=3, col=2)
 
         fig.update_yaxes(title_text="Information Gain (DKL) (z-score)", row=1, col=1)
         fig.update_yaxes(title_text="Information Gain (DKL) (z-score)", row=1, col=2)
         fig.update_yaxes(title_text="Regression Coefficient", row=2, col=1)
         fig.update_yaxes(title_text="Model Predictions", row=2, col=2)
         fig.update_yaxes(title_text="Model R Squared", row=3, col=1)
+        fig.update_yaxes(title_text="Computed DKL (z-score)", row=3, col=2)
+
 
         # Save the figure to the desktop
         desktop_path = os.path.join(os.path.expanduser("~"), "Desktop")
