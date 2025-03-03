@@ -2,12 +2,11 @@ import os
 import pandas as pd
 import numpy as np
 import sys
+import statsmodels.api as sm
 from sklearn.preprocessing import StandardScaler
-from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_squared_error
 from scipy.stats import pearsonr
 from scipy.stats import sem
-from scipy.stats import linregress
 import plotly.io as pio
 import plotly.graph_objects as go
 import plotly.express as px
@@ -956,47 +955,74 @@ def behav_v_model_linear_analysis(computational_var_df, participant_str, conditi
     behav_v_model_corr = cleaned_df[model_var].corr(cleaned_df[behav_var])
     print(f"The correlation coefficient between {model_var} and {behav_var} for participant {participant_str} is: {behav_v_model_corr}")
     
+    # Option to plot regression analysis
     behav_v_model_regress = None
 
-    # Optionally perform regression
     if add_regression:
-        regression = linregress(cleaned_df[model_var], cleaned_df[behav_var])
+        X = cleaned_df[model_var] 
+        y = cleaned_df[behav_var]  
+
+        # Add an intercept term
+        X = sm.add_constant(X)
+
+        # Fit the regression model
+        model = sm.OLS(y, X).fit()
+
+        conf_int = model.conf_int() 
+        std_err_mean = model.bse 
+
+        # Store regression results
         behav_v_model_regress = {
-            "slope": regression.slope,
-            "intercept": regression.intercept,
-            "r_value": regression.rvalue,
-            "p_value": regression.pvalue,
-            "std_err": regression.stderr
+            "variable": model.params.index.tolist(),
+            "slope": model.params.values.tolist(),
+            "sem": std_err_mean.tolist(), 
+            "p_value": model.pvalues.tolist(),
+            "r_squared": model.rsquared,  
+            "r_value": behav_v_model_corr, 
+            "ci_lower": conf_int.iloc[:, 0].tolist(), 
+            "ci_upper": conf_int.iloc[:, 1].tolist(), 
         }
-        print(f"Linear regression results: {behav_v_model_regress}")
-    
+
+    print(f"Linear regression results: {behav_v_model_regress}")
+
     # Optionally plot
     if plot_behav_v_model_scatter:
-        df= cleaned_df.copy()
-        df['task_session'] = df['task_session'].astype('category')
+        df = cleaned_df.copy()
+        df["task_session"] = df["task_session"].astype("category")
 
-        fig = px.scatter(df, x=model_var, y=behav_var, color="task_session", symbol="task_session")
+        fig = px.scatter(
+            df, x=model_var, y=behav_var, color="task_session", symbol="task_session"
+        )
 
         fig.update_layout(
-        title_text=f"Ideal observer model by behavioural response for participant {participant_str} across all task sessions in condition {condition_str}.",
-        showlegend=True,
-        xaxis_title=model_var,
-        yaxis_title=behav_var
+            title_text=f"Ideal observer model by behavioural response for participant {participant_str} across all task sessions in condition {condition_str}.",
+            showlegend=True,
+            xaxis_title=model_var,
+            yaxis_title=behav_var,
         )
 
         if add_regression:
             x_vals = np.linspace(cleaned_df[model_var].min(), cleaned_df[model_var].max(), 100)
-            y_vals = behav_v_model_regress["slope"] * x_vals + behav_v_model_regress["intercept"]
-            fig.add_scatter(x=x_vals, y=y_vals, mode="lines", name="Regression Line")
 
+            intercept = behav_v_model_regress["slope"][0]  
+            slopes = np.array(behav_v_model_regress["slope"][1:])  
+
+            # Handle multiple predictors correctly
+            if len(slopes) == 1:
+                y_vals = intercept + slopes[0] * x_vals
+            else:
+                x_matrix = np.column_stack([x_vals] * len(slopes)) 
+                y_vals = intercept + np.dot(x_matrix, slopes)
+
+            fig.add_scatter(x=x_vals, y=y_vals, mode="lines", name="Regression Line")
 
         # Create annotation text
         annotation_text = f"r = {behav_v_model_corr:.2f}"
         if add_regression:
             annotation_text += (
-                f"<br>Slope = {behav_v_model_regress['slope']:.2f}"
-                f"<br>Intercept = {behav_v_model_regress['intercept']:.2f}"
-                f"<br>p-value = {behav_v_model_regress['p_value']:.3f}"
+                f"<br>Slope = {', '.join(f'{s:.2f}' for s in behav_v_model_regress['slope'][1:])}"
+                f"<br>Intercept = {behav_v_model_regress['slope'][0]:.2f}"
+                f"<br>p-value = {', '.join(f'{p:.3f}' for p in behav_v_model_regress['p_value'][1:])}"
             )
 
         # Add annotation box to the plot
@@ -1100,24 +1126,41 @@ def uncertainty_on_learning_rate_participant_level(participant_str, condition_st
     X = df_clean[['conf_zscore', 'cpp_zscore']]
     y = df_clean[f'lr_zscore_{parameter_estimate}']
 
-    # Fit the linear regression model
-    model = LinearRegression()
-    model.fit(X, y)
+    # Add intercept term
+    X = sm.add_constant(X)
 
-    #  Extract Beta estimates (coefficients) and intercept
-    coefficients = model.coef_
-    intercept = model.intercept_
+    # Fit the regression model
+    model = sm.OLS(y, X).fit()
 
-    # Estimate odel fit (R²)
-    r_squared = model.score(X, y)
+    # Extract coefficients and model fit statistics
+    coefficients = model.params.iloc[1:].values  
+    intercept = model.params.iloc[0]  
+    r_squared = model.rsquared
+    p_values = model.pvalues.values
+    std_err_mean = model.bse.values  
+    conf_int = model.conf_int().values  
 
-    # Calculate Mean Squared Error (MSE) and RMSE
+    # Calculate MSE and RMSE
     y_pred = model.predict(X)
     mse = mean_squared_error(y, y_pred)
     rmse = np.sqrt(mse)
 
-    # Storing data in dictionary
-    learning_rate_analysis_dict = {'uncert_lr_part_df': df_clean, 'binned_conf_lr_dict': binned_data, 'conf_lr_corr': conf_lr_corr, 'cpp_lr_corr': cpp_lr_corr, 'reg_coefs': coefficients, 'reg_intercept': intercept, 'reg_rsquared': r_squared, 'reg_mse': mse, 'reg_rsme': rmse}
+    # Store results in a dictionary
+    learning_rate_analysis_dict = {
+        'uncert_lr_part_df': df_clean,
+        'binned_conf_lr_dict': binned_data,
+        'conf_lr_corr': conf_lr_corr,
+        'cpp_lr_corr': cpp_lr_corr,
+        'reg_coefs': coefficients,  
+        'reg_intercept': intercept,
+        'reg_rsquared': r_squared,
+        'reg_pvalues': p_values,
+        'reg_sems': std_err_mean, 
+        'reg_ci_lower': conf_int[:, 0], 
+        'reg_ci_upper': conf_int[:, 1],  
+        'reg_mse': mse,
+        'reg_rmse': rmse,
+    }
 
     # Option to data across subplots
     if plot_corr_subplots:
@@ -1216,22 +1259,28 @@ def comp_parameters_on_info_gain(participant_str, condition_str, computational_v
     X = computational_var_df[['conf_zscore', 'cpp_zscore']]
     y = computational_var_df['dkl_zscore']
 
-    # Fit the linear regression model
-    model = LinearRegression()
-    model.fit(X, y)
+    # Add intercept term
+    X = sm.add_constant(X)
 
-    #  Extract Beta estimates (coefficients) and intercept
-    coefficients = model.coef_
-    intercept = model.intercept_
+    # Fit the regression model
+    model = sm.OLS(y, X).fit()
 
-    # Estimate model fit, error and residuals
-    r_squared = model.score(X, y)
+    # Extract coefficients and model fit statistics
+    coefficients = model.params.iloc[1:].values
+    print(coefficients, type(coefficients))  
+    intercept = model.params.iloc[0]  
+    r_squared = model.rsquared
+    p_values = model.pvalues.values
+    std_err_mean = model.bse.values  
+    conf_int = model.conf_int().values  
+
+    # Calculate MSE and RMSE
     y_pred = model.predict(X)
     mse = mean_squared_error(y, y_pred)
     rmse = np.sqrt(mse)
-    residuals = y - y_pred
-
+    
     # Adding residuals to compuational_var_df and creating dataframe to store regression outputs
+    residuals = y - y_pred
     computational_var_df['dkl_regress_residuals'] = residuals
 
     dkl_regress_df = pd.DataFrame({
@@ -1239,11 +1288,12 @@ def comp_parameters_on_info_gain(participant_str, condition_str, computational_v
         'cpp_dkl_corr': [cpp_dkl_corr],
         'conf_coef': [coefficients[0]],
         'cpp_coef': [coefficients[1]],
-        'intercept': [intercept],
+        'intercept': intercept,
         'r_squared': [r_squared],
         'mean_squared_error': [mse],
         'root_mean_squared_error': [rmse]
     })
+
 
     # Option to plot DKL regression outputs
     if plot_dkl_regression:
@@ -1274,8 +1324,8 @@ def comp_parameters_on_info_gain(participant_str, condition_str, computational_v
 
         # Plot the regression line for conf_zscore
         conf_x_range = np.linspace(computational_var_df['conf_zscore'].min(), computational_var_df['conf_zscore'].max(), 100)
-        conf_predict_df = pd.DataFrame({'conf_zscore': conf_x_range, 'cpp_zscore': np.zeros_like(conf_x_range)})
-        conf_y_pred = model.predict(conf_predict_df)  
+        conf_y_pred = intercept + coefficients[0] * conf_x_range
+
         fig.add_trace(go.Scatter(
             x=conf_x_range, 
             y=conf_y_pred, 
@@ -1296,8 +1346,8 @@ def comp_parameters_on_info_gain(participant_str, condition_str, computational_v
 
         # Plot the regression line for conf_zscore
         cpp_x_range = np.linspace(computational_var_df['cpp_zscore'].min(), computational_var_df['cpp_zscore'].max(), 100)
-        cpp_predict_df = pd.DataFrame({'conf_zscore': np.zeros_like(cpp_x_range), 'cpp_zscore': cpp_x_range})
-        cpp_y_pred = model.predict(cpp_predict_df)
+        cpp_y_pred = intercept + coefficients[1] * cpp_x_range
+
         fig.add_trace(go.Scatter(
             x=cpp_x_range, 
             y=cpp_y_pred, 
