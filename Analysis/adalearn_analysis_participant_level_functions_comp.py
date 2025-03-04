@@ -1267,7 +1267,6 @@ def comp_parameters_on_info_gain(participant_str, condition_str, computational_v
 
     # Extract coefficients and model fit statistics
     coefficients = model.params.iloc[1:].values
-    print(coefficients, type(coefficients))  
     intercept = model.params.iloc[0]  
     r_squared = model.rsquared
     p_values = model.pvalues.values

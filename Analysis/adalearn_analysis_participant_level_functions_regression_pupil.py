@@ -3,8 +3,8 @@ import numpy as np
 import os
 import sys
 import pingouin
+import statsmodels.api as sm
 from sklearn.preprocessing import StandardScaler
-from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_squared_error
 import plotly.io as pio
 import plotly.graph_objects as go
@@ -13,9 +13,7 @@ from plotly.subplots import make_subplots
 pio.renderers.default='browser'
 
 
-def pupil_regression_analysis(participant_str, condition_str, computational_var_df, outcome_epoched_pupil_df, 
-                              outcome_epochs_to_remove=None, variables=None, include_outcome=False, 
-                              plot_regression_analysis=True):
+def pupil_regression_analysis(participant_str, condition_str, computational_var_df, outcome_epoched_pupil_df, outcome_epochs_to_remove=None, variables=None, covariates=None, include_outcome=False, plot_regression_analysis=True):
     """
     Function to analyse the relationship between pupil response and a set of computational predictor variables using multiple linear regression at each peri-stimulus timepoint across defined epochs (defined within the pupil analysis).
 
@@ -26,6 +24,7 @@ def pupil_regression_analysis(participant_str, condition_str, computational_var_
     - outcome_epoched_pupil_df: pd.DataFrame, contains transposed epoched data (each column represents one epoch), the calculated mean, variance metrics, and timestamp across epochs.
     - outcome_epochs_to_remove: list, indices of the epochs that exceed the threshold for the amount of interpolation within.
     - variables: list, names of the variables to be used as predictors in the regression analysis.
+    - covariates: list, names of the variables to be used as covariates in the regression analysis. 
     - include_outcome: boolean, if True, includes the 'outcome' variable as an additional predictor in the regression analysis.
     - plot_regression_analysis: boolean, if True, plots the regression coefficients at each peri-stimulus timepoint.
 
@@ -37,103 +36,79 @@ def pupil_regression_analysis(participant_str, condition_str, computational_var_
     if variables is None:
         raise ValueError("You must provide at least one variable as a predictor.")
     
-    # Ensure variables is a list
     if isinstance(variables, str):
         variables = [variables]
-
-    # Prepare predictors
+    
     predictors = computational_var_df[variables].copy()
-
-    # Optionally include 'outcome' as a predictor
+    
     if include_outcome:
         if 'outcome' not in computational_var_df.columns:
-            raise ValueError("The 'outcome' variable is not present in comp_variable_df.")
+            raise ValueError("The 'outcome' variable is not present in computational_var_df.")
         
         scaler = StandardScaler()
-
         computational_var_df['outcome_zscore'] = scaler.fit_transform(computational_var_df[['outcome']]).flatten()
-
         predictors['outcome'] = computational_var_df['outcome_zscore']
+    
+    if covariates is not None:
+        scaler = StandardScaler()
+    
+        for cov in covariates:
+            if cov not in computational_var_df.columns:
+                raise ValueError(f"Covariate '{cov}' not found in computational_var_df.")
 
-    # Option to remove the epochs containing too much interpolated data (should in most instances be True)
+            # Check if the covariate is numeric before z-scoring
+            #if computational_var_df[cov].dtype in ['int64', 'float64']:  
+                predictors[cov] = scaler.fit_transform(computational_var_df[[cov]]).flatten()
+            else:
+                predictors[cov] = computational_var_df[cov] 
+                   
     if outcome_epochs_to_remove is not None:
         predictors.drop(index=outcome_epochs_to_remove, inplace=True)
-
-    # Removing the mean, std, sem and time to just have the raw epoched data
+    
     epoched_pupil_data = outcome_epoched_pupil_df.copy()
     time = epoched_pupil_data['time']
     time_points = epoched_pupil_data.index
     epoched_pupil_data.drop(columns=['mean', 'std', 'sem', 'time'], inplace=True)
 
     nan_epochs = predictors[predictors.isna().any(axis=1)].index
-    print(f"Removed epochs due to NaN values: {nan_epochs}")
-
     predictors = predictors.dropna()
+    
     epoched_pupil_data_long = epoched_pupil_data.melt(var_name='epoch', value_name='pupil', ignore_index=False)
     epoched_pupil_data_long = epoched_pupil_data_long[~epoched_pupil_data_long['epoch'].isin(nan_epochs)]
-
-    # Map predictors to the long-format DataFrame
+    
     for var in predictors.columns:
         epoched_pupil_data_long[var] = epoched_pupil_data_long['epoch'].map(predictors[var])
-
-    # Prepare storage for regression results
+    
     coefficients = {var: [] for var in predictors.columns}
     residuals_by_time = []
-    model_outputs = {  
-    'time': [],
-    'intercept': [],
-    'r_squared': [],
-    'mean_squared_error': [],
-    'root_mean_squared_error': []
-    }
-
-    # Run regression for each time point
+    model_outputs = {'time': [], 'intercept': [], 'r_squared': [], 'mean_squared_error': [], 'root_mean_squared_error': []}
+    
     for t in time_points:
         data_at_time = epoched_pupil_data_long.loc[t]
-
-        # Define predictors and target variable
-        X = data_at_time[predictors.columns].values
+        X = data_at_time[predictors.columns]
         y = data_at_time['pupil']
-
-        # Initialize and fit the linear regression model
-        model = LinearRegression()
-        model.fit(X, y)
-
-        # Store coefficients for each predictor
-        for idx, var in enumerate(predictors.columns):
-            coefficients[var].append(model.coef_[idx])
-
-        # Calculate predicted values and residuals
-        y_pred = model.predict(X)
-        residuals = residuals = pd.Series(y - y_pred, index=data_at_time.index)  # Residuals: actual - predicted
-
-        # Changing to unique indexing to allow stroage in a dataframe
+        X = sm.add_constant(X)  # Adds intercept term
+        
+        model = sm.OLS(y, X).fit()
+        
+        for var in predictors.columns:
+            coefficients[var].append(model.params[var])
+        
+        residuals = pd.Series(model.resid, index=data_at_time.index)
         residuals = residuals.reset_index(drop=True)
-
-        # Store residuals for this time point (these are residuals across all epochs for a single time point)
         residuals_by_time.append(residuals)
-
-        # Storing model outputs
-        intercept = model.intercept_
-        r_squared = model.score(X, y)  
-        mse = mean_squared_error(y, y_pred)  
-        rmse = np.sqrt(mse)  
-
-        model_outputs['time'].append(t)        # Store model outputs for this time point
-        model_outputs['intercept'].append(intercept)
-        model_outputs['r_squared'].append(r_squared)
-        model_outputs['mean_squared_error'].append(mse)
-        model_outputs['root_mean_squared_error'].append(rmse)
-
+        
+        model_outputs['time'].append(t)
+        model_outputs['intercept'].append(model.params['const'])
+        model_outputs['r_squared'].append(model.rsquared)
+        model_outputs['mean_squared_error'].append(mean_squared_error(y, model.fittedvalues))
+        model_outputs['root_mean_squared_error'].append(np.sqrt(mean_squared_error(y, model.fittedvalues)))
+    
     residuals_df = pd.DataFrame(residuals_by_time, index=time_points)
-
-    # Create a DataFrame for coefficients
     coefficients_df = pd.DataFrame(coefficients)
     coefficients_df['time'] = time
-
-    # Create Dataframe for model outputs for each time t
     pupil_regress_df = pd.DataFrame(model_outputs)
-
+    
     avg_r_squared = pupil_regress_df['r_squared'].mean()
     avg_rmse = pupil_regress_df['root_mean_squared_error'].mean()
 
@@ -172,8 +147,6 @@ def pupil_regression_analysis(participant_str, condition_str, computational_var_
         fig.show()
 
     return coefficients_df, pupil_regress_df, residuals_df
-
-
 
 
 
