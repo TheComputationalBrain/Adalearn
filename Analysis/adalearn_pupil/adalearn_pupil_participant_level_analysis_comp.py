@@ -59,5 +59,5 @@ learning_rate_analysis_dict = uncertainty_on_learning_rate_participant_level(par
 
 
 
-computational_var_df, dkl_regression_df = comp_parameters_on_info_gain(participant_str=participant_str, condition_str=condition_str, computational_var_df=computational_var_df, plot_dkl_regression=True)
+computational_var_df, dkl_regression_df = comp_parameters_on_info_gain(participant_str=participant_str, condition_str=condition_str, computational_var_df=computational_var_df, plot_dkl_regression=False)
 
