@@ -5,7 +5,7 @@ from adalearn_analysis_participant_level_functions_participant_info import read_
 
 base_dir = '/home/aarongreenhouse-tucknott/Documents/Python/Ada_Learn/Pupil_Ada_Learn/Data/Study'
 
-selected_participant = 17
+selected_participant = 23
 
 participant_str = str(selected_participant).zfill(2)
 list_subject_selected = [selected_participant]
@@ -15,7 +15,7 @@ from_session =  1
 to_session =  22
 task_sessions = [str(session).zfill(2) for session in range(from_session, to_session + 1)]
 
-# Read demogrpahic .tsv file
+# Read demographic .tsv file
 tsv_df = read_tsv_files(directory_path=directory_path)
 
 # Task information
