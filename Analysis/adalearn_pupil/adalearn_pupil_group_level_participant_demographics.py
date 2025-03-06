@@ -27,10 +27,10 @@ print(f' The number of participants reporting a history of psychological/neurolo
 
 avg_education_dur = group_demographic_df['EducationLevel'].mean()
 std_education_dur = group_demographic_df['EducationLevel'].std()
-print(f'The mean (+/- std) duration of education amongst participants was {avg_education_dur:.2f} +/- {std_education_dur:.2f}')
+print(f'The mean (+/- std) duration of higher education amongst participants was {avg_education_dur:.2f} +/- {std_education_dur:.2f}')
 
 math_training_count = (group_demographic_df['MathsTraining'] == 'yes').sum()
-print(f' The number of participants reporting additonal math training was {math_training_count} out of {len(group_demographic_df)}')
+print(f' The number of participants reporting additonal math training for education/occupation was {math_training_count} out of {len(group_demographic_df)}')
 
 group_demographic_df['DOB'] = pd.to_datetime(group_demographic_df['DOB'], format='%Y-%m-%d')
 today = datetime.today()

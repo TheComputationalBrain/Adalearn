@@ -249,8 +249,7 @@ def learning_rate_by_change_point(computational_var_df, change_point_indices,par
                 'outcome_num_rel_pos': outcome_num + i
             })
 
-    expanded_change_points_df = pd.DataFrame(expanded_change_points)
-    expanded_change_points_df['relative_position'] = expanded_change_points_df['relative_position'] +1                      
+    expanded_change_points_df = pd.DataFrame(expanded_change_points)                 
 
     # Filter main behavioural dataframe to only contain values in defined range around change point  
     filtered_learning_rate_by_cp = pd.merge(expanded_change_points_df, computational_var_df, 
@@ -311,7 +310,6 @@ def learning_rate_by_change_point(computational_var_df, change_point_indices,par
             ),
         )
 
-        # Update layout
         fig.update_layout(
             title=f"{learning_rate_parameter} learning rate relative to change points for participant {participant_str} in condition {condition_str}",
             xaxis_title='Outcome relative to change point',
@@ -955,8 +953,8 @@ def behav_v_model_linear_analysis(computational_var_df, participant_str, conditi
     behav_v_model_corr = cleaned_df[model_var].corr(cleaned_df[behav_var])
     print(f"The correlation coefficient between {model_var} and {behav_var} for participant {participant_str} is: {behav_v_model_corr}")
     
-    # Option to plot regression analysis
-    behav_v_model_regress = None
+
+    behav_v_model_df = None
 
     if add_regression:
         X = cleaned_df[model_var] 
@@ -972,18 +970,18 @@ def behav_v_model_linear_analysis(computational_var_df, participant_str, conditi
         std_err_mean = model.bse 
 
         # Store regression results
-        behav_v_model_regress = {
+        behav_v_model_df = pd.DataFrame({
             "variable": model.params.index.tolist(),
             "slope": model.params.values.tolist(),
             "sem": std_err_mean.tolist(), 
             "p_value": model.pvalues.tolist(),
             "r_squared": model.rsquared,  
-            "r_value": behav_v_model_corr, 
+            "correlation": behav_v_model_corr, 
             "ci_lower": conf_int.iloc[:, 0].tolist(), 
             "ci_upper": conf_int.iloc[:, 1].tolist(), 
-        }
+        })
 
-    print(f"Linear regression results: {behav_v_model_regress}")
+    print(f"Linear regression results: {behav_v_model_df}")
 
     # Optionally plot
     if plot_behav_v_model_scatter:
@@ -1004,8 +1002,8 @@ def behav_v_model_linear_analysis(computational_var_df, participant_str, conditi
         if add_regression:
             x_vals = np.linspace(cleaned_df[model_var].min(), cleaned_df[model_var].max(), 100)
 
-            intercept = behav_v_model_regress["slope"][0]  
-            slopes = np.array(behav_v_model_regress["slope"][1:])  
+            intercept = behav_v_model_df["slope"][0]  
+            slopes = np.atleast_1d(behav_v_model_df["slope"].iloc[1:])  
 
             # Handle multiple predictors correctly
             if len(slopes) == 1:
@@ -1020,9 +1018,9 @@ def behav_v_model_linear_analysis(computational_var_df, participant_str, conditi
         annotation_text = f"r = {behav_v_model_corr:.2f}"
         if add_regression:
             annotation_text += (
-                f"<br>Slope = {', '.join(f'{s:.2f}' for s in behav_v_model_regress['slope'][1:])}"
-                f"<br>Intercept = {behav_v_model_regress['slope'][0]:.2f}"
-                f"<br>p-value = {', '.join(f'{p:.3f}' for p in behav_v_model_regress['p_value'][1:])}"
+                f"<br>Slope = {behav_v_model_df['slope'].iloc[1]:.2f}"
+                f"<br>Intercept = {behav_v_model_df['slope'].iloc[0]:.2f}"
+                f"<br>p-value = {behav_v_model_df['p_value'].iloc[1]:.3f}"
             )
 
         # Add annotation box to the plot
@@ -1058,7 +1056,7 @@ def behav_v_model_linear_analysis(computational_var_df, participant_str, conditi
 
         fig.show()
     
-    return behav_v_model_corr, behav_v_model_regress
+    return behav_v_model_df
 
 
 
@@ -1145,21 +1143,22 @@ def uncertainty_on_learning_rate_participant_level(participant_str, condition_st
     mse = mean_squared_error(y, y_pred)
     rmse = np.sqrt(mse)
 
+    # Create a DataFrame for regression and correlation results
+    uncertainty_v_lr_df = pd.DataFrame({
+        "variable": ["Intercept"] + X.columns[1:].tolist(),  # Include predictor names
+        "coefficient": [intercept] + coefficients.tolist(),
+        "p_value": p_values.tolist(),
+        "std_err": std_err_mean.tolist(),
+        "ci_lower": conf_int[:, 0].tolist(),
+        "ci_upper": conf_int[:, 1].tolist(),
+        "correlation": [np.nan] + [conf_lr_corr if var == "conf_zscore" else cpp_lr_corr if var == "cpp_zscore" else np.nan for var in X.columns[1:]]
+    })
+
     # Store results in a dictionary
     learning_rate_analysis_dict = {
         'uncert_lr_part_df': df_clean,
         'binned_conf_lr_dict': binned_data,
-        'conf_lr_corr': conf_lr_corr,
-        'cpp_lr_corr': cpp_lr_corr,
-        'reg_coefs': coefficients,  
-        'reg_intercept': intercept,
-        'reg_rsquared': r_squared,
-        'reg_pvalues': p_values,
-        'reg_sems': std_err_mean, 
-        'reg_ci_lower': conf_int[:, 0], 
-        'reg_ci_upper': conf_int[:, 1],  
-        'reg_mse': mse,
-        'reg_rmse': rmse,
+        'uncertainty_v_lr_df': uncertainty_v_lr_df
     }
 
     # Option to data across subplots

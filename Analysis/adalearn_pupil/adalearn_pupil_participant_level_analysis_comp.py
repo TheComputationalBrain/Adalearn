@@ -39,11 +39,15 @@ computational_var_df = compute_information_gain(participant_str=participant_str,
 
 
 
-behav_v_model_estimate_corr, behav_v_model_estimate_regress = behav_v_model_linear_analysis(computational_var_df=computational_var_df, participant_str=participant_str, condition_str=condition_str, model_var='ideal_observer', behav_var='estimate', exclude_zero=False, plot_behav_v_model_scatter=False, add_regression=True)
+behav_v_model_estimate_df = behav_v_model_linear_analysis(computational_var_df=computational_var_df, participant_str=participant_str, condition_str=condition_str, model_var='ideal_observer', behav_var='estimate', exclude_zero=False, plot_behav_v_model_scatter=False, add_regression=True)
 
 
 
-behav_v_model_lr_corr, behav_v_model_lr_regress = behav_v_model_linear_analysis(computational_var_df=computational_var_df, participant_str=participant_str, condition_str=condition_str, model_var='cleaned_learning_rate_ideal_observer', behav_var='cleaned_learning_rate_estimate', exclude_zero=False, plot_behav_v_model_scatter=False, add_regression=True)
+behav_v_model_lr_df = behav_v_model_linear_analysis(computational_var_df=computational_var_df, participant_str=participant_str, condition_str=condition_str, model_var='cleaned_learning_rate_ideal_observer', behav_var='cleaned_learning_rate_estimate', exclude_zero=False, plot_behav_v_model_scatter=False, add_regression=True)
+
+
+
+behav_v_model_lr_df_zero_exclude = behav_v_model_linear_analysis(computational_var_df=computational_var_df, participant_str=participant_str, condition_str=condition_str, model_var='cleaned_learning_rate_ideal_observer', behav_var='cleaned_learning_rate_estimate', exclude_zero=True, plot_behav_v_model_scatter=False, add_regression=True)
 
 
 
@@ -51,11 +55,15 @@ plot_session_behav_comp(participant_str=participant_str, condition_str=condition
 
 
 
-lr_evaluation_dict = evaluation_of_learning_rate(participant_str=participant_str, condition_str=condition_str, behavioural_df=behavioural_df, computational_var_df=computational_var_df, change_point_indices=change_point_indices, quantile_baseline=0.2, parameter_estimate='estimate', baseline_method='quantile_over_sessions', plot_lr_evaluation=False)
+lr_evaluation_dict = evaluation_of_learning_rate(participant_str=participant_str, condition_str=condition_str, behavioural_df=behavioural_df, computational_var_df=computational_var_df, change_point_indices=change_point_indices, quantile_baseline=0.2, parameter_estimate='estimate', baseline_method='quantile_over_sessions', plot_lr_evaluation=True)
 
 
 
 learning_rate_analysis_dict = uncertainty_on_learning_rate_participant_level(participant_str=participant_str, condition_str=condition_str, computational_var_df=computational_var_df, n_bins=6, parameter_estimate='estimate', exclude_zero=False, plot_corr_subplots=False)
+
+
+
+learning_rate_analysis_dict = uncertainty_on_learning_rate_participant_level(participant_str=participant_str, condition_str=condition_str, computational_var_df=computational_var_df, n_bins=6, parameter_estimate='estimate', exclude_zero=True, plot_corr_subplots=False)
 
 
 
