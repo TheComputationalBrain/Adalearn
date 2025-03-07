@@ -29,24 +29,24 @@ def save_dfs_to_csv(participant_str, condition_str,  directory_path, task = 'pup
         f"sub-{participant_str}_ses-{condition_str}_task-Adalearn-{task}_mean-abs-error-df": mean_abs_error_df,
         # Computational analyses
         f"sub-{participant_str}_ses-{condition_str}_task-Adalearn-{task}_computational-var-df": computational_var_df,
-        f"sub-{participant_str}_ses-{condition_str}_task-Adalearn-{task}_filtered-behav-lr_by_cp": filtered_behav_learning_rate_by_cp,
-        f"sub-{participant_str}_ses-{condition_str}_task-Adalearn-{task}_averaged-behav-lr_by_cp": averaged_behav_learning_rate_by_cp,
-        f"sub-{participant_str}_ses-{condition_str}_task-Adalearn-{task}_filtered-model-lr_by_cp": filtered_model_learning_rate_by_cp,
-        f"sub-{participant_str}_ses-{condition_str}_task-Adalearn-{task}_averaged_model_lr_by_cp": averaged_model_learning_rate_by_cp,
+        f"sub-{participant_str}_ses-{condition_str}_task-Adalearn-{task}_filtered-behav-lr-by-cp": filtered_behav_learning_rate_by_cp,
+        f"sub-{participant_str}_ses-{condition_str}_task-Adalearn-{task}_averaged-behav-lr-by-cp": averaged_behav_learning_rate_by_cp,
+        f"sub-{participant_str}_ses-{condition_str}_task-Adalearn-{task}_filtered-model-lr-by-cp": filtered_model_learning_rate_by_cp,
+        f"sub-{participant_str}_ses-{condition_str}_task-Adalearn-{task}_averaged-model-lr-by-cp": averaged_model_learning_rate_by_cp,
         f"sub-{participant_str}_ses-{condition_str}_task-Adalearn-{task}_behav-v-model-estimate": behav_v_model_estimate_df,
         f"sub-{participant_str}_ses-{condition_str}_task-Adalearn-{task}_behav-v-model-lr": behav_v_model_lr_df, 
-        f"sub-{participant_str}_ses-{condition_str}_task-Adalearn-{task}_behav-v-model-lr-zero_excluded": behav_v_model_lr_df_zero_exclude, 
-        f"sub-{participant_str}_ses-{condition_str}_task-Adalearn-{task}_lr-by-session": lr_evaluation_dict['avg_lr_session_df'], # Not a dataframe
-        f"sub-{participant_str}_ses-{condition_str}_task-Adalearn-{task}_uncertainty_v_lr_df": learning_rate_analysis_dict['uncertainty_v_lr_df'], 
+        f"sub-{participant_str}_ses-{condition_str}_task-Adalearn-{task}_behav-v-model-lr-zero-excluded": behav_v_model_lr_df_zero_exclude, 
+        f"sub-{participant_str}_ses-{condition_str}_task-Adalearn-{task}_lr-by-session": lr_evaluation_dict['avg_lr_session_df'],
+        f"sub-{participant_str}_ses-{condition_str}_task-Adalearn-{task}_uncertainty-v-lr-df": learning_rate_analysis_dict['uncertainty_v_lr_df'], 
         f"sub-{participant_str}_ses-{condition_str}_task-Adalearn-{task}_dkl-regression-analysis": dkl_regression_df,
         # Pupil analyses
         f"sub-{participant_str}_ses-{condition_str}_task-Adalearn-{task}_pupil-trig-df": pupil_trig_df,
         f"sub-{participant_str}_ses-{condition_str}_task-Adalearn-{task}_outcome-epoched-pupil-df": outcome_epoched_pupil_df,
         f"sub-{participant_str}_ses-{condition_str}_task-Adalearn-{task}_outcome-blink-ratio-df": outcome_blink_ratio_df,
-        f"sub-{participant_str}_ses-{condition_str}_task-Adalearn-{task}_outcome-epochs-to-remove": outcome_epochs_to_remove,
-        f"sub-{participant_str}_ses-{condition_str}_task-Adalearn-{task}_outcome_epoched_pupil_df_nobc": outcome_epoched_pupil_df_nobc,
+        #f"sub-{participant_str}_ses-{condition_str}_task-Adalearn-{task}_outcome-epochs-to-remove": outcome_epochs_to_remove,
+        f"sub-{participant_str}_ses-{condition_str}_task-Adalearn-{task}_outcome-epoched-pupil-df-nobc": outcome_epoched_pupil_df_nobc,
         f"sub-{participant_str}_ses-{condition_str}_task-Adalearn-{task}_outcome-blink-ratio-df-nobc": outcome_blink_ratio_df_nobc,
-        f"sub-{participant_str}_ses-{condition_str}_task-Adalearn-{task}_outcome-epochs-to-remove-nobc": outcome_epochs_to_remove_nobc,
+        #f"sub-{participant_str}_ses-{condition_str}_task-Adalearn-{task}_outcome-epochs-to-remove-nobc": outcome_epochs_to_remove_nobc,
         f"sub-{participant_str}_ses-{condition_str}_task-Adalearn-{task}_pupil-amplitude-around-cp": pupil_amp_around_cp_df,
         f"sub-{participant_str}_ses-{condition_str}_task-Adalearn-{task}_pupil-average-around-cp": pupil_avg_around_cp_df,
         f"sub-{participant_str}_ses-{condition_str}_task-Adalearn-{task}_pupil-baseline-around-cp": pupil_baseline_around_cp_df,
@@ -72,5 +72,6 @@ def save_dfs_to_csv(participant_str, condition_str,  directory_path, task = 'pup
 
 desktop_path = os.path.join(os.path.expanduser("~"), "Desktop")
 
-save_dfs_to_csv(participant_str=participant_str, condition_str=condition_str, directory_path=desktop_path, task='pupil')
+save_dfs_to_csv(participant_str=participant_str, condition_str=condition_str, directory_path=desktop_path, task='Pupil')
+
 

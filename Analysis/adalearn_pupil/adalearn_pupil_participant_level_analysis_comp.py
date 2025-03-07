@@ -55,7 +55,7 @@ plot_session_behav_comp(participant_str=participant_str, condition_str=condition
 
 
 
-lr_evaluation_dict = evaluation_of_learning_rate(participant_str=participant_str, condition_str=condition_str, behavioural_df=behavioural_df, computational_var_df=computational_var_df, change_point_indices=change_point_indices, quantile_baseline=0.2, parameter_estimate='estimate', baseline_method='quantile_over_sessions', plot_lr_evaluation=True)
+lr_evaluation_dict = evaluation_of_learning_rate(participant_str=participant_str, condition_str=condition_str, behavioural_df=behavioural_df, computational_var_df=computational_var_df, change_point_indices=change_point_indices, quantile_baseline=0.2, parameter_estimate='estimate', baseline_method='quantile_over_sessions', plot_lr_evaluation=False)
 
 
 

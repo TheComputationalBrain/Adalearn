@@ -5,7 +5,7 @@ from adalearn_analysis_participant_level_functions_participant_info import read_
 
 base_dir = '/home/aarongreenhouse-tucknott/Documents/Python/Ada_Learn/Pupil_Ada_Learn/Data/Study'
 
-selected_participant = 23
+selected_participant = 25
 
 participant_str = str(selected_participant).zfill(2)
 list_subject_selected = [selected_participant]
