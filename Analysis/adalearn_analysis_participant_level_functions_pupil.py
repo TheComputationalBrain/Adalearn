@@ -311,6 +311,32 @@ def load_and_process_pupil_data(directory_path, participant_str, list_subject_se
         pupil_trig_ses['time_stamp'] = pd.to_numeric(pupil_trig_ses['time_stamp'], errors='coerce').astype('Int64')
         pupil_trig_ses['task_session'] = session
 
+        # Deal with or raise error due to missing triggers
+        if not outcome_data:
+            print(f"ERROR: Outcome triggers missing. May need to remove this task session.")
+        if not session_start:
+            print(f"ERROR: Missing trigger and list is empty: session_start = {session_start}")
+            if len(outcome_data) == 75:
+                print(f"Adding timestamp of first outcome trigger in this task session")
+                session_start.append(outcome_data[0]['time_stamp'])
+            else:
+                print("Missing outcome triggers also found. Consider removing this task session")
+        if not session_end:
+            print(f"ERROR: Missing trigger and list is empty: session_end = {session_end}")
+            if len(outcome_data) == 75:
+                print(f"Adding timestamp of last outcome trigger in this task session")
+                session_end.append(outcome_data[-1]['time_stamp'])
+            else:
+                print("Missing outcome triggers also found. Consider removing this task session")
+        if not pupil_end:
+            print(f"ERROR: Missing trigger and list is empty: pupil_end = {pupil_end}")
+            if len(outcome_data) == 75:
+                print(f"Adding timestamp of last outcome trigger in this task session")
+                pupil_end.append(outcome_data[-1]['time_stamp'])
+            else:
+                print("Missing outcome triggers also found. Consider removing this task session")
+
+
         # Creates a dataframe to store the extracted session characteristics information for each task session 
         pupil_ses = pd.DataFrame({
             'task_session': session, 

@@ -9,10 +9,17 @@ group_demographic_df = pd.DataFrame()
 
 base_path = Path(base_dir)
 
-for sub_folder in base_path.iterdir():
-    tsv_df = read_tsv_files(directory_path=sub_folder)
-    group_demographic_df = pd.concat([group_demographic_df, tsv_df], ignore_index=True)
+excluded_participants = ['sub-09']
+print(f'Participants excluded from analysis: {excluded_participants}')
 
+for sub_folder in base_path.iterdir():
+    if sub_folder.name not in excluded_participants:
+        tsv_df = read_tsv_files(directory_path=sub_folder)
+        group_demographic_df = pd.concat([group_demographic_df, tsv_df], ignore_index=True)
+
+group_demographic_df.sort_values('ParticipantNumber')
+
+print(f'The sample size is n = {len(group_demographic_df)}')
 
 male_count = (group_demographic_df['Gender'] == 'male').sum()
 female_count = (group_demographic_df['Gender'] == 'female').sum()

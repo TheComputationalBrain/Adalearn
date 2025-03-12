@@ -215,7 +215,7 @@ def ideal_observer_learning_rate_analysis(computational_var_df, change_point_ind
 
 
 
-def learning_rate_by_change_point(computational_var_df, change_point_indices,participant_str, condition_str, learning_rate_parameter = 'estimate', pre=2, post=10, plot_learning_rate_by_cp = False):
+def learning_rate_by_change_point(computational_var_df, change_point_indices,participant_str, condition_str, learning_rate_parameter = 'estimate', pre=2, post=10, exclude_zero = False, plot_learning_rate_by_cp = False):
     """ 
     Function to calculate the average learning rate around change points. Uses identified change point indices to derive learning rate dynamics before and after a change in task structure. Stores responses across all task sessions and then plots the average (plus standard deviation) learning rate. 
 
@@ -227,10 +227,11 @@ def learning_rate_by_change_point(computational_var_df, change_point_indices,par
     - learning_rate_parameter: string, column to be used to calculate learning rate around change points. Can be 'estimate' or 'ideal_observer'. Default = 'estimate'. 
     - pre: float, number of outcomes before the change point. Predefined to incorporate in plotting the data.
     - post: float, number of outcomes after the change point. Predefined to incorporate in plotting the data.
+    - exclude_zero: boolean, if true, will remove rows in which no updates made (learning rate = 0) 
     - plot_learning_rate_by_cp: boolean, if true, will plot individual traces as well as averaged learning rate around change points (defined by pre and post variables) (default = False)
 
     Returns:
-    - filtered_learning_rate_by_cp: pd.DataFrame, contains learning rate data within defined bounds around change points.
+    - filtered_learning_rate_by_cp: pd.DataFrame, contains learning rate data within defined bounds (window) around each change point.
     - averaged_learning_rate_by_cp: pd.DataFrame, contains calculated mean, std, count and sem of learning rate at each relative trial position for each identified change point. 
     """
   
@@ -240,10 +241,12 @@ def learning_rate_by_change_point(computational_var_df, change_point_indices,par
     for idx, row in change_point_indices.iterrows():
         task_session = row['task_session']
         outcome_num = row['outcome_num']
+        cum_outcome_num = row['cum_outcome_num']
 
         for i in range(-pre, post+1):  # Predefined to be 2 trials before to 10 trials after identified change points. Can be changed to suit. 
             expanded_change_points.append({
                 'task_session': task_session,
+                'cum_outcome_num': cum_outcome_num,
                 'outcome_num': outcome_num,
                 'relative_position': i,
                 'outcome_num_rel_pos': outcome_num + i
@@ -252,17 +255,20 @@ def learning_rate_by_change_point(computational_var_df, change_point_indices,par
     expanded_change_points_df = pd.DataFrame(expanded_change_points)                 
 
     # Filter main behavioural dataframe to only contain values in defined range around change point  
-    filtered_learning_rate_by_cp = pd.merge(expanded_change_points_df, computational_var_df, 
-                                            left_on=['task_session', 'outcome_num_rel_pos'], 
-                                            right_on=['task_session', 'outcome_num'], 
-                                            how='left', suffixes=('', '_y'))
+    filtered_learning_rate_by_cp = pd.merge(expanded_change_points_df, computational_var_df, left_on=['task_session', 'outcome_num_rel_pos'], right_on=['task_session', 'outcome_num'], how='left', suffixes=('', '_y'))
 
     # Drop unnecessary columns
-    filtered_learning_rate_by_cp.drop(columns=['rel_time', 'outcome_num_y'], inplace=True)
+    filtered_learning_rate_by_cp.drop(columns=['rel_time', 'outcome_num_y', 'cum_outcome_num_y'], inplace=True)
 
+    title = ""
 
     # Get the parameter of interest
     learning_rate_col = f'cleaned_learning_rate_{learning_rate_parameter}'
+
+    if exclude_zero:
+        filtered_learning_rate_by_cp = filtered_learning_rate_by_cp[filtered_learning_rate_by_cp[learning_rate_col] != 0]
+
+        title = "-(no-updates-excluded)"
 
     # Calculate the average, standard deviation and count of the behavioural learning rate across the different relative positions to the change point
     averaged_learning_rate_by_cp = filtered_learning_rate_by_cp.groupby('relative_position')[learning_rate_col].agg(['mean', 'std', 'count']).reset_index()
@@ -311,7 +317,7 @@ def learning_rate_by_change_point(computational_var_df, change_point_indices,par
         )
 
         fig.update_layout(
-            title=f"{learning_rate_parameter} learning rate relative to change points for participant {participant_str} in condition {condition_str}",
+            title=f"{learning_rate_parameter} learning rate relative to change points {title} for participant {participant_str} in condition {condition_str}",
             xaxis_title='Outcome relative to change point',
             yaxis_title='Learning rate',
             yaxis=dict(
@@ -325,7 +331,7 @@ def learning_rate_by_change_point(computational_var_df, change_point_indices,par
 
         # Save the figure to the desktop
         desktop_path = os.path.join(os.path.expanduser("~"), "Desktop")
-        file_name = f"sub-{participant_str}_ses-{condition_str}_{learning_rate_parameter}-learning-rate-by-change-point.png"
+        file_name = f"sub-{participant_str}_ses-{condition_str}_{learning_rate_parameter}-learning-rate-by-change-point{title}.png"
         fig.write_image(os.path.join(desktop_path, file_name))
 
         fig.show()
@@ -920,7 +926,7 @@ def behav_v_model_linear_analysis(computational_var_df, participant_str, conditi
     - condition_str: string, identifier of the condition.
     - model_var: string, name of the column to be used as the predictor variable (x-axis).
     - behav_var: string, name of the column to be used as the outcome variable (y-axis).
-    - exclude_zero: boolean, if true, will exclude rows where x_col is 0.
+    - exclude_zero: boolean, if true, will exclude rows where x_col (i.e. update) is 0.
     - plot_behav_v_model_scatter: boolean, if true, will plot the scattergram between the two variables.
     - add_regression: boolean, if true, will compute and plot the regression line.
 
@@ -1057,6 +1063,138 @@ def behav_v_model_linear_analysis(computational_var_df, participant_str, conditi
         fig.show()
     
     return behav_v_model_df
+
+
+
+def correlation_around_change_point(participant_str, condition_str, filtered_learning_rate_by_cp, average_over = 'position', plot_correlation_round_cp = True):  
+    """
+    Function to compute the correlation between participants and model-derived learning rate in the window defined around change points. Returns the averaged data and correlation outputs.
+
+    Parameters:
+    - participant_str: string, participant identifier.
+    - condition_str: string, identifier of the condition.
+    - filtered_learning_rate_by_cp: pd.DataFrame, contains learning rate data within defined bounds (window) around each change point. Window set in a previous function.
+    - average_over: string, parameter defining the element to average over. Options are "window" (representing the full window around each change point) and "position" (representing each position within the window relative to change points).
+    - plot_correlation_around_cp: boolean, if true, will plot the correlation between participants and model learning rates around change points.
+
+    Returns:
+    - change_point_avg_lrs_df: pd.DataFrame, contains the averaged learning rates around change points for participants and model.
+    - lr_around_cp_corr_df: pd.DataFrame, contains the correlation and p-value between participants and model learning rates around change points.
+    """
+    # Add cumulative change point count to dataframe
+    filtered_learning_rate_by_cp['change_point_count'] = (filtered_learning_rate_by_cp['relative_position'] == -2).cumsum()
+
+    # Average within a participant will be derived based on element to average over
+    if average_over == 'window':
+
+        change_point_avg_lrs = []
+
+        for i in filtered_learning_rate_by_cp['change_point_count'].unique():
+            data = filtered_learning_rate_by_cp[filtered_learning_rate_by_cp['change_point_count'] == i]
+
+            avg_lr_around_cp_behav = data['cleaned_learning_rate_estimate'].mean()
+            avg_lr_around_cp_model = data['cleaned_learning_rate_ideal_observer'].mean()
+
+            change_point_avg_lrs.append({
+                'change_point_count': i,
+                'avg_behav_lr_around_cp': avg_lr_around_cp_behav,
+                'avg_model_lr_around_cp': avg_lr_around_cp_model
+            })
+
+        change_point_avg_lrs_df = pd.DataFrame(change_point_avg_lrs)
+
+        lr_around_cp_corr, lr_around_cp_pvalue = pearsonr(x = change_point_avg_lrs_df['avg_behav_lr_around_cp'], y = change_point_avg_lrs_df['avg_model_lr_around_cp'])
+
+        lr_around_cp_corr_df = pd.DataFrame({
+            'correlation': [lr_around_cp_corr],
+            'p-value': [lr_around_cp_pvalue]
+        })
+
+        title = 'window'
+
+        print(f"The correlation between participants and model learning rates around change points is: {lr_around_cp_corr_df['correlation'].values[0]}, p-value: {lr_around_cp_corr_df['p-value'].values[0]}")
+
+
+    elif average_over == 'position':
+
+        change_point_avg_lrs = []
+
+        for i in filtered_learning_rate_by_cp['relative_position'].unique():
+            data = filtered_learning_rate_by_cp[filtered_learning_rate_by_cp['relative_position'] == i]
+
+            avg_lr_around_cp_behav = data['cleaned_learning_rate_estimate'].mean()
+            avg_lr_around_cp_model = data['cleaned_learning_rate_ideal_observer'].mean()
+
+            change_point_avg_lrs.append({
+                'change_point_count': i,
+                'avg_behav_lr_around_cp': avg_lr_around_cp_behav,
+                'avg_model_lr_around_cp': avg_lr_around_cp_model
+            })
+
+        change_point_avg_lrs_df = pd.DataFrame(change_point_avg_lrs)
+
+        lr_around_cp_corr, lr_around_cp_pvalue = pearsonr(x = change_point_avg_lrs_df['avg_behav_lr_around_cp'], y = change_point_avg_lrs_df['avg_model_lr_around_cp'])
+
+        lr_around_cp_corr_df = pd.DataFrame({
+            'correlation': [lr_around_cp_corr],
+            'p-value': [lr_around_cp_pvalue]
+        })
+
+        title = 'position'
+
+        print(f"The correlation between participants and model learning rates around change points is: {lr_around_cp_corr_df['correlation'].values[0]}, p-value: {lr_around_cp_corr_df['p-value'].values[0]}")
+
+    else:
+        print('WARNING: Need to enter either window and position as the element to average over')
+
+        change_point_avg_lrs_df = None
+        lr_around_cp_corr_df = None
+
+    # Option to plot the correlation between learning rates around cp derived from behaviour and model.
+    if plot_correlation_round_cp:
+            fig = go.Figure()
+
+            fig.add_trace(go.Scatter(x = change_point_avg_lrs_df['avg_model_lr_around_cp'], y = change_point_avg_lrs_df['avg_behav_lr_around_cp'], mode='markers'))
+
+
+            fig.add_trace(go.Scatter(
+                x=[min(change_point_avg_lrs_df['avg_behav_lr_around_cp'].min(), 
+                    change_point_avg_lrs_df['avg_model_lr_around_cp'].min()), 
+                    max(change_point_avg_lrs_df['avg_behav_lr_around_cp'].max(), 
+                        change_point_avg_lrs_df['avg_model_lr_around_cp'].max())],
+                y=[min(change_point_avg_lrs_df['avg_behav_lr_around_cp'].min(), 
+                    change_point_avg_lrs_df['avg_model_lr_around_cp'].min()), 
+                    max(change_point_avg_lrs_df['avg_behav_lr_around_cp'].max(), 
+                        change_point_avg_lrs_df['avg_model_lr_around_cp'].max())],
+                mode='lines',
+                line=dict(dash='dash', color='grey'),
+                name='Identity Line'
+            ))
+
+            fig.update_layout(
+                title=dict(
+                    text=f'Correlation between participant and model learning rates around change points derived from averaging across change point {title} for participant {participant_str} in condition {condition_str}'),
+                xaxis=dict(
+                    title=dict(
+                        text="Model-derived learning rate"
+                    ),
+                ),
+                yaxis=dict(
+                    title=dict(
+                        text="Participant learning rate"
+                    ),
+                ),
+                showlegend = False
+            )
+
+            # Save the figure to the desktop
+            desktop_path = os.path.join(os.path.expanduser("~"), "Desktop")
+            file_name = f"sub-{participant_str}_ses-{condition_str}_corr-around-cp-based-on-{title}.png"
+            fig.write_image(os.path.join(desktop_path, file_name))
+
+            fig.show()
+
+    return change_point_avg_lrs_df, lr_around_cp_corr_df
 
 
 

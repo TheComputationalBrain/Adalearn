@@ -1,7 +1,7 @@
 import plotly.io as pio
 pio.renderers.default='browser'
 
-from adalearn_analysis_participant_level_functions_comp import compute_surprise_from_observations, compute_prior_conf_and_cpp_from_observations, compute_information_gain, behavioural_learning_rate_analysis, ideal_observer_learning_rate_analysis, learning_rate_by_change_point, behav_v_model_linear_analysis, uncertainty_on_learning_rate_participant_level, comp_parameters_on_info_gain
+from adalearn_analysis_participant_level_functions_comp import compute_surprise_from_observations, compute_prior_conf_and_cpp_from_observations, compute_information_gain, behavioural_learning_rate_analysis, ideal_observer_learning_rate_analysis, learning_rate_by_change_point, behav_v_model_linear_analysis, uncertainty_on_learning_rate_participant_level, comp_parameters_on_info_gain, correlation_around_change_point
 
 from adalearn_analysis_participant_level_functions_data_utilities import plot_session_behav_comp, evaluation_of_learning_rate
 
@@ -19,11 +19,19 @@ computational_var_df = ideal_observer_learning_rate_analysis(computational_var_d
 
 
 
-filtered_behav_learning_rate_by_cp, averaged_behav_learning_rate_by_cp = learning_rate_by_change_point(computational_var_df=computational_var_df, change_point_indices=change_point_indices, participant_str=participant_str, condition_str=condition_str, learning_rate_parameter='estimate', pre=2, post=10, plot_learning_rate_by_cp=False)
+filtered_behav_learning_rate_by_cp, averaged_behav_learning_rate_by_cp = learning_rate_by_change_point(computational_var_df=computational_var_df, change_point_indices=change_point_indices, participant_str=participant_str, condition_str=condition_str, learning_rate_parameter='estimate', pre=2, post=10, exclude_zero=False, plot_learning_rate_by_cp=False)
 
 
 
-filtered_model_learning_rate_by_cp, averaged_model_learning_rate_by_cp = learning_rate_by_change_point(computational_var_df=computational_var_df, change_point_indices=change_point_indices, participant_str=participant_str, condition_str=condition_str, learning_rate_parameter='ideal_observer', pre=2, post=10, plot_learning_rate_by_cp=False)
+filtered_model_learning_rate_by_cp, averaged_model_learning_rate_by_cp = learning_rate_by_change_point(computational_var_df=computational_var_df, change_point_indices=change_point_indices, participant_str=participant_str, condition_str=condition_str, learning_rate_parameter='ideal_observer', pre=2, post=10, exclude_zero = False, plot_learning_rate_by_cp=False)
+
+
+
+filtered_behav_learning_rate_by_cp_zero_excluded, averaged_behav_learning_rate_by_cp_zero_excluded = learning_rate_by_change_point(computational_var_df=computational_var_df, change_point_indices=change_point_indices, participant_str=participant_str, condition_str=condition_str, learning_rate_parameter='estimate', pre=2, post=10, exclude_zero=True, plot_learning_rate_by_cp=False)
+
+
+
+filtered_model_learning_rate_by_cp_zero_excluded, averaged_model_learning_rate_by_cp_zero_excluded = learning_rate_by_change_point(computational_var_df=computational_var_df, change_point_indices=change_point_indices, participant_str=participant_str, condition_str=condition_str, learning_rate_parameter='ideal_observer', pre=2, post=10, exclude_zero = True, plot_learning_rate_by_cp=False)
 
 
 
@@ -40,6 +48,14 @@ computational_var_df = compute_information_gain(participant_str=participant_str,
 
 
 behav_v_model_estimate_df = behav_v_model_linear_analysis(computational_var_df=computational_var_df, participant_str=participant_str, condition_str=condition_str, model_var='ideal_observer', behav_var='estimate', exclude_zero=False, plot_behav_v_model_scatter=False, add_regression=True)
+
+
+
+change_point_avg_lrs_df, lr_around_cp_corr_df = correlation_around_change_point(participant_str=participant_str, condition_str=condition_str, filtered_learning_rate_by_cp=filtered_behav_learning_rate_by_cp, average_over='position', plot_correlation_round_cp=False)
+
+
+
+change_point_avg_lrs_df_zero_excluded, lr_around_cp_corr_df_zero_excluded = correlation_around_change_point(participant_str=participant_str, condition_str=condition_str, filtered_learning_rate_by_cp=filtered_behav_learning_rate_by_cp_zero_excluded, average_over='window', plot_correlation_round_cp=False)
 
 
 
@@ -68,4 +84,3 @@ learning_rate_analysis_dict = uncertainty_on_learning_rate_participant_level(par
 
 
 computational_var_df, dkl_regression_df = comp_parameters_on_info_gain(participant_str=participant_str, condition_str=condition_str, computational_var_df=computational_var_df, plot_dkl_regression=False)
-
