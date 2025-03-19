@@ -54,7 +54,7 @@ def compute_learning_rate(computational_var_df, estimate_parameter=None, estimat
     # Iterate through each task session to compute the learning rate
     for group, data in grouped_lr_df:
 
-        # Prepend the prior estimate to the 'estimate' column
+        # Add the initial prior estimate to the 'estimate' column
         estimates_with_prior = np.insert(data[estimate_parameter], 0, estimate_prior, axis=0)
 
         # Compute the estimate updates and errors for learning rate calculation (estimate_updates = vt - vt-1; estimate_errors = xt - vt-1)
@@ -68,7 +68,7 @@ def compute_learning_rate(computational_var_df, estimate_parameter=None, estimat
         # Computing mask to check if an update occurred (tolerance around 0: relative = 1e-05; absolute = 1e-08)
         was_updated = ~np.isclose(estimate_updates, 0.)  
         
-        # Assign computed learning rates to the original DataFrame rows (except first row)
+        # Assign computed learning rates to the original DataFrame rows
         computational_var_df.loc[data.index, learning_rate_col] = learning_rate
         computational_var_df.loc[data.index, estimate_updates_col] = estimate_updates
         computational_var_df.loc[data.index, estimate_errors_col] = estimate_errors
@@ -532,7 +532,7 @@ def compute_surprise_from_observations(participant_str, condition_str, computati
 
 
 
-def compute_prior_conf_and_cpp_from_observations(participant_str, condition_str, computational_var_df, change_point_indices_df, p_c, p1_min, p1_max, estimate_type, conf_type, plot_distribution_mean = False, plot_prior_conf = False, plot_cpp = False):
+def compute_prior_conf_and_cpp_from_observations(participant_str, condition_str, computational_var_df, change_point_indices_df, p_c, p1_min, p1_max, estimate_type, conf_type, unit = 'confidence', plot_distribution_mean = False, plot_prior_conf = False, plot_cpp = False):
     """
     Function computes the "confidence" in the prior and change point probability from each set of task session observations. Computes "confidence" and change point probability using functions within "model_learner" (created by Cedric Foucault and Florent Meyniel: https://github.com/florentmeyniel/Ada-Learn/blob/main/analysis). "Confidence" is the -log(sd) of the prior distribution, while change point probability is calculated from the conditional probability of an observation (at time t) given a change point has occurred multiplied by the true probability of a change point occurring, divided by the conditional probability of an observation (at time t) given a change point has occurred multiplied by the true probability of a change point occurring plus the conditional probability of an observation (at time t) given no change point has occurred multiplied by the true probability that a change point did not occur:
 
@@ -550,6 +550,7 @@ def compute_prior_conf_and_cpp_from_observations(participant_str, condition_str,
     - 'p1_max': float, the maximum value of the Bernoulli parameter (used to clip the Dirichlet prior distribution) (should be 0.9)
     - estimate_type': string, parameter defining ideal_learner_prob_estimates_from_outcomes function. Options are "mean", "mean-pred", "median", "median-pred". The "-pred" options accountfor volatility in the estimate. Function returns the standard deviation and distribution with each distribution parameter selected (only working with "mean" at the minute. Cant get "mean_pred" to work)
     - 'conf_type': string, parameter defining ideal_learner_prob_conf_from_outcomes function. Options are "prev-conf", "prev-conf-pred", "new-conf", "new-conf-pred". The "-pred" options accountfor volatility in the estimate. "Prev-conf" refers to prior variance while "new-conf" refers to posterior variance. 
+    - unit: string, parameter specifying the units in which prior variability should be presented. Four options available: 'confidence', 'uncertaity_sd', 'uncertainty_log_sd', and 'uncertainty_sd_cpp'.
     - 'plot_distribution_mean: boolean, if true will plot the prior mean of the probability distribution (default = False)
     - 'plot_prior_conf: boolean, if true will plot the prior "confidence" of the probability distribution (default = False)
     - 'plot_cpp: boolean, if true will plot the change point probability (default = False)
@@ -579,6 +580,19 @@ def compute_prior_conf_and_cpp_from_observations(participant_str, condition_str,
             seq, p_c, conf_type=conf_type, p1_min=p1_min, p1_max=p1_max
         )
         cpp = ideal_learner_prob_cpp(seq, p_c, p1_min=p1_min, p1_max=p1_max)
+
+        # Option to modify the units prior confidence is presented in
+        if unit == 'uncertainty_sd':
+            prior_conf = np.exp(-prior_conf)
+        elif unit == 'uncertainty_log_sd':
+            prior_conf = -prior_conf
+        elif unit == 'uncertainty_sd_cpp':
+            prior_conf = np.exp(-prior_conf) * (1 - cpp)
+        elif unit == 'confidence':
+            pass
+        else:
+             raise ValueError('Correct unit for prior variability needs to be specified. ''Options are: "confidence", "uncertainty_sd", "uncertainty_log_sd", "uncertainty_sd_cpp".')
+
 
         # Add new columns to computational_var_df
         session_indices = session_data.index
