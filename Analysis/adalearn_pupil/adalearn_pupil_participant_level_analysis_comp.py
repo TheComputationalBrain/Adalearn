@@ -39,7 +39,7 @@ computational_var_df, surprise_cat_df = compute_surprise_from_observations(parti
 
 
 
-computational_var_df = compute_prior_conf_and_cpp_from_observations(participant_str=participant_str, condition_str=condition_str, computational_var_df=computational_var_df, change_point_indices_df=change_point_indices, p_c=P_C, p1_min=P1_MIN, p1_max=P1_MAX, estimate_type='mean', conf_type='prev-conf', plot_distribution_mean=False, plot_prior_conf=False, plot_cpp=False)
+computational_var_df = compute_prior_conf_and_cpp_from_observations(participant_str=participant_str, condition_str=condition_str, computational_var_df=computational_var_df, change_point_indices_df=change_point_indices, p_c=P_C, p1_min=P1_MIN, p1_max=P1_MAX, estimate_type='mean', conf_type='prev-conf', unit = 'uncertainty_sd', plot_distribution_mean=False, plot_prior_conf=False, plot_cpp=False)
 
 
 
@@ -55,7 +55,7 @@ change_point_avg_lrs_df, lr_around_cp_corr_df = correlation_around_change_point(
 
 
 
-change_point_avg_lrs_df_zero_excluded, lr_around_cp_corr_df_zero_excluded = correlation_around_change_point(participant_str=participant_str, condition_str=condition_str, filtered_learning_rate_by_cp=filtered_behav_learning_rate_by_cp_zero_excluded, average_over='window', plot_correlation_round_cp=False)
+change_point_avg_lrs_df_zero_excluded, lr_around_cp_corr_df_zero_excluded = correlation_around_change_point(participant_str=participant_str, condition_str=condition_str, filtered_learning_rate_by_cp=filtered_behav_learning_rate_by_cp_zero_excluded, average_over='position', plot_correlation_round_cp=False)
 
 
 
@@ -79,7 +79,7 @@ learning_rate_analysis_dict = uncertainty_on_learning_rate_participant_level(par
 
 
 
-learning_rate_analysis_dict = uncertainty_on_learning_rate_participant_level(participant_str=participant_str, condition_str=condition_str, computational_var_df=computational_var_df, n_bins=6, parameter_estimate='estimate', exclude_zero=True, plot_corr_subplots=False)
+learning_rate_analysis_dict_exclude_zero = uncertainty_on_learning_rate_participant_level(participant_str=participant_str, condition_str=condition_str, computational_var_df=computational_var_df, n_bins=6, parameter_estimate='estimate', exclude_zero=True, plot_corr_subplots=False)
 
 
 

@@ -4,7 +4,7 @@ from adalearn_pupil.adalearn_pupil_participant_characteristics import participan
 
 from adalearn_pupil.adalearn_pupil_participant_level_analysis_behav import behavioural_df, mean_abs_error_df
 
-from adalearn_pupil.adalearn_pupil_participant_level_analysis_comp import computational_var_df, filtered_behav_learning_rate_by_cp, averaged_behav_learning_rate_by_cp, filtered_model_learning_rate_by_cp, averaged_model_learning_rate_by_cp, behav_v_model_estimate_df, behav_v_model_lr_df, behav_v_model_lr_df_zero_exclude, lr_evaluation_dict, learning_rate_analysis_dict, dkl_regression_df
+from adalearn_pupil.adalearn_pupil_participant_level_analysis_comp import computational_var_df, filtered_behav_learning_rate_by_cp, averaged_behav_learning_rate_by_cp, filtered_model_learning_rate_by_cp, averaged_model_learning_rate_by_cp, filtered_behav_learning_rate_by_cp_zero_excluded, averaged_behav_learning_rate_by_cp_zero_excluded, filtered_model_learning_rate_by_cp_zero_excluded, averaged_model_learning_rate_by_cp_zero_excluded, behav_v_model_estimate_df, change_point_avg_lrs_df, lr_around_cp_corr_df, change_point_avg_lrs_df_zero_excluded, lr_around_cp_corr_df_zero_excluded, behav_v_model_lr_df, behav_v_model_lr_df_zero_exclude, lr_evaluation_dict, learning_rate_analysis_dict, learning_rate_analysis_dict_exclude_zero, dkl_regression_df
 
 from adalearn_pupil.adalearn_pupil_participant_level_analysis_pupil import pupil_trig_df, outcome_epoched_pupil_df, outcome_blink_ratio_df, outcome_epochs_to_remove, outcome_epoched_pupil_df_nobc, outcome_blink_ratio_df_nobc, outcome_epochs_to_remove_nobc, pupil_amp_around_cp_df, pupil_avg_around_cp_df, pupil_baseline_around_cp_df  
 
@@ -34,10 +34,20 @@ def save_dfs_to_csv(participant_str, condition_str,  directory_path, task = 'pup
         f"sub-{participant_str}_ses-{condition_str}_task-Adalearn-{task}_filtered-model-lr-by-cp": filtered_model_learning_rate_by_cp,
         f"sub-{participant_str}_ses-{condition_str}_task-Adalearn-{task}_averaged-model-lr-by-cp": averaged_model_learning_rate_by_cp,
         f"sub-{participant_str}_ses-{condition_str}_task-Adalearn-{task}_behav-v-model-estimate": behav_v_model_estimate_df,
+        f"sub-{participant_str}_ses-{condition_str}_task-Adalearn-{task}_filtered-behav-lr-by-cp-zero-excluded": filtered_behav_learning_rate_by_cp_zero_excluded,
+        f"sub-{participant_str}_ses-{condition_str}_task-Adalearn-{task}_averaged-behav-lr-by-cp-zero-excluded": averaged_behav_learning_rate_by_cp_zero_excluded,
+        f"sub-{participant_str}_ses-{condition_str}_task-Adalearn-{task}_filtered-model-lr-by-cp-zero-excluded": filtered_model_learning_rate_by_cp_zero_excluded,
+        f"sub-{participant_str}_ses-{condition_str}_task-Adalearn-{task}_averaged-model-lr-by-cp-zero-excluded": averaged_model_learning_rate_by_cp_zero_excluded,
+        f"sub-{participant_str}_ses-{condition_str}_task-Adalearn-{task}_behav-v-model-estimate": behav_v_model_estimate_df,
+        f"sub-{participant_str}_ses-{condition_str}_task-Adalearn-{task}_lr-around-cp": change_point_avg_lrs_df,
+        f"sub-{participant_str}_ses-{condition_str}_task-Adalearn-{task}_lr-around-cp-corr": lr_around_cp_corr_df,
+        f"sub-{participant_str}_ses-{condition_str}_task-Adalearn-{task}_lr-around-cp-zero-excluded": change_point_avg_lrs_df_zero_excluded,
+        f"sub-{participant_str}_ses-{condition_str}_task-Adalearn-{task}_lr-around-cp-corr-zero-excluded": lr_around_cp_corr_df_zero_excluded,
         f"sub-{participant_str}_ses-{condition_str}_task-Adalearn-{task}_behav-v-model-lr": behav_v_model_lr_df, 
         f"sub-{participant_str}_ses-{condition_str}_task-Adalearn-{task}_behav-v-model-lr-zero-excluded": behav_v_model_lr_df_zero_exclude, 
         f"sub-{participant_str}_ses-{condition_str}_task-Adalearn-{task}_lr-by-session": lr_evaluation_dict['avg_lr_session_df'],
         f"sub-{participant_str}_ses-{condition_str}_task-Adalearn-{task}_uncertainty-v-lr-df": learning_rate_analysis_dict['uncertainty_v_lr_df'], 
+        f"sub-{participant_str}_ses-{condition_str}_task-Adalearn-{task}_uncertainty-v-lr-df-zero-excluded": learning_rate_analysis_dict_exclude_zero['uncertainty_v_lr_df'],
         f"sub-{participant_str}_ses-{condition_str}_task-Adalearn-{task}_dkl-regression-analysis": dkl_regression_df,
         # Pupil analyses
         f"sub-{participant_str}_ses-{condition_str}_task-Adalearn-{task}_pupil-trig-df": pupil_trig_df,
