@@ -78,15 +78,16 @@ def compute_learning_rate(computational_var_df, estimate_parameter=None, estimat
 
 
 
-def behavioural_learning_rate_analysis(computational_var_df, change_point_indices_df, participant_str, condition_str, estimate_prior = None, plot_learning_rate_by_ses = False):
+def behavioural_learning_rate_analysis(participant_str, condition_str, directory_path, computational_var_df, change_point_indices_df,  estimate_prior = None, plot_learning_rate_by_ses = False):
     """ 
     Function to calculate the behavioural learning rate based on participants estimates following each outcome presentation. Returns behavioural dataframe with new learning rate variable created. Option to plot learning rate across each task session. 
 
     Parameters:
-    - computational_var_df: pd.DataFrame, contains parsed data from json adalearn data file for select variables to be used in/or provide context to model analysis.
-    - change_point_indices_df: pd.DataFrame, with columns 'cum_outcome_num', 'rel_time', and 'task_session', containing the indices and relative times of the change points for each session. Used to mark the change points on plots (*Note: Have removed identification of the first outcome of each task session as a new change point)
     - participant_str: string, participant identifier (number; set to 2 digits)
     - condition_str: string, identifier of condition order (set to 2 numbers) ** May need to change to denote actual condition in Adalearn VNS study **
+    - directory_path: Path, directory path to the participant level of the data storage
+    - computational_var_df: pd.DataFrame, contains parsed data from json adalearn data file for select variables to be used in/or provide context to model analysis.
+    - change_point_indices_df: pd.DataFrame, with columns 'cum_outcome_num', 'rel_time', and 'task_session', containing the indices and relative times of the change points for each session. Used to mark the change points on plots (*Note: Have removed identification of the first outcome of each task session as a new change point)
     - estimate_prior: float, the prior estimate to be used in the learning rate calculation. Reflects the value where the estimate slider is positioned at the start of each session (i.e. 0.5).
     - plot_learning_rate_by_ses: boolean, if true, will plot the calculated (and filtered) learning rate across each task session. Change points added as dotted horizontal lines for visualisation (default = false).
 
@@ -126,7 +127,6 @@ def behavioural_learning_rate_analysis(computational_var_df, change_point_indice
                     xref=f'x{i}', yref=f'y{i}'
                 )  
 
-        # Update layout
         fig.update_layout(height=300*len(unique_sessions), width=800, title_text=f"Behavioural learning rate across task sessions for participant {participant_str} in condition {condition_str}",
                   showlegend=False, title_x=0.5)
 
@@ -135,10 +135,17 @@ def behavioural_learning_rate_analysis(computational_var_df, change_point_indice
         for i in range(1, len(unique_sessions)+1):
             fig.update_yaxes(title_text='Learning Rate', row=i, col=1)
 
-        # Save the figure to the desktop
-        desktop_path = os.path.join(os.path.expanduser("~"), "Desktop")
+        # Save the figure to the specific participant folder
+        plot_dir = os.path.join(directory_path, f"ses-{condition_str}", "plots")
+
+        os.makedirs(plot_dir, exist_ok=True)
+
         file_name = f"sub-{participant_str}_ses-{condition_str}_behav-learning-rate-by-task-session.png"
-        fig.write_image(os.path.join(desktop_path, file_name))
+
+        file_path = os.path.join(plot_dir, file_name)
+
+        fig.write_image(file_path)
+
 
         fig.show()
 
@@ -147,15 +154,17 @@ def behavioural_learning_rate_analysis(computational_var_df, change_point_indice
 
 
 
-def ideal_observer_learning_rate_analysis(computational_var_df, change_point_indices_df, participant_str, condition_str, estimate_prior = None, plot_learning_rate_by_ses = False):
+def ideal_observer_learning_rate_analysis(participant_str, condition_str,directory_path, computational_var_df, change_point_indices_df,  estimate_prior = None, plot_learning_rate_by_ses = False):
     """ 
     Function to calculate the learning rate based on the ideal observer model estimates following each outcome presentation. Returns behavioural dataframe with new learning rate variable created. Option to plot learning rate across each task session. 
 
     Parameters:
-    -  computational_var_df: pd.DataFrame, contains parsed data from json adalearn data file for select variables to be used in/or provide context to model analysis.
-    - change_point_indices_df: pd.DataFrame, with columns 'cum_outcome_num', 'rel_time', and 'task_session', containing the indices and relative times of the change points for each session. Used to mark the change points on plots (*Note: Have removed identification of the first outcome of each task session as a new change point)
     - participant_str: string, participant identifier (number; set to 2 digits)
     - condition_str: string, identifier of condition order (set to 2 numbers) ** May need to change to denote actual condition in Adalearn VNS study **
+    - directory_path: Path, directory path to the participant level of the data storage
+    -  computational_var_df: pd.DataFrame, contains parsed data from json adalearn data file for select variables to be used in/or provide context to model analysis.
+    - change_point_indices_df: pd.DataFrame, with columns 'cum_outcome_num', 'rel_time', and 'task_session', containing the indices and relative times of the change points for each session. Used to mark the change points on plots (*Note: Have removed identification of the first outcome of each task session as a new change point)
+
     - estimate_prior: float, the prior estimate to be used in the learning rate calculation. Reflects the value where the estimate slider is positioned at the start of each session (i.e. 0.5).
     - plot_learning_rate_by_ses: boolean, if true, will plot the calculated (and filtered) learning rate across each task session. Change points added as dotted horizontal lines for visualisation (default = false).
 
@@ -203,10 +212,17 @@ def ideal_observer_learning_rate_analysis(computational_var_df, change_point_ind
         for i in range(1, len(unique_sessions)+1):
             fig.update_yaxes(title_text='Learning Rate', row=i, col=1)
 
-        # Save the figure to the desktop
-        desktop_path = os.path.join(os.path.expanduser("~"), "Desktop")
+        # Save the figure to the partcipant specific folder 
+        plot_dir = os.path.join(directory_path, f"ses-{condition_str}", "plots")
+
+        os.makedirs(plot_dir, exist_ok=True)
+
         file_name = f"sub-{participant_str}_ses-{condition_str}_model-learning-rate-by-task-session.png"
-        fig.write_image(os.path.join(desktop_path, file_name))
+
+        file_path = os.path.join(plot_dir, file_name)
+
+        fig.write_image(file_path)
+
 
         fig.show()
 
@@ -215,15 +231,16 @@ def ideal_observer_learning_rate_analysis(computational_var_df, change_point_ind
 
 
 
-def learning_rate_by_change_point(computational_var_df, change_point_indices,participant_str, condition_str, learning_rate_parameter = 'estimate', pre=2, post=10, exclude_zero = False, plot_learning_rate_by_cp = False):
+def learning_rate_by_change_point(participant_str, condition_str, directory_path, computational_var_df, change_point_indices, learning_rate_parameter = 'estimate', pre=2, post=10, exclude_zero = False, plot_learning_rate_by_cp = False):
     """ 
-    Function to calculate the average learning rate around change points. Uses identified change point indices to derive learning rate dynamics before and after a change in task structure. Stores responses across all task sessions and then plots the average (plus standard deviation) learning rate. 
+    Function to calculate the average learning rate around change points. Uses identified change point indices to derive learning rate dynamics before and after a change in task structure. Stores responses across all task sessions and then plots the average (plus standard deviation) learning rate. *Note, as a second change point may occur within window specified, the function is created to detect if this happens and limit the window to before the next instance of a change, to prevent this from distoring analysis.  
 
     Parameters:
-    - computational_var_df: pd.DataFrame, contains parsed data from json adalearn data file for select variables to be used in/or provide context to model analysis.
-    - change_point_indices: pd.DataFrame, with columns 'cum_outcome_num', 'rel_time', and 'task_session', containing the indices and relative times of the change points for each session. (*Note: Have removed identification of the first outcome of each task session as a new change point).
     - participant_str: string, identifier of participant number
     - condition_str: string, identifier of condition order (set to 2 numbers) ** May need to change to denote actual condition in Adalearn VNS study **
+    - directory_path: Path, directory path to the participant level of the data storage
+    - computational_var_df: pd.DataFrame, contains parsed data from json adalearn data file for select variables to be used in/or provide context to model analysis.
+    - change_point_indices: pd.DataFrame, with columns 'cum_outcome_num', 'rel_time', and 'task_session', containing the indices and relative times of the change points for each session. (*Note: Have removed identification of the first outcome of each task session as a new change point).
     - learning_rate_parameter: string, column to be used to calculate learning rate around change points. Can be 'estimate' or 'ideal_observer'. Default = 'estimate'. 
     - pre: float, number of outcomes before the change point. Predefined to incorporate in plotting the data.
     - post: float, number of outcomes after the change point. Predefined to incorporate in plotting the data.
@@ -243,7 +260,16 @@ def learning_rate_by_change_point(computational_var_df, change_point_indices,par
         outcome_num = row['outcome_num']
         cum_outcome_num = row['cum_outcome_num']
 
-        for i in range(-pre, post+1):  # Predefined to be 2 trials before to 10 trials after identified change points. Can be changed to suit. 
+        # Check for next change point and only average up to this point if within window, to prevent a new change point from distorting the analysis 
+        next_cp = change_point_indices[
+            (change_point_indices['task_session'] == task_session) & 
+            (change_point_indices['outcome_num'] > outcome_num)
+        ]['outcome_num'].min()
+
+        # Define the post limit: either the predefined window or the next CP
+        max_post = post if pd.isna(next_cp) else min(post, next_cp - outcome_num - 1)
+
+        for i in range(-pre, max_post + 1):  # Adjust post range if needed
             expanded_change_points.append({
                 'task_session': task_session,
                 'cum_outcome_num': cum_outcome_num,
@@ -260,15 +286,23 @@ def learning_rate_by_change_point(computational_var_df, change_point_indices,par
     # Drop unnecessary columns
     filtered_learning_rate_by_cp.drop(columns=['rel_time', 'outcome_num_y', 'cum_outcome_num_y'], inplace=True)
 
-    title = ""
+    zero_title = ""
 
     # Get the parameter of interest
     learning_rate_col = f'cleaned_learning_rate_{learning_rate_parameter}'
 
+    # Exclude zero update trials (if necessary)
     if exclude_zero:
         filtered_learning_rate_by_cp = filtered_learning_rate_by_cp[filtered_learning_rate_by_cp[learning_rate_col] != 0]
 
-        title = "-(no-updates-excluded)"
+        zero_title = "-(no-update-trials-removed)"
+
+     # Additional title information
+    if learning_rate_parameter == 'ideal_observer':
+        title_addon = "model"
+    else:
+        title_addon = "behavioural"
+
 
     # Calculate the average, standard deviation and count of the behavioural learning rate across the different relative positions to the change point
     averaged_learning_rate_by_cp = filtered_learning_rate_by_cp.groupby('relative_position')[learning_rate_col].agg(['mean', 'std', 'count']).reset_index()
@@ -317,7 +351,7 @@ def learning_rate_by_change_point(computational_var_df, change_point_indices,par
         )
 
         fig.update_layout(
-            title=f"{learning_rate_parameter} learning rate relative to change points {title} for participant {participant_str} in condition {condition_str}",
+            title=f"{learning_rate_parameter} learning rate relative to change points {zero_title} for participant {participant_str} in condition {condition_str}",
             xaxis_title='Outcome relative to change point',
             yaxis_title='Learning rate',
             yaxis=dict(
@@ -329,10 +363,17 @@ def learning_rate_by_change_point(computational_var_df, change_point_indices,par
             margin=dict(l=50, r=50, t=50, b=50)
         )
 
-        # Save the figure to the desktop
-        desktop_path = os.path.join(os.path.expanduser("~"), "Desktop")
-        file_name = f"sub-{participant_str}_ses-{condition_str}_{learning_rate_parameter}-learning-rate-by-change-point{title}.png"
-        fig.write_image(os.path.join(desktop_path, file_name))
+        # Save the figure to the participant folder
+        plot_dir = os.path.join(directory_path, f"ses-{condition_str}", "plots")
+
+        os.makedirs(plot_dir, exist_ok=True)
+
+        file_name = f"sub-{participant_str}_ses-{condition_str}_{title_addon}-learning-rate-by-change-point{zero_title}.png"
+
+        file_path = os.path.join(plot_dir, file_name)
+
+        fig.write_image(file_path)
+
 
         fig.show()
 
@@ -341,7 +382,7 @@ def learning_rate_by_change_point(computational_var_df, change_point_indices,par
 
 
 
-def compute_surprise_from_observations(participant_str, condition_str, computational_var_df, change_point_indices_df, plot_surprise = False, plot_posterior_conf = False, plot_posterior_dist_means = False):
+def compute_surprise_from_observations(participant_str, condition_str, directory_path, computational_var_df, change_point_indices_df, plot_surprise = False, plot_posterior_conf = False, plot_posterior_dist_means = False):
     """
     Function computes the level of surprise of each set of task session observations. Achieves this using the "run_inference" function (created by Cedric Foucault and Florent Meyniel: https://github.com/florentmeyniel/Ada-Learn/blob/main/analysis) to generate posterior inferences of generative probabilities of the data sequence (seq). Surprise is calculated as:
 
@@ -359,6 +400,7 @@ def compute_surprise_from_observations(participant_str, condition_str, computati
     Parameters:
     - participant_str: string, participant identifier (set to 2 digits)  
     - condition: string, identifier of condition order (set to 2 digits) ** May need to change to denote actual condition in Adalearn VNS study **
+    - directory_path: Path, directory path to the participant level of the data storage
     - computational_var_df: pd.DataFrame, contains parsed data from json adalearn data file for select variables to be used in/or provide context to model analysis.
     - change_point_indices_df: pd.DataFrame, contains outputs related to the presence of change points in the hidden task structure. The identified outcome number within each task session will be used in plot visualisation.
     - plot_surprise: boolean, if true, will plot the change in surprise per observation across each task session (default = False).
@@ -462,10 +504,17 @@ def compute_surprise_from_observations(participant_str, condition_str, computati
 
         fig.update_layout(height=300 * len(unique_sessions), title_text=f"Surprise across task sessions for participant {participant_str} in condition {condition_str}", showlegend=False)
 
-        # Save the figure to the desktop
-        desktop_path = os.path.join(os.path.expanduser("~"), "Desktop")
+        # Save the figure to the partcipant folder
+        plot_dir = os.path.join(directory_path, f"ses-{condition_str}", "plots")
+
+        os.makedirs(plot_dir, exist_ok=True)
+
         file_name = f"sub-{participant_str}_ses-{condition_str}_surprise-by-task-session.png"
-        fig.write_image(os.path.join(desktop_path, file_name))
+
+        file_path = os.path.join(plot_dir, file_name)
+
+        fig.write_image(file_path)
+
 
         fig.show()
 
@@ -491,10 +540,17 @@ def compute_surprise_from_observations(participant_str, condition_str, computati
 
         fig.update_layout(height=300 * len(unique_task_sessions), title_text=f"Posterior distribution SD ('confidence') across task sessions for participant {participant_str} in condition {condition_str}", showlegend=False)
 
-        # Save the figure to the desktop
-        desktop_path = os.path.join(os.path.expanduser("~"), "Desktop")
+        # Save the figure to the partcipant folder
+        plot_dir = os.path.join(directory_path, f"ses-{condition_str}", "plots")
+
+        os.makedirs(plot_dir, exist_ok=True)
+
         file_name = f"sub-{participant_str}_ses-{condition_str}_post-conf-by-task-session.png"
-        fig.write_image(os.path.join(desktop_path, file_name))
+
+        file_path = os.path.join(plot_dir, file_name)
+
+        fig.write_image(file_path)
+       
 
         fig.show()
 
@@ -521,10 +577,17 @@ def compute_surprise_from_observations(participant_str, condition_str, computati
 
         fig.update_layout(height=300 * len(unique_task_sessions), title_text=f"Posterior distribution mean across task sessions for participant {participant_str} in condition {condition_str}", showlegend=False)
 
-        # Save the figure to the desktop
-        desktop_path = os.path.join(os.path.expanduser("~"), "Desktop")
+        # Save the figure to the partcipant folder
+        plot_dir = os.path.join(directory_path, f"ses-{condition_str}", "plots")
+
+        os.makedirs(plot_dir, exist_ok=True)
+
         file_name = f"sub-{participant_str}_ses-{condition_str}_post-dist-by-task-session.png"
-        fig.write_image(os.path.join(desktop_path, file_name))
+
+        file_path = os.path.join(plot_dir, file_name)
+
+        fig.write_image(file_path)
+        
 
         fig.show()
 
@@ -532,17 +595,18 @@ def compute_surprise_from_observations(participant_str, condition_str, computati
 
 
 
-def compute_prior_conf_and_cpp_from_observations(participant_str, condition_str, computational_var_df, change_point_indices_df, p_c, p1_min, p1_max, estimate_type, conf_type, unit = 'confidence', plot_distribution_mean = False, plot_prior_conf = False, plot_cpp = False):
+def compute_prior_conf_and_cpp_from_observations(participant_str, condition_str, directory_path, computational_var_df, change_point_indices_df, p_c, p1_min, p1_max, estimate_type, conf_type, unit = 'confidence', plot_distribution_mean = False, plot_prior_conf = False, plot_cpp = False):
     """
     Function computes the "confidence" in the prior and change point probability from each set of task session observations. Computes "confidence" and change point probability using functions within "model_learner" (created by Cedric Foucault and Florent Meyniel: https://github.com/florentmeyniel/Ada-Learn/blob/main/analysis). "Confidence" is the -log(sd) of the prior distribution, while change point probability is calculated from the conditional probability of an observation (at time t) given a change point has occurred multiplied by the true probability of a change point occurring, divided by the conditional probability of an observation (at time t) given a change point has occurred multiplied by the true probability of a change point occurring plus the conditional probability of an observation (at time t) given no change point has occurred multiplied by the true probability that a change point did not occur:
 
                                     p(cp | X_t) = p(X_t | cp) p(cp) / (p(X_t | cp) p(cp) + p(X_t | no cp) (1-p(cp)))
 
-    This function takes the ada_learn data, converts the observations to a sequence for each task session, before returning a separate dataframe for prior "confidence" and change point probability.
+    This function takes the 'outcome' data, converts the observations to a sequence for each task session, before estimating prior "confidence" and change point probability and returning the modified dataframe.
 
     Parameters:
     - participant_str: string, participant identifier (number; set to 2 digits)  
     - condition: string, identifier of condition order (set to 2 digits) ** May need to change to denote actual condition in Adalearn VNS study **
+    - directory_path: Path, directory path to the participant level of the data storage
     - computational_var_df: pd.DataFrame, contains computed variables from the ideal observer model.
     - change_point_indices_df: pd.DataFrame, contains outputs related to the presence of change points in the hidden task structure. The outcome number within each task session will be used in plot visualisation.
     - 'p_c': float, true change point probability (should be 0.05)
@@ -664,10 +728,17 @@ def compute_prior_conf_and_cpp_from_observations(participant_str, condition_str,
 
         fig.update_layout(height=300 * len(unique_sessions), title_text=f"Prior distribution mean across task sessions for participant {participant_str} in condition {condition_str}", showlegend=False)
 
-        # Save the figure to the desktop
-        desktop_path = os.path.join(os.path.expanduser("~"), "Desktop")
+        # Save the figure to the partcipant folder
+        plot_dir = os.path.join(directory_path, f"ses-{condition_str}", "plots")
+
+        os.makedirs(plot_dir, exist_ok=True)
+
         file_name = f"sub-{participant_str}_ses-{condition_str}_prior-dist-by-task-session.png"
-        fig.write_image(os.path.join(desktop_path, file_name))
+
+        file_path = os.path.join(plot_dir, file_name)
+
+        fig.write_image(file_path)
+
 
         fig.show()
 
@@ -694,10 +765,17 @@ def compute_prior_conf_and_cpp_from_observations(participant_str, condition_str,
 
         fig.update_layout(height=300 * len(unique_sessions), title_text=f"Prior confidence across task sessions for participant {participant_str} in condition {condition_str}", showlegend=False)
 
-        # Save the figure to the desktop
-        desktop_path = os.path.join(os.path.expanduser("~"), "Desktop")
+        # Save the figure to the partcipant folder
+        plot_dir = os.path.join(directory_path, f"ses-{condition_str}", "plots")
+
+        os.makedirs(plot_dir, exist_ok=True)
+
         file_name = f"sub-{participant_str}_ses-{condition_str}_prior-conf-by-task-session.png"
-        fig.write_image(os.path.join(desktop_path, file_name))
+
+        file_path = os.path.join(plot_dir, file_name)
+
+        fig.write_image(file_path)
+        
 
         fig.show()
 
@@ -723,10 +801,17 @@ def compute_prior_conf_and_cpp_from_observations(participant_str, condition_str,
 
         fig.update_layout(height=300 * len(unique_sessions), title_text=f"Change point probability across task sessions for participant {participant_str} in condition {condition_str}", showlegend=False)
 
-        # Save the figure to the desktop
-        desktop_path = os.path.join(os.path.expanduser("~"), "Desktop")
+        # Save the figure to the partcipant folder
+        plot_dir = os.path.join(directory_path, f"ses-{condition_str}", "plots")
+
+        os.makedirs(plot_dir, exist_ok=True)
+
         file_name = f"sub-{participant_str}_ses-{condition_str}_cpp-by-task-session.png"
-        fig.write_image(os.path.join(desktop_path, file_name))
+
+        file_path = os.path.join(plot_dir, file_name)
+
+        fig.write_image(file_path)
+        
 
         fig.show()
 
@@ -791,13 +876,14 @@ def create_generalized_initial_prior(resol = 20, p1_min = 0.1, p1_max = 0.9):
 
 
 
-def compute_information_gain(participant_str, condition_str,computational_var_df, change_point_indices_df, p_c = 0.05, resol = 20, p1_min = 0.1, p1_max = 0.9, plot_dkl = False, add_surprise_and_conf = False):
+def compute_information_gain(participant_str, condition_str, directory_path, computational_var_df, change_point_indices_df, p_c = 0.05, resol = 20, p1_min = 0.1, p1_max = 0.9, plot_dkl = False, add_surprise_and_conf = False):
     """
     Function to compute the information gain (DKL) for each task session. Data is stored within the computational_var_df and option to plot the calculated DKL values (alongside other computational variables) is available. 
 
     Parameters:
     - participant_str: string, participant identifier (number; set to 2 digits)  
     - condition_str: string, identifier of condition order (set to 2 digits) ** May need to change to denote actual condition in Adalearn VNS study **
+    - directory_path: Path, directory path to the participant level of the data storage
     - computational_var_df: pd.DataFrame, contains computed variables from the ideal observer model.
     - change_point_indices_df: pd.DataFrame, contains outputs related to the presence of change points in the hidden task structure. The outcome number within each task session will be used in plot visualisation.
     - p_c: float, true change point probability (should be 0.05)
@@ -836,14 +922,10 @@ def compute_information_gain(participant_str, condition_str,computational_var_df
 
         prior_grid_array = prior_grid_with_uniform[:, :-1]
 
-        #prior_grid_array = prior_grid_transposed[:, :-1]
-
         # Compute posterior distributions
         output = run_inference(seq, options=options)
 
         post_grid_array = output[(1,)]['dist']
-
-        #post_grid_array = post_grid[:, 1:]
         
         # Calculate DKL for the current task session
         dkl = calculate_dkl_grid(post_grid_array, prior_grid_array)
@@ -869,7 +951,7 @@ def compute_information_gain(participant_str, condition_str,computational_var_df
             fig.add_trace(go.Scatter(
                 x=np.arange(len(session_data['dkl'])),  
                 y=session_data['dkl'],  
-                mode='lines+markers',
+                mode='lines',
                 line_color = 'blue',
                 name=f'Information gain (DKL)',
             ),
@@ -883,7 +965,7 @@ def compute_information_gain(participant_str, condition_str,computational_var_df
                 fig.add_trace(go.Scatter(
                     x=np.arange(len(session_data['surprise'])),  
                     y=session_data['surprise'],  
-                    mode='lines+markers',
+                    mode='lines',
                     line_color = 'red',
                     name=f'Surprise',
                 ),
@@ -894,7 +976,7 @@ def compute_information_gain(participant_str, condition_str,computational_var_df
                 fig.add_trace(go.Scatter(
                     x=np.arange(len(session_data['prior_conf'])),
                     y = session_data['prior_conf'], 
-                    mode='lines+markers',
+                    mode='lines',
                     line_color= 'green',
                     name=f'Prior confidence',
                 ),
@@ -918,10 +1000,17 @@ def compute_information_gain(participant_str, condition_str,computational_var_df
             showlegend=False
         )
 
-        # Save the figure to the desktop
-        desktop_path = os.path.join(os.path.expanduser("~"), "Desktop")
+        # Save the figure to the partcipant folder
+        plot_dir = os.path.join(directory_path, f"ses-{condition_str}", "plots")
+
+        os.makedirs(plot_dir, exist_ok=True)
+
         file_name = f"sub-{participant_str}_ses-{condition_str}_dkl-by-task-session.png"
-        fig.write_image(os.path.join(desktop_path, file_name))
+
+        file_path = os.path.join(plot_dir, file_name)
+
+        fig.write_image(file_path)
+        
 
         fig.show()
 
@@ -929,17 +1018,17 @@ def compute_information_gain(participant_str, condition_str,computational_var_df
 
 
 
-def behav_v_model_linear_analysis(computational_var_df, participant_str, condition_str, model_var, behav_var, exclude_zero=False, plot_behav_v_model_scatter=False, add_regression=False):
+def behav_v_model_linear_analysis( participant_str, condition_str, directory_path, computational_var_df, outcome_var, pred_var, exclude_zero=False, plot_behav_v_model_scatter=False, add_regression=False):
     """
-    Function to compute the correlation and optionally perform regression analysis 
-    between two variables in a DataFrame.
+    Function to compute the correlation and optionally perform regression analysis between two variables in a DataFrame.
 
     Parameters:
-    - computational_var_df: pd.DataFrame, the dataset containing the variables to be analysed.
     - participant_str: string, participant identifier.
     - condition_str: string, identifier of the condition.
-    - model_var: string, name of the column to be used as the predictor variable (x-axis).
-    - behav_var: string, name of the column to be used as the outcome variable (y-axis).
+    - directory_path: Path, directory path to the participant level of the data storage.
+    - computational_var_df: pd.DataFrame, the dataset containing the variables to be analysed.
+    - pred_var: string, name of the column to be used as the predictor variable (x-axis).
+    - outcome_var: string, name of the column to be used as the outcome variable (y-axis).
     - exclude_zero: boolean, if true, will exclude rows where x_col (i.e. update) is 0.
     - plot_behav_v_model_scatter: boolean, if true, will plot the scattergram between the two variables.
     - add_regression: boolean, if true, will compute and plot the regression line.
@@ -952,7 +1041,7 @@ def behav_v_model_linear_analysis(computational_var_df, participant_str, conditi
     initial_rows = len(computational_var_df)
 
     # Drop rows with missing values in the columns of interest
-    cleaned_df = computational_var_df[[model_var, behav_var, "task_session"]].dropna()
+    cleaned_df = computational_var_df[[outcome_var, pred_var, "task_session"]].dropna()
 
     # Print the number of rows removed due to missing values
     removed_missing = initial_rows - len(cleaned_df)
@@ -961,24 +1050,35 @@ def behav_v_model_linear_analysis(computational_var_df, participant_str, conditi
     # Optionally exclude rows where the behavioural variable shows no update (i.e.) value is 0).
     if exclude_zero:
         before_zero_filter = len(cleaned_df)
-        cleaned_df = cleaned_df[cleaned_df[behav_var] != 0]
+        cleaned_df = cleaned_df[cleaned_df[outcome_var] != 0]
         removed_zero = before_zero_filter - len(cleaned_df)
-        print(f"Removed {removed_zero} rows where {behav_var} was 0.")
-        title = "-(no-update-removed)"
+        print(f"Removed {removed_zero} rows where {outcome_var} was 0.")
+        zero_title = "-(no-update-trials-removed)"
     else:
-        title = "-(all-outcomes)"
+        zero_title = "-(all-outcomes)"
+
+
+    # Additional title information
+    if "ideal_observer" in pred_var:
+        title_addon = "model"
+    else:
+        title_addon = "behavioural"
+
+    if "learning_rate" in outcome_var:
+        variable_title = "learning-rate"
+    else:
+        variable_title = "estimate"
 
     
     # Compute the correlation coefficient
-    behav_v_model_corr = cleaned_df[model_var].corr(cleaned_df[behav_var])
-    print(f"The correlation coefficient between {model_var} and {behav_var} for participant {participant_str} is: {behav_v_model_corr}")
+    behav_v_model_corr = cleaned_df[outcome_var].corr(cleaned_df[pred_var])
+    print(f"The correlation coefficient between {outcome_var} and {pred_var} for participant {participant_str} is: {behav_v_model_corr}")
     
-
     behav_v_model_df = None
 
     if add_regression:
-        X = cleaned_df[model_var] 
-        y = cleaned_df[behav_var]  
+        X = cleaned_df[pred_var] 
+        y = cleaned_df[outcome_var]  
 
         # Add an intercept term
         X = sm.add_constant(X)
@@ -1009,18 +1109,18 @@ def behav_v_model_linear_analysis(computational_var_df, participant_str, conditi
         df["task_session"] = df["task_session"].astype("category")
 
         fig = px.scatter(
-            df, x=model_var, y=behav_var, color="task_session", symbol="task_session"
+            df, x=pred_var, y=outcome_var, color="task_session", symbol="task_session"
         )
 
         fig.update_layout(
             title_text=f"Ideal observer model by behavioural response for participant {participant_str} across all task sessions in condition {condition_str}.",
             showlegend=True,
-            xaxis_title=model_var,
-            yaxis_title=behav_var,
+            xaxis_title=pred_var,
+            yaxis_title=outcome_var,
         )
 
         if add_regression:
-            x_vals = np.linspace(cleaned_df[model_var].min(), cleaned_df[model_var].max(), 100)
+            x_vals = np.linspace(cleaned_df[pred_var].min(), cleaned_df[pred_var].max(), 100)
 
             intercept = behav_v_model_df["slope"][0]  
             slopes = np.atleast_1d(behav_v_model_df["slope"].iloc[1:])  
@@ -1060,19 +1160,26 @@ def behav_v_model_linear_analysis(computational_var_df, participant_str, conditi
         )
 
         fig.update_layout(
-            title_text=f"Scatterplot of {behav_var} derived from behavioural and ideal observer for participant {participant_str} in condition {condition_str}",
-            xaxis_title=model_var,
-            yaxis_title=behav_var,
+            title_text=f"Scatterplot of {variable_title} derived from behaviour and ideal observer model for participant {participant_str} in condition {condition_str}",
+            xaxis_title=pred_var,
+            yaxis_title=outcome_var,
             height=950,
             width=1800,
             showlegend=True,
             margin=dict(l=50, r=50, t=50, b=50)
         )
 
-        # Save the figure to the desktop
-        desktop_path = os.path.join(os.path.expanduser("~"), "Desktop")
-        file_name = f"sub-{participant_str}_ses-{condition_str}_linear-analysis-of-{behav_var}{title}.png"
-        fig.write_image(os.path.join(desktop_path, file_name))
+        # Save the figure to the partcipant folder
+        plot_dir = os.path.join(directory_path, f"ses-{condition_str}", "plots")
+
+        os.makedirs(plot_dir, exist_ok=True)
+
+        file_name = f"sub-{participant_str}_ses-{condition_str}_linear-analysis-of-{title_addon}-{variable_title}{zero_title}.png"
+
+        file_path = os.path.join(plot_dir, file_name)
+
+        fig.write_image(file_path)
+       
 
         fig.show()
     
@@ -1080,13 +1187,14 @@ def behav_v_model_linear_analysis(computational_var_df, participant_str, conditi
 
 
 
-def correlation_around_change_point(participant_str, condition_str, filtered_learning_rate_by_cp, average_over = 'position', plot_correlation_round_cp = True):  
+def correlation_around_change_point(participant_str, condition_str, directory_path, filtered_learning_rate_by_cp, average_over = 'position', plot_correlation_round_cp = True):  
     """
     Function to compute the correlation between participants and model-derived learning rate in the window defined around change points. Returns the averaged data and correlation outputs.
 
     Parameters:
     - participant_str: string, participant identifier.
     - condition_str: string, identifier of the condition.
+    - directory_path: Path, directory path to the participant level of the data storage.
     - filtered_learning_rate_by_cp: pd.DataFrame, contains learning rate data within defined bounds (window) around each change point. Window set in a previous function.
     - average_over: string, parameter defining the element to average over. Options are "window" (representing the full window around each change point) and "position" (representing each position within the window relative to change points).
     - plot_correlation_around_cp: boolean, if true, will plot the correlation between participants and model learning rates around change points.
@@ -1166,59 +1274,67 @@ def correlation_around_change_point(participant_str, condition_str, filtered_lea
 
     # Option to plot the correlation between learning rates around cp derived from behaviour and model.
     if plot_correlation_round_cp:
-            fig = go.Figure()
+        fig = go.Figure()
 
-            fig.add_trace(go.Scatter(x = change_point_avg_lrs_df['avg_model_lr_around_cp'], y = change_point_avg_lrs_df['avg_behav_lr_around_cp'], mode='markers'))
+        fig.add_trace(go.Scatter(x = change_point_avg_lrs_df['avg_model_lr_around_cp'], y = change_point_avg_lrs_df['avg_behav_lr_around_cp'], mode='markers'))
 
 
-            fig.add_trace(go.Scatter(
-                x=[min(change_point_avg_lrs_df['avg_behav_lr_around_cp'].min(), 
-                    change_point_avg_lrs_df['avg_model_lr_around_cp'].min()), 
-                    max(change_point_avg_lrs_df['avg_behav_lr_around_cp'].max(), 
-                        change_point_avg_lrs_df['avg_model_lr_around_cp'].max())],
-                y=[min(change_point_avg_lrs_df['avg_behav_lr_around_cp'].min(), 
-                    change_point_avg_lrs_df['avg_model_lr_around_cp'].min()), 
-                    max(change_point_avg_lrs_df['avg_behav_lr_around_cp'].max(), 
-                        change_point_avg_lrs_df['avg_model_lr_around_cp'].max())],
-                mode='lines',
-                line=dict(dash='dash', color='grey'),
-                name='Identity Line'
-            ))
+        fig.add_trace(go.Scatter(
+            x=[min(change_point_avg_lrs_df['avg_behav_lr_around_cp'].min(), 
+                change_point_avg_lrs_df['avg_model_lr_around_cp'].min()), 
+                max(change_point_avg_lrs_df['avg_behav_lr_around_cp'].max(), 
+                    change_point_avg_lrs_df['avg_model_lr_around_cp'].max())],
+            y=[min(change_point_avg_lrs_df['avg_behav_lr_around_cp'].min(), 
+                change_point_avg_lrs_df['avg_model_lr_around_cp'].min()), 
+                max(change_point_avg_lrs_df['avg_behav_lr_around_cp'].max(), 
+                    change_point_avg_lrs_df['avg_model_lr_around_cp'].max())],
+            mode='lines',
+            line=dict(dash='dash', color='grey'),
+            name='Identity Line'
+        ))
 
-            fig.update_layout(
+        fig.update_layout(
+            title=dict(
+                text=f'Correlation between participant and model learning rates around change points derived from averaging across change point {title} for participant {participant_str} in condition {condition_str}'),
+            xaxis=dict(
                 title=dict(
-                    text=f'Correlation between participant and model learning rates around change points derived from averaging across change point {title} for participant {participant_str} in condition {condition_str}'),
-                xaxis=dict(
-                    title=dict(
-                        text="Model-derived learning rate"
-                    ),
+                    text="Model-derived learning rate"
                 ),
-                yaxis=dict(
-                    title=dict(
-                        text="Participant learning rate"
-                    ),
+            ),
+            yaxis=dict(
+                title=dict(
+                    text="Participant learning rate"
                 ),
-                showlegend = False
-            )
+            ),
+            showlegend = False
+        )
 
-            # Save the figure to the desktop
-            desktop_path = os.path.join(os.path.expanduser("~"), "Desktop")
-            file_name = f"sub-{participant_str}_ses-{condition_str}_corr-around-cp-based-on-{title}.png"
-            fig.write_image(os.path.join(desktop_path, file_name))
+        # Save the figure to the partcipant folder
+        plot_dir = os.path.join(directory_path, f"ses-{condition_str}", "plots")
 
-            fig.show()
+        os.makedirs(plot_dir, exist_ok=True)
+
+        file_name = f"sub-{participant_str}_ses-{condition_str}_corr-around-cp-based-on-{title}.png"
+
+        file_path = os.path.join(plot_dir, file_name)
+
+        fig.write_image(file_path)
+
+
+        fig.show()
 
     return change_point_avg_lrs_df, lr_around_cp_corr_df
 
 
 
-def uncertainty_on_learning_rate_participant_level(participant_str, condition_str, computational_var_df, n_bins = 6, parameter_estimate = 'estimate', exclude_zero = True, plot_corr_subplots = True):
+def uncertainty_on_learning_rate_participant_level(participant_str, condition_str, directory_path, computational_var_df, n_bins = 6, parameter_estimate = 'estimate', exclude_zero = True, plot_corr_subplots = True):
     """
     Function to compute correlations and regression parameters for prior confidence and change point probability on learning rate. Returns analysis outputs and model parameters. 
 
     Parameters:
     - participant_str: string, participant identifier (number; set to 2 digits)
     - condition_str: string, identifier of condition order (set to 2 numbers) ** May need to change to denote actual condition in Adalearn VNS study **
+    - directory_path: Path, directory path to the participant level of the data storage.
     - computational_var_df: pd.DataFrame, contains parsed data from json adalearn data file for select variables to be used in/or provide context to model analysis.
     - n_bins: float, number of bins the prior confidence variable shuld be split into. 
     - parameter_estimate: string, column identifier of which parameter to use (can be 'estimate' for participants' estimates, or 'ideal_observer' for model estimates).
@@ -1247,9 +1363,15 @@ def uncertainty_on_learning_rate_participant_level(participant_str, condition_st
         df_clean = df_clean[df_clean[f'cleaned_learning_rate_{parameter_estimate}'] != 0]
         removed_zero = before_zero_filter - len(df_clean)
         print(f"Removed {removed_zero} rows where 'cleaned_learning_rate_{parameter_estimate}' was 0.")
-        title = "-(no-update-removed)"
+        zero_title = "-(no-update-trials-removed)"
     else:
-        title = "-(all-outcomes)"
+        zero_title = "-(all-outcomes)"
+
+    # Additional title information
+    if parameter_estimate == 'ideal_observer':
+        title_addon = "model"
+    else:
+        title_addon = "behavioural"
 
     # Correlation between parameters and learning rate
     conf_lr_corr, _ = pearsonr(x = df_clean['conf_zscore'], y = df_clean[f'lr_zscore_{parameter_estimate}'])
@@ -1321,10 +1443,10 @@ def uncertainty_on_learning_rate_participant_level(participant_str, condition_st
             shared_xaxes=False, 
             vertical_spacing=0.1, 
             subplot_titles=(
-                "Correlation between learning rate and change point probability",
-                "Correlation between learning rate and prior confidence", 
-                "Regression weights for prior confidence and change point probability on learning rate", 
-                "Binned relationship between learning rate and prior confidence"
+                f"Correlation between {title_addon} learning rate and change point probability",
+                f"Correlation between {title_addon} learning rate and prior confidence", 
+                f"Regression weights for prior confidence and change point probability on {title_addon} learning rate", 
+                f"Binned relationship between {title_addon} learning rate and prior confidence"
             )
         )
 
@@ -1353,7 +1475,7 @@ def uncertainty_on_learning_rate_participant_level(participant_str, condition_st
         ), row=2, col=2)
 
         fig.update_layout(
-            title=f"Association between computationally-derived parameters and learning rate for participant {participant_str} in condition {condition_str}",
+            title=f"Association between computationally-derived parameters and {title_addon} learning rate for participant {participant_str} in condition {condition_str}",
             title_x=0.5,
             title_font=dict(size=16, family="Arial"),
             height=950,
@@ -1372,10 +1494,17 @@ def uncertainty_on_learning_rate_participant_level(participant_str, condition_st
         fig.update_yaxes(title_text="Regression Coefficient", row=2, col=1)
         fig.update_yaxes(title_text="Learning Rate Average (z-score)", row=2, col=2)
 
-        # Save the figure to the desktop
-        desktop_path = os.path.join(os.path.expanduser("~"), "Desktop")
-        file_name = f"sub-{participant_str}_ses-{condition_str}_uncertainty-parameters-on-learning-rate{title}.png"
-        fig.write_image(os.path.join(desktop_path, file_name))
+        # Save the figure to the partcipant folder
+        plot_dir = os.path.join(directory_path, f"ses-{condition_str}", "plots")
+
+        os.makedirs(plot_dir, exist_ok=True)
+
+        file_name = f"sub-{participant_str}_ses-{condition_str}_uncertainty-parameters-on-{title_addon}-learning-rate{zero_title}.png"
+
+        file_path = os.path.join(plot_dir, file_name)
+
+        fig.write_image(file_path)
+
 
         fig.show()
 
@@ -1383,13 +1512,14 @@ def uncertainty_on_learning_rate_participant_level(participant_str, condition_st
 
 
 
-def comp_parameters_on_info_gain(participant_str, condition_str, computational_var_df, plot_dkl_regression = True):
+def comp_parameters_on_info_gain(participant_str, condition_str, directory_path, computational_var_df, plot_dkl_regression = True):
     """
     Function to run regression analysis evaluating the main effects of prior confidence and change point proabability on information gain. EXtracts the residuals of the model and indexes the amount of variation explained by the two computational parameters.
 
     Parameters:
     - participant_str: string, participant identifier (number; set to 2 digits) 
     - condition_str: string, identifier of condition order (set to 2 digits) ** May need to change to denote actual condition in Adalearn VNS study **
+    - directory_path: Path, directory path to the participant level of the data storage.
     - computational_var_df: pd.DataFrame, contains computed variables from the ideal observer model.
     - plot_dkl_regression: boolean, if true, will plot the outputs of the regression analysis for information gain (DKL)
 
@@ -1562,10 +1692,17 @@ def comp_parameters_on_info_gain(participant_str, condition_str, computational_v
         fig.update_yaxes(title_text="Computed DKL (z-score)", row=3, col=2)
 
 
-        # Save the figure to the desktop
-        desktop_path = os.path.join(os.path.expanduser("~"), "Desktop")
-        file_name = f"sub-{participant_str}_ses-{condition_str}_uncertainty_parameters_on_info_gain.png"
-        fig.write_image(os.path.join(desktop_path, file_name))
+        # Save the figure to the partcipant folder
+        plot_dir = os.path.join(directory_path, f"ses-{condition_str}", "plots")
+
+        os.makedirs(plot_dir, exist_ok=True)
+
+        file_name = f"sub-{participant_str}_ses-{condition_str}_uncertainty-parameters-on-info-gain.png"
+
+        file_path = os.path.join(plot_dir, file_name)
+
+        fig.write_image(file_path)
+
 
         fig.show()
 

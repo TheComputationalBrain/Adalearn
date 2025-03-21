@@ -11,7 +11,7 @@ pio.renderers.default='browser'
 
 
 
-def load_behavioural_data(directory_path, participant_str, condition_str, condition_task_sessions, plot_behav_data = False):
+def load_behavioural_data(participant_str, condition_str, directory_path, condition_task_sessions, plot_behav_data = False):
     """
     Function to load adalearn .json files. Sets the working directory to the relevant file, before loading and storing the data for each task session for a given condition. Then unpacks parsed_json adalearn files into a dataframe. Returned dataframe contains only selected variables deemed most relevant from the full .json file. Diagnostics identify whether what is expected in the dataframe is in fact there. Options to plot the the behavioural data (participants estimation, ideal observer, true hidden estimates and outcome observations) from each task session, and also the participants estimates against ideal observer across all task sessions.  
 
@@ -21,9 +21,9 @@ def load_behavioural_data(directory_path, participant_str, condition_str, condit
     - number of change points per task session: Is there at least 2 change points per task session (2 because the first outcome of each task session is identified as a change point)?
     
     Parameters:
-    - directory_path: Path, path to the participant level directory
     - participant_str: string, participant identifier (number; set to 2 digits)
     - condition_str: string, identifier of condition order (set to 2 numbers) ** May need to change to denote actual condition in Adalearn VNS study **
+    - directory_path: Path, path to the participant level directory
     - condition_task_sessions: list, contains string variables (set to 2 numbers) denoting the individual task sessions completed by the participant in the condition
     - plot_behav_data: boolean, if true, will plot the raw behavioural data as subplots for each task session (default = False)
 
@@ -166,10 +166,17 @@ def load_behavioural_data(directory_path, participant_str, condition_str, condit
         for i in range(1, num_sessions+1):
             fig.update_yaxes(title_text='Proportion blue', row=i, col=1)
 
-        # Save the figure to the desktop
-        desktop_path = os.path.join(os.path.expanduser("~"), "Desktop")
+       # Save the figure to the partcipant folder
+        plot_dir = os.path.join(directory_path, f"ses-{condition_str}", "plots")
+
+        os.makedirs(plot_dir, exist_ok=True)
+
         file_name = f"sub-{participant_str}_ses-{condition_str}_behav-by-task-session.png"
-        fig.write_image(os.path.join(desktop_path, file_name))
+
+        file_path = os.path.join(plot_dir, file_name)
+
+        fig.write_image(file_path)
+
 
         fig.show()
 
@@ -177,7 +184,7 @@ def load_behavioural_data(directory_path, participant_str, condition_str, condit
 
 
 
-def behavioural_change_point_analysis(participant_str, condition_str, behavioural_df, plot_histogram_zscores = False):
+def behavioural_change_point_analysis(participant_str, condition_str, directory_path, behavioural_df, plot_histogram_zscores = False):
     """
     Function to identify change points within each task session from the respective adalearn data file.
     Takes the boolean variable 'change_point' and:
@@ -189,6 +196,7 @@ def behavioural_change_point_analysis(participant_str, condition_str, behavioura
     Parameters:
     - participant_str: string, participant identifier (number; set to 2 digits)
     - condition_str: string, identifier of condition order (set to 2 numbers) ** May need to change to denote actual condition in Adalearn VNS study **
+    - directory_path: directory_path: Path, path to the participant level directory
     - behavioural_df: pd.DataFrame, contains parsed data from all .json adalearn data files for select variables.
     - plot_histogram_zscores: boolean, if true, will plot a histogram of the z-score differences between change points (default = False)
         
@@ -255,10 +263,17 @@ def behavioural_change_point_analysis(participant_str, condition_str, behavioura
     if plot_histogram_zscores:
         fig = px.histogram(change_point_indices, x='z_score_diff', color='change_point_cat', nbins=20, title=f"Histogram of consecutive differences in change point outcome value z-scores for Participant {participant_str} in condition {condition_str}. Colours denote categorisation of 'obvious' and 'non-obvious' change points", labels={'x': 'Z-score difference', 'y': 'Frequency'})
 
-        # Save the figure to the desktop
-        desktop_path = os.path.join(os.path.expanduser("~"), "Desktop")
+        # Save the figure to the partcipant folder
+        plot_dir = os.path.join(directory_path, f"ses-{condition_str}", "plots")
+
+        os.makedirs(plot_dir, exist_ok=True)
+
         file_name = f"sub-{participant_str}_ses-{condition_str}_histogram-of-z-score-difference-in-change-points.png"
-        fig.write_image(os.path.join(desktop_path, file_name))
+
+        file_path = os.path.join(plot_dir, file_name)
+
+        fig.write_image(file_path)
+        
 
         fig.show()
 
@@ -266,13 +281,14 @@ def behavioural_change_point_analysis(participant_str, condition_str, behavioura
 
 
 
-def behavioural_performance_analysis(participant_str, condition_str, behavioural_df, plot_performance):
+def behavioural_performance_analysis(participant_str, condition_str, directory_path, behavioural_df, plot_performance):
     """
     Function to compute primary perforamnce metric (the absolute error between the participant's estimate and the true hidden value) for each task session.
 
     Parameters:
     - participant_str: string, participant identifier (number; set to 2 digits)
     - condition_str: string, identifier of condition order (set to 2 numbers) ** May need to change to denote actual condition in Adalearn VNS study **
+    - directory_path: directory_path: Path, path to the participant level directory
     - behavioural_df: pd.DataFrame, contains parsed data from all .json adalearn data files for select variables.
     - plot_performance: boolean, if true, will plot the average error and the standard deviation in the error for each task session (default = False)
 
@@ -332,10 +348,16 @@ def behavioural_performance_analysis(participant_str, condition_str, behavioural
                           margin=dict(l=50, r=50, t=50, b=50)
                           )
 
-        # Save the figure to the desktop
-        desktop_path = os.path.join(os.path.expanduser("~"), "Desktop")
+       # Save the figure to the partcipant folder
+        plot_dir = os.path.join(directory_path, f"ses-{condition_str}", "plots")
+
+        os.makedirs(plot_dir, exist_ok=True)
+
         file_name = f"sub-{participant_str}_ses-{condition_str}_absolute-error-across-task-sessions.png"
-        fig.write_image(os.path.join(desktop_path, file_name))
+
+        file_path = os.path.join(plot_dir, file_name)
+
+        fig.write_image(file_path)
 
 
         fig.show()

@@ -184,7 +184,7 @@ def load_and_process_pupil_data(directory_path, participant_str, list_subject_se
     - directory_path: Path, path to the participant level directory
     - participant_str: string, identifier of participant number (set to 2 numbers)
     - list_subject_selected: list, identifier generated from participant number
-    - condition: string, identifier of condition order (set to 2 numbers) ** May need to change to denote actual condition in Adalearn VNS study **
+    - condition_str: string, identifier of condition order (set to 2 numbers) ** May need to change to denote actual condition in Adalearn VNS study **
     - condition_task_sessions: list, contains string variables (set to 2 numbers) denoting the individual task sessions completed by the participant in that condition
     - from_session: int, defining the number of the first task session within the condition
     - to_session: int, defining the number of the last task session within the condition
@@ -484,10 +484,18 @@ def load_and_process_pupil_data(directory_path, participant_str, list_subject_se
                         xaxis_title='Time (s)',
                         yaxis_title='Pupil Diameter (a.u)')
         
-        # Save the figure to the desktop
-        desktop_path = os.path.join(os.path.expanduser("~"), "Desktop")
+
+        # Save the figure to the partcipant folder
+        plot_dir = os.path.join(directory_path, f"ses-{condition_str}", "plots")
+
+        os.makedirs(plot_dir, exist_ok=True)
+
         file_name = f"sub-{participant_str}_ses-{condition_str}_pupil-interpolation-by-task-session.png"
-        fig.write_image(os.path.join(desktop_path, file_name))
+
+        file_path = os.path.join(plot_dir, file_name)
+
+        fig.write_image(file_path)
+
 
         fig.show()
 
@@ -714,10 +722,17 @@ def all_outcome_pupil_epochs(directory_path, participant_str, list_subject_selec
             margin=dict(l=50, r=50, t=50, b=50)
         )
 
-        # Save the figure to the desktop
-        desktop_path = os.path.join(os.path.expanduser("~"), "Desktop")
+        # Save the figure to the partcipant folder
+        plot_dir = os.path.join(directory_path, f"ses-{condition_str}", "plots")
+
+        os.makedirs(plot_dir, exist_ok=True)
+
         file_name = f"sub-{participant_str}_ses-{condition_str}_pupil-all-outcomes.png"
-        fig_pupil_avg.write_image(os.path.join(desktop_path, file_name))       
+
+        file_path = os.path.join(plot_dir, file_name)
+
+        fig_pupil_avg.write_image(file_path)
+
 
         fig_pupil_avg.show()
 
@@ -740,10 +755,17 @@ def all_outcome_pupil_epochs(directory_path, participant_str, list_subject_selec
                           margin=dict(l=50, r=50, t=50, b=50)
         )
 
-        # Save the figure to the desktop
-        desktop_path = os.path.join(os.path.expanduser("~"), "Desktop")
+        # Save the figure to the partcipant folder
+        plot_dir = os.path.join(directory_path, f"ses-{condition_str}", "plots")
+
+        os.makedirs(plot_dir, exist_ok=True)
+
         file_name = f"sub-{participant_str}_ses-{condition_str}_pupil-all-outcomes-heatmap.png"
-        fig.write_image(os.path.join(desktop_path, file_name))  
+
+        file_path = os.path.join(plot_dir, file_name)
+
+        fig.write_image(file_path)
+        
 
         fig.show()
 
@@ -891,10 +913,17 @@ def outcome_colour_pupil_epochs(directory_path, participant_str, list_subject_se
             margin=dict(l=50, r=50, t=50, b=50)
         )
 
-        # Save the figure to the desktop
-        desktop_path = os.path.join(os.path.expanduser("~"), "Desktop")
+        # Save the figure to the partcipant folder
+        plot_dir = os.path.join(directory_path, f"ses-{condition_str}", "plots")
+
+        os.makedirs(plot_dir, exist_ok=True)
+
         file_name = f"sub-{participant_str}_ses-{condition_str}_pupil-by-colour.png"
-        fig_pupil_avg.write_image(os.path.join(desktop_path, file_name))         
+
+        file_path = os.path.join(plot_dir, file_name)
+
+        fig_pupil_avg.write_image(file_path)
+        
 
         fig_pupil_avg.show()
 
@@ -1188,10 +1217,17 @@ def change_point_pupil_epochs(directory_path, participant_str, list_subject_sele
             margin=dict(l=50, r=50, t=50, b=50)
         )
 
-        # Save the figure to the desktop
-        desktop_path = os.path.join(os.path.expanduser("~"), "Desktop")
+        # Save the figure to the partcipant folder
+        plot_dir = os.path.join(directory_path, f"ses-{condition_str}", "plots")
+
+        os.makedirs(plot_dir, exist_ok=True)
+
         file_name = f"sub-{participant_str}_ses-{condition_str}_pupil-by-change-point.png"
-        fig_epoch_avg.write_image(os.path.join(desktop_path, file_name))         
+
+        file_path = os.path.join(plot_dir, file_name)
+
+        fig_epoch_avg.write_image(file_path)
+            
 
         fig_epoch_avg.show()
 
@@ -1320,6 +1356,16 @@ def comp_var_pupil_quartile_epochs(directory_path, participant_str, list_subject
         'fourth_quart_blink_ratio': fourth_quart_blink_ratio_df,
         'fourth_quart_epochs_to_remove':fourth_quart_epochs_to_remove
         }
+    
+    # Additional title elements
+    if "surprise_cat" in variable_cat:
+        title_addon = "surprise"
+    elif "prior_conf_cat" in variable_cat:
+        title_addon = "prior-conf"
+    elif "cpp_cat" in variable_cat:
+        title_addon = "cpp"
+    else:
+        title_addon = ""
 
     # Option to plot pupil response of the pupil diameter timelocked to quartiles of computational variable of interest
     if plot_pupil_by_quartile:
@@ -1434,7 +1480,7 @@ def comp_var_pupil_quartile_epochs(directory_path, participant_str, list_subject
         fig_epoch_avg.add_vline(x=0, line_width=3, line_dash="dash", line_color="black", opacity=0.5)
 
         fig_epoch_avg.update_layout(
-            title=f'Baseline corrected right pupil response epoched around outcomes relating to {variable_cat}, split by quartile, for participant {participant_str} in condition {condition_str} (Mean +/- SEM)',
+            title=f'Baseline corrected right pupil response epoched around outcomes relating to {title_addon}, split by quartile, for participant {participant_str} in condition {condition_str} (Mean +/- SEM)',
             xaxis_title='Time (s)',
             yaxis_title='Pupil diameter (z-score)',
             height=950,
@@ -1443,10 +1489,17 @@ def comp_var_pupil_quartile_epochs(directory_path, participant_str, list_subject
             margin=dict(l=50, r=50, t=50, b=50)
         )
 
-        # Save the figure to the desktop
-        desktop_path = os.path.join(os.path.expanduser("~"), "Desktop")
-        file_name = f"sub-{participant_str}_ses-{condition_str}_pupil-by-{variable_cat}.png"
-        fig_epoch_avg.write_image(os.path.join(desktop_path, file_name))         
+        # Save the figure to the partcipant folder
+        plot_dir = os.path.join(directory_path, f"ses-{condition_str}", "plots")
+
+        os.makedirs(plot_dir, exist_ok=True)
+
+        file_name = f"sub-{participant_str}_ses-{condition_str}_pupil-by-{title_addon}-quartile.png"
+
+        file_path = os.path.join(plot_dir, file_name)
+
+        fig_epoch_avg.write_image(file_path)
+       
 
         fig_epoch_avg.show()
 
