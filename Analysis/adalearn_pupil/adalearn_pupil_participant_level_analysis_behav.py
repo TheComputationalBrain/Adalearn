@@ -7,12 +7,12 @@ from adalearn_analysis_participant_level_functions_behav import load_behavioural
 
 
 
-behavioural_df, computational_var_df = load_behavioural_data(directory_path=directory_path, participant_str=participant_str, condition_str=condition_str, condition_task_sessions=task_sessions, plot_behav_data=False)
+behavioural_df, computational_var_df = load_behavioural_data( participant_str=participant_str, condition_str=condition_str, directory_path=directory_path, condition_task_sessions=task_sessions, plot_behav_data=False)
 
 
 
-num_change_points, change_points_per_session, change_point_indices, behavioural_df = behavioural_change_point_analysis(participant_str=participant_str, condition_str=condition_str, behavioural_df=behavioural_df, plot_histogram_zscores=False)
+num_change_points, change_points_per_session, change_point_indices, behavioural_df = behavioural_change_point_analysis(participant_str=participant_str, condition_str=condition_str, directory_path=directory_path, behavioural_df=behavioural_df, plot_histogram_zscores=False)
 
 
 
-mean_abs_error_df = behavioural_performance_analysis(participant_str=participant_str, condition_str=condition_str, behavioural_df=behavioural_df, plot_performance=False)
+mean_abs_error_df = behavioural_performance_analysis(participant_str=participant_str, condition_str=condition_str, directory_path=directory_path, behavioural_df=behavioural_df, plot_performance=False)
