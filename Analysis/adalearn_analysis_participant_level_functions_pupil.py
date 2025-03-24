@@ -934,11 +934,12 @@ def outcome_colour_pupil_epochs(directory_path, participant_str, list_subject_se
 
 
 
-def pupil_response_around_change_point(participant_str, condition_str, outcome_epoched_pupil_df, change_point_indices, before = 6, after = 6, estimate_type = 'mean', plot_pupil_around_change_point = True):
+def pupil_response_around_change_point(directory_path, participant_str, condition_str, outcome_epoched_pupil_df, change_point_indices, before = 6, after = 6, estimate_type = 'mean', plot_pupil_around_change_point = True):
     """
     Function to plot pupil responses to stimuli around change points. Pupil responses are the mean of the baseline corrected data (the mean is calculated across the entire epoch), the amplitude of the baseline corrected data (the amplitude is calculated as the max - min after stimulus presentation), and the baseline average of the uncorrected data (the average before stimulus presentation). CAUTION: Requires attention that the correct data is matched to the appropriate estimate type. Returns a dataframe with the mean (and variance; std, sem) of the response around the change in the task hidden structure.
 
     Parameters:
+    - directory_path: Path, path to the participant level directory
     - participant_str: string, identifier of participant number (set to 2 numbers)
     - condition_str: string, identifier of condition order (set to 2 numbers) ** May need to change to denote actual condition in Adalearn VNS study **
     - outcome_epoched_pupil_df: pd.DataFrame, containing transposed epoched data (each column represents one epoch), the calculated mean, standard deviation and sem across all outcome defined epochs. Includes the timestamp.
@@ -1077,10 +1078,18 @@ def pupil_response_around_change_point(participant_str, condition_str, outcome_e
             showlegend = False
         )
 
-        # Save the figure to the desktop
-        desktop_path = os.path.join(os.path.expanduser("~"), "Desktop")
-        file_name = f"sub-{participant_str}_ses-{condition_str}_pupil-{title_append}-response-around_cp.png"
-        fig.write_image(os.path.join(desktop_path, file_name)) 
+        # Save the figure to the partcipant folder
+        plot_dir = os.path.join(directory_path, f"ses-{condition_str}", "plots")
+
+        os.makedirs(plot_dir, exist_ok=True)
+
+        file_name = f"sub-{participant_str}_ses-{condition_str}_pupil-{title_append}-response-around-cp.png"
+
+        file_path = os.path.join(plot_dir, file_name)
+
+        fig.write_image(file_path)
+
+
 
         fig.show()
 

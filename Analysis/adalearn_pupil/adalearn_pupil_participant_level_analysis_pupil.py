@@ -34,15 +34,15 @@ outcome_pupil_dict = outcome_colour_pupil_epochs(directory_path=directory_path, 
 
 
 
-pupil_amp_around_cp_df = pupil_response_around_change_point(participant_str=participant_str, condition_str=condition_str, outcome_epoched_pupil_df=outcome_epoched_pupil_df, change_point_indices=change_point_indices, before=6, after=6, estimate_type='amplitude', plot_pupil_around_change_point=False)
+pupil_amp_around_cp_df = pupil_response_around_change_point(directory_path=directory_path, participant_str=participant_str, condition_str=condition_str, outcome_epoched_pupil_df=outcome_epoched_pupil_df, change_point_indices=change_point_indices, before=6, after=6, estimate_type='amplitude', plot_pupil_around_change_point=False)
 
 
 
-pupil_avg_around_cp_df = pupil_response_around_change_point(participant_str=participant_str, condition_str=condition_str, outcome_epoched_pupil_df=outcome_epoched_pupil_df, change_point_indices=change_point_indices, before=6, after=6, estimate_type='mean', plot_pupil_around_change_point=False)
+pupil_avg_around_cp_df = pupil_response_around_change_point(directory_path=directory_path, participant_str=participant_str, condition_str=condition_str, outcome_epoched_pupil_df=outcome_epoched_pupil_df, change_point_indices=change_point_indices, before=6, after=6, estimate_type='mean', plot_pupil_around_change_point=False)
 
 
 
-pupil_baseline_around_cp_df = pupil_response_around_change_point(participant_str=participant_str, condition_str=condition_str, outcome_epoched_pupil_df=outcome_epoched_pupil_df_nobc, change_point_indices=change_point_indices, before=6, after=6, estimate_type='baseline', plot_pupil_around_change_point=False)
+pupil_baseline_around_cp_df = pupil_response_around_change_point(directory_path=directory_path, participant_str=participant_str, condition_str=condition_str, outcome_epoched_pupil_df=outcome_epoched_pupil_df_nobc, change_point_indices=change_point_indices, before=6, after=6, estimate_type='baseline', plot_pupil_around_change_point=False)
 
 
 
