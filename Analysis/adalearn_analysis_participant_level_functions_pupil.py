@@ -176,7 +176,7 @@ def identifying_best_eye (data_tob, file_name, file_dir, session):
 
 
 
-def load_and_process_pupil_data(directory_path, participant_str, list_subject_selected, condition_str, condition_task_sessions, from_session, to_session, dict_onsets, dict_num, session_list = None, outlier_limit_std = 10, outlier_correct_average_amount = 15,  window_start_before = 0.4, window_end_after = 1.4, baseline_cor = [-0.2, 0], lpf = [5], blink_ratio_threshold = 0.20, select_eye = True, remove_epochs = True, z_score = True, plot_interpolation_process = False):
+def load_and_process_pupil_data(directory_path, participant_str, list_subject_selected, condition_str, condition_task_sessions, from_session, to_session, dict_onsets, dict_num, session_list = None, outlier_limit_std = 10, outlier_correct_average_amount = 15,  window_start_before = 0.4, window_end_after = 1.4, baseline_cor = [-0.4, 0], lpf = [5], blink_ratio_threshold = 0.20, select_eye = True, remove_epochs = True, z_score = True, plot_interpolation_process = False):
     """
     Function to load and preprocess pupil data. Preprocessing involves defining blinks, outliers and the interpolation of pupil data. Preprocessing taken from preprocess_eyedata script, created by Florent, Maëva, Aziza and Yannaël. Option to plot the raw and interpolated data. If dictionaries passed defining events of interest, will compute epochs around defined outcomes of interest (e.g. change points, high and low surprise, etc). If epochs computed, will calculate the mean, std, sem across each identified epoch for all task sessions.
 
@@ -243,7 +243,7 @@ def load_and_process_pupil_data(directory_path, participant_str, list_subject_se
 
             if os.path.exists(file_path):
                 file_found = True  # Mark the file as found
-                # Defining the eye to be used in the pupil analysis
+                # Defining the eye to be used in the pupil analysis - if selec_eye right is selected as default
                 if select_eye:
                     print(f"Eye pre-selected for Session {session}. The chosen eye is: right")
                     used_eye_list.append(select_eye)
@@ -257,7 +257,7 @@ def load_and_process_pupil_data(directory_path, participant_str, list_subject_se
                         col_name=['x_pos', 'y_pos', 'diameter'],
                         eyetracker='tobii'
                     )
-                else:
+                else: # If identifying the best eye, files will be run to find the eye with the least missing data
                     best_eye = identifying_best_eye(
                         data_tob=data_tob,
                         file_name=file_name,
@@ -362,7 +362,7 @@ def load_and_process_pupil_data(directory_path, participant_str, list_subject_se
         pupil_ses_list.append(pupil_ses)
         blink_ses_list.append(blink_ses)
 
-        # Preprocess the data. If need, can plot the preprocessed pupil time series. To see the blink ratio use data_tob.epoch_blink_ratio. For more complete summary can insert data_tob.epochs_info (provides a data frame with the epoch number, the blink ratio, NaN ratio per epoch and conditions [rejected etc])
+        # Preprocess the data. If needed, can plot the preprocessed pupil time series. To see the blink ratio use data_tob.epoch_blink_ratio. For more complete summary can insert data_tob.epochs_info (provides a data frame with the epoch number, the blink ratio, NaN ratio per epoch and conditions [rejected etc])
         time, diameter, diameter_int, x_pos, x_pos_int, y_pos, y_pos_int = data_tob.preprocess(lpf=lpf, plot=False, remove_outlier=True, outlier_limit_std=outlier_limit_std, outlier_correct_average_amount=outlier_correct_average_amount)   
 
         processed_data = data_tob.data.copy()
@@ -383,7 +383,7 @@ def load_and_process_pupil_data(directory_path, participant_str, list_subject_se
             # Append list to blink_ratio list 
             blink_ratio_epoch_list.append(data_tob.epoch_blink_ratio)
 
-    # Concatenate pre_processed pupil dataframes across task sessions
+    # Concatenate pre processed pupil dataframes (trigger information, blink information, task session timings, epoched data, etc) across task sessions
     preprocessed_pupil_df = pd.concat(pre_process_data_list, ignore_index=True)
 
     pupil_trig_df = pd.concat(pupil_trig_ses_list, ignore_index=True)
@@ -409,20 +409,41 @@ def load_and_process_pupil_data(directory_path, participant_str, list_subject_se
         blink_ratio_epoch_df = pd.DataFrame(flattened_array, columns=['blink_ratio'])
         blink_ratio_epoch_df['above_threshold'] = blink_ratio_epoch_df['blink_ratio'] >= blink_ratio_threshold
 
+        # Checking that  all epoch df have the same shape - possibly not due t sampling issues related to trigger insertion.
+        expected_num_columns = round(((window_start_before + window_end_after) * 60) + 1) # 60Hz is the sampling frequency of the tobii eyetracker. Add 1, because the epoching window includes the last time point exactly.
+
+        mismatched_shape_indices = [i for i, df in enumerate(epoched_data_list) if df.shape[1] != expected_num_columns]
+        print(f'The following task session(s) (keys) was shown to have a different length to that expected (i.e. 108): {mismatched_shape_indices}') 
+
         # Collating the timelocked epoched pupil data to calculate descriptive statistics for plotting
         epoched_pupil_df = pd.concat(epoched_data_list, ignore_index=True).T
 
-        # Removing epochs in which interpolation exceeds defined threshold
+        # Removing epochs in which interpolation exceeds defined threshold (and in which the shape of the epoch is off due to sampling issues)
         if remove_epochs:
-            # Get indices of epochs (columns) to remove
-            epochs_to_remove = blink_ratio_epoch_df.index[blink_ratio_epoch_df['above_threshold']]
+            # Get indices of epochs (columns) to remove due to excessive blinking
+            epochs_to_remove = list(blink_ratio_epoch_df.index[blink_ratio_epoch_df['above_threshold']])
+
+            num_excess_blink_columns = len(epochs_to_remove)
+
+            # Removing columns that have null values due to sampling issues
+            nan_columns = epoched_pupil_df.columns[epoched_pupil_df.isna().any()].tolist()
+            print(f'Number of columns containing NaN values: {len(nan_columns)}')
+
+            # For each column with NaN values, check if the NaN is in the last row. If it is then pad the null value with the data in the previous rpow for that column 
+            for col in nan_columns:
+                if epoched_pupil_df[col].isna().iloc[-1]:  
+                    epoched_pupil_df.at[epoched_pupil_df.index[-1], col] = epoched_pupil_df[col].iloc[-2] 
+            # Checking if null values remain in the columns
+            print(f'Number of columns containing NaN values after rectifying sampling issue: {len(epoched_pupil_df.columns[epoched_pupil_df.isna().any()].tolist())}')
+
+            # Remove only columns that had excessive blinking
+            epochs_to_remove = sorted(set(epochs_to_remove)) 
             epoched_pupil_df.drop(columns=epochs_to_remove, inplace=True)
 
-            print(f"Removed {len(epochs_to_remove)} epochs due to excessive interpolation.")
-            print(f"Columns removed: {list(epochs_to_remove)}")
+            print(f"Removed {len(epochs_to_remove)} epochs due to excessive blinking ({num_excess_blink_columns}).")
+            print(f"Columns removed: {epochs_to_remove}")
         else:
             epochs_to_remove = None
-            
 
         numeric_data = epoched_pupil_df.iloc[:, :]
 
@@ -478,8 +499,8 @@ def load_and_process_pupil_data(directory_path, participant_str, list_subject_se
                                 yref=f'y{subplot_idx}')  
                     interpolating = False
 
-        fig.update_layout(height=900*num_sessions, 
-                        width=1200,
+        fig.update_layout(height=600*num_sessions, 
+                        width=1000,
                         title_text=f'Preprocessed pupil diameter and x/y position across task sessions for participant {participant_str} in condition {condition_str}',
                         xaxis_title='Time (s)',
                         yaxis_title='Pupil Diameter (a.u)')
@@ -502,9 +523,10 @@ def load_and_process_pupil_data(directory_path, participant_str, list_subject_se
     return preprocessed_pupil_df, pupil_trig_df, pupil_ses_df, blink_df, epoched_pupil_df, blink_ratio_epoch_df, epochs_to_remove
 
 
+
 def align_pupil_to_events(pupil_trig_df, event_df, to_session, print_event_df_shape=True):
     """
-    Function to align pupil data with adalearn outcome presentations marking some event of interest. Aligns outcome triggers between different files based on the cumulative number (id) of that outcome, or based on a relative number within task sessions. Provides initial checks to ensure that the data is macthed and determine which route to progress with during the alignment.
+    Function to align pupil data with adalearn outcome presentations marking some event of interest. Aligns outcome triggers between different files based on the cumulative number (id) of that outcome, or based on a relative number within task sessions. Provides initial checks to ensure that the data is matched and determines which route to progress with during the alignment.
 
     Parameters:
     - pupil_trig_df: pd.DataFrame, contains the trigger information (i.e. time, outcome) for each task session, extracted from the pupil data files. 
@@ -610,7 +632,7 @@ def create_pupil_epoch_dicts(pupil_event_aligned_df):
     return onsets, nums
 
 
-def all_outcome_pupil_epochs(directory_path, participant_str, list_subject_selected, condition_str, condition_task_sessions, from_session, to_session, pupil_trig_df, baseline_cor = [-0.2, 0], variable_df=None, variable_column=None, select_eye = True, remove_epochs = True, plot_averaged_pupil_response = False, plot_raster_pupil_response = False):
+def all_outcome_pupil_epochs(directory_path, participant_str, list_subject_selected, condition_str, condition_task_sessions, from_session, to_session, pupil_trig_df, baseline_cor = [-0.4, 0], variable_df=None, variable_column=None, select_eye = True, remove_epochs = True, plot_averaged_pupil_response = False, plot_raster_pupil_response = False):
     """
     Function to preprocess and analysis pupil data for each outcome across all task sessions. Uses load_and_process_pupil_data method to load and run the preporocessing analysis. There is an option to plot the mean response from all outcomes across all task sessions, as well as a raster plot from each outcome. Parameters defining the preprocessing of the pupil data should be modified in the process_pupil_data function directly. 
 
@@ -647,7 +669,7 @@ def all_outcome_pupil_epochs(directory_path, participant_str, list_subject_selec
       print(f"In task session {session} there are {len(events)} outcome observations") 
 
     # Analysing pupil data based on identified outcome indices
-    preprocessed_pupil_df, pupil_trig_df, pupil_ses_df, blink_df, outcome_epoched_pupil_df, outcome_blink_ratio_df, outcome_epochs_to_remove = load_and_process_pupil_data(directory_path=directory_path, participant_str=participant_str, list_subject_selected=list_subject_selected, condition_str=condition_str, condition_task_sessions=condition_task_sessions, from_session=from_session, to_session=to_session, dict_onsets=outcome_onsets, dict_num=outcome_nums, baseline_cor=baseline_cor, lpf=[5], blink_ratio_threshold=0.2, select_eye=select_eye, remove_epochs=remove_epochs, z_score=True, plot_interpolation_process=False)
+    preprocessed_pupil_df, pupil_trig_df, pupil_ses_df, blink_df, outcome_epoched_pupil_df, outcome_blink_ratio_df, outcome_epochs_to_remove = load_and_process_pupil_data(directory_path=directory_path, participant_str=participant_str, list_subject_selected=list_subject_selected, condition_str=condition_str, condition_task_sessions=condition_task_sessions, from_session=from_session, to_session=to_session, dict_onsets=outcome_onsets, dict_num=outcome_nums, session_list=None, outlier_limit_std=10, outlier_correct_average_amount=15, window_start_before=0.4, window_end_after=1.4, baseline_cor=baseline_cor, lpf=[5], blink_ratio_threshold=0.2, select_eye=select_eye, remove_epochs=remove_epochs, z_score=True, plot_interpolation_process=False)
 
     # Match outcomes to the input variable of interest
     if variable_df is not None and variable_column is not None:
@@ -773,7 +795,7 @@ def all_outcome_pupil_epochs(directory_path, participant_str, list_subject_selec
 
 
 
-def outcome_colour_pupil_epochs(directory_path, participant_str, list_subject_selected, condition_str, condition_task_sessions, from_session, to_session, pupil_trig_df, baseline_cor = [-0.2, 0], select_eye = True, remove_epochs = True, plot_pupil_by_colour_response = False):
+def outcome_colour_pupil_epochs(directory_path, participant_str, list_subject_selected, condition_str, condition_task_sessions, from_session, to_session, pupil_trig_df, baseline_cor = [-0.4, 0], select_eye = True, remove_epochs = True, plot_pupil_by_colour_response = False):
     """
     Function to preprocess and analysis pupil data based on the specific colour of the outcome. Uses load_and_process_pupil_data method to run the preporocessing analysis. Option to plot the mean and sem derived from all instances of 'blue' and 'yellow' outcomes across all trials. Parameters defining the preprocessing of the pupil data should be modified in the load_and_process_pupil_data function. 
 
@@ -1097,7 +1119,7 @@ def pupil_response_around_change_point(directory_path, participant_str, conditio
 
 
 
-def change_point_pupil_epochs(directory_path, participant_str, list_subject_selected, condition_str, condition_task_sessions, from_session, to_session, pupil_trig_df, change_point_indices, baseline_cor = [-0.2, 0], select_eye = True, remove_epochs = True,  plot_pupil_by_cp=False):
+def change_point_pupil_epochs(directory_path, participant_str, list_subject_selected, condition_str, condition_task_sessions, from_session, to_session, pupil_trig_df, change_point_indices, baseline_cor = [-0.4, 0], select_eye = True, remove_epochs = True,  plot_pupil_by_cp=False):
     """
     Function to preprocess and analysis pupil data around change points in the hidden task structure. Uses load_and_process_pupil_data method to run the preporocessing analysis. In addition to analysising the data around change points, there is an option to plot the mean and sem derived from all instances across all task sessions. Parameters defining the preprocessing of the pupil data should be modified in the process_pupil_data function directly. 
 
@@ -1244,7 +1266,7 @@ def change_point_pupil_epochs(directory_path, participant_str, list_subject_sele
 
 
 
-def comp_var_pupil_quartile_epochs(directory_path, participant_str, list_subject_selected, condition_str, condition_task_sessions, from_session, to_session, pupil_trig_df, computational_var_df, baseline_cor = [-0.2, 0], variable_cat = None, select_eye = True, remove_epochs = True, plot_pupil_by_quartile=True):
+def comp_var_pupil_quartile_epochs(directory_path, participant_str, list_subject_selected, condition_str, condition_task_sessions, from_session, to_session, pupil_trig_df, computational_var_df, baseline_cor = [-0.4, 0], variable_cat = None, select_eye = True, remove_epochs = True, plot_pupil_by_quartile=True):
     """"
      Function to preprocess and then compute epoched pupil diameter response around separate quartiles of a computational variable of interest. Preprocessing taken from load_and_process_pupil_data method. Calculates the mean, std and sem  across each identified epoch for all task sessions. In addition to analysising the data around the computational variable, there is an option to plot the mean and sem derived from all instances across all task sessions. Parameters defining the preprocessing of the pupil data should be modified in the process_pupil_data function.
 

@@ -1363,6 +1363,9 @@ def uncertainty_on_learning_rate_participant_level(participant_str, condition_st
         df_clean = df_clean[df_clean[f'cleaned_learning_rate_{parameter_estimate}'] != 0]
         removed_zero = before_zero_filter - len(df_clean)
         print(f"Removed {removed_zero} rows where 'cleaned_learning_rate_{parameter_estimate}' was 0.")
+        # Re z-scoring data
+        df_clean[f'lr_zscore_{parameter_estimate}'] = scaler.fit_transform(df_clean[[f'cleaned_learning_rate_{parameter_estimate}']]).flatten()
+
         zero_title = "-(no-update-trials-removed)"
     else:
         zero_title = "-(all-outcomes)"

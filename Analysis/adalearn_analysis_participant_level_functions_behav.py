@@ -82,18 +82,30 @@ def load_behavioural_data(participant_str, condition_str, directory_path, condit
     # Concatenate all unpacked DataFrames in the list vertically
     behavioural_df = pd.concat(unpack_dfs, ignore_index=True)
 
+    # There was an issue with one participant (sub-09) where a new experiment had to be started during the second half. This means that the task session ids are duplicated between the first and second half of the experiment. This code fixes the data frame to make sure the task session ids are unique.
+    duplicated_sessions = behavioural_df.duplicated(subset=['task_session'], keep=False)
+
+    if behavioural_df[duplicated_sessions]['run_id'].nunique() > 1:
+        print('Duplicated task sessions found in dataframe creation. Processing to rectify...')
+
+        second_run_id = behavioural_df['run_id'].unique()[-1]
+
+        second_run_df = behavioural_df[behavioural_df['run_id'] == second_run_id]
+
+        duplicated_sessions_second_run = second_run_df['task_session'].duplicated(keep=False)
+
+        behavioural_df.loc[second_run_df.index[duplicated_sessions_second_run], 'task_session'] = behavioural_df.loc[second_run_df.index[duplicated_sessions_second_run], 'task_session'] + 11
+
     # Calculate first outcome presentation times for each task session
     first_outcome_times = behavioural_df.groupby('task_session')['time'].transform('first')
 
     # Subtract start times from 'time' column to create 'rel_time' column for each task session
     behavioural_df['rel_time'] = (behavioural_df['time'] - first_outcome_times) / 1000
 
-    # adjust trial and task session index
+    # adjust  task session index
     behavioural_df['task_session'] = behavioural_df['task_session'] + 1
-    #behavioural_df['outcome_num'] = behavioural_df['outcome_num'] + 1
 
     # Behavioural data diagnostics
-
     # Checking whether the right number of task sessions are in the data frame
     unique_task_sessions = behavioural_df['task_session'].unique()
     number_of_unique_task_sessions = len(unique_task_sessions)

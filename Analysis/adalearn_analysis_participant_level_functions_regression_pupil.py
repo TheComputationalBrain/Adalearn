@@ -218,7 +218,7 @@ def pupil_uncertainty_lr_mediation_analysis(participant_str, condition_str, dire
     scaler = StandardScaler() 
 
     mediation_df = mediators[variables].copy()
-    mediation_df['learning_rate'] = mediators['lr_zscore_estimate']
+    mediation_df['learning_rate_zscore'] = mediators['lr_zscore_estimate']
     mediation_df['pupil_response'] = pupil_variable.values 
     mediation_df['pupil_response_zscore'] = scaler.fit_transform(mediation_df[['pupil_response']]).flatten()
 
@@ -227,14 +227,18 @@ def pupil_uncertainty_lr_mediation_analysis(participant_str, condition_str, dire
     # Option to exclude no update trials
     if exclude_zero:
         before_zero_filter = len(mediation_df)
-        cleaned_df = mediation_df[mediation_df['learning_rate_estimate'] != 0]
+        mediation_df['cleaned_learning_rate_estimate'] = mediators['cleaned_learning_rate_estimate']
+        mediation_df = mediation_df[mediation_df['cleaned_learning_rate_estimate'] != 0]
         removed_zero = before_zero_filter - len(mediation_df)
         print(f"Removed {removed_zero} rows where learning rate was 0.")
+        # Re z-scoring the data after zero updates removed
+        mediation_df['learning_rate_zscore'] = scaler.fit_transform(mediation_df[['cleaned_learning_rate_estimate']]).flatten()
+
         zero_title = "-(no-update-trials-removed)"
 
 
     # Run mediation analysis (currently no option to exclude no update trials)
-    mediation_analysis = pingouin.mediation_analysis(data=mediation_df, x='pupil_response_zscore', m=['conf_zscore', 'cpp_zscore'], y='learning_rate', covar=None, alpha=0.05, n_boot=500, seed=None, return_dist=False, logreg_kwargs=None)
+    mediation_analysis = pingouin.mediation_analysis(data=mediation_df, x='pupil_response_zscore', m=['conf_zscore', 'cpp_zscore'], y='learning_rate_zscore', covar=None, alpha=0.05, n_boot=500, seed=None, return_dist=False, logreg_kwargs=None)
 
     # Option to plot mediation analysis
     if plot_mediation_analysis:
@@ -425,7 +429,7 @@ def pupil_uncertainty_lr_mediation_analysis(participant_str, condition_str, dire
         )
 
         fig.update_layout(
-            title=f"Mediation analysis for particpant {participant_str} in condition {condition_str} examining pupil {title} response on behavioural learning rate <br> mediated by uncertainty parameters",
+            title=f"Mediation analysis for participant {participant_str} in condition {condition_str} examining pupil {title} response on behavioural learning rate <br> mediated by uncertainty parameters",
             width=1000, 
             height=1000,
             xaxis=dict(showticklabels=False), 
