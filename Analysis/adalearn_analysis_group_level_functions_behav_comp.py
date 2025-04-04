@@ -476,7 +476,7 @@ def sample_behav_v_model_estimate(condition_str, base_dir, excluded_participants
             fig.show()
 
 
-    return behav_model_estimate_regress_df, behav_model_estimate_corr_df, bin_average_data
+    return behav_model_estimate_regress_df, behav_model_estimate_corr_df, participant_v_model_df
 
 
 

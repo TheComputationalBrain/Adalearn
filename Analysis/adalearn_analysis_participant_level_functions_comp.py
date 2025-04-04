@@ -1018,7 +1018,7 @@ def compute_information_gain(participant_str, condition_str, directory_path, com
 
 
 
-def behav_v_model_linear_analysis( participant_str, condition_str, directory_path, computational_var_df, outcome_var, pred_var, exclude_zero=False, plot_behav_v_model_scatter=False, add_regression=False):
+def behav_v_model_linear_analysis(participant_str, condition_str, directory_path, computational_var_df, outcome_var, pred_var, exclude_zero=False, plot_behav_v_model_scatter=False, add_regression=False):
     """
     Function to compute the correlation and optionally perform regression analysis between two variables in a DataFrame.
 
