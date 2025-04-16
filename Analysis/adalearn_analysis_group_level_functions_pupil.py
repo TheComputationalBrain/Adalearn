@@ -155,13 +155,13 @@ fig.show()
 participants = sorted(pupil_mean_df['participant'].unique())
 num_participants = len(participants)
 
-cols = 4
+cols = 6
 rows = int(np.ceil(num_participants / cols))
 
 fig = go.Figure()
 
 fig = make_subplots(rows=rows, cols=cols, shared_xaxes=True, 
-                           subplot_titles=[f'Participant {p}' for p in participants])
+                           subplot_titles=[f'Participant {i+1}' for i in range(num_participants)])
     
 for i, participant in enumerate(participants):
     row = (i // cols) + 1
@@ -198,7 +198,7 @@ for i, participant in enumerate(participants):
         col=col  
     )
 
-fig.update_layout(height=700*rows, width=1500, title_text="Pupil Response per Participant", plot_bgcolor='rgba(255, 255, 255, 1)')
+fig.update_layout(height=700*rows, width=1800, title_text="Pupil Response per Participant", plot_bgcolor='rgba(255, 255, 255, 1)')
 
 # Save the figure to the group level plots folder
 plot_dir = os.path.join(base_dir, "group_level_plots")
@@ -297,35 +297,35 @@ pupil_coef_df = pd.DataFrame(pupil_coef_data)
 # Plotting mean regression coefficients
 fig = go.Figure()
 
-fig.add_trace(go.Scatter(
-    x=pupil_coef_df['time_mean'], 
-    y=pupil_coef_df['dkl_resid_coef'], 
-    mode= 'lines',
-    line=dict(color='rgba(220, 120, 0, 0.8)'),  
-    name='Information gain (regression residuals)'))
+#fig.add_trace(go.Scatter(
+#    x=pupil_coef_df['time_mean'], 
+#    y=pupil_coef_df['dkl_resid_coef'], 
+#    mode= 'lines',
+#    line=dict(color='rgba(220, 120, 0, 0.8)'),  
+#    name='Information gain (regression residuals)'))
 
-fig.add_trace(go.Scatter(
-    x=list(pupil_coef_df['time_mean']) + list(pupil_coef_df['time_mean'][::-1]),
-    y=list(pupil_coef_df['dkl_resid_coef'] + pupil_coef_df['dkl_resid_coef_error']) + list((pupil_coef_df['dkl_resid_coef'] - pupil_coef_df['dkl_resid_coef_error'])[::-1]),
-    fill='toself',
-    fillcolor='rgba(220, 120, 0, 0.2)',
-    line=dict(color='rgba(255,255,255,0)'),
-    hoverinfo="skip",
-    showlegend=False
-))
+#fig.add_trace(go.Scatter(
+#    x=list(pupil_coef_df['time_mean']) + list(pupil_coef_df['time_mean'][::-1]),
+#    y=list(pupil_coef_df['dkl_resid_coef'] + pupil_coef_df['dkl_resid_coef_error']) + list((pupil_coef_df#['dkl_resid_coef'] - pupil_coef_df['dkl_resid_coef_error'])[::-1]),
+#    fill='toself',
+#    fillcolor='rgba(220, 120, 0, 0.2)',
+#    line=dict(color='rgba(255,255,255,0)'),
+#    hoverinfo="skip",
+#    showlegend=False
+#))
 
 fig.add_trace(go.Scatter(
     x=pupil_coef_df['time_mean'], 
     y=pupil_coef_df['cpp_coef'], 
     mode= 'lines',
-    line=dict(color='rgba(160, 70, 180, 0.8)'), 
+    line=dict(color='rgba(255, 125, 105, 0.8)'), 
     name='Change point probability '))
 
 fig.add_trace(go.Scatter(
     x=list(pupil_coef_df['time_mean']) + list(pupil_coef_df['time_mean'][::-1]),
     y=list(pupil_coef_df['cpp_coef'] + pupil_coef_df['cpp_coef_error']) + list((pupil_coef_df['cpp_coef'] - pupil_coef_df['cpp_coef_error'])[::-1]),
     fill='toself',
-    fillcolor='rgba(160, 70, 180, 0.2)',
+    fillcolor='rgba(255, 125, 105, 0.2)',
     line=dict(color='rgba(255,255,255,0)'),
     hoverinfo="skip",
     showlegend=False
@@ -389,13 +389,13 @@ fig.show()
 participants = sorted(pupil_regress_coef_amp['participant'].unique())
 num_participants = len(participants)
 
-cols = 4
+cols = 6
 rows = int(np.ceil(num_participants / cols))
 
 fig = go.Figure()
 
 fig = make_subplots(rows=rows, cols=cols, shared_xaxes=True, 
-                           subplot_titles=[f'Participant {p}' for p in participants])
+                           subplot_titles=[f'Participant {i+1}' for i in range(num_participants)])
     
 for i, participant in enumerate(participants):
     row = (i // cols) + 1
@@ -403,9 +403,9 @@ for i, participant in enumerate(participants):
     sub_df = pupil_regress_coef_amp[pupil_regress_coef_amp['participant'] == participant]
     fig.add_trace(go.Scatter(x=sub_df['time'], y=sub_df['conf_zscore'], mode='lines', line=dict(color='rgba(0, 130, 150, 0.8)'), name=f'Prior confidence', showlegend=False), row=row, col=col)
     
-    fig.add_trace(go.Scatter(x=sub_df['time'], y=sub_df['cpp_zscore'], mode='lines', line=dict(color='rgba(160, 70, 180, 0.8)'), name=f'Change point probability', showlegend=False), row=row, col=col)
+    fig.add_trace(go.Scatter(x=sub_df['time'], y=sub_df['cpp_zscore'], mode='lines', line=dict(color='rgba(255, 125, 105, 0.8)'), name=f'Change point probability', showlegend=False), row=row, col=col)
     
-    fig.add_trace(go.Scatter(x=sub_df['time'], y=sub_df['dkl_regress_residuals'], mode='lines', line=dict(color='rgba(220, 120, 0, 0.8)'), name=f'Information gain (regression residuals)', showlegend=False), row=row, col=col)
+#    fig.add_trace(go.Scatter(x=sub_df['time'], y=sub_df['dkl_regress_residuals'], mode='lines', line=dict(color='rgba(220, 120, 0, 0.8)'), name=f'Information gain (regression residuals)', showlegend=False), row=row, col=col)
     
 
     fig.add_vline(x=0, line_dash='dot', row=row, col=col)
@@ -429,7 +429,7 @@ for i, participant in enumerate(participants):
     )
 
     
-fig.update_layout(height=700*rows, width=1500, title_text="Pupil versus parameters of uncertainty peristimulus regression coefficients per participant", plot_bgcolor='rgba(255, 255, 255, 1)')
+fig.update_layout(height=700*rows, width=1800, title_text="Pupil versus parameters of uncertainty peristimulus regression coefficients per participant", plot_bgcolor='rgba(255, 255, 255, 1)')
 
 # Save the figure to the group level plots folder
 plot_dir = os.path.join(base_dir, "group_level_plots")
@@ -442,11 +442,12 @@ fig.show()
 
 
 # Plotting individual coefficient regressions grouped by parameter
-fig = make_subplots(rows=2, cols=2, shared_xaxes=True, 
+fig = make_subplots(rows=3, cols=1, shared_xaxes=True, 
                            subplot_titles=[
                                'Individual regression coefficients for prior confidence',
-                               'Individual regression coefficients for information gain (regression residuals)',
                                'Individual regression coefficients for change point probability'
+#                              'Individual regression coefficients for information gain (regression residuals)',
+                               
                                ])
     
 for  participant in pupil_regress_coef_amp['participant'].unique():
@@ -454,14 +455,13 @@ for  participant in pupil_regress_coef_amp['participant'].unique():
    
     fig.add_trace(go.Scatter(x=data['time'], y=data['conf_zscore'], mode='lines', line=dict(color='rgba(0, 130, 150, 0.4)'), name=f'Prior confidence', showlegend=False), row=1, col=1)
     
-    fig.add_trace(go.Scatter(x=data['time'], y=data['cpp_zscore'], mode='lines', line=dict(color='rgba(160, 70, 180, 0.4)'), name=f'Change point probability', showlegend=False), row=2, col=1)
+    fig.add_trace(go.Scatter(x=data['time'], y=data['cpp_zscore'], mode='lines', line=dict(color='rgba(255, 125, 105, 0.4)'), name=f'Change point probability', showlegend=False), row=2, col=1)
     
-    fig.add_trace(go.Scatter(x=data['time'], y=data['dkl_regress_residuals'], mode='lines', line=dict(color='rgba(220, 120, 0, 0.4)'), name=f'Information gain (regression residuals)', showlegend=False), row=1, col=2)
+#    fig.add_trace(go.Scatter(x=data['time'], y=data['dkl_regress_residuals'], mode='lines', line=dict(color='rgba(220, 120, 0, 0.4)'), name=f'Information gain (regression residuals)', showlegend=False), row=3, col=1)
 
 for r in [1, 2]:
-    for c in [1, 2]:
-        fig.add_vline(x=0, line_dash='dot', row=r, col=c)
-        fig.add_hline(y=0, line_dash='dot', row=r, col=c)
+    fig.add_vline(x=0, line_dash='dot', row=r, col=1)
+    fig.add_hline(y=0, line_dash='dot', row=r, col=1)
 
 fig.update_xaxes(
     showline=True, 
@@ -477,7 +477,7 @@ fig.update_yaxes(
 )
 
 
-fig.update_layout(height=900, width=1800, title_text="Pupil versus parameters of uncertainty peristimulus regression coefficients per participant split by parameter", plot_bgcolor='rgba(255, 255, 255, 1)')
+fig.update_layout(height=400*rows, width=1500, title_text="Pupil versus parameters of uncertainty peristimulus regression coefficients per participant split by parameter", plot_bgcolor='rgba(255, 255, 255, 1)')
 
 # Save the figure to the group level plots folder
 plot_dir = os.path.join(base_dir, "group_level_plots")
@@ -574,35 +574,35 @@ pupil_coef_nobc_df = pd.DataFrame(pupil_coef_nobc_data)
 
 fig = go.Figure()
 
-fig.add_trace(go.Scatter(
-    x=pupil_coef_nobc_df['time_mean'], 
-    y=pupil_coef_nobc_df['dkl_resid_coef'], 
-    mode= 'lines',
-    line=dict(color='rgba(220, 120, 0, 0.8)'),  
-    name='Information gain (regression residuals)'))
+#fig.add_trace(go.Scatter(
+#    x=pupil_coef_nobc_df['time_mean'], 
+#    y=pupil_coef_nobc_df['dkl_resid_coef'], 
+#    mode= 'lines',
+#    line=dict(color='rgba(220, 120, 0, 0.8)'),  
+#    name='Information gain (regression residuals)'))
 
-fig.add_trace(go.Scatter(
-    x=list(pupil_coef_nobc_df['time_mean']) + list(pupil_coef_nobc_df['time_mean'][::-1]),
-    y=list(pupil_coef_nobc_df['dkl_resid_coef'] + pupil_coef_nobc_df['dkl_resid_coef_error']) + list((pupil_coef_nobc_df['dkl_resid_coef'] - pupil_coef_nobc_df['dkl_resid_coef_error'])[::-1]),
-    fill='toself',
-    fillcolor='rgba(220, 120, 0, 0.2)',
-    line=dict(color='rgba(255,255,255,0)'),
-    hoverinfo="skip",
-    showlegend=False
-))
+#fig.add_trace(go.Scatter(
+#    x=list(pupil_coef_nobc_df['time_mean']) + list(pupil_coef_nobc_df['time_mean'][::-1]),
+#    y=list(pupil_coef_nobc_df['dkl_resid_coef'] + pupil_coef_nobc_df['dkl_resid_coef_error']) + list((pupil_coef_nobc_df['dkl_resid_coef'] - pupil_coef_nobc_df['dkl_resid_coef_error'])[::-1]),
+#    fill='toself',
+#    fillcolor='rgba(220, 120, 0, 0.2)',
+#    line=dict(color='rgba(255,255,255,0)'),
+#    hoverinfo="skip",
+#    showlegend=False
+#))
 
 fig.add_trace(go.Scatter(
     x=pupil_coef_nobc_df['time_mean'], 
     y=pupil_coef_nobc_df['cpp_coef'], 
     mode= 'lines',
-    line=dict(color='rgba(160, 70, 180, 0.8)'), 
+    line=dict(color='rgba(255, 125, 105, 0.8)'), 
     name='Change point probability '))
 
 fig.add_trace(go.Scatter(
     x=list(pupil_coef_nobc_df['time_mean']) + list(pupil_coef_nobc_df['time_mean'][::-1]),
     y=list(pupil_coef_nobc_df['cpp_coef'] + pupil_coef_nobc_df['cpp_coef_error']) + list((pupil_coef_nobc_df['cpp_coef'] - pupil_coef_nobc_df['cpp_coef_error'])[::-1]),
     fill='toself',
-    fillcolor='rgba(160, 70, 180, 0.2)',
+    fillcolor='rgba(255, 125, 105, 0.2)',
     line=dict(color='rgba(255,255,255,0)'),
     hoverinfo="skip",
     showlegend=False
@@ -663,13 +663,13 @@ fig.show()
 participants = sorted(pupil_regress_coef_nobc_amp['participant'].unique())
 num_participants = len(participants)
 
-cols = 4
+cols = 6
 rows = int(np.ceil(num_participants / cols))
 
 fig = go.Figure()
 
 fig = make_subplots(rows=rows, cols=cols, shared_xaxes=True, 
-                           subplot_titles=[f'Participant {p}' for p in participants])
+                           subplot_titles=[f'Participant {i+1}' for i in range(num_participants)])
     
 for i, participant in enumerate(participants):
     row = (i // cols) + 1
@@ -677,9 +677,9 @@ for i, participant in enumerate(participants):
     sub_df = pupil_regress_coef_nobc_amp[pupil_regress_coef_nobc_amp['participant'] == participant]
     fig.add_trace(go.Scatter(x=sub_df['time'], y=sub_df['conf_zscore'], mode='lines', line=dict(color='rgba(0, 130, 150, 0.8)'), name=f'Prior confidence', showlegend=False), row=row, col=col)
     
-    fig.add_trace(go.Scatter(x=sub_df['time'], y=sub_df['cpp_zscore'], mode='lines', line=dict(color='rgba(160, 70, 180, 0.8)'), name=f'Change point probability', showlegend=False), row=row, col=col)
+    fig.add_trace(go.Scatter(x=sub_df['time'], y=sub_df['cpp_zscore'], mode='lines', line=dict(color='rgba(255, 125, 105, 0.8)'), name=f'Change point probability', showlegend=False), row=row, col=col)
     
-    fig.add_trace(go.Scatter(x=sub_df['time'], y=sub_df['dkl_regress_residuals'], mode='lines', line=dict(color='rgba(220, 120, 0, 0.8)'), name=f'Information gain (regression residuals)', showlegend=False), row=row, col=col)
+#    fig.add_trace(go.Scatter(x=sub_df['time'], y=sub_df['dkl_regress_residuals'], mode='lines', line=dict(color='rgba(220, 120, 0, 0.8)'), name=f'Information gain (regression residuals)', showlegend=False), row=row, col=col)
     
 
     fig.add_vline(x=0, line_dash='dot', row=row, col=col)
@@ -703,7 +703,7 @@ for i, participant in enumerate(participants):
     )
 
     
-fig.update_layout(height=700*rows, width=1500, title_text="Pupil versus parameters of uncertainty peristimulus regression coefficients per participant", plot_bgcolor='rgba(255, 255, 255, 1)')
+fig.update_layout(height=700*rows, width=1800, title_text="Pupil versus parameters of uncertainty peristimulus regression coefficients per participant", plot_bgcolor='rgba(255, 255, 255, 1)')
 
 # Save the figure to the group level plots folder
 plot_dir = os.path.join(base_dir, "group_level_plots")
@@ -717,11 +717,11 @@ fig.show()
 
 
 # Plotting individual coefficient regressions grouped by parameter
-fig = make_subplots(rows=2, cols=2, shared_xaxes=True, 
+fig = make_subplots(rows=3, cols=1, shared_xaxes=True, 
                            subplot_titles=[
                                'Individual regression coefficients for prior confidence',
-                               'Individual regression coefficients for information gain (regression residuals)',
-                               'Individual regression coefficients for change point probability'
+                               'Individual regression coefficients for change point probability',
+#                              'Individual regression coefficients for information gain (regression residuals)',
                                ])
     
 for  participant in pupil_regress_coef_nobc_amp['participant'].unique():
@@ -729,14 +729,13 @@ for  participant in pupil_regress_coef_nobc_amp['participant'].unique():
    
     fig.add_trace(go.Scatter(x=data['time'], y=data['conf_zscore'], mode='lines', line=dict(color='rgba(0, 130, 150, 0.4)'), name=f'Prior confidence', showlegend=False), row=1, col=1)
     
-    fig.add_trace(go.Scatter(x=data['time'], y=data['cpp_zscore'], mode='lines', line=dict(color='rgba(160, 70, 180, 0.4)'), name=f'Change point probability', showlegend=False), row=2, col=1)
+    fig.add_trace(go.Scatter(x=data['time'], y=data['cpp_zscore'], mode='lines', line=dict(color='rgba(255, 125, 105, 0.4)'), name=f'Change point probability', showlegend=False), row=2, col=1)
     
-    fig.add_trace(go.Scatter(x=data['time'], y=data['dkl_regress_residuals'], mode='lines', line=dict(color='rgba(220, 120, 0, 0.4)'), name=f'Information gain (regression residuals)', showlegend=False), row=1, col=2)
+#    fig.add_trace(go.Scatter(x=data['time'], y=data['dkl_regress_residuals'], mode='lines', line=dict(color='rgba(220, 120, 0, 0.4)'), name=f'Information gain (regression residuals)', showlegend=False), row=1, col=2)
 
 for r in [1, 2]:
-    for c in [1, 2]:
-        fig.add_vline(x=0, line_dash='dot', row=r, col=c)
-        fig.add_hline(y=0, line_dash='dot', row=r, col=c)
+    fig.add_vline(x=0, line_dash='dot', row=r, col=1)
+    fig.add_hline(y=0, line_dash='dot', row=r, col=1)
 
 fig.update_xaxes(
     showline=True, 
@@ -752,7 +751,7 @@ fig.update_yaxes(
 )
 
 
-fig.update_layout(height=900, width=1800, title_text="Pupil versus parameters of uncertainty peristimulus regression coefficients per participant split by parameter", plot_bgcolor='rgba(255, 255, 255, 1)')
+fig.update_layout(height=400*rows, width=1800, title_text="Pupil versus parameters of uncertainty peristimulus regression coefficients per participant split by parameter", plot_bgcolor='rgba(255, 255, 255, 1)')
 
 # Save the figure to the group level plots folder
 plot_dir = os.path.join(base_dir, "group_level_plots")

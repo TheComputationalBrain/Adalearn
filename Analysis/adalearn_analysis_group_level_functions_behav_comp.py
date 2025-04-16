@@ -12,7 +12,7 @@ pio.renderers.default='browser'
 from adalearn_pupil.adalearn_pupil_participant_characteristics import base_dir, condition_str
 from adalearn_pupil.adalearn_pupil_group_level_participant_demographics import excluded_participants
 
-def sample_absolute_error_and_cv(condition_str, base_dir, excluded_participants, save_plot = True):
+def sample_absolute_error_cv_and_score(condition_str, base_dir, excluded_participants, save_plot = True):
     """
     Function to plot the absolute error and coefficient of variation in absolute error across task sessions.
     
@@ -26,6 +26,7 @@ def sample_absolute_error_and_cv(condition_str, base_dir, excluded_participants,
     - mean_abs_error_avg_df: pd.DataFrame, contains the grouped absolute error and coefficient of variation across task sessions.
     """
     mean_abs_error_group_df = pd.DataFrame()
+    behavioural_df = pd.DataFrame()
 
     base_path = Path(base_dir)
 
@@ -40,16 +41,16 @@ def sample_absolute_error_and_cv(condition_str, base_dir, excluded_participants,
                 print(f"CSV files path exists: {csv_files_path}") 
                 
                 participant_id = sub_folder.name.split('-')[1]  # Extract participant ID (xx from 'sub-xx')
-                csv_file_name = f'sub-{participant_id}_ses-{condition_str}_task-Adalearn-Pupil_mean-abs-error-df.csv'
+                csv_file_name_error = f'sub-{participant_id}_ses-{condition_str}_task-Adalearn-Pupil_mean-abs-error-df.csv'
                 
-                csv_file_path = csv_files_path / csv_file_name
+                csv_file_path_error = csv_files_path / csv_file_name_error
                 
-                if csv_file_path.exists():
-                    print(f"CSV file path exists: {csv_file_path}")  
+                if csv_file_path_error.exists():
+                    print(f"CSV file path exists: {csv_file_path_error}")  
                     
                     # Read the CSV data
-                    csv_df = pd.read_csv(csv_file_path)
-                    print(f"Data from {csv_file_name}:\n{csv_df.head()}") 
+                    csv_df = pd.read_csv(csv_file_path_error)
+                    print(f"Data from {csv_file_name_error}:\n{csv_df.head()}") 
                     
                     # Add the participant ID to the DataFrame
                     csv_df['participant'] = participant_id
@@ -58,7 +59,27 @@ def sample_absolute_error_and_cv(condition_str, base_dir, excluded_participants,
                     mean_abs_error_group_df = pd.concat([mean_abs_error_group_df, csv_df], ignore_index=True)
                     
                 else:
-                    print(f"CSV file not found: {csv_file_path}")  
+                    print(f"CSV file not found: {csv_file_path_error}")
+
+                csv_file_name_behav = f'sub-{participant_id}_ses-{condition_str}_task-Adalearn-Pupil_behavioural-df.csv'
+                
+                csv_file_path_behav = csv_files_path / csv_file_name_behav
+                
+                if csv_file_path_behav.exists():
+                    print(f"CSV file path exists: {csv_file_path_behav}")  
+                    
+                    # Read the CSV data
+                    csv_df = pd.read_csv(csv_file_path_behav)
+                    print(f"Data from {csv_file_name_behav}:\n{csv_df.head()}") 
+                    
+                    # Add the participant ID to the DataFrame
+                    csv_df['participant'] = participant_id
+
+                    # Concatenate to the main DataFrame
+                    behavioural_df = pd.concat([behavioural_df, csv_df], ignore_index=True)
+                    
+                else:
+                    print(f"CSV file not found: {csv_file_path_behav}")    
             else:
                 print(f"CSV folder not found: {csv_files_path}")  
 
@@ -66,18 +87,49 @@ def sample_absolute_error_and_cv(condition_str, base_dir, excluded_participants,
     mean_abs_error_group_df['participant'] = mean_abs_error_group_df['participant'].astype(int)
     mean_abs_error_group_df['coef_variation'] = mean_abs_error_group_df['std_abs_error']/ mean_abs_error_group_df['mean_abs_error']
 
-    task_session_mean = mean_abs_error_group_df.groupby('task_session')['mean_abs_error'].mean()
-    task_session_count = mean_abs_error_group_df.groupby('task_session')['mean_abs_error'].count()
-    task_session_sd = mean_abs_error_group_df.groupby('task_session')['std_abs_error'].mean()
-    task_session_cv = mean_abs_error_group_df.groupby('task_session')['coef_variation'].mean()
+    task_session_error_mean = mean_abs_error_group_df.groupby('task_session')['mean_abs_error'].mean()
+    task_session_error_count = mean_abs_error_group_df.groupby('task_session')['mean_abs_error'].count()
+    task_session_error_sd = mean_abs_error_group_df.groupby('task_session')['std_abs_error'].mean()
+    task_session_error_cv = mean_abs_error_group_df.groupby('task_session')['coef_variation'].mean()
 
     mean_abs_error_avg_df = pd.DataFrame({
-        'mean': task_session_mean,
-        'std': task_session_sd,
-        'cv': task_session_cv,
-        'count': task_session_count,
+        'mean': task_session_error_mean,
+        'std': task_session_error_sd,
+        'cv': task_session_error_cv,
+        'count': task_session_error_count,
         'task_session': mean_abs_error_group_df['task_session'].unique()
     })
+
+
+    mean_score_dict = {'participant': [], 'task_session': [], 'score': []}
+
+    for participant in behavioural_df['participant'].unique():
+        data = behavioural_df[behavioural_df['participant'] == participant]
+        for task_session in data['task_session'].unique():
+            score = data[data['task_session'] == task_session]['score'].mean()
+
+            mean_score_dict['participant'].append(participant)
+            mean_score_dict['task_session'].append(task_session)
+            mean_score_dict['score'].append(score)
+    
+    mean_score_df = pd.DataFrame(mean_score_dict)
+
+    mean_score_avg_dict = {'mean': [], 'std': [], 'sem': [], 'count': [], 'task_session': []}
+
+    for session in mean_score_df['task_session'].unique():
+        data = mean_score_df[mean_score_df['task_session'] == session]
+        mean = data['score'].mean()
+        count = data['score'].count()
+        sd = data['score'].std()
+        sem = stats.sem(data['score'])
+
+        mean_score_avg_dict['mean'].append(mean)
+        mean_score_avg_dict['std'].append(sd)
+        mean_score_avg_dict['sem'].append(sem)
+        mean_score_avg_dict['count'].append(count)
+        mean_score_avg_dict['task_session'].append(session)
+        
+    mean_score_avg_df = pd.DataFrame(mean_score_avg_dict)
 
 
     # Plot the mean absolute error across task sessions
@@ -91,15 +143,15 @@ def sample_absolute_error_and_cv(condition_str, base_dir, excluded_participants,
                 x=participant_data['task_session'], 
                 y=participant_data['mean_abs_error'], 
                 mode='lines+markers', 
-                line=dict(color='rgba(0, 0, 255, 0.12)'),
-                marker=dict(color='rgba(0, 0, 255, 0.12)', size=6)
+                line=dict(color='rgba(0, 130, 150, 0.12)'),
+                marker=dict(color='rgba(0, 130, 150, 0.12)', size=6)
             ))
 
         fig.add_trace(go.Scatter(
             x=mean_abs_error_avg_df['task_session'], 
             y=mean_abs_error_avg_df['mean'], 
             mode='lines+markers', 
-            marker=dict(color='rgba(0, 0, 255, 1.0)', size=12)
+            marker=dict(color='rgba(0, 130, 150, 0.8)', size=12)
         ))
 
         fig.update_layout(
@@ -145,15 +197,15 @@ def sample_absolute_error_and_cv(condition_str, base_dir, excluded_participants,
                 x=participant_data['task_session'], 
                 y=participant_data['coef_variation'], 
                 mode='lines+markers', 
-                line=dict(color='rgba(0, 0, 255, 0.12)'),
-                marker=dict(color='rgba(0, 0, 255, 0.12)', size=6)
+                line=dict(color='rgba(0, 130, 150, 0.12)'),
+                marker=dict(color='rgba(0, 130, 150, 0.12)', size=6)
             ))
 
         fig.add_trace(go.Scatter(
             x=mean_abs_error_avg_df['task_session'], 
             y=mean_abs_error_avg_df['cv'], 
             mode='lines+markers', 
-            marker=dict(color='rgba(0, 0, 255, 1.0)', size=12)
+            marker=dict(color='rgba(0, 130, 150, 0.8)', size=12)
         ))
 
         fig.update_layout(
@@ -188,8 +240,62 @@ def sample_absolute_error_and_cv(condition_str, base_dir, excluded_participants,
 
         fig.show()
 
+        # Plot the average score across task sessions
+        fig = go.Figure()
 
-    return mean_abs_error_avg_df
+        fig.add_trace(go.Scatter(
+            x=mean_score_avg_df['task_session'], 
+            y=mean_score_avg_df['mean'], 
+            mode='lines+markers', 
+            marker=dict(color='rgba(0, 130, 150, 0.8)', size=12)
+        ))
+
+        fig.add_trace(go.Scatter(
+            x=list(mean_score_avg_df['task_session']) + list(mean_score_avg_df['task_session'][::-1]),
+            y=list(mean_score_avg_df['mean'] + mean_score_avg_df['sem']) + list((mean_score_avg_df['mean'] - mean_score_avg_df['sem'])[::-1]),
+            fill='toself',
+            fillcolor='rgba(0, 130, 150, 0.12)',
+            line=dict(color='rgba(255,255,255,0)'),
+            hoverinfo="skip",
+            showlegend=False
+        ))
+
+        fig.update_layout(
+            title=dict(
+                text="Mean score across task sessions"
+            ),
+            xaxis=dict(
+                tickvals=list(range(1, 23)),
+                title=dict(
+                    text="Task session"
+                ),
+            ),
+            yaxis=dict(
+                range=[0, 1.0],
+                title=dict(
+                    text="Score (%)"
+                ),
+            ),
+            height=950,
+            width=1800,
+            template = 'simple_white',
+            showlegend=False
+        )
+
+        fig.update_yaxes(autorangeoptions_include=0)
+
+        # Save the figure to the group level plots folder
+        plot_dir = os.path.join(base_dir, "group_level_plots")
+        os.makedirs(plot_dir, exist_ok=True)
+        file_name = f"mean-score-across-task-sessions-(Adalearn-Pupil).png"
+        file_path = os.path.join(plot_dir, file_name)
+        fig.write_image(file_path)
+
+
+        fig.show()
+
+
+    return mean_abs_error_avg_df, mean_score_avg_df
 
 
 
@@ -385,14 +491,14 @@ def sample_behav_v_model_estimate(condition_str, base_dir, excluded_participants
                 x=data['model_estimate_bin_label'], 
                 y=data['avg_estimate'], 
                 mode='lines+markers',
-                line=dict(color='rgba(0, 0, 255, 0.2)'),
+                line=dict(color='rgba(0, 130, 150, 0.12)'),
                 showlegend=False))
 
         fig.add_trace(go.Scatter(
             x=group_behav_v_model_estimate_df['model_estimate_bin_label'],
             y=group_behav_v_model_estimate_df['group_avg_estimate'], 
             mode='markers',
-            marker=dict(color='rgba(0, 0, 255, 0.8)', size=14), 
+            marker=dict(color='rgba(0, 130, 150, 0.8)', size=14), 
             showlegend=False, 
             ))
         
@@ -435,9 +541,9 @@ def sample_behav_v_model_estimate(condition_str, base_dir, excluded_participants
         fig.show()
 
         if plot_correlation_histogram:
-            fig = go.Figure(data=[go.Histogram(x = behav_model_slope_df['correlation'])])
+            fig = go.Figure(data=[go.Histogram(x = behav_model_slope_df['correlation'], marker=dict(color='rgba(0, 130, 150, 0.8)') )])
 
-            fig.add_vline(x=0.6275770499186455, line_dash='dash')
+            #fig.add_vline(x=0.6275770499186455, line_dash='dash')
 
             fig.update_layout(
             title=dict(text="Histogram of correlation coefficients defining the relationship between participant and normative estimates"),
@@ -446,7 +552,7 @@ def sample_behav_v_model_estimate(condition_str, base_dir, excluded_participants
                 title=dict(text="Correlation coefficient"),
             ),
             yaxis=dict(
-                title=dict(text="Number of participants")
+                title=dict(text="Count")
             ),
             paper_bgcolor='white',
             plot_bgcolor='white', 
@@ -624,20 +730,63 @@ def sample_behav_v_model_learning_rate(condition_str, base_dir, excluded_partici
         figure_text = ""
 
 
-    behav_model_lr_df['model_bin'] = pd.cut(behav_model_lr_df['cleaned_learning_rate_ideal_observer'], bins=6)
-    behav_model_lr_df['bin_mid'] = behav_model_lr_df['model_bin'].apply(lambda x: x.mid)
-    participant_averaged_data = behav_model_lr_df.groupby(['participant', 'bin_mid'])['estimate'].mean().reset_index()
-    bin_average_data =  behav_model_lr_df.groupby(['bin_mid'])['estimate'].mean().reset_index()
+    # Evaluating relationship between participants' estimates and model learning rates
+    nbins_model_estimate = 6
+
+    _, bin_edges_model_lr = pd.qcut(behav_model_lr_df['cleaned_learning_rate_ideal_observer'],nbins_model_estimate, retbins=True)
+
+    bin_midpoints = [(bin_edges_model_lr[i] + bin_edges_model_lr[i+1]) / 2 for i in range(len(bin_edges_model_lr) - 1)]
+
+    behav_model_lr_df["model_lr_bin"] = pd.cut(behav_model_lr_df["cleaned_learning_rate_ideal_observer"], bins=bin_edges_model_lr, labels=False, include_lowest=True)
+
+    behav_model_lr_df["model_lr_bin_label"] = behav_model_lr_df["model_lr_bin"].apply(lambda x: bin_midpoints[x])
+
+    # Storing the average learning rate at the participant level
+    binned_data =  {"model_lr_bin": [], "model_lr_bin_label": [], "avg_lr": [], "participant": []}
+
+    for participant in behav_model_lr_df["participant"].unique():
+        participant_data = behav_model_lr_df[behav_model_lr_df["participant"] == participant]
+        
+        for model_lr_bin in sorted(participant_data["model_lr_bin"].unique()):
+                
+            bin_data = participant_data[
+                (participant_data["model_lr_bin"] == model_lr_bin)]
+            
+            avg_lr = bin_data["cleaned_learning_rate_estimate"].mean()
+            bin_label = bin_data['model_lr_bin_label'].unique()[0]  
+
+            binned_data['model_lr_bin_label'].append(bin_label)
+            binned_data["model_lr_bin"].append(model_lr_bin)
+            binned_data["avg_lr"].append(avg_lr)
+            binned_data["participant"].append(participant)
+
+    participant_v_model_lr_df = pd.DataFrame(binned_data)
+
+
+    group_avg_lr_dict = {"model_lr_bin": [], "model_lr_bin_label": [], "group_avg_lr": [], "group_sem_lr": []}
+
+    for bin in sorted(participant_v_model_lr_df['model_lr_bin'].unique()):
+        data = participant_v_model_lr_df[participant_v_model_lr_df['model_lr_bin'] == bin]
+        estimate = data['avg_lr'].mean()
+        estimate_sem = stats.sem(data['avg_lr'])
+        bin_label = data['model_lr_bin_label'].unique()[0] 
+
+        group_avg_lr_dict["model_lr_bin"].append(bin)
+        group_avg_lr_dict["model_lr_bin_label"].append(bin_label)
+        group_avg_lr_dict["group_avg_lr"].append(estimate)
+        group_avg_lr_dict["group_sem_lr"].append(estimate_sem)
+
+    group_behav_v_model_estimate_df = pd.DataFrame(group_avg_lr_dict)
 
     if save_plot:
         fig = go.Figure()
 
-        for participant in participant_averaged_data['participant'].unique():
-            participant_data = participant_averaged_data[participant_averaged_data['participant'] == participant]
+        for participant in participant_v_model_lr_df['participant'].unique():
+            participant_data = participant_v_model_lr_df[participant_v_model_lr_df['participant'] == participant]
         
-            fig.add_trace(go.Scatter(x=participant_data['bin_mid'], y=participant_data['estimate'], mode='lines+markers', marker=dict(color='rgba(0,0,255,0.12)')))
+            fig.add_trace(go.Scatter(x=participant_data['model_lr_bin_label'], y=participant_data['avg_lr'], mode='lines+markers', marker=dict(color='rgba(0, 130, 150, 0.12)')))
 
-        fig.add_trace(go.Scatter(x=bin_average_data['bin_mid'], y=bin_average_data['estimate'], mode='markers', marker=dict(color='rgba(0,0,255,1.0)',size=10)))
+        fig.add_trace(go.Scatter(x=group_behav_v_model_estimate_df['model_lr_bin_label'], y=group_behav_v_model_estimate_df['group_avg_lr'], mode='markers', marker=dict(color='rgba(0, 130, 150, 0.8)',size=12)))
 
 
         fig.update_layout(
@@ -664,7 +813,7 @@ def sample_behav_v_model_learning_rate(condition_str, base_dir, excluded_partici
         fig.show()
 
 
-    return behav_model_lr_regress_df, behav_model_lr_corr_df, bin_average_data
+    return behav_model_lr_regress_df, behav_model_lr_corr_df, group_behav_v_model_estimate_df
 
 
 
@@ -768,6 +917,7 @@ def sample_learning_rates_by_cp(condition_str, base_dir, excluded_participants, 
         'count': lr_by_cp_count_behav
     })
 
+    lr_by_cp_avg_df_behav.index = lr_by_cp_avg_df_behav.index + 1
 
     lr_by_cp_mean_model = model_lr_by_cp_group_df.groupby('relative_position')['mean'].mean()
     lr_by_cp_count_model = model_lr_by_cp_group_df.groupby('relative_position')['mean'].count()
@@ -780,6 +930,8 @@ def sample_learning_rates_by_cp(condition_str, base_dir, excluded_participants, 
         'sem': lr_by_cp_sem_model,
         'count': lr_by_cp_count_model
     })
+
+    lr_by_cp_avg_df_model.index = lr_by_cp_avg_df_model.index + 1
 
     # Assessment of correlation between behviourally- and model-derived learning rates around change points
     behav_lr_by_cp_points_df = pd.DataFrame()
@@ -873,7 +1025,7 @@ def sample_learning_rates_by_cp(condition_str, base_dir, excluded_participants, 
             x=lr_by_cp_avg_df_behav.index, 
             y=lr_by_cp_avg_df_behav['mean'], 
             mode='lines', 
-            line=dict(color='blue'),
+            line=dict(color='rgba(0, 130, 150, 0.8)'),
             name="Behavior Mean"
         ))
 
@@ -882,7 +1034,7 @@ def sample_learning_rates_by_cp(condition_str, base_dir, excluded_participants, 
             x=lr_by_cp_avg_df_behav.index, 
             y=lr_by_cp_avg_df_behav['mean'] + lr_by_cp_avg_df_behav['sem'], 
             mode='lines', 
-            line=dict(color='rgba(0, 0, 255, 0)'),  
+            line=dict(color='rgba(0, 130, 150, 0)'),  
             showlegend=False
         ))
 
@@ -891,10 +1043,15 @@ def sample_learning_rates_by_cp(condition_str, base_dir, excluded_participants, 
             y=lr_by_cp_avg_df_behav['mean'] - lr_by_cp_avg_df_behav['sem'], 
             mode='lines', 
             fill='tonexty', 
-            fillcolor='rgba(0, 0, 255, 0.2)',  
-            line=dict(color='rgba(0, 0, 255, 0)'),
+            fillcolor='rgba(0, 130, 150, 0.12)',  
+            line=dict(color='rgba(0, 130, 150, 0)'),
             showlegend=False
         ))
+
+        fig.add_vline(
+            x=1, 
+            line=dict(color='grey', width=2, dash='dash'),
+        )
 
         fig.update_layout(
             xaxis2=dict(domain=[0.7, 1.0], anchor='y2'),
@@ -933,6 +1090,17 @@ def sample_learning_rates_by_cp(condition_str, base_dir, excluded_participants, 
             showlegend=False
         ))
 
+        fig.add_shape(
+            type="line",
+            x0=1, 
+            x1=1,
+            y0=lr_by_cp_avg_df_model['mean'].min() - 0.01, 
+            y1=lr_by_cp_avg_df_model['mean'].max() + 0.01,
+            line=dict(color="grey", width=2, dash="dash"),
+            xref="x2",
+            yref="y2"
+        )
+
         if exclude_zero:
             title_text = "Behaviourally- and model-derived learning rates relative to change point (zero learning rates excluded)"
         else:
@@ -942,8 +1110,9 @@ def sample_learning_rates_by_cp(condition_str, base_dir, excluded_participants, 
             title=dict(text=title_text),
             
             xaxis=dict(
-                range=[-3, 11], 
+                range=[-3, 15], 
                 title=dict(text="Outcome relative to change point"),
+                tickvals=list(range(1, 16))
             ),
             yaxis=dict(
                 title=dict(text="Learning rate (behavioural)")
@@ -952,7 +1121,8 @@ def sample_learning_rates_by_cp(condition_str, base_dir, excluded_participants, 
             xaxis2=dict(
                 domain=[0.7, 1.0],  
                 anchor="y2",
-                range=[-3, 11],  
+                range=[-3, 15],
+                tickvals=list(range(1, 16)),  
                 title=dict(text="Outcome relative to change point")  
             ),
             yaxis2=dict(
@@ -1145,8 +1315,8 @@ def model_uncertainty_on_learning_rate(condition_str, base_dir, excluded_partici
             [None, {}],  
         ],
         subplot_titles=(
-            "Regression weights for prior confidence and change point probability <br> on participants' learning rate derived from the ideal observer model", 
-            "Individual regression weights for prior confidence and change point probability <br> on participants' learning rate derived from the ideal observer model", 
+            "Regression weights for prior confidence and change point probability <br> on learning rate derived from the ideal observer model estimates", 
+            "Individual regression weights for prior confidence and change point probability <br> on learning rate derived from the ideal observer model", 
             "Predicted relationship between learning rate, prior confidence and change point probability <br> derived from the ideal observer model"),
             )
         
@@ -1170,8 +1340,8 @@ def model_uncertainty_on_learning_rate(condition_str, base_dir, excluded_partici
 
         # Update bar appearance for the first subplot
         fig.update_traces(
-            marker_color='rgba(0, 0, 225, 0.4)', 
-            marker_line_color='rgba(0, 0 , 255, 0.8)', 
+            marker_color='rgba(0, 130, 150, 0.4)', 
+            marker_line_color='rgba(0, 130, 150, 0.8)', 
             marker_line_width=1.0,
             row=1, col=1
         )
@@ -1185,7 +1355,7 @@ def model_uncertainty_on_learning_rate(condition_str, base_dir, excluded_partici
             x=model_conf_coef['coefficient'], 
             y=model_cpp_coef['coefficient'], 
             mode='markers', 
-            marker=dict(color='rgba(0, 0, 255, 0.8)', size=10),
+            marker=dict(color='rgba(0, 130, 150, 0.8)', size=10),
             showlegend=False
         ), row=1, col=2)
 
@@ -1198,7 +1368,7 @@ def model_uncertainty_on_learning_rate(condition_str, base_dir, excluded_partici
             showline=True, 
             linewidth=1, 
             linecolor='black', 
-            title_text="Prior Confidence (Learning Rate)", 
+            title_text="Prior confidence (Beta)", 
             range=[-0.9, -0.85],  
             row=1, col=2
         )
@@ -1207,21 +1377,35 @@ def model_uncertainty_on_learning_rate(condition_str, base_dir, excluded_partici
             showline=True, 
             linewidth=1, 
             linecolor='black', 
-            title_text="Change Point Probability (Learning Rate)",  
+            title_text="Change point probability (Beta)",  
             range=[0.39, 0.5], 
             row=1, col=2
         )
 
         # Add predicted relationship between learning rate, prior confidence and change point probability in the final subplot
-        fig.add_trace(go.Scatter(x=model_group_avg_df[model_group_avg_df['cpp_bin']==0]['prior_conf_bin_label'], y=model_group_avg_df[model_group_avg_df['cpp_bin']==0]['group_avg_lr'], mode='lines+markers', name=f"{bin_edges_cpp[0]:.2f} - {bin_edges_cpp[1]:.2f}"), row=2, col=2)
+        fig.add_trace(go.Scatter(
+            x=model_group_avg_df[model_group_avg_df['cpp_bin']==0]['prior_conf_bin_label'],
+            y=model_group_avg_df[model_group_avg_df['cpp_bin']==0]['group_avg_lr'],
+            mode='lines+markers',
+            marker=dict(color='orange', size=10),  
+            name=f"{bin_edges_cpp[0]:.2f} - {bin_edges_cpp[1]:.2f}"), 
+            row=2, col=2
+        )
 
-        fig.add_trace(go.Scatter(x=model_group_avg_df[model_group_avg_df['cpp_bin']==1]['prior_conf_bin_label'], y=model_group_avg_df[model_group_avg_df['cpp_bin']==1]['group_avg_lr'], mode='lines+markers', name=f"{bin_edges_cpp[1]:.2f} - {bin_edges_cpp[2]:.2f}"), row=2, col=2)
+        fig.add_trace(go.Scatter(
+            x=model_group_avg_df[model_group_avg_df['cpp_bin']==1]['prior_conf_bin_label'], 
+            y=model_group_avg_df[model_group_avg_df['cpp_bin']==1]['group_avg_lr'],
+            mode='lines+markers',
+            marker=dict(color='purple', size=10),
+            name=f"{bin_edges_cpp[1]:.2f} - {bin_edges_cpp[2]:.2f}"), 
+            row=2, col=2
+        )
 
         fig.update_xaxes(
             showline=True, 
             linewidth=1, 
             linecolor='black', 
-            title_text="Prior Confidence (-log(std))", 
+            title_text="Prior confidence (-log(std))", 
             row=2, col=2
         )
 
@@ -1235,7 +1419,7 @@ def model_uncertainty_on_learning_rate(condition_str, base_dir, excluded_partici
 
         fig.update_layout(
         legend=dict(
-            title="Change Point Probability (bins)", 
+            title="Change point probability (bins)", 
             x=0.95,  
             y=0.35,  
             xanchor='center',  
@@ -1486,9 +1670,9 @@ def sample_behav_uncertainty_on_learning_rate(condition_str, base_dir, excluded_
         fig = make_subplots(
         rows=2, cols=2,  
         subplot_titles=(
-            f"Regression weights for prior confidence and change point probability <br> on participants' learning rate derived from participants' estimates {plot_title}", 
+            f"Regression weights for prior confidence and change point probability <br> on learning rate derived from participants' estimates {plot_title}", 
             f"Relationship between learning rate and prior confidence <br> derived from participants' estimates {plot_title}",
-            f"Individual regression weights for prior confidence and change point probability <br> on participants' learning rate derived from participants' estimates {plot_title}",
+            f"Individual regression weights for prior confidence and change point probability <br> on  learning rate derived from participants' estimates {plot_title}",
             f"Relationship between learning rate, prior confidence and change point probability <br> derived from participants' estimates {plot_title}"),
             )
         
@@ -1512,8 +1696,8 @@ def sample_behav_uncertainty_on_learning_rate(condition_str, base_dir, excluded_
 
         # Update bar appearance for the first subplot
         fig.update_traces(
-            marker_color='rgba(0, 0, 225, 0.4)', 
-            marker_line_color='rgba(0, 0 , 255, 0.8)', 
+            marker_color='rgba(0, 130, 150, 0.4)', 
+            marker_line_color='rgba(0, 130, 150, 0.8)', 
             marker_line_width=1.0,
             row=1, col=1
         )
@@ -1527,7 +1711,7 @@ def sample_behav_uncertainty_on_learning_rate(condition_str, base_dir, excluded_
             x=behav_conf_coef['coefficient'], 
             y=behav_cpp_coef['coefficient'], 
             mode='markers', 
-            marker=dict(color='rgba(0, 0, 255, 0.8)', size=10),
+            marker=dict(color='rgba(0, 130, 150, 0.8)', size=10),
             showlegend=False
         ), row=2, col=1)
 
@@ -1540,7 +1724,7 @@ def sample_behav_uncertainty_on_learning_rate(condition_str, base_dir, excluded_
             showline=True, 
             linewidth=1, 
             linecolor='black', 
-            title_text="Prior Confidence (Learning Rate)", 
+            title_text="Prior confidence (Beta)", 
             range=[-0.6, 0.6],  
             row=2, col=1
         )
@@ -1549,7 +1733,7 @@ def sample_behav_uncertainty_on_learning_rate(condition_str, base_dir, excluded_
             showline=True, 
             linewidth=1, 
             linecolor='black', 
-            title_text="Change Point Probability (Learning Rate)",  
+            title_text="Change point probability (Beta)",  
             range=[-0.6, 0.6], 
             row=2, col=1
         )
@@ -1561,6 +1745,7 @@ def sample_behav_uncertainty_on_learning_rate(condition_str, base_dir, excluded_
             mode='lines+markers', 
             showlegend=False, 
             line = dict(color = 'teal'),
+            marker=dict(size=10),
             error_y=dict(
                 type='data',
                 array=behav_group_conf_lr_df['group_sem_lr'],
@@ -1571,7 +1756,7 @@ def sample_behav_uncertainty_on_learning_rate(condition_str, base_dir, excluded_
             showline=True, 
             linewidth=1, 
             linecolor='black', 
-            title_text="Prior Confidence (-log(sd))", 
+            title_text="Prior confidence (-log(sd))", 
             row=1, col=2
         )
 
@@ -1590,7 +1775,8 @@ def sample_behav_uncertainty_on_learning_rate(condition_str, base_dir, excluded_
             y=behav_group_conf_cpp_df[behav_group_conf_cpp_df['cpp_bin']==0]['group_avg_lr'],
             mode='lines+markers',
             name=f"{bin_edges_cpp[0]:.2f} - {bin_edges_cpp[1]:.2f}",
-            line = dict(color='purple'),
+            line = dict(color='orange'),
+            marker=dict(size=10),
             error_y=dict(
                 type='data',
                 array=behav_group_conf_cpp_df[behav_group_conf_cpp_df['cpp_bin']==0]['group_sem_lr'],
@@ -1602,7 +1788,8 @@ def sample_behav_uncertainty_on_learning_rate(condition_str, base_dir, excluded_
             y=behav_group_conf_cpp_df[behav_group_conf_cpp_df['cpp_bin']==1]['group_avg_lr'],
             mode='lines+markers',
             name=f"{bin_edges_cpp[1]:.2f} - {bin_edges_cpp[2]:.2f}",
-            line = dict(color='orange'),
+            line = dict(color='purple'),
+            marker=dict(size=10),
             error_y=dict(
                 type='data',
                 array=behav_group_conf_cpp_df[behav_group_conf_cpp_df['cpp_bin']==1]['group_sem_lr'],
@@ -1613,7 +1800,7 @@ def sample_behav_uncertainty_on_learning_rate(condition_str, base_dir, excluded_
             showline=True, 
             linewidth=1, 
             linecolor='black', 
-            title_text="Prior Confidence (-log(std))", 
+            title_text="Prior confidence (-log(std))", 
             row=2, col=2
         )
 
@@ -1627,7 +1814,7 @@ def sample_behav_uncertainty_on_learning_rate(condition_str, base_dir, excluded_
 
         fig.update_layout(
         legend=dict(
-            title="Change Point Probability (bins)", 
+            title="Change point probability (bins)", 
             x=0.95,  
             y=0.35,  
             xanchor='center',  
