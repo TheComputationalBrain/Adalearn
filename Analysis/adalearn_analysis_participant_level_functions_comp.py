@@ -1381,7 +1381,7 @@ def uncertainty_on_learning_rate_participant_level(participant_str, condition_st
     cpp_lr_corr, _ = pearsonr(x = df_clean['cpp_zscore'], y = df_clean[f'lr_zscore_{parameter_estimate}'])
 
     # Binned asscoiation between prior confidence and learning rate
-    n_bins = 6
+    n_bins = n_bins
     _, bin_edges = pd.qcut(df_clean['conf_zscore'], n_bins, retbins=True)
 
     binned_data = {'conf_avg': [], 'lr_avg': [], 'lr_sem': []}

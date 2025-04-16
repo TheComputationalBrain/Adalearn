@@ -409,11 +409,17 @@ def load_and_process_pupil_data(directory_path, participant_str, list_subject_se
         blink_ratio_epoch_df = pd.DataFrame(flattened_array, columns=['blink_ratio'])
         blink_ratio_epoch_df['above_threshold'] = blink_ratio_epoch_df['blink_ratio'] >= blink_ratio_threshold
 
-        # Checking that  all epoch df have the same shape - possibly not due t sampling issues related to trigger insertion.
+        # Checking that  all epoch df have the same shape - possibly not due to sampling issues related to trigger insertion.
         expected_num_columns = round(((window_start_before + window_end_after) * 60) + 1) # 60Hz is the sampling frequency of the tobii eyetracker. Add 1, because the epoching window includes the last time point exactly.
 
-        mismatched_shape_indices = [i for i, df in enumerate(epoched_data_list) if df.shape[1] != expected_num_columns]
-        print(f'The following task session(s) (keys) was shown to have a different length to that expected (i.e. 108): {mismatched_shape_indices}') 
+        mismatched_shape_info = [(i, df.shape[1]) for i, df in enumerate(epoched_data_list) if df.shape[1] != expected_num_columns]
+
+        if mismatched_shape_info:
+            print("The following task session(s) have a different number of columns than expected (expected: {}):".format(expected_num_columns))
+            for idx, shape in mismatched_shape_info:
+                print(f"  - Task session index {idx} has {shape} columns")
+        else:
+            print("All task sessions have the expected number of columns.") 
 
         # Collating the timelocked epoched pupil data to calculate descriptive statistics for plotting
         epoched_pupil_df = pd.concat(epoched_data_list, ignore_index=True).T
@@ -430,11 +436,25 @@ def load_and_process_pupil_data(directory_path, participant_str, list_subject_se
             print(f'Number of columns containing NaN values: {len(nan_columns)}')
 
             # For each column with NaN values, check if the NaN is in the last row. If it is then pad the null value with the data in the previous rpow for that column 
+            # For each column with NaN values, check if NaNs are in the last 3 rows max
             for col in nan_columns:
-                if epoched_pupil_df[col].isna().iloc[-1]:  
-                    epoched_pupil_df.at[epoched_pupil_df.index[-1], col] = epoched_pupil_df[col].iloc[-2] 
-            # Checking if null values remain in the columns
-            print(f'Number of columns containing NaN values after rectifying sampling issue: {len(epoched_pupil_df.columns[epoched_pupil_df.isna().any()].tolist())}')
+                series = epoched_pupil_df[col]
+                # Reverse the series and count how many NaNs are at the end
+                reversed_series = series[::-1]
+                trailing_nans = reversed_series.isna().cumprod().sum()
+
+                if trailing_nans > 0:
+                    if trailing_nans <= 3:
+                        # Get the last non-NaN value to use for padding
+                        last_valid_value = series.iloc[:-trailing_nans].dropna().iloc[-1]
+                        # Fill all trailing NaNs with the last valid value
+                        epoched_pupil_df.loc[epoched_pupil_df.index[-trailing_nans:], col] = last_valid_value
+                    else:
+                        raise ValueError(f"Column '{col}' has {trailing_nans} trailing NaNs — exceeds limit of 3.")
+
+            # Final check for any remaining NaNs
+            remaining_nans = epoched_pupil_df.columns[epoched_pupil_df.isna().any()].tolist()
+            print(f'Number of columns containing NaN values after rectifying sampling issue: {len(remaining_nans)}')
 
             # Remove only columns that had excessive blinking
             epochs_to_remove = sorted(set(epochs_to_remove)) 
