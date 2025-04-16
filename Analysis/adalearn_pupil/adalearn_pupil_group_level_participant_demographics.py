@@ -1,3 +1,8 @@
+"""
+This script reads .tsv files within each participants data directory folder to obtain demographic information for the sample. A dataframe is created with the demographic information for each participant. 
+"""
+
+
 from pathlib import Path
 import pandas as pd
 from datetime import datetime
@@ -9,7 +14,7 @@ group_demographic_df = pd.DataFrame()
 
 base_path = Path(base_dir)
 
-excluded_participants = ['sub-09']
+excluded_participants = []
 print(f'Participants excluded from analysis: {excluded_participants}')
 
 for sub_folder in base_path.iterdir():

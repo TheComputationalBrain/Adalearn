@@ -1,5 +1,6 @@
-import plotly.io as pio
-pio.renderers.default='browser'
+"""
+This script loads the data extracted from the probability learning task (Adalearn) for a individual participant and analyses the participant's performance. The behavioural data is first extracted, before task features (i.e. change points) are identified and extracted into their own dataframe. Some analysis is performed on change points relating to previous literature (i.e. identification of 'obvious' and 'non-obvious' change points as performed by Jepma et al. (2016) - PLos Comp Biol). Performance level metrics relating primarily to absolute error are also calculated. The script offers the user the ability to plot the individual participant's data for inspection (the generated plot will be saved in a newly created directory within the specified participant's data directory). The script is designed to be run on a single participant at a time, mainly to inspect the data and obtain the data for further collation in later analysis. The user should ensure that the relevant directories are set up correctly before running the script.  
+"""
 
 from adalearn_pupil.adalearn_pupil_participant_characteristics import participant_str, directory_path, condition_str, task_sessions
 

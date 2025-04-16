@@ -1,3 +1,7 @@
+"""
+This script defines the participant analysed at the participant level. To change participant, the user simply changes the participant number. In addition, the user can specify the base directory (base_dir: the top level location of the datafiles). Changes to the expected task structure can be made here too (e.g. the number of sessions, the session numbers, the condition). The script also includes the parameters used in the ideal observer model (P_C, P1_MIN, P1_MAX, ESTIMATE_PRIOR).
+"""
+
 from pathlib import Path
 
 from adalearn_analysis_participant_level_functions_participant_info import read_tsv_files
@@ -5,7 +9,7 @@ from adalearn_analysis_participant_level_functions_participant_info import read_
 
 base_dir = '/home/aarongreenhouse-tucknott/Documents/Python/Ada_Learn/Pupil_Ada_Learn/Data/Study'
 
-selected_participant = 33
+selected_participant = 31
 
 participant_str = str(selected_participant).zfill(2)
 list_subject_selected = [selected_participant]
