@@ -12,7 +12,7 @@ pio.renderers.default='browser'
 
 from adalearn_pupil.adalearn_pupil_participant_characteristics import base_dir
 
-excluded_participants = ['17', '33']
+excluded_participants = ['09', '17', '33', '35']
 
 condition_str = '01'
 
@@ -25,6 +25,9 @@ condition_str = '01'
 
 pupil_df = pd.DataFrame()
 pupil_mean_df = pd.DataFrame()
+
+pupil_df_nobc = pd.DataFrame()
+pupil_mean_df_nobc = pd.DataFrame()
 
 
 base_path = Path(base_dir)
@@ -88,7 +91,49 @@ for sub_folder in base_path.iterdir():
                 pupil_df = pd.concat([pupil_df, csv_df], ignore_index=True)
                 
             else:
-                print(f"CSV file not found: {csv_file_path}")  
+                print(f"CSV file not found: {csv_file_path}")
+
+            csv_file_name_nobc = f'sub-{participant_id}_ses-{condition_str}_task-Adalearn-Pupil_outcome-epoched-pupil-df.csv'
+            
+            csv_file_path_nobc = csv_files_path / csv_file_name_nobc
+            
+            if csv_file_path_nobc.exists():
+                print(f"CSV file path exists: {csv_file_path_nobc}")  
+                
+                # Read the CSV data
+                csv_df = pd.read_csv(csv_file_path_nobc)
+                print(f'The shape of the dataframe for participant {participant_id} is {csv_df.shape}')
+
+                mean = pd.DataFrame({
+                    'mean': csv_df['mean'],
+                    'sem': csv_df['sem'],
+                    'time': csv_df['time'],
+                    'count': range(len(csv_df)),
+                    'participant': participant_id})                
+
+                pupil_mean_df_nobc = pd.concat([pupil_mean_df, mean])
+
+                mean = csv_df
+                
+                # Drop columns you don't need
+                csv_df = csv_df.drop(columns=['mean', 'std', 'sem', 'time'])
+
+                # Ensure the columns match before concatenation
+                csv_df = csv_df.T
+                
+                # Add the participant ID to the transposed DataFrame
+                csv_df['participant'] = participant_id
+                
+                # Align the columns across all participants (add missing columns with NaN)
+                all_columns = pupil_df_nobc.columns.union(csv_df.columns)
+                pupil_df_nobc = pupil_df.reindex(columns=all_columns)
+                csv_df = csv_df.reindex(columns=all_columns)
+
+                # Concatenate to the main DataFrame
+                pupil_df_nobc = pd.concat([pupil_df_nobc, csv_df], ignore_index=True)
+                
+            else:
+                print(f"CSV file not found: {csv_file_path_nobc}")    
         else:
             print(f"CSV folder not found: {csv_files_path}")  
 
@@ -146,6 +191,66 @@ fig.update_layout(height=950, width=1800, title_text="Average epoched pupil resp
 plot_dir = os.path.join(base_dir, "group_level_plots")
 os.makedirs(plot_dir, exist_ok=True)
 file_name = f"pupil-average-epoched-response-(Adalearn-Pupil).png"
+file_path = os.path.join(plot_dir, file_name)
+fig.write_image(file_path)   
+
+fig.show()
+
+
+
+group_pupil_nobc_dict = {'mean_pupil': [], 'sem_pupil': [], 'time': []}
+
+for count in pupil_mean_df_nobc['count'].unique():
+    data = pupil_mean_df_nobc[pupil_mean_df_nobc['count'] == count]
+
+    mean_pupil = data['mean'].mean()
+    sem_pupil = stats.sem(data['mean'])
+    time = data['time'].mean()
+
+    group_pupil_nobc_dict['mean_pupil'].append(mean_pupil)
+    group_pupil_nobc_dict['sem_pupil'].append(sem_pupil)
+    group_pupil_nobc_dict['time'].append(time)
+
+group_pupil_nobc_df = pd.DataFrame(group_pupil_nobc_dict)
+
+
+fig = go.Figure()
+
+fig.add_trace(go.Scatter(x=group_pupil_nobc_df['time'], y=group_pupil_nobc_df['mean_pupil'], mode = 'lines', line=dict(color='rgba(0, 130, 150, 0.8)'), showlegend=False))
+
+fig.add_trace(go.Scatter(
+    x=list(group_pupil_nobc_df['time']) + list(group_pupil_nobc_df['time'][::-1]),
+    y=list(group_pupil_nobc_df['mean_pupil'] + group_pupil_nobc_df['sem_pupil']) + list((group_pupil_nobc_df['mean_pupil'] - group_pupil_nobc_df['sem_pupil'])[::-1]),
+    fill='toself',
+    fillcolor='rgba(0, 130, 150, 0.2)',
+    line=dict(color='rgba(255,255,255,0)'),
+    hoverinfo="skip",
+    showlegend=False
+))
+
+fig.add_vline(x=0, line_dash='dot')
+fig.add_hline(y=0, line_dash = 'dot')
+
+fig.update_xaxes(
+        showline=True, 
+        linewidth=1, 
+        linecolor='black', 
+        title_text="Time relative to outcome presentation (s)",
+    )
+
+fig.update_yaxes(
+        showline=True, 
+        linewidth=1, 
+        linecolor='black',
+        title_text = 'Pupil size' 
+    )
+
+fig.update_layout(height=950, width=1800, title_text="Average epoched non-baseline corrected pupil response around outcome presentation across participants", plot_bgcolor='rgba(255, 255, 255, 1)')
+
+# Save the figure to the group level plots folder
+plot_dir = os.path.join(base_dir, "group_level_plots")
+os.makedirs(plot_dir, exist_ok=True)
+file_name = f"pupil-average-epoched-response-non-baseline-corrected-(Adalearn-Pupil).png"
 file_path = os.path.join(plot_dir, file_name)
 fig.write_image(file_path)   
 
@@ -771,7 +876,6 @@ fig.show()
 
 
 pupil_round_cp_amp = pd.DataFrame()
-pupil_round_cp_avg = pd.DataFrame()
 pupil_round_cp_base = pd.DataFrame()
 
 
@@ -796,13 +900,9 @@ for sub_folder in base_path.iterdir():
             print(f"CSV files path exists: {csv_files_path}") 
             
             participant_id = sub_folder.name.split('-')[1]  # Extract participant ID (xx from 'sub-xx')
-            csv_file_name_amp = f'sub-{participant_id}_ses-{condition_str}_task-Adalearn-Pupil_pupil-amplitude-around-cp.csv'
+            csv_file_name_amp = f'sub-{participant_id}_ses-{condition_str}_task-Adalearn-Pupil_pupil-amplitude-regress-effect-around-cp.csv'
             
             csv_file_path_amp = csv_files_path / csv_file_name_amp
-
-            csv_file_name_avg = f'sub-{participant_id}_ses-{condition_str}_task-Adalearn-Pupil_pupil-average-around-cp.csv'
-            
-            csv_file_path_avg = csv_files_path / csv_file_name_avg
 
 
             csv_file_name_base = f'sub-{participant_id}_ses-{condition_str}_task-Adalearn-Pupil_pupil-baseline-around-cp.csv'
@@ -825,21 +925,6 @@ for sub_folder in base_path.iterdir():
             else:
                 print(f"CSV file not found: {csv_file_path_amp}") 
 
-            if csv_file_path_avg.exists():
-                print(f"CSV file path exists: {csv_file_path_avg}")  
-                
-                # Read the CSV data
-                csv_avg_df = pd.read_csv(csv_file_path_avg)
-                print(f"Data from {csv_file_name_avg}:\n{csv_avg_df.head()}") 
-                
-                # Add the participant ID to the DataFrame
-                csv_avg_df['participant'] = participant_id
-
-                # Concatenate to the main DataFrame
-                pupil_round_cp_avg = pd.concat([pupil_round_cp_avg, csv_avg_df], ignore_index=True)
-
-            else:
-                print(f"CSV file not found: {csv_file_path_avg}")
 
             if csv_file_path_base.exists():
                 print(f"CSV file path exists: {csv_file_path_base}")  
@@ -876,24 +961,6 @@ for point in pupil_round_cp_amp['stimulus_rel_cp'].unique():
 pupil_round_cp_amp_df = pd.DataFrame(pupil_round_cp_amp_dict)
 
 
-
-pupil_round_cp_avg_dict = {'cp_rel_position': [], 'avg_mean': [], 'avg_sem': []}
-
-for point in pupil_round_cp_avg['stimulus_rel_cp'].unique():
-    data = pupil_round_cp_avg[pupil_round_cp_avg['stimulus_rel_cp']==point]
-
-    position = point
-    mean_avg = data['mean'].mean()
-    sem_avg = stats.sem(data['mean'])
-
-    pupil_round_cp_avg_dict['cp_rel_position'].append(position)
-    pupil_round_cp_avg_dict['avg_mean'].append(mean_avg)
-    pupil_round_cp_avg_dict['avg_sem'].append(sem_avg)
-
-pupil_round_cp_avg_df = pd.DataFrame(pupil_round_cp_avg_dict)
-
-
-
 pupil_round_cp_base_dict = {'cp_rel_position': [], 'base_mean': [], 'base_sem': []}
 
 for point in pupil_round_cp_base['stimulus_rel_cp'].unique():
@@ -912,10 +979,9 @@ pupil_round_cp_base_df = pd.DataFrame(pupil_round_cp_base_dict)
 
 
 
-fig = make_subplots(rows=3, cols=1, shared_xaxes=False, 
+fig = make_subplots(rows=2, cols=1, shared_xaxes=False, 
                     subplot_titles=[
-                        "Pupil amplitude across outcomes relative to change point",
-                        "Pupil average across outcomes relative to change point",
+                        "Pupil baseline-corrected effect window mean across outcomes relative to change point",
                         "Pupil baseline across outcomes relative to change point",
                     ])
 
@@ -926,15 +992,6 @@ fig.add_trace(go.Scatter(
     mode='markers', 
     marker=dict(size=12, color='rgba(0, 130, 150, 0.8)'),
     error_y=dict(type='data', array=pupil_round_cp_base_df['base_sem'], visible=True)
-), row=3, col=1)
-
-# Pupil Average
-fig.add_trace(go.Scatter(
-    x=pupil_round_cp_avg_df['cp_rel_position'], 
-    y=pupil_round_cp_avg_df['avg_mean'], 
-    mode='markers', 
-    marker=dict(size=12, color='rgba(0, 130, 150, 0.8)'),
-    error_y=dict(type='data', array=pupil_round_cp_avg_df['avg_sem'], visible=True)
 ), row=2, col=1)
 
 # Pupil Amplitude
@@ -947,7 +1004,7 @@ fig.add_trace(go.Scatter(
 ), row=1, col=1)
 
 # Add vertical and horizontal lines for all subplots
-for i in range(1, 4):  # Rows 1 to 3
+for i in range(1, 3):  # Rows 1 to 3
     fig.add_shape(type="line", x0=0, x1=0, y0=0, y1=1, 
                   line=dict(dash="dot", color="black"), 
                   xref="x", yref="y domain", row=i, col=1)
@@ -957,19 +1014,16 @@ for i in range(1, 4):  # Rows 1 to 3
                   xref="x domain", yref="y", row=i, col=1)
 
 # Update x-axes
-for i in range(1, 4):
+for i in range(1, 3):
     fig.update_xaxes(showline=True, linewidth=1, linecolor='black', 
                      title_text="Outcome relative to change point", row=i, col=1)
 
 # Update y-axes
 fig.update_yaxes(range=[-0.16, 0.14], showline=True, linewidth=1, linecolor='black', 
-                 title_text='Baseline pupil average', row=3, col=1)
+                 title_text='Non corrected baseline pupil average', row=2, col=1)
 
-fig.update_yaxes(range=[-0.15, 0.15], showline=True, linewidth=1, linecolor='black', 
-                 title_text='Pupil average', row=2, col=1)
-
-fig.update_yaxes(range=[0.9, 1.2], showline=True, linewidth=1, linecolor='black', 
-                 title_text='Pupil amplitude', row=1, col=1)
+fig.update_yaxes(showline=True, linewidth=1, linecolor='black', 
+                 title_text='Baseline corrected effect window average', row=1, col=1)
 
 # Update layout
 fig.update_layout(height=600*3, width=1200, plot_bgcolor='rgba(255, 255, 255, 1)', showlegend=False)

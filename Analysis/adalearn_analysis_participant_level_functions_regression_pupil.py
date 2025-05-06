@@ -48,25 +48,31 @@ def pupil_regression_analysis(participant_str, condition_str, directory_path, co
     # Handling of other covariates to be included (z-scoring etc) 
     if covariates is not None:
         scaler = StandardScaler()
+        covariates_to_zscore = list(covariates)  # Make a copy to avoid modifying the list while iterating
 
-        # Add the square and square root to outcome number to account for effects that are non-linear across the duration of a task session
+        # Add square and sqrt of outcome_num
         if 'outcome_num' in covariates:
             computational_var_df['outcome_num_sq'] = computational_var_df['outcome_num'] ** 2
             computational_var_df['outcome_num_sqrt'] = computational_var_df['outcome_num'] ** 0.5
-            covariates.extend(['outcome_num_sq', 'outcome_num_sqrt'])  
-    
-        for cov in covariates:
+            covariates_to_zscore.extend(['outcome_num_sq', 'outcome_num_sqrt'])
+
+        # Compute entropy if 'P1' is in covariates
+        if 'P1' in covariates:
+            p = np.clip(computational_var_df['P1'], 1e-10, 1 - 1e-10)
+            computational_var_df['entropy'] = -(p * np.log2(p) + (1 - p) * np.log2(1 - p))
+            covariates_to_zscore.extend(['entropy'])
+
+        for cov in covariates_to_zscore:
             if cov not in computational_var_df.columns:
                 raise ValueError(f"Covariate '{cov}' not found in computational_var_df.")
 
-            # Check if the covariate is numeric before z-scoring
             if computational_var_df[cov].dtype in ['int64', 'float64']:
                 print('processing covariates...')
                 print(f'z-scoring {cov}')  
                 predictors[cov] = scaler.fit_transform(computational_var_df[[cov]]).flatten()
             else:
                 print(f'{cov} not numeric and not z-scored')
-                predictors[cov] = computational_var_df[cov] 
+                predictors[cov] = computational_var_df[cov]
 
     # Based on the epochs containing too much interpolated data, remove respective rows                
     if outcome_epochs_to_remove is not None:
@@ -205,7 +211,7 @@ def pupil_uncertainty_lr_mediation_analysis(participant_str, condition_str, dire
     pupil_data = pupil_data.set_index('time')
     pupil_data = pupil_data.drop(columns=['mean', 'std', 'sem'])
 
-    # If data baseline corrected specify pupil data to be examined (if yes, then the amplitude after an outcome stimulus used as a marker of phasic pupil activity. If no, then the average of the pupil response before the stimulus is used as a marker of tonic activity)
+    # If data baseline corrected specify pupil data to be examined (if yes, then the amplitude after an outcome stimulus used as a marker of phasic pupil activity. If no, then the average of the non-baseline corrected pupil response before the stimulus is used as a marker of tonic activity)
     if baseline_corrected:
         filtered_pupil_data_bc = pupil_data.loc[(pupil_data.index >= 0) & (pupil_data.index <= 1.4)]
         pupil_variable = filtered_pupil_data_bc.max() - filtered_pupil_data_bc.min()

@@ -691,6 +691,11 @@ def all_outcome_pupil_epochs(directory_path, participant_str, list_subject_selec
     # Analysing pupil data based on identified outcome indices
     preprocessed_pupil_df, pupil_trig_df, pupil_ses_df, blink_df, outcome_epoched_pupil_df, outcome_blink_ratio_df, outcome_epochs_to_remove = load_and_process_pupil_data(directory_path=directory_path, participant_str=participant_str, list_subject_selected=list_subject_selected, condition_str=condition_str, condition_task_sessions=condition_task_sessions, from_session=from_session, to_session=to_session, dict_onsets=outcome_onsets, dict_num=outcome_nums, session_list=None, outlier_limit_std=10, outlier_correct_average_amount=15, window_start_before=0.4, window_end_after=1.4, baseline_cor=baseline_cor, lpf=[5], blink_ratio_threshold=0.2, select_eye=select_eye, remove_epochs=remove_epochs, z_score=True, plot_interpolation_process=False)
 
+    outcome_epochs_to_remove_df = pd.DataFrame({
+        'epochs': outcome_epochs_to_remove,
+        'participant': participant_str
+    })
+
     # Match outcomes to the input variable of interest
     if variable_df is not None and variable_column is not None:
         print(f"Order of heatmap defined by {variable_column}")
@@ -811,7 +816,7 @@ def all_outcome_pupil_epochs(directory_path, participant_str, list_subject_selec
 
         fig.show()
 
-    return outcome_onsets, outcome_nums, outcome_epoched_pupil_df, outcome_blink_ratio_df, outcome_epochs_to_remove
+    return outcome_onsets, outcome_nums, outcome_epoched_pupil_df, outcome_blink_ratio_df, outcome_epochs_to_remove, outcome_epochs_to_remove_df
 
 
 
@@ -988,7 +993,7 @@ def pupil_response_around_change_point(directory_path, participant_str, conditio
     - change_point_indices: pd.DataFrame, with columns 'index', 'relative_time', and 'task_session', containing the indices and relative times of the change points for each session. (*Note: Have removed identification of the first outcome of each task session as a new change point).
     - before: float, defines the number of outcomes examined before the change point
     - after: float, defines the number of outcomes examined after the change point
-    - estimate_type: string: can be 'baseline', 'mean' or 'amplitude'. Defines the function performed on the pupil data. Attention should be paid that the appropriate function is matched to the examined data (i.e. baseline vs. non-baseline corrected)
+    - estimate_type: string: can be 'baseline', 'mean', 'amplitude', 'baseline_corrected_effect". Defines the function performed on the pupil data. Attention should be paid that the appropriate function is matched to the examined data (i.e. baseline vs. non-baseline corrected)
     - plot_around_change_point: boolean, if True, will plot the calculated pupil response around change points. 
 
     Returns:
@@ -1053,9 +1058,9 @@ def pupil_response_around_change_point(directory_path, participant_str, conditio
                         session_averages[column].append(pupil_variable)
 
                     elif estimate_type == 'amplitude':
-                        filtered_pupil_data = window_data[column].loc[(window_data.index >= 0) & (window_data.index <= 1.4)]
+                        filtered_pupil_data = window_data[column].loc[(window_data.index >= 0.0) & (window_data.index <= 1.4)]
 
-                        pupil_variable = filtered_pupil_data.max() - filtered_pupil_data.min()
+                        pupil_variable = filtered_pupil_data.mean()
 
                         title_append = f"amplitude"
 
@@ -1064,8 +1069,20 @@ def pupil_response_around_change_point(directory_path, participant_str, conditio
 
                         session_averages[column].append(pupil_variable)
 
+                    elif estimate_type == 'baseline_corrected_effect':
+                        filtered_pupil_data = window_data[column].loc[(window_data.index >= 0.6) & (window_data.index <= 1.4)]
+
+                        pupil_variable = filtered_pupil_data.mean()
+
+                        title_append = f"baseline_corrected_effect_window"
+
+                        if column not in session_averages:
+                            session_averages[column] = []
+
+                        session_averages[column].append(pupil_variable)
+
                     else:
-                        print(f'ERROR: mean, amplitude or baseline must be specified as the estimate type for the analysis') 
+                        print(f'ERROR: mean, amplitude, baseline or baseline_corrected_effect must be specified as the estimate type for the analysis') 
 
                         title_append = ""
 

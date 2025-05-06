@@ -139,23 +139,33 @@ for sub_folder in base_path.iterdir():
 
 mediation_amp_df = pd.DataFrame()
 
+n_boot = 5000  # You can increase for more precision
+
 for path in pupil_mediation_amp_df['path'].unique():
     data = pupil_mediation_amp_df[pupil_mediation_amp_df['path'] == path]
-    path = data['path'].values[0]
-    mean = data['coef'].mean()
-    sem = stats.sem(data['coef'])
-    ci = stats.t.interval(0.95, len(data)-1, loc=mean, scale=sem)
+    coefs = data['coef'].values
+    path_label = data['path'].values[0]
 
+    # Bootstrap sampling
+    boot_means = []
+    for _ in range(n_boot):
+        sample = np.random.choice(coefs, size=len(coefs), replace=True)
+        boot_means.append(np.mean(sample))
 
-    df = pd.DataFrame({
-        'path': [path],
+    # Get 95% CI from bootstrap distribution
+    ci_lower, ci_upper = np.percentile(boot_means, [2.5, 97.5])
+    mean = np.mean(boot_means)
+    sem = np.std(boot_means, ddof=1)
+
+    df_amp = pd.DataFrame({
+        'path': [path_label],
         'mean': [mean],
         'sem': [sem],
-        'ci_lower': [ci[0]],
-        'ci_upper': [ci[1]]
+        'ci_lower': [ci_lower],
+        'ci_upper': [ci_upper]
     })
 
-    mediation_amp_df = pd.concat([mediation_amp_df, df], ignore_index=True)
+    mediation_amp_df = pd.concat([mediation_amp_df, df_amp], ignore_index=True)
 
 
 fig = go.Figure()
@@ -363,28 +373,36 @@ fig.write_image(file_path)
 fig.show()
     
 
-
-
-
+    
 mediation_avg_df = pd.DataFrame()
+
+n_boot = 5000  # You can increase for more precision
 
 for path in pupil_mediation_avg_df['path'].unique():
     data = pupil_mediation_avg_df[pupil_mediation_avg_df['path'] == path]
-    path = data['path'].values[0]
-    mean = data['coef'].mean()
-    sem = stats.sem(data['coef'])
-    ci = stats.t.interval(0.95, len(data)-1, loc=mean, scale=sem)
+    coefs = data['coef'].values
+    path_label = data['path'].values[0]
 
+    # Bootstrap sampling
+    boot_means = []
+    for _ in range(n_boot):
+        sample = np.random.choice(coefs, size=len(coefs), replace=True)
+        boot_means.append(np.mean(sample))
 
-    df = pd.DataFrame({
-        'path': [path],
+    # Get 95% CI from bootstrap distribution
+    ci_lower, ci_upper = np.percentile(boot_means, [2.5, 97.5])
+    mean = np.mean(boot_means)
+    sem = np.std(boot_means, ddof=1)
+
+    df_avg = pd.DataFrame({
+        'path': [path_label],
         'mean': [mean],
         'sem': [sem],
-        'ci_lower': [ci[0]],
-        'ci_upper': [ci[1]]
+        'ci_lower': [ci_lower],
+        'ci_upper': [ci_upper]
     })
 
-    mediation_avg_df = pd.concat([mediation_avg_df, df], ignore_index=True)
+    mediation_avg_df = pd.concat([mediation_avg_df, df_avg], ignore_index=True)
 
 
 fig = go.Figure()
@@ -591,30 +609,38 @@ fig.write_image(file_path)
 
 fig.show()
     
-
-
-
-
+#########################################################Something is wrong with this zero_exclude analysis, check original function
 
 mediation_amp_zero_excluded_df = pd.DataFrame()
 
+n_boot = 5000  # You can increase for more precision
+
 for path in pupil_mediation_amp_zero_excluded_df['path'].unique():
     data = pupil_mediation_amp_zero_excluded_df[pupil_mediation_amp_zero_excluded_df['path'] == path]
-    path = data['path'].values[0]
-    mean = data['coef'].mean()
-    sem = stats.sem(data['coef'])
-    ci = stats.t.interval(0.95, len(data)-1, loc=mean, scale=sem)
+    coefs = data['coef'].values
+    path_label = data['path'].values[0]
 
+    # Bootstrap sampling
+    boot_means = []
+    for _ in range(n_boot):
+        sample = np.random.choice(coefs, size=len(coefs), replace=True)
+        boot_means.append(np.mean(sample))
 
-    df = pd.DataFrame({
-        'path': [path],
+    # Get 95% CI from bootstrap distribution
+    ci_lower, ci_upper = np.percentile(boot_means, [2.5, 97.5])
+    mean = np.mean(boot_means)
+    sem = np.std(boot_means, ddof=1)
+
+    df_amp_zero_exclude = pd.DataFrame({
+        'path': [path_label],
         'mean': [mean],
         'sem': [sem],
-        'ci_lower': [ci[0]],
-        'ci_upper': [ci[1]]
+        'ci_lower': [ci_lower],
+        'ci_upper': [ci_upper]
     })
 
-    mediation_amp_zero_excluded_df = pd.concat([mediation_amp_zero_excluded_df, df], ignore_index=True)
+    mediation_amp_zero_excluded_df = pd.concat([mediation_amp_zero_excluded_df, df_amp_zero_exclude], ignore_index=True)
+
 
 
 fig = go.Figure()
@@ -827,23 +853,33 @@ fig.show()
 
 mediation_avg_zero_excluded_df = pd.DataFrame()
 
+n_boot = 5000  # You can increase for more precision
+
 for path in pupil_mediation_avg_zero_excluded_df['path'].unique():
     data = pupil_mediation_avg_zero_excluded_df[pupil_mediation_avg_zero_excluded_df['path'] == path]
-    path = data['path'].values[0]
-    mean = data['coef'].mean()
-    sem = stats.sem(data['coef'])
-    ci = stats.t.interval(0.95, len(data)-1, loc=mean, scale=sem)
+    coefs = data['coef'].values
+    path_label = data['path'].values[0]
 
+    # Bootstrap sampling
+    boot_means = []
+    for _ in range(n_boot):
+        sample = np.random.choice(coefs, size=len(coefs), replace=True)
+        boot_means.append(np.mean(sample))
 
-    df = pd.DataFrame({
-        'path': [path],
+    # Get 95% CI from bootstrap distribution
+    ci_lower, ci_upper = np.percentile(boot_means, [2.5, 97.5])
+    mean = np.mean(boot_means)
+    sem = np.std(boot_means, ddof=1)
+
+    df_avg_zero_exclude = pd.DataFrame({
+        'path': [path_label],
         'mean': [mean],
         'sem': [sem],
-        'ci_lower': [ci[0]],
-        'ci_upper': [ci[1]]
+        'ci_lower': [ci_lower],
+        'ci_upper': [ci_upper]
     })
 
-    mediation_avg_zero_excluded_df = pd.concat([mediation_avg_zero_excluded_df, df], ignore_index=True)
+    mediation_avg_zero_excluded_df = pd.concat([mediation_avg_zero_excluded_df, df_avg_zero_exclude], ignore_index=True)
 
 
 fig = go.Figure()

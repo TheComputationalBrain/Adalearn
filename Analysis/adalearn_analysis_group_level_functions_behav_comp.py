@@ -144,31 +144,34 @@ def sample_absolute_error_cv_and_score(condition_str, base_dir, excluded_partici
                 y=participant_data['mean_abs_error'], 
                 mode='lines+markers', 
                 line=dict(color='rgba(0, 130, 150, 0.12)'),
-                marker=dict(color='rgba(0, 130, 150, 0.12)', size=6)
+                marker=dict(color='rgba(0, 130, 150, 0.12)', size=8)
             ))
 
         fig.add_trace(go.Scatter(
             x=mean_abs_error_avg_df['task_session'], 
             y=mean_abs_error_avg_df['mean'], 
             mode='lines+markers', 
-            marker=dict(color='rgba(0, 130, 150, 0.8)', size=12)
+            marker=dict(color='rgba(0, 130, 150, 0.8)', size=16)
         ))
 
         fig.update_layout(
             title=dict(
-                text="Mean absolute error across task sessions"
+                text="Mean absolute error across task sessions", font=dict(size=28)
             ),
             xaxis=dict(
                 tickvals=list(range(1, 23)),
                 title=dict(
-                    text="Task session"
+                    text="Task session",
+                    font=dict(size=24)
                 ),
             ),
             yaxis=dict(
                 title=dict(
-                    text="Mean absolute error"
+                    text="Mean absolute error",
+                    font=dict(size=24)
                 ),
             ),
+            font=dict(size=18),
             height=950,
             width=1800,
             template = 'simple_white',
@@ -198,31 +201,34 @@ def sample_absolute_error_cv_and_score(condition_str, base_dir, excluded_partici
                 y=participant_data['coef_variation'], 
                 mode='lines+markers', 
                 line=dict(color='rgba(0, 130, 150, 0.12)'),
-                marker=dict(color='rgba(0, 130, 150, 0.12)', size=6)
+                marker=dict(color='rgba(0, 130, 150, 0.12)', size=8)
             ))
 
         fig.add_trace(go.Scatter(
             x=mean_abs_error_avg_df['task_session'], 
             y=mean_abs_error_avg_df['cv'], 
             mode='lines+markers', 
-            marker=dict(color='rgba(0, 130, 150, 0.8)', size=12)
+            marker=dict(color='rgba(0, 130, 150, 0.8)', size=16)
         ))
 
         fig.update_layout(
             title=dict(
-                text="Coefficient of variation for absolute error across task sessions"
+                text="Coefficient of variation for absolute error across task sessions", font=dict(size=28)
             ),
             xaxis=dict(
                 tickvals=list(range(1, 23)),
                 title=dict(
-                    text="Task session"
+                    text="Task session",
+                    font=dict(size=24)
                 ),
             ),
             yaxis=dict(
                 title=dict(
-                    text="Coefficient of variation (absolute error)"
+                    text="Coefficient of variation (absolute error)",
+                    font=dict(size=24)
                 ),
             ),
+            font=dict(size=18),
             height=950,
             width=1800,
             template = 'simple_white',
@@ -262,20 +268,23 @@ def sample_absolute_error_cv_and_score(condition_str, base_dir, excluded_partici
 
         fig.update_layout(
             title=dict(
-                text="Mean score across task sessions"
+                text="Mean score across task sessions", font=dict(size=28)
             ),
             xaxis=dict(
                 tickvals=list(range(1, 23)),
                 title=dict(
-                    text="Task session"
+                    text="Task session",
+                    font=dict(size=24)
                 ),
             ),
             yaxis=dict(
                 range=[0, 1.0],
                 title=dict(
-                    text="Score (%)"
+                    text="Score (%)",
+                    font=dict(size=24)
                 ),
             ),
+            font=dict(size=18),
             height=950,
             width=1800,
             template = 'simple_white',
@@ -299,7 +308,7 @@ def sample_absolute_error_cv_and_score(condition_str, base_dir, excluded_partici
 
 
 
-def sample_behav_v_model_estimate(condition_str, base_dir, excluded_participants, save_plot = True, plot_correlation_histogram=True):
+def sample_behav_v_model_estimate(condition_str, base_dir, excluded_participants, save_plot = True):
     """
     Function to plot the behavioural estimates versus model predictions across participants. Runs analysis on correlation coefficients and regression analysis, grouped across participants. Option to plot a histogram of the recorded correlation coefficients between behavioural and model-derived learning rates across participants. Threshold defining a consideration of minimum perfromance based on the bottom 10% of correlation coefficients recorded in Cedric anfd Florent's previous analysis (https://doi.org/10.1162/opmi_a_00139)
 
@@ -308,8 +317,6 @@ def sample_behav_v_model_estimate(condition_str, base_dir, excluded_participants
     - base_dir: Path, base directory for data files.
     - excluded_participants: list, participants to exclude from plots/analysis.
     - save_plot: boolean, if True, will save the produce plot(s) in a group level file (default = True)
-    - plot_correlation_histogram: boolean, if true, will plot a histogram of the correlation coefficients between behavioural and model estimates (default = True).
-
 
     Returns:
     - behav_model_estimate_regress_df: pd.DataFrame, contains the group-level outcomes of the regression analysis.
@@ -439,11 +446,11 @@ def sample_behav_v_model_estimate(condition_str, base_dir, excluded_participants
 
     _, bin_edges_model_estimate = pd.qcut(behav_model_estimate_df["ideal_observer"], nbins_model_estimate, retbins=True)
 
-    bin_midpoints = [(bin_edges_model_estimate[i] + bin_edges_model_estimate[i+1]) / 2 for i in range(len(bin_edges_model_estimate) - 1)]
-
     behav_model_estimate_df["model_estimate_bin"] = pd.cut(behav_model_estimate_df["ideal_observer"], bins=bin_edges_model_estimate, labels=False, include_lowest=True)
 
-    behav_model_estimate_df["model_estimate_bin_label"] = behav_model_estimate_df["model_estimate_bin"].apply(lambda x: bin_midpoints[x])
+    avg_model_estimate_per_bin = behav_model_estimate_df.groupby("model_estimate_bin")["ideal_observer"].mean()
+
+    behav_model_estimate_df = behav_model_estimate_df.merge(avg_model_estimate_per_bin, on="model_estimate_bin", suffixes=("", "_bin_avg"))
 
     # Storing the average learning rate at the participant level
     binned_data =  {"model_estimate_bin": [], "model_estimate_bin_label": [], "avg_estimate": [], "participant": []}
@@ -457,7 +464,7 @@ def sample_behav_v_model_estimate(condition_str, base_dir, excluded_participants
                 (participant_data["model_estimate_bin"] == model_estimate_bin)]
             
             avg_estimate = bin_data["estimate"].mean()
-            bin_label = bin_data['model_estimate_bin_label'].unique()[0]  
+            bin_label = bin_data['ideal_observer_bin_avg'].unique()[0]  
 
             binned_data['model_estimate_bin_label'].append(bin_label)
             binned_data["model_estimate_bin"].append(model_estimate_bin)
@@ -516,15 +523,57 @@ def sample_behav_v_model_estimate(condition_str, base_dir, excluded_participants
             title_text="Participant estimate",   
         )
 
+        # Add histogram to the plot
+        hist_trace = go.Histogram(
+            x=behav_model_slope_df['correlation'], 
+            marker=dict(color='rgba(0, 130, 150, 0.8)'),
+            xaxis='x2',  
+            yaxis='y2',
+            nbinsx=20,
+            opacity=0.75,
+            showlegend=False
+        )
+
+        fig.add_trace(hist_trace)
+
         fig.update_layout(
-            title=dict(text="Relationship between participant and normative estimates"),
+            xaxis2=dict(
+                domain=[0.7, 0.95],  
+                anchor='y2',
+                range=[0, 1.0],      
+                title='Correlation coefficient',
+                showline=True,
+                linecolor='black'
+            ),
+            yaxis2=dict(
+                domain=[0.15, 0.4],  
+                anchor='x2',
+                title='Count',
+                showline=True,
+                linecolor='black'
+            )
+        )
+
+        fig.update_layout(
+            title=dict(text="Relationship between participant and model estimates", 
+                       font=dict(size=28)
+                       ),
             xaxis=dict(
                 range=[0.1, 0.9],  
-                title=dict(text="Normative estimate"),
+                title=dict(text="Model estimate", font=dict(size=24)),
             ),
             yaxis=dict(
-                title=dict(text="Participant estimate")
+                title=dict(text="Participant estimate", font=dict(size=24))
             ),
+            xaxis2=dict(
+                title=dict(text='Correlation coefficient', font=dict(size=18)),
+                tickfont=dict(size=14),
+            ),
+            yaxis2=dict(
+                title=dict(text='Count', font=dict(size=18)),
+                tickfont=dict(size=14),
+            ),
+            font=dict(size=18), 
             height=950,
             width=1800,
             template='simple_white',
@@ -539,47 +588,6 @@ def sample_behav_v_model_estimate(condition_str, base_dir, excluded_participants
         fig.write_image(file_path)
 
         fig.show()
-
-        if plot_correlation_histogram:
-            fig = go.Figure(data=[go.Histogram(x = behav_model_slope_df['correlation'], marker=dict(color='rgba(0, 130, 150, 0.8)') )])
-
-            #fig.add_vline(x=0.6275770499186455, line_dash='dash')
-
-            fig.update_layout(
-            title=dict(text="Histogram of correlation coefficients defining the relationship between participant and normative estimates"),
-            xaxis=dict(
-                range=[0, 1.0], 
-                title=dict(text="Correlation coefficient"),
-            ),
-            yaxis=dict(
-                title=dict(text="Count")
-            ),
-            paper_bgcolor='white',
-            plot_bgcolor='white', 
-            height=950,
-            width=1800,
-            showlegend=False
-            )
-
-            fig.update_xaxes(
-                linecolor='black',              
-                tickmode='auto'                                  
-            )
-
-            fig.update_yaxes(    
-                linecolor='black',              
-                tickmode='linear'                     
-            )
-
-            # Save the figure to the group level plots folder
-            plot_dir = os.path.join(base_dir, "group_level_plots")
-            os.makedirs(plot_dir, exist_ok=True)
-            file_name = f"behav-v-model-estimates-correlation-histogram-(Adalearn-Pupil).png"
-            file_path = os.path.join(plot_dir, file_name)
-            fig.write_image(file_path)
-
-
-            fig.show()
 
 
     return behav_model_estimate_regress_df, behav_model_estimate_corr_df, participant_v_model_df
@@ -735,11 +743,12 @@ def sample_behav_v_model_learning_rate(condition_str, base_dir, excluded_partici
 
     _, bin_edges_model_lr = pd.qcut(behav_model_lr_df['cleaned_learning_rate_ideal_observer'],nbins_model_estimate, retbins=True)
 
-    bin_midpoints = [(bin_edges_model_lr[i] + bin_edges_model_lr[i+1]) / 2 for i in range(len(bin_edges_model_lr) - 1)]
 
     behav_model_lr_df["model_lr_bin"] = pd.cut(behav_model_lr_df["cleaned_learning_rate_ideal_observer"], bins=bin_edges_model_lr, labels=False, include_lowest=True)
 
-    behav_model_lr_df["model_lr_bin_label"] = behav_model_lr_df["model_lr_bin"].apply(lambda x: bin_midpoints[x])
+    avg_model_lr_per_bin = behav_model_lr_df.groupby("model_lr_bin")["cleaned_learning_rate_ideal_observer"].mean()
+
+    behav_model_lr_df = behav_model_lr_df.merge(avg_model_lr_per_bin, on="model_lr_bin", suffixes=("", "_bin_avg"))
 
     # Storing the average learning rate at the participant level
     binned_data =  {"model_lr_bin": [], "model_lr_bin_label": [], "avg_lr": [], "participant": []}
@@ -753,7 +762,7 @@ def sample_behav_v_model_learning_rate(condition_str, base_dir, excluded_partici
                 (participant_data["model_lr_bin"] == model_lr_bin)]
             
             avg_lr = bin_data["cleaned_learning_rate_estimate"].mean()
-            bin_label = bin_data['model_lr_bin_label'].unique()[0]  
+            bin_label = bin_data['cleaned_learning_rate_ideal_observer_bin_avg'].unique()[0]  
 
             binned_data['model_lr_bin_label'].append(bin_label)
             binned_data["model_lr_bin"].append(model_lr_bin)
@@ -790,13 +799,16 @@ def sample_behav_v_model_learning_rate(condition_str, base_dir, excluded_partici
 
 
         fig.update_layout(
-            title=dict(text=f"Relationship between participant and normative learning rates {title_text}"),
+            title=dict(text=f"Relationship between participant and model learning rates {title_text}",
+                       font=dict(size=28)
+                       ),
             xaxis=dict(  
-                title=dict(text="Normative learning rate"),
+                title=dict(text="Model learning rate", font=dict(size=24)),
             ),
             yaxis=dict(
-                title=dict(text="Participant learning rate")
+                title=dict(text="Participant learning rate", font=dict(size=24))
             ),
+            font=dict(size=18),
             height=950,
             width=1800,
             template='simple_white',
@@ -1016,6 +1028,7 @@ def sample_learning_rates_by_cp(condition_str, base_dir, excluded_participants, 
     'pvalue_against_zero': [lr_around_cp_corr_ttest[1]],
     })
 
+    group_level_corr = stats.pearsonr(x=lr_by_cp_avg_df_behav['mean'], y=lr_by_cp_avg_df_model['mean'], alternative="two-sided")
 
     # Plot the learning rates around change points
     if save_plot:
@@ -1102,20 +1115,20 @@ def sample_learning_rates_by_cp(condition_str, base_dir, excluded_participants, 
         )
 
         if exclude_zero:
-            title_text = "Behaviourally- and model-derived learning rates relative to change point (zero learning rates excluded)"
+            title_text = "Participant- and model-derived learning rates relative to change point (zero learning rates excluded)"
         else:
-            title_text = "Behaviourally- and model-derived learning rates relative to change point"
+            title_text = "Participant- and model-derived learning rates relative to change point"
 
         fig.update_layout(
-            title=dict(text=title_text),
+            title=dict(text=title_text, font=dict(size=28)),
             
             xaxis=dict(
                 range=[-3, 15], 
-                title=dict(text="Outcome relative to change point"),
+                title=dict(text="Outcome relative to change point", font=dict(size=24)),
                 tickvals=list(range(1, 16))
             ),
             yaxis=dict(
-                title=dict(text="Learning rate (behavioural)")
+                title=dict(text="Learning rate (participant)", font=dict(size=24))
             ),
 
             xaxis2=dict(
@@ -1123,13 +1136,14 @@ def sample_learning_rates_by_cp(condition_str, base_dir, excluded_participants, 
                 anchor="y2",
                 range=[-3, 15],
                 tickvals=list(range(1, 16)),  
-                title=dict(text="Outcome relative to change point")  
+                title=dict(text="Outcome relative to change point", font=dict(size=18))  
             ),
             yaxis2=dict(
                 domain=[0.7, 1.0], 
                 anchor="x2",
-                title=dict(text="Learning rate (model)")  
+                title=dict(text="Learning rate (model)", font=dict(size=18))  
             ),
+            font=dict(size=18),
             height=950,
             width=1800,
             template='simple_white',
@@ -1237,19 +1251,25 @@ def model_uncertainty_on_learning_rate(condition_str, base_dir, excluded_partici
     # Splitting data into bins to perform same analysis as in Cedric's paper
     model_uncertainty_df = computational_var_dfs[['cleaned_learning_rate_ideal_observer', 'prior_conf', 'cpp', 'task_session', 'participant']]
 
+    # Splitting by cpp
+    _, bin_edges_cpp = pd.qcut(model_uncertainty_df["cpp"], 2, retbins=True)
+
+    model_uncertainty_df["cpp_bin"] = pd.cut(model_uncertainty_df["cpp"], bins=bin_edges_cpp, labels=False, include_lowest=True)
+
     # Splitting by prior confidence
     nbins_uncert = 15 
 
     _, bin_edges_conf = pd.qcut(model_uncertainty_df["prior_conf"], nbins_uncert, retbins=True)
 
-    bin_midpoints = [(bin_edges_conf[i] + bin_edges_conf[i+1]) / 2 for i in range(len(bin_edges_conf) - 1)]
     model_uncertainty_df["prior_conf_bin"] = pd.cut(model_uncertainty_df["prior_conf"], bins=bin_edges_conf, labels=False, include_lowest=True)
-    model_uncertainty_df["prior_conf_bin_label"] = model_uncertainty_df["prior_conf_bin"].apply(lambda x: bin_midpoints[x])
 
-    # Splitting by cpp
-    _, bin_edges_cpp = pd.qcut(model_uncertainty_df["cpp"], 2, retbins=True)
+    avg_prior_conf_per_bin = model_uncertainty_df.groupby(['prior_conf_bin', 'cpp_bin'])['prior_conf'].mean()
 
-    model_uncertainty_df["cpp_bin"] = pd.cut(model_uncertainty_df["cpp"], bins=bin_edges_cpp, labels=False, include_lowest=True)
+    model_uncertainty_df = model_uncertainty_df.merge(
+    avg_prior_conf_per_bin,
+    on=['prior_conf_bin', 'cpp_bin'],
+    how='left',
+    suffixes= ('', '_bin_avg'))  
 
     # Storing the average learning rate at the participant level
     binned_data =  {"prior_conf_bin": [], "prior_conf_bin_label": [], "cpp_bin": [], "avg_lr": [], "participant": []}
@@ -1266,7 +1286,7 @@ def model_uncertainty_on_learning_rate(condition_str, base_dir, excluded_partici
                 ]
                 
                 avg_lr = bin_data["cleaned_learning_rate_ideal_observer"].mean()
-                bin_label = bin_data['prior_conf_bin_label'].unique()[0]  
+                bin_label = bin_data['prior_conf_bin_avg'].unique()[0]  
 
                 binned_data['prior_conf_bin_label'].append(bin_label)
                 binned_data["prior_conf_bin"].append(prior_conf_bin)
@@ -1315,22 +1335,22 @@ def model_uncertainty_on_learning_rate(condition_str, base_dir, excluded_partici
             [None, {}],  
         ],
         subplot_titles=(
-            "Regression weights for prior confidence and change point probability <br> on learning rate derived from the ideal observer model estimates", 
-            "Individual regression weights for prior confidence and change point probability <br> on learning rate derived from the ideal observer model", 
-            "Predicted relationship between learning rate, prior confidence and change point probability <br> derived from the ideal observer model"),
+            "Regression weights for prior confidence and change point probability <br> on learning rate based on model estimates", 
+            "Individual regression weights for prior confidence and change point probability <br> on learning rate based on model", 
+            "Predicted relationship between learning rate, prior confidence and change point probability <br> based on model"),
             )
         
         # Add bars for Prior conf (z-score) and Change point prob (z-score) in the first subplot
         fig.add_trace(go.Bar(
-            name='Prior conf (z-score)',
-            x=['Prior conf (z-score)'], y=[model_conf_coef_mean],
+            name='Prior confidence (z-score)',
+            x=['Prior confidence (z-score)'], y=[model_conf_coef_mean],
             error_y=dict(type='data', array=[model_conf_coef_sem]),
             showlegend=False
         ), row=1, col=1)
 
         fig.add_trace(go.Bar(
-            name='Change point prob (z-score)',
-            x=['Change point prob (z-score)'], y=[model_cpp_coef_mean],
+            name='Change point probability (z-score)',
+            x=['Change point probability (z-score)'], y=[model_cpp_coef_mean],
             error_y=dict(type='data', array=[model_cpp_coef_sem]),
             showlegend=False
         ), row=1, col=1)
@@ -1348,7 +1368,7 @@ def model_uncertainty_on_learning_rate(condition_str, base_dir, excluded_partici
 
         # Update axes for the first subplot (left)
         fig.update_xaxes(showline=True, linewidth=1, linecolor='black', row=1, col=1)
-        fig.update_yaxes(showline=True, linewidth=1, linecolor='black',  title_text="Regression Weight", row=1, col=1)
+        fig.update_yaxes(showline=True, linewidth=1, linecolor='black',  title_text="Regression weights", row=1, col=1)
 
         # Add scatter plot for individual regression weights in the second subplot
         fig.add_trace(go.Scatter(
@@ -1368,7 +1388,7 @@ def model_uncertainty_on_learning_rate(condition_str, base_dir, excluded_partici
             showline=True, 
             linewidth=1, 
             linecolor='black', 
-            title_text="Prior confidence (Beta)", 
+            title_text="Prior confidence (beta)", 
             range=[-0.9, -0.85],  
             row=1, col=2
         )
@@ -1377,7 +1397,7 @@ def model_uncertainty_on_learning_rate(condition_str, base_dir, excluded_partici
             showline=True, 
             linewidth=1, 
             linecolor='black', 
-            title_text="Change point probability (Beta)",  
+            title_text="Change point probability (beta)",  
             range=[0.39, 0.5], 
             row=1, col=2
         )
@@ -1413,7 +1433,7 @@ def model_uncertainty_on_learning_rate(condition_str, base_dir, excluded_partici
             showline=True, 
             linewidth=1, 
             linecolor='black', 
-            title_text="Model-derived learning rate",  
+            title_text="Learning rate (model)",  
             row=2, col=2
         )
 
@@ -1426,6 +1446,7 @@ def model_uncertainty_on_learning_rate(condition_str, base_dir, excluded_partici
             yanchor='top'
         ),
         plot_bgcolor='rgba(255, 255, 255, 1)',
+        font=dict(size=16),
         height=950,
         width=1800)
 
@@ -1537,8 +1558,10 @@ def sample_behav_uncertainty_on_learning_rate(condition_str, base_dir, excluded_
     behav_conf_coef_sem = stats.sem(behav_conf_coef['coefficient'])
     behav_cpp_coef_sem = stats.sem(behav_cpp_coef['coefficient'])
 
+    computational_conf_df = computational_var_dfs.copy()
+
     # Splitting data into bins to perform the same analysis as in Cedric's paper
-    behav_uncertainty_df = computational_var_dfs[['cleaned_learning_rate_estimate', 'prior_conf', 'cpp', 'task_session', 'participant']]
+    behav_uncertainty_df = computational_conf_df[['cleaned_learning_rate_estimate', 'prior_conf', 'cpp', 'task_session', 'participant']]
 
     if exclude_zero:
         beginning_length = len(behav_uncertainty_df)
@@ -1552,9 +1575,11 @@ def sample_behav_uncertainty_on_learning_rate(condition_str, base_dir, excluded_
     # Evaluating the relationship between learning rate and prior confidence based on behavioural responses
     _, bin_edges_conf_lr = pd.qcut(behav_uncertainty_df["prior_conf"], nbins_uncert_lr, retbins=True)
 
-    bin_midpoints = [(bin_edges_conf_lr[i] + bin_edges_conf_lr[i+1]) / 2 for i in range(len(bin_edges_conf_lr) - 1)]
     behav_uncertainty_df["prior_conf_bin"] = pd.cut(behav_uncertainty_df["prior_conf"], bins=bin_edges_conf_lr, labels=False, include_lowest=True)
-    behav_uncertainty_df["prior_conf_bin_label"] = behav_uncertainty_df["prior_conf_bin"].apply(lambda x: bin_midpoints[x])
+
+    avg_prior_conf_per_bin = behav_uncertainty_df.groupby('prior_conf_bin')['prior_conf'].mean()
+    
+    behav_uncertainty_df = behav_uncertainty_df.merge(avg_prior_conf_per_bin, on='prior_conf_bin', suffixes=('', '_bin_avg'))
 
     # Storing the average learning rate at the participant level
     binned_data =  {"prior_conf_bin": [], "prior_conf_bin_label": [], "avg_lr": [], "participant": []}
@@ -1568,7 +1593,7 @@ def sample_behav_uncertainty_on_learning_rate(condition_str, base_dir, excluded_
                 (participant_data["prior_conf_bin"] == prior_conf_bin)]
             
             avg_lr = bin_data["cleaned_learning_rate_estimate"].mean()
-            bin_label = bin_data['prior_conf_bin_label'].unique()[0]  
+            bin_label = bin_data['prior_conf_bin_avg'].unique()[0]  
 
             binned_data['prior_conf_bin_label'].append(bin_label)
             binned_data["prior_conf_bin"].append(prior_conf_bin)
@@ -1593,18 +1618,30 @@ def sample_behav_uncertainty_on_learning_rate(condition_str, base_dir, excluded_
     behav_group_conf_lr_df = pd.DataFrame(group_avg_data)
 
     # Evaluating the relationship between learning rate, prior confidence and change point probability based on behavioural responses
+    computational_conf_cpp_df = computational_var_dfs.copy()
+
+    behav_uncertainty_df = computational_conf_cpp_df[['cleaned_learning_rate_estimate', 'prior_conf', 'cpp', 'task_session', 'participant']]
+
     nbins_uncert_cpp_lr = nbins_uncert_lr // 2
-
-    _, bin_edges_conf_cpp = pd.qcut(behav_uncertainty_df["prior_conf"], nbins_uncert_cpp_lr, retbins=True)
-
-    bin_midpoints = [(bin_edges_conf_cpp[i] + bin_edges_conf_cpp[i+1]) / 2 for i in range(len(bin_edges_conf_cpp) - 1)]
-    behav_uncertainty_df["prior_conf_bin"] = pd.cut(behav_uncertainty_df["prior_conf"], bins=bin_edges_conf_cpp, labels=False, include_lowest=True)
-    behav_uncertainty_df["prior_conf_bin_label"] = behav_uncertainty_df["prior_conf_bin"].apply(lambda x: bin_midpoints[x])
 
     # Splitting by cpp
     _, bin_edges_cpp = pd.qcut(behav_uncertainty_df["cpp"], 2, retbins=True)
 
     behav_uncertainty_df["cpp_bin"] = pd.cut(behav_uncertainty_df["cpp"], bins=bin_edges_cpp, labels=False, include_lowest=True)
+
+    # Splitting by prior confidence
+    _, bin_edges_conf_cpp = pd.qcut(behav_uncertainty_df["prior_conf"], nbins_uncert_cpp_lr, retbins=True)
+
+    behav_uncertainty_df["prior_conf_bin"] = pd.cut(behav_uncertainty_df["prior_conf"], bins=bin_edges_conf_cpp, labels=False, include_lowest=True)
+
+    avg_prior_conf_per_bin = behav_uncertainty_df.groupby(['prior_conf_bin', 'cpp_bin'])['prior_conf'].mean()
+
+    behav_uncertainty_df = behav_uncertainty_df.merge(
+        avg_prior_conf_per_bin,
+        on=['prior_conf_bin', 'cpp_bin'],
+        how='left',
+        suffixes= ('', '_bin_avg') 
+    )
 
     # Storing the average learning rate at the participant level
     binned_data =  {"prior_conf_bin": [], "prior_conf_bin_label": [], "cpp_bin": [], "avg_lr": [], "participant": []}
@@ -1621,7 +1658,7 @@ def sample_behav_uncertainty_on_learning_rate(condition_str, base_dir, excluded_
                 ]
                 
                 avg_lr = bin_data["cleaned_learning_rate_estimate"].mean()
-                bin_label = bin_data['prior_conf_bin_label'].unique()[0]  
+                bin_label = bin_data['prior_conf_bin_avg'].unique()[0]  
 
                 binned_data['prior_conf_bin_label'].append(bin_label)
                 binned_data["prior_conf_bin"].append(prior_conf_bin)
@@ -1670,23 +1707,23 @@ def sample_behav_uncertainty_on_learning_rate(condition_str, base_dir, excluded_
         fig = make_subplots(
         rows=2, cols=2,  
         subplot_titles=(
-            f"Regression weights for prior confidence and change point probability <br> on learning rate derived from participants' estimates {plot_title}", 
-            f"Relationship between learning rate and prior confidence <br> derived from participants' estimates {plot_title}",
-            f"Individual regression weights for prior confidence and change point probability <br> on  learning rate derived from participants' estimates {plot_title}",
-            f"Relationship between learning rate, prior confidence and change point probability <br> derived from participants' estimates {plot_title}"),
+            f"Regression weights for prior confidence and change point probability <br> on learning rate based on participants' estimates {plot_title}", 
+            f"Relationship between prior confidence and learning rate<br> based on participants' estimates {plot_title}",
+            f"Individual regression weights for prior confidence and change point probability <br> on learning rate based on participants' estimates {plot_title}",
+            f"Relationship between learning rate, prior confidence and change point probability <br> based on participants' estimates {plot_title}"),
             )
         
         # Add bars for Prior conf (z-score) and Change point prob (z-score) in the first subplot
         fig.add_trace(go.Bar(
-            name='Prior conf (z-score)',
-            x=['Prior conf (z-score)'], y=[behav_conf_coef_mean],
+            name='Prior confidence (z-score)',
+            x=['Prior confidence (z-score)'], y=[behav_conf_coef_mean],
             error_y=dict(type='data', array=[behav_conf_coef_sem]),
             showlegend=False
         ), row=1, col=1)
 
         fig.add_trace(go.Bar(
-            name='Change point prob (z-score)',
-            x=['Change point prob (z-score)'], y=[behav_cpp_coef_mean],
+            name='Change point probability (z-score)',
+            x=['Change point probability (z-score)'], y=[behav_cpp_coef_mean],
             error_y=dict(type='data', array=[behav_cpp_coef_sem]),
             showlegend=False
         ), row=1, col=1)
@@ -1704,7 +1741,7 @@ def sample_behav_uncertainty_on_learning_rate(condition_str, base_dir, excluded_
 
         # Update axes for the first subplot (left)
         fig.update_xaxes(showline=True, linewidth=1, linecolor='black', row=1, col=1)
-        fig.update_yaxes(showline=True, linewidth=1, linecolor='black',  title_text="Regression Weight", row=1, col=1)
+        fig.update_yaxes(showline=True, linewidth=1, linecolor='black',  title_text="Regression weight", row=1, col=1)
 
         # Add scatter plot for individual regression weights in the second subplot
         fig.add_trace(go.Scatter(
@@ -1724,7 +1761,7 @@ def sample_behav_uncertainty_on_learning_rate(condition_str, base_dir, excluded_
             showline=True, 
             linewidth=1, 
             linecolor='black', 
-            title_text="Prior confidence (Beta)", 
+            title_text="Prior confidence (beta)", 
             range=[-0.6, 0.6],  
             row=2, col=1
         )
@@ -1733,7 +1770,7 @@ def sample_behav_uncertainty_on_learning_rate(condition_str, base_dir, excluded_
             showline=True, 
             linewidth=1, 
             linecolor='black', 
-            title_text="Change point probability (Beta)",  
+            title_text="Change point probability (beta)",  
             range=[-0.6, 0.6], 
             row=2, col=1
         )
@@ -1764,7 +1801,7 @@ def sample_behav_uncertainty_on_learning_rate(condition_str, base_dir, excluded_
             showline=True, 
             linewidth=1, 
             linecolor='black', 
-            title_text="Learning rate",   
+            title_text="Learning rate (participant)",   
             row=1, col=2
         )
 
@@ -1808,7 +1845,7 @@ def sample_behav_uncertainty_on_learning_rate(condition_str, base_dir, excluded_
             showline=True, 
             linewidth=1, 
             linecolor='black', 
-            title_text="Learning rate",  
+            title_text="Learning rate (participant)",  
             row=2, col=2
         )
 
@@ -1821,6 +1858,7 @@ def sample_behav_uncertainty_on_learning_rate(condition_str, base_dir, excluded_
             yanchor='top'
         ),
         plot_bgcolor='rgba(255, 255, 255, 1)',
+        font=dict(size=16),
         height=950,
         width=1800)
 
