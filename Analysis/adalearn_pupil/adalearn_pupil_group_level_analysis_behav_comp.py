@@ -13,7 +13,7 @@ mean_abs_error_avg_df, mean_score_avg_df = sample_absolute_error_cv_and_score(co
 
 
 
-behav_model_estimate_regress_df, behav_model_estimate_corr_df, bin_average_data = sample_behav_v_model_estimate(condition_str=condition_str, base_dir=base_dir, excluded_participants=[], save_plot=True, plot_correlation_histogram=True)
+behav_model_estimate_regress_df, behav_model_estimate_corr_df, bin_average_data = sample_behav_v_model_estimate(condition_str=condition_str, base_dir=base_dir, excluded_participants=[], save_plot=True)
 
 
 

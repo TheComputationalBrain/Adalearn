@@ -15,21 +15,10 @@ preprocessed_pupil_df, pupil_trig_df, pupil_ses_df, blink_df, epoched_pupil_df, 
 
 
 
-outcome_onsets, outcome_nums, outcome_epoched_pupil_df, outcome_blink_ratio_df, outcome_epochs_to_remove = all_outcome_pupil_epochs(directory_path=directory_path, participant_str=participant_str, list_subject_selected=list_subject_selected, condition_str=condition_str, condition_task_sessions=task_sessions, from_session=from_session, to_session=to_session, pupil_trig_df=pupil_trig_df, baseline_cor=[-0.4, 0], variable_df=None, variable_column=None, select_eye=True, remove_epochs=True, plot_averaged_pupil_response=False, plot_raster_pupil_response=False)
+outcome_onsets, outcome_nums, outcome_epoched_pupil_df, outcome_blink_ratio_df, outcome_epochs_to_remove, outcome_epochs_to_remove_df = all_outcome_pupil_epochs(directory_path=directory_path, participant_str=participant_str, list_subject_selected=list_subject_selected, condition_str=condition_str, condition_task_sessions=task_sessions, from_session=from_session, to_session=to_session, pupil_trig_df=pupil_trig_df, baseline_cor=[-0.4, 0], variable_df=None, variable_column=None, select_eye=True, remove_epochs=True, plot_averaged_pupil_response=False, plot_raster_pupil_response=False)
 
 
 
-outcome_onsets_nobc, outcome_nums_nobc, outcome_epoched_pupil_df_nobc, outcome_blink_ratio_df_nobc, outcome_epochs_to_remove_nobc = all_outcome_pupil_epochs(directory_path=directory_path, participant_str=participant_str, list_subject_selected=list_subject_selected, condition_str=condition_str, condition_task_sessions=task_sessions, from_session=from_session, to_session=to_session, pupil_trig_df=pupil_trig_df, baseline_cor=[], variable_df=None, variable_column=None, select_eye=True, remove_epochs=True, plot_averaged_pupil_response=False, plot_raster_pupil_response=False)
+outcome_onsets_nobc, outcome_nums_nobc, outcome_epoched_pupil_df_nobc, outcome_blink_ratio_df_nobc, outcome_epochs_to_remove_nobc, outcome_epochs_to_remove_nobc_df = all_outcome_pupil_epochs(directory_path=directory_path, participant_str=participant_str, list_subject_selected=list_subject_selected, condition_str=condition_str, condition_task_sessions=task_sessions, from_session=from_session, to_session=to_session, pupil_trig_df=pupil_trig_df, baseline_cor=[], variable_df=None, variable_column=None, select_eye=True, remove_epochs=True, plot_averaged_pupil_response=False, plot_raster_pupil_response=False)
 
-
-
-pupil_amp_around_cp_df = pupil_response_around_change_point(directory_path=directory_path, participant_str=participant_str, condition_str=condition_str, outcome_epoched_pupil_df=outcome_epoched_pupil_df, change_point_indices=change_point_indices, before=6, after=6, estimate_type='amplitude', plot_pupil_around_change_point=False)
-
-
-
-pupil_avg_around_cp_df = pupil_response_around_change_point(directory_path=directory_path, participant_str=participant_str, condition_str=condition_str, outcome_epoched_pupil_df=outcome_epoched_pupil_df, change_point_indices=change_point_indices, before=6, after=6, estimate_type='mean', plot_pupil_around_change_point=False)
-
-
-
-pupil_baseline_around_cp_df = pupil_response_around_change_point(directory_path=directory_path, participant_str=participant_str, condition_str=condition_str, outcome_epoched_pupil_df=outcome_epoched_pupil_df_nobc, change_point_indices=change_point_indices, before=6, after=6, estimate_type='baseline', plot_pupil_around_change_point=False)
 

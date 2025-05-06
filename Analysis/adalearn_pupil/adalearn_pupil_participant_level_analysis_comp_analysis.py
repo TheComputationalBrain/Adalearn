@@ -14,7 +14,7 @@ from adalearn_pupil.adalearn_pupil_participant_characteristics import directory_
 
 
 
-plot_session_behav_comp(participant_str=participant_str, condition_str=condition_str, directory_path=directory_path, behavioural_df=behavioural_df, computational_df=computational_var_df, change_point_indices=change_point_indices, task_session=9, turn_on_plotting=True)
+plot_session_behav_comp(participant_str=participant_str, condition_str=condition_str, directory_path=directory_path, behavioural_df=behavioural_df, computational_df=computational_var_df, change_point_indices=change_point_indices, task_session=20, turn_on_plotting=False)
 
 
 
