@@ -1,5 +1,5 @@
 """
-This script defines the participant analysed at the participant level. To change participant, the user simply changes the participant number. In addition, the user can specify the base directory (base_dir: the top level location of the datafiles). Changes to the expected task structure can be made here too (e.g. the number of sessions, the session numbers, the condition). The script also includes the parameters used in the ideal observer model (P_C, P1_MIN, P1_MAX, ESTIMATE_PRIOR).
+This script defines the participant analysed. To change participant, the user simply changes the participant number. In addition, the user can specify the base directory (base_dir: the top level location of the datafiles). Changes to the expected task structure can be made here too (e.g. the number of sessions, the session numbers, the condition). The script also includes the parameters used in the normative model (P_C, P1_MIN, P1_MAX, ESTIMATE_PRIOR).
 """
 
 from pathlib import Path
