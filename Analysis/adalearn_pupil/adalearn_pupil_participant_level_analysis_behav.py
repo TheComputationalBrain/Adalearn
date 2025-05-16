@@ -6,7 +6,7 @@ from adalearn_analysis_participant_level_functions_behav import load_behavioural
 
 from adalearn_analysis_participant_level_functions_data_utilities import save_dataframes_to_csv
 
-from adalearn_pupil.adalearn_pupil_participant_characteristics import participant_str, directory_path, condition_str, task_sessions
+from adalearn_pupil.adalearn_pupil_participant_info_and_parameters import participant_str, directory_path, condition_str, task_sessions
 
 
 

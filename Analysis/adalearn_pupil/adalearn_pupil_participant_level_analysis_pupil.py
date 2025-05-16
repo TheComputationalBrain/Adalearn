@@ -7,7 +7,7 @@ from adalearn_analysis_participant_level_functions_pupil import load_and_process
 
 from adalearn_analysis_participant_level_functions_data_utilities import save_dataframes_to_csv, load_csvs
 
-from adalearn_pupil.adalearn_pupil_participant_characteristics import directory_path, participant_str, list_subject_selected, condition_str, task_sessions, from_session, to_session
+from adalearn_pupil.adalearn_pupil_participant_info_and_parameters import directory_path, participant_str, list_subject_selected, condition_str, task_sessions, from_session, to_session
 
 
 

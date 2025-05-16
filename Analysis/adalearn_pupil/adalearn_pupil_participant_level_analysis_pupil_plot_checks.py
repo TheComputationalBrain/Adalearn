@@ -7,7 +7,7 @@ from adalearn_analysis_participant_level_functions_pupil import change_point_pup
 from adalearn_analysis_participant_level_functions_data_utilities import load_csvs, save_dataframes_to_csv
 
 
-from adalearn_pupil.adalearn_pupil_participant_characteristics import directory_path, participant_str, list_subject_selected, condition_str, task_sessions, from_session, to_session
+from adalearn_pupil.adalearn_pupil_participant_info_and_parameters import directory_path, participant_str, list_subject_selected, condition_str, task_sessions, from_session, to_session
 
 
 dataframes = load_csvs(directory_path=directory_path, condition_str=condition_str, substrings=['change_point_indices', 'pupil_trig_df', 'computational_var_df'])

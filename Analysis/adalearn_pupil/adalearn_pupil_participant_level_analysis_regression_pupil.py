@@ -9,7 +9,7 @@ from adalearn_analysis_participant_level_functions_pupil import pupil_response_a
 
 from adalearn_analysis_participant_level_functions_data_utilities import save_dataframes_to_csv, load_csvs
 
-from adalearn_pupil.adalearn_pupil_participant_characteristics import directory_path, participant_str,  condition_str
+from adalearn_pupil.adalearn_pupil_participant_info_and_parameters import directory_path, participant_str, condition_str
 
 
 
