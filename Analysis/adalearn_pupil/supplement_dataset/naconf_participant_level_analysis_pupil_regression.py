@@ -4,17 +4,34 @@ This scripts loads pupil data obtained during the task at a participant level. C
 
 from adalearn_pupil.supplement_dataset.naconf_pupil_regression_functions import pupil_peristimulus_regression_analysis
 
-from adalearn_pupil.supplement_dataset.naconf_participant_characteristics import directory_path, selected_participant, list_subject_selected, task_sessions, from_session, to_session
+from adalearn_analysis_participant_level_functions_data_utilities import save_dataframes_to_csv, load_csvs
 
-from adalearn_pupil.supplement_dataset.naconf_participant_level_analysis_model import task_session_df, change_point_indices
-
-from adalearn_pupil.supplement_dataset.naconf_participant_level_analysis_pupil import outcome_epoched_pupil_df, outcome_epochs_to_remove, outcome_epoched_pupil_df_nobc, outcome_epochs_to_remove_nobc
+from adalearn_pupil.supplement_dataset.naconf_participant_info_and_parameters import directory_path, selected_participant
 
 
 
-coefficients_df, pupil_regress_df, residuals_df = pupil_peristimulus_regression_analysis(participant_str = selected_participant, directory_path = directory_path, task_session_df = task_session_df, outcome_epoched_pupil_df = outcome_epoched_pupil_df, outcome_epochs_to_remove=outcome_epochs_to_remove, variables=['prior_conf', 'cpp'], covariates=None, baseline_corrected = True, plot_regression_analysis=True)
+dataframes = load_csvs(directory_path=directory_path, condition_str='01', substrings=['task_session_df',  'outcome_epoched_pupil_df', 'outcome_epochs_to_remove_df', 'outcome_epoched_pupil_nobc_df',  'outcome_epochs_to_remove_nobc_df'])
+
+
+coefficients_df, pupil_regress_df, residuals_df = pupil_peristimulus_regression_analysis(participant_str = selected_participant, directory_path = directory_path, task_session_df = dataframes['task_session_df'], outcome_epoched_pupil_df = dataframes['outcome_epoched_pupil_df'], outcome_epochs_to_remove=dataframes['outcome_epochs_to_remove_df'], variables=['prior_conf', 'cpp'], covariates=None, baseline_corrected = True, plot_regression_analysis=False)
 
 
 
 
-coefficients_df_nobc, pupil_regress_df_nobc, residuals_df_nobc = pupil_peristimulus_regression_analysis(participant_str = selected_participant, directory_path = directory_path, task_session_df = task_session_df, outcome_epoched_pupil_df = outcome_epoched_pupil_df_nobc, outcome_epochs_to_remove=outcome_epochs_to_remove_nobc, variables=['prior_conf', 'cpp'], covariates=None, baseline_corrected = False, plot_regression_analysis=True)
+coefficients_df_nobc, pupil_regress_df_nobc, residuals_df_nobc = pupil_peristimulus_regression_analysis(participant_str = selected_participant, directory_path = directory_path, task_session_df = dataframes['task_session_df'], outcome_epoched_pupil_df = dataframes['outcome_epoched_pupil_nobc_df'], outcome_epochs_to_remove = dataframes['outcome_epochs_to_remove_nobc_df'], variables=['prior_conf', 'cpp'], covariates=None, baseline_corrected = False, plot_regression_analysis=False)
+
+
+
+save_dataframes_to_csv(dataframes={
+    'pupil_regress_df': pupil_regress_df, 
+    'pupil_regress_df_nobc': pupil_regress_df_nobc, 
+    'coefficients_df': coefficients_df, 
+    'coefficients_df_nobc': coefficients_df_nobc, 
+    'residuals_df': residuals_df, 
+    'residuals_df_nobc': residuals_df_nobc
+}, 
+directory_path=directory_path,
+participant_str=selected_participant,
+condition_str='01',
+task='NACONF-Supplement'
+)

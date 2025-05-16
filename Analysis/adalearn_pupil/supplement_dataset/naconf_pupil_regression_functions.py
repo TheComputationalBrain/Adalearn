@@ -33,6 +33,9 @@ def pupil_peristimulus_regression_analysis(participant_str, directory_path, task
     - pupil_regress_df: pd.DataFrame, contains model evaluation outputs (e.g. intercept, R^2, mse, rmse) for each peristimulus time point.
     - residuals_df: pd.DataFrame, contains model residuals for each peristimulus timepoint. 
     """
+     # Ensuring that the task session data is in the correct format
+    task_session_df['session'] = task_session_df['session'].apply(lambda x: str(x) if not isinstance(x, str) else x).str.zfill(2)
+
     # Check that at least one variable has been added as a predictor
     if variables is None:
         raise ValueError("You must provide at least one variable as a predictor.")
@@ -73,8 +76,8 @@ def pupil_peristimulus_regression_analysis(participant_str, directory_path, task
             covariates_to_zscore.extend(['trial_ID_sq', 'trial_ID_sqrt'])
 
         # Compute entropy if 'P1' is in covariates
-        if 'P1' in covariates:
-            p = np.clip(task_session_df['p1'], 1e-10, 1 - 1e-10)
+        if 'prior_dist' in covariates:
+            p = np.clip(task_session_df['prior_dist'], 1e-10, 1 - 1e-10)
             task_session_df['entropy'] = -(p * np.log2(p) + (1 - p) * np.log2(1 - p))
             covariates_to_zscore.extend(['entropy'])
 
@@ -104,7 +107,8 @@ def pupil_peristimulus_regression_analysis(participant_str, directory_path, task
 
     # Based on the epochs containing too much interpolated data, remove respective rows                
     if outcome_epochs_to_remove is not None:
-        predictors.drop(index=outcome_epochs_to_remove, inplace=True)
+        outcomes_to_remove = outcome_epochs_to_remove['epochs'].values
+        predictors.drop(index=outcomes_to_remove, inplace=True)
     
     # Prepare the pupil data
     epoched_pupil_data = outcome_epoched_pupil_df.copy()
@@ -119,6 +123,9 @@ def pupil_peristimulus_regression_analysis(participant_str, directory_path, task
     # Transpose the pupil dataframe
     epoched_pupil_data_long = epoched_pupil_data.melt(var_name='epoch', value_name='pupil', ignore_index=False)
     epoched_pupil_data_long = epoched_pupil_data_long[~epoched_pupil_data_long['epoch'].isin(nan_epochs)]
+
+    # Ensure that the index is of the right data type
+    epoched_pupil_data_long['epoch'] = epoched_pupil_data_long['epoch'].astype(int)
     
     # Map variables to pupil data 
     for var in predictors.columns:
@@ -132,8 +139,8 @@ def pupil_peristimulus_regression_analysis(participant_str, directory_path, task
     # Run regression analyses across duration of the epoch
     for t in time_points:
         data_at_time = epoched_pupil_data_long.loc[t]
-        X = data_at_time[predictors.columns]
-        y = data_at_time['pupil']
+        X = data_at_time[predictors.columns].apply(pd.to_numeric, errors='coerce')
+        y = pd.to_numeric(data_at_time['pupil'], errors='coerce')
         X = sm.add_constant(X)  # Adds intercept term
         
         model = sm.OLS(y, X).fit()

@@ -4,7 +4,9 @@ This scripts loads pupil data obtained during the task at a participant level. C
 
 from adalearn_pupil.supplement_dataset.naconf_ideal_observer_model_functions import load_task_behavioural_data, load_constants, change_point_analysis, compute_surprise_from_observations, compute_prior_conf_and_cpp_from_observations 
 
-from adalearn_pupil.supplement_dataset.naconf_participant_characteristics import directory_path, selected_participant, task_sessions
+from adalearn_analysis_participant_level_functions_data_utilities import save_dataframes_to_csv
+
+from adalearn_pupil.supplement_dataset.naconf_participant_info_and_parameters import directory_path, selected_participant, task_sessions
 
 
 
@@ -27,3 +29,13 @@ task_session_df = compute_surprise_from_observations(participant_str=selected_pa
 task_session_df = compute_prior_conf_and_cpp_from_observations(participant_str=selected_participant, directory_path=directory_path, task_session_df=task_session_df, change_point_indices_df=change_point_indices, p_c=P_C, p_min=P_MIN, p_max=P_MAX, estimate_type = 'mean', conf_type = 'prev-conf', unit = 'confidence', plot_prior_conf = False, plot_cpp = False)
 
 
+
+save_dataframes_to_csv(dataframes={
+    'task_session_df': task_session_df,
+    'change_point_indices': change_point_indices
+},
+ directory_path=directory_path, 
+ participant_str=selected_participant,
+ condition_str='01', 
+task='NACONF-Supplement'
+)

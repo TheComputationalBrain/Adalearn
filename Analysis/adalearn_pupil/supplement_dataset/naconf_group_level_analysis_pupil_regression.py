@@ -19,7 +19,7 @@ from adalearn_pupil.supplement_dataset.naconf_group_level_analysis_functions imp
 
 from adalearn_pupil.supplement_dataset.naconf_participant_list import usable_participants
 
-from adalearn_pupil.supplement_dataset.naconf_participant_characteristics import base_dir, list_subject_selected, task_sessions, from_session, to_session
+from adalearn_pupil.supplement_dataset.naconf_participant_info_and_parameters import base_dir, list_subject_selected, task_sessions, from_session, to_session
 
 
 task_session_df_list = []

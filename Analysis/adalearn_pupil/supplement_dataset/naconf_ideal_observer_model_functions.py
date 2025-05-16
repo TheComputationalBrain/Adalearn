@@ -10,11 +10,11 @@ import plotly.express as px
 from plotly.subplots import make_subplots
 pio.renderers.default='browser'
 
-from adalearn_pupil.supplement_dataset.naconf_participant_characteristics import base_dir, directory_path, selected_participant, task_sessions
+from adalearn_pupil.supplement_dataset.naconf_participant_info_and_parameters import base_dir, directory_path, selected_participant, task_sessions
 
 sys.path.append('/home/aarongreenhouse-tucknott/Documents/Python/Ada_Learn/Analysis/Misc')
 from IdealObserver import run_inference
-from model_learner import ideal_learner_prob_estimates_from_outcomes, ideal_learner_prob_inference_from_outcomes, ideal_learner_prob_confidence_from_outcomes, ideal_learner_prob_cpp
+from model_learner import ideal_learner_prob_estimates_from_outcomes, ideal_learner_prob_confidence_from_outcomes, ideal_learner_prob_cpp
 
 
 

@@ -1,7 +1,7 @@
 from pathlib import Path
 import pickle
 
-from adalearn_pupil.supplement_dataset.naconf_participant_characteristics import base_dir
+from adalearn_pupil.supplement_dataset.naconf_participant_info_and_parameters import base_dir
 
 
 group_level_folder_path = Path(f'{base_dir}/pupil_analyses_group_level')
