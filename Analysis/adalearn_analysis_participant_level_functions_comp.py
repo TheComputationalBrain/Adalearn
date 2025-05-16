@@ -284,7 +284,10 @@ def learning_rate_by_change_point(participant_str, condition_str, directory_path
     filtered_learning_rate_by_cp = pd.merge(expanded_change_points_df, computational_var_df, left_on=['task_session', 'outcome_num_rel_pos'], right_on=['task_session', 'outcome_num'], how='left', suffixes=('', '_y'))
 
     # Drop unnecessary columns
-    filtered_learning_rate_by_cp.drop(columns=['rel_time', 'outcome_num_y', 'cum_outcome_num_y'], inplace=True)
+    filtered_learning_rate_by_cp.drop(
+        columns=[col for col in filtered_learning_rate_by_cp.columns if col.endswith('_y')],
+        inplace=True
+    )
 
     zero_title = ""
 
@@ -1259,7 +1262,8 @@ def correlation_around_change_point(participant_str, condition_str, directory_pa
 
         lr_around_cp_corr_df = pd.DataFrame({
             'correlation': [lr_around_cp_corr],
-            'p-value': [lr_around_cp_pvalue]
+            'p-value': [lr_around_cp_pvalue],
+            'participant': [participant_str],
         })
 
         title = 'position'

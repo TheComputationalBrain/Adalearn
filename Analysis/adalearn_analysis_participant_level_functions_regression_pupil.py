@@ -34,6 +34,9 @@ def pupil_peristimulus_regression_analysis(participant_str, condition_str, direc
     - pupil_regress_df: pd.DataFrame, contains model evaluation outputs (e.g. intercept, R^2, mse, rmse) for each peristimulus time point.
     - residuals_df: pd.DataFrame, contains model residuals for each peristimulus timepoint. 
     """
+    # Ensuring that the task session data is in the correct format
+    computational_var_df['task_session'] = computational_var_df['task_session'].apply(lambda x: str(x) if not isinstance(x, str) else x).str.zfill(2)
+
     # Check that at least one variable has been added as a predictor
     if variables is None:
         raise ValueError("You must provide at least one variable as a predictor.")
@@ -55,9 +58,9 @@ def pupil_peristimulus_regression_analysis(participant_str, condition_str, direc
             computational_var_df['outcome_num_sqrt'] = computational_var_df['outcome_num'] ** 0.5
             covariates_to_zscore.extend(['outcome_num_sq', 'outcome_num_sqrt'])
 
-        # Compute entropy if 'P1' is in covariates
-        if 'P1' in covariates:
-            p = np.clip(computational_var_df['P1'], 1e-10, 1 - 1e-10)
+        # Compute entropy if 'prior_dist' is in covariates
+        if 'prior_dist' in covariates:
+            p = np.clip(computational_var_df['prior_dist'], 1e-10, 1 - 1e-10)
             computational_var_df['entropy'] = -(p * np.log2(p) + (1 - p) * np.log2(1 - p))
             covariates_to_zscore.extend(['entropy'])
 
@@ -87,7 +90,8 @@ def pupil_peristimulus_regression_analysis(participant_str, condition_str, direc
 
     # Based on the epochs containing too much interpolated data, remove respective rows                
     if outcome_epochs_to_remove is not None:
-        predictors.drop(index=outcome_epochs_to_remove, inplace=True)
+        outcomes_to_remove = outcome_epochs_to_remove['epochs'].values
+        predictors.drop(index=outcomes_to_remove, inplace=True)
     
     # Prepare the pupil data
     epoched_pupil_data = outcome_epoched_pupil_df.copy()
@@ -103,6 +107,9 @@ def pupil_peristimulus_regression_analysis(participant_str, condition_str, direc
     epoched_pupil_data_long = epoched_pupil_data.melt(var_name='epoch', value_name='pupil', ignore_index=False)
     epoched_pupil_data_long = epoched_pupil_data_long[~epoched_pupil_data_long['epoch'].isin(nan_epochs)]
     
+    # Ensure that the index is of the right data type
+    epoched_pupil_data_long['epoch'] = epoched_pupil_data_long['epoch'].astype(int)
+
     # Map variables to pupil data 
     for var in predictors.columns:
         epoched_pupil_data_long[var] = epoched_pupil_data_long['epoch'].map(predictors[var])
@@ -115,8 +122,8 @@ def pupil_peristimulus_regression_analysis(participant_str, condition_str, direc
     # Run regression analyses across duration of the epoch
     for t in time_points:
         data_at_time = epoched_pupil_data_long.loc[t]
-        X = data_at_time[predictors.columns]
-        y = data_at_time['pupil']
+        X = data_at_time[predictors.columns].apply(pd.to_numeric, errors='coerce')
+        y = pd.to_numeric(data_at_time['pupil'], errors='coerce')
         X = sm.add_constant(X)  # Adds intercept term
         
         model = sm.OLS(y, X).fit()
@@ -222,7 +229,8 @@ def pupil_on_learning_rate_regression_analysis(participant_str, condition_str, d
 
     # Based on the epochs containing too much interpolated data, remove respective rows                
     if outcome_epochs_to_remove is not None:
-        df_clean.drop(index=outcome_epochs_to_remove, inplace=True)
+        outcomes_to_remove = outcome_epochs_to_remove['epochs'].values
+        df_clean.drop(index=outcomes_to_remove, inplace=True)
    
     # Preparing pupil data
     pupil_data_bc = outcome_epoched_pupil_df.copy()
@@ -238,7 +246,7 @@ def pupil_on_learning_rate_regression_analysis(participant_str, condition_str, d
     pupil_data_nobc = pupil_data_nobc.set_index('time')
     pupil_data_nobc = pupil_data_nobc.drop(columns=['mean', 'std', 'sem'])
 
-    filtered_pupil_data_nobc = pupil_data_nobc.loc[(pupil_data_nobc.index >= -0.4) & (pupil_data_nobc.index <= 0)]
+    filtered_pupil_data_nobc = pupil_data_nobc.loc[(pupil_data_nobc.index >= -0.25) & (pupil_data_nobc.index <= 0)]
     pupil_variable_nobc = filtered_pupil_data_nobc.mean()
 
     # Creating dataframe for regression 
@@ -271,8 +279,8 @@ def pupil_on_learning_rate_regression_analysis(participant_str, condition_str, d
     lr_regress_df = lr_regress_df.dropna(subset=['learning_rate_zscore'])
 
     # Setting variables for regression analysis
-    X = lr_regress_df[['pupil_response_bc_zscore', 'pupil_response_nobc_zscore']]  
-    y = lr_regress_df['learning_rate_zscore']
+    X = lr_regress_df[['pupil_response_bc_zscore', 'pupil_response_nobc_zscore']].apply(pd.to_numeric, errors='coerce')  
+    y = pd.to_numeric(lr_regress_df['learning_rate_zscore'], errors='coerce')
 
     # Add intercept term
     X = sm.add_constant(X)
@@ -346,8 +354,7 @@ def pupil_on_learning_rate_regression_analysis(participant_str, condition_str, d
 
 
 
-
-def pupil_uncertainty_lr_mediation_analysis(participant_str, condition_str, directory_path, computational_var_df, outcome_epoched_pupil_df, outcome_epochs_to_remove, variables, baseline_corrected = True, exclude_zero=False, plot_mediation_analysis = True):
+def pupil_uncertainty_lr_mediation_analysis(participant_str, condition_str, directory_path, computational_var_df, outcome_epoched_pupil_df, outcome_epoched_pupil_df_nobc, outcome_epochs_to_remove, uncertainty_param, variables, exclude_zero=False):
     """
     Prepares a DataFrame for mediation analysis by selecting relevant computational variables and combining with pupil response, conditioned on whether baseline correction is applied. If baseline corrected data is offered as an input, the pupil response will be the pupil amplitude following stimuli presentation (i.e. max - min within the window 0 - 1.4 s). If not, the average pupil response on non-baseline corrected data will be used (the average is taken across the whole epoch). Returns the output of the mediation analysis.
 
@@ -358,6 +365,7 @@ def pupil_uncertainty_lr_mediation_analysis(participant_str, condition_str, dire
     - directory_path: Path, directory to participant level data 
     - computational_var_df: pd.DataFrame, the dataset containing the variables to be analysed.
     - outcome_epoched_pupil_df: pd.DataFrame, contains transposed epoched data (each column represents one epoch), the calculated mean, variance metrics, and timestamp across epochs.
+    - outcome_epoched_pupil_df_nobc: pd.DataFrame, contains transposed epoched data (each column represents one epoch), the calculated mean, variance metrics, and timestamp across epochs.
     - outcome_epochs_to_remove: list, indices of the epochs that exceed the threshold for the amount of interpolation within.
     - variables: list, names of the variables to be used as predictors in the regression analysis.
     - baseline_corrected: boolean, if true, specifies that the pupil data provided is baseline-corrected and the amplitude of the response will be calculated. If false, non-baseline corrected pupil data provided and the avaerage response will be evaluated (default = True).
@@ -367,261 +375,53 @@ def pupil_uncertainty_lr_mediation_analysis(participant_str, condition_str, dire
     - pd.DataFrame: pd.DataFrame, contains the output statistics of the mediation analysis.
     """
     # Preparing the data. Ensuring that the pupil data and "mediators" are matched in terms of the pupil epochs that can be used (do not excede the threshold of too much interpolated data)  
-    mediators = computational_var_df.copy()
-    mediators.drop(index=outcome_epochs_to_remove, inplace=True)
+    predictors = computational_var_df.copy()
+    outcomes_to_remove = outcome_epochs_to_remove['epochs'].values
+    predictors.drop(index=outcomes_to_remove, inplace=True)
 
-    pupil_data = outcome_epoched_pupil_df.copy()
-    pupil_data = pupil_data.set_index('time')
-    pupil_data = pupil_data.drop(columns=['mean', 'std', 'sem'])
+    pupil_data_bc = outcome_epoched_pupil_df.copy()
+    pupil_data_bc = pupil_data_bc.set_index('time')
+    pupil_data_bc = pupil_data_bc.drop(columns=['mean', 'std', 'sem'])
 
-    # If data baseline corrected specify pupil data to be examined (if yes, then the amplitude after an outcome stimulus used as a marker of phasic pupil activity. If no, then the average of the non-baseline corrected pupil response before the stimulus is used as a marker of tonic activity)
-    if baseline_corrected:
-        filtered_pupil_data_bc = pupil_data.loc[(pupil_data.index >= 0) & (pupil_data.index <= 1.4)]
-        pupil_variable = filtered_pupil_data_bc.max() - filtered_pupil_data_bc.min()
-        title = f"amplitude"
-    else:
-        pupil_variable = pupil_data.mean()
-        title = f"mean"
+    # Baseline corrected specify pupil data to be examined (the average after an outcome within the window of the peristimulus effect is used as a marker of phasic pupil activity.) 
+    filtered_pupil_data_bc = pupil_data_bc.loc[(pupil_data_bc.index >= 0.6) & (pupil_data_bc.index <= 1.4)]
+    pupil_variable_bc = filtered_pupil_data_bc.mean()
+
+    # The average of the non-baseline corrected pupil response before the stimulus (used as a marker of tonic activity)
+    pupil_data_nobc = outcome_epoched_pupil_df_nobc.copy()
+    pupil_data_nobc = pupil_data_nobc.set_index('time')
+    pupil_data_nobc = pupil_data_nobc.drop(columns=['mean', 'std', 'sem'])
+
+    filtered_pupil_data_nobc = pupil_data_nobc.loc[(pupil_data_nobc.index >= -0.25) & (pupil_data_nobc.index <= 0)]
+    pupil_variable_nobc = filtered_pupil_data_nobc.mean()
 
     # Prepare variables for mediation analysis
     scaler = StandardScaler() 
 
-    mediation_df = mediators[variables].copy()
-    if 'lr_zscore_estimate' in mediators:
-        mediation_df['learning_rate_zscore'] = mediators['lr_zscore_estimate']
-    else:
-        print("z-scored learning rate derived from participants' estimates is not in the provided computational_var_df")
-    mediation_df['pupil_response'] = pupil_variable.values 
-    mediation_df['pupil_response_zscore'] = scaler.fit_transform(mediation_df[['pupil_response']]).flatten()
+    mediation_df = predictors[variables].copy()
+    mediation_df['learning_rate_zscore'] = predictors['lr_zscore_estimate']
+    mediation_df['pupil_response_bc'] = pupil_variable_bc.values 
+    mediation_df['pupil_response_bc_zscore'] = scaler.fit_transform(mediation_df[['pupil_response_bc']]).flatten()
 
-    zero_title = "-(all-outcomes)"
+    mediation_df['pupil_response_nobc'] = pupil_variable_nobc.values 
+    mediation_df['pupil_response_nobc_zscore'] = scaler.fit_transform(mediation_df[['pupil_response_nobc']]).flatten()
 
     # Option to exclude no update trials
     if exclude_zero:
         before_zero_filter = len(mediation_df)
-        mediation_df['cleaned_learning_rate_estimate'] = mediators['cleaned_learning_rate_estimate']
+        mediation_df['cleaned_learning_rate_estimate'] = predictors['cleaned_learning_rate_estimate']
         mediation_df = mediation_df[mediation_df['cleaned_learning_rate_estimate'] != 0]
         removed_zero = before_zero_filter - len(mediation_df)
         print(f"Removed {removed_zero} rows where learning rate was 0.")
         # Re z-scoring the data after zero updates removed
         mediation_df['learning_rate_zscore'] = scaler.fit_transform(mediation_df[['cleaned_learning_rate_estimate']]).flatten()
 
-        zero_title = "-(no-update-trials-removed)"
-
-    # Exclude the cleaned learning rate rows that contain NaN
+    print(f'length of mediators before removing NaN values: {len(mediation_df)}')
     mediation_df = mediation_df.dropna(subset=['learning_rate_zscore'])
+    print(f'length of mediators after removing Nan: {len(mediation_df)}')
 
     # Run mediation analysis (currently no option to exclude no update trials)
-    mediation_analysis = pingouin.mediation_analysis(data=mediation_df, x='pupil_response_zscore', m=['conf_zscore', 'cpp_zscore'], y='learning_rate_zscore', covar=None, alpha=0.05, n_boot=500, seed=None, return_dist=False, logreg_kwargs=None)
+    mediation_analysis = pingouin.mediation_analysis(data=mediation_df, x=uncertainty_param, m=['pupil_response_bc', 'pupil_response_nobc'], y='learning_rate_zscore', covar=None, alpha=0.05, n_boot=500, seed=None, return_dist=False, logreg_kwargs=None)
 
-    # Option to plot mediation analysis
-    if plot_mediation_analysis:
-        fig = go.Figure()
-        fig.update_xaxes(range=[0, 10], zeroline=False)
-        fig.update_yaxes(range=[0, 10])
-
-        fig.add_shape(type="line",
-            xref="x", yref="y",
-            x0=1, y0=5, x1=5,
-            y1=8,
-            line=dict(
-                color="Black",
-                width=3,
-            ),
-        )
-
-        fig.add_shape(type="line",
-            xref="x", yref="y",
-            x0=5, y0=8, x1=9,
-            y1=5,
-            line=dict(
-                color="Black",
-                width=3,
-            ),
-        )
-
-        fig.add_shape(type="line",
-            xref="x", yref="y",
-            x0=1, y0=5, x1=5,
-            y1=2,
-            line=dict(
-                color="Black",
-                width=3,
-            ),
-        )
-
-        fig.add_shape(type="line",
-            xref="x", yref="y",
-            x0=5, y0=2, x1=9,
-            y1=5,
-            line=dict(
-                color="Black",
-                width=3,
-            ),
-        )
-
-        fig.add_shape(type="line",
-            xref="x", yref="y",
-            x0=1, y0=5.2, x1=9,
-            y1=5.2,
-            line=dict(
-                color="Black",
-                width=3,
-            ),
-        )
-
-        fig.add_shape(type="line",
-            xref="x", yref="y",
-            x0=1, y0=4.8, x1=9,
-            y1=4.8,
-            line=dict(
-                color="Black",
-                width=3,
-                dash='dash'
-            ),
-        )
-
-        fig.add_shape(type="circle",
-            xref="x", yref="y",
-            fillcolor="PaleTurquoise",
-            x0=0.5, y0=4.5, x1=1.5, y1=5.5,
-            line_color="LightSeaGreen",
-            label=dict(text=f"Pupil: <br>{title}", textangle=0)
-        )
-
-        fig.add_shape(type="circle",
-            xref="x", yref="y",
-            fillcolor="PaleTurquoise",
-            x0=8.5, y0=4.5, x1=9.5, y1=5.5,
-            line_color="LightSeaGreen",
-            label=dict(text="Learning Rate", textangle=0)
-        )
-
-        fig.add_shape(type="circle",
-            xref="x", yref="y",
-            fillcolor="PaleTurquoise",
-            x0=4.5, y0=7.5, x1=5.5, y1=8.5,
-            line_color="LightSeaGreen",
-            label=dict(text="Prior Conf", textangle=0)
-        )
-
-        fig.add_shape(type="circle",
-            xref="x", yref="y",
-            fillcolor="PaleTurquoise",
-            x0=4.5, y0=1.5, x1=5.5, y1=2.5,
-            line_color="LightSeaGreen",
-            label=dict(text="CPP", textangle=0)
-        )
-
-        total_path_text = (
-                        f"Total Effect (C)"
-                        f"<br>Coef = {mediation_analysis['coef'][4]:.2f}"
-                        f"<br>95% CI = {mediation_analysis['CI[2.5%]'][4]:.2f} - {mediation_analysis['CI[97.5%]'][4]:.2f}"
-                        f"<br>p-value = {mediation_analysis['pval'][4]:.3f}"
-                    )
-
-
-        fig.add_annotation(
-            x=5,  
-            y=4,
-            xref="x",
-            yref="y",
-            text=total_path_text,
-            showarrow=False,
-            bordercolor="black",
-            borderwidth=1,
-            borderpad=4,
-            bgcolor="white",
-            opacity=0.8
-        )
-
-        direct_path_text = (
-                        f"Direct Effect (C')"
-                        f"<br>Coef = {mediation_analysis['coef'][5]:.2f}"
-                        f"<br>95% CI = {mediation_analysis['CI[2.5%]'][5]:.2f} - {mediation_analysis['CI[97.5%]'][5]:.2f}"
-                        f"<br>p-value = {mediation_analysis['pval'][5]:.3f}"
-                    )
-
-
-        fig.add_annotation(
-            x=5,  
-            y=6,
-            xref="x",
-            yref="y",
-            text=direct_path_text,
-            showarrow=False,
-            bordercolor="black",
-            borderwidth=1,
-            borderpad=4,
-            bgcolor="white",
-            opacity=0.8
-        )
-
-
-        conf_path_text = (
-                        f"Indirect Effect (Conf)"
-                        f"<br>Coef = {mediation_analysis['coef'][6]:.2f}"
-                        f"<br>95% CI = {mediation_analysis['CI[2.5%]'][6]:.2f} - {mediation_analysis['CI[97.5%]'][6]:.2f}"
-                        f"<br>p-value = {mediation_analysis['pval'][6]:.3f}"
-                    )
-
-
-        fig.add_annotation(
-            x=5,  
-            y=9.2,
-            xref="x",
-            yref="y",
-            text=conf_path_text,
-            showarrow=False,
-            bordercolor="black",
-            borderwidth=1,
-            borderpad=4,
-            bgcolor="white",
-            opacity=0.8
-        )
-
-        cpp_path_text = (
-                        f"Indirect Effect (CPP)"
-                        f"<br>Coef = {mediation_analysis['coef'][7]:.2f}"
-                        f"<br>95% CI = {mediation_analysis['CI[2.5%]'][7]:.2f} - {mediation_analysis['CI[97.5%]'][7]:.2f}"
-                        f"<br>p-value = {mediation_analysis['pval'][7]:.3f}"
-                    )
-
-
-        fig.add_annotation(
-            x=5,  
-            y=0.8,
-            xref="x",
-            yref="y",
-            text=cpp_path_text,
-            showarrow=False,
-            bordercolor="black",
-            borderwidth=1,
-            borderpad=4,
-            bgcolor="white",
-            opacity=0.8
-        )
-
-        fig.update_layout(
-            title=f"Mediation analysis for participant {participant_str} in condition {condition_str} examining pupil {title} response on behavioural learning rate <br> mediated by uncertainty parameters",
-            width=1000, 
-            height=1000,
-            xaxis=dict(showticklabels=False), 
-            yaxis=dict(showticklabels=False)
-        )  
-
-         # Save the figure to the partcipant folder
-        plot_dir = os.path.join(directory_path, f"ses-{condition_str}", "plots")
-
-        os.makedirs(plot_dir, exist_ok=True)
-
-        file_name = f"sub-{participant_str}_ses-{condition_str}_pupil-{title}-uncertainty-lr-mediation{zero_title}.png"
-
-        file_path = os.path.join(plot_dir, file_name)
-
-        fig.write_image(file_path)
-
-
-        fig.show()
     
     return mediation_analysis

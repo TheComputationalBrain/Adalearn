@@ -82,6 +82,9 @@ def load_behavioural_data(participant_str, condition_str, directory_path, condit
     # Concatenate all unpacked DataFrames in the list vertically
     behavioural_df = pd.concat(unpack_dfs, ignore_index=True)
 
+    # Add a cumulative count of the number of outcomes
+    behavioural_df['cum_outcome_num'] = range(len(behavioural_df))
+
     # There was an issue with one participant (sub-09) where a new experiment had to be started during the second half. This means that the task session ids are duplicated between the first and second half of the experiment. This code fixes the data frame to make sure the task session ids are unique.
     duplicated_sessions = behavioural_df.duplicated(subset=['task_session'], keep=False)
 

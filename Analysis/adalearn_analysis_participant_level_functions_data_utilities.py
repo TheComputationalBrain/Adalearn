@@ -676,3 +676,64 @@ def save_dfs_to_csv(participant_str, condition_str,  directory_path, task = 'pup
         file_path = os.path.join(save_dir, f"{name}.csv")
         df.to_csv(file_path, index=False)
         print(f"Saved {name} to {file_path}")
+
+
+
+def save_dataframes_to_csv(dataframes, directory_path, participant_str, condition_str, task):
+    """
+    Saves each DataFrame in `dataframes` to a CSV file in the participant specified directory.
+
+    Parameters:
+    - dataframes: dictionary, where keys are filenames and values are pandas DataFrames.
+    - directory_path: Path, path to the participant level directory
+    - participant_str: string, identifier of participant number (set to 2 numbers)
+    - condition_str: string, identifier of condition order (set to 2 numbers) ** May need to change to denote actual condition in Adalearn VNS study **
+    - task: string, defines the task being analysed
+    """
+    save_dir = os.path.join(directory_path, f"ses-{condition_str}", "csv_files")
+    os.makedirs(save_dir, exist_ok=True)
+
+    for name, df in dataframes.items():
+        if isinstance(df, dict):
+            print(f"Skipping {name} (dict object)")
+            continue
+        if not isinstance(df, pd.DataFrame):
+            print(f"Skipping {name} (not a DataFrame)")
+            continue
+        file_path = os.path.join(save_dir, f"sub_{participant_str}-ses_{condition_str}-task_Adalearn_{task}-{name}.csv")
+        df.to_csv(file_path, index=False)
+        print(f"Saved {name} to {file_path}")
+
+
+
+def load_csvs(directory_path, condition_str, substrings):
+    """
+    Loads CSV files whose filenames contain any of the given substrings.
+
+    Parameters:
+    - directory_path (str): Base directory where the files are stored.
+    - condition_str (str): Session or condition identifier (e.g., "01").
+    - substrings (list): List of substrings to search for in filenames.
+
+    Returns:
+    - dict: Dictionary of DataFrames with keys matching the matched filenames (without .csv).
+    """
+    load_dir = os.path.join(directory_path, f"ses-{condition_str}", "csv_files")
+    loaded_dataframes = {}
+
+    if not os.path.exists(load_dir):
+        print(f"Directory does not exist: {load_dir}")
+        return loaded_dataframes
+
+    # List all .csv files
+    for file in os.listdir(load_dir):
+        if file.endswith('.csv'):
+            for sub in substrings:
+                if sub in file:
+                    file_path = os.path.join(load_dir, file)
+                    df = pd.read_csv(file_path)
+                    loaded_dataframes[sub] = df
+                    print(f"Loaded {sub} from {file_path}")
+                    break
+
+    return loaded_dataframes
