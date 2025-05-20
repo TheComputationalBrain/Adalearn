@@ -13,6 +13,29 @@ from preprocess_eyedata import pupil
 
 
 
+def check_pupil_file_triggers(file_path, threshold=2):
+    """
+    Function to check whether a pupil file has an obvious issue. This function reads in the .txt file and checks whether the number of triggers in the file that are consecutive with each other does not exceed a set threshold. If yes, may be provide grounds to remove this file as something has obviously gone wrong with the data capture.
+
+    Parameters:
+    - file_path: string or Path, reprsents the directory of the file.
+    - threshold: int, number of consecutive triggers deemed to signal an issue with the file. 
+
+    Returns:
+    - consecutive_count > thrshold: boolean, if true, the number of consecutive triggers in the file exceeds the predefined threshold
+    """
+    with open(file_path, 'r') as f:
+        lines = f.readlines()
+
+    consecutive_count = 0
+    for i in range(1, len(lines)):
+        if 'MSG' in lines[i-1] and 'MSG' in lines[i]:
+            consecutive_count += 1
+
+    return consecutive_count > threshold
+
+
+
 def pupil_data_file_check(data_tob, pupil_trig_ses, blink_ses, pupil_ses, pupil_end, file_path, session, file_size_threshold = 2, plot_original_data = True, plot_reduced_data = True):
     """
     Function to ensure that the pupil data loaded from files does not contain erroneous data. Also checks the number of triggers within the file.  Currently function is based on the large files that were found after the first couple of participants, but should be adapted to rectify any other issues that crop up. 

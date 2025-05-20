@@ -251,7 +251,6 @@ def learning_rate_by_change_point(participant_str, condition_str, directory_path
     - filtered_learning_rate_by_cp: pd.DataFrame, contains learning rate data within defined bounds (window) around each change point.
     - averaged_learning_rate_by_cp: pd.DataFrame, contains calculated mean, std, count and sem of learning rate at each relative trial position for each identified change point. 
     """
-  
     # Creating dataframe to store data around defined   
     expanded_change_points = []
 

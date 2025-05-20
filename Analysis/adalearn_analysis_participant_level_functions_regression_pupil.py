@@ -35,58 +35,61 @@ def pupil_peristimulus_regression_analysis(participant_str, condition_str, direc
     - residuals_df: pd.DataFrame, contains model residuals for each peristimulus timepoint. 
     """
     # Ensuring that the task session data is in the correct format
-    computational_var_df['task_session'] = computational_var_df['task_session'].apply(lambda x: str(x) if not isinstance(x, str) else x).str.zfill(2)
+    #computational_var_df['task_session'] = computational_var_df['task_session'].apply(lambda x: str(x) if not isinstance(x, str) else x).str.zfill(2)
 
     # Check that at least one variable has been added as a predictor
     if variables is None:
         raise ValueError("You must provide at least one variable as a predictor.")
+        
     
     # This ensures that variable titles are always entered as a list of strings
     if isinstance(variables, str):
         variables = [variables]
-    
+      
     # Obtain the columns related to the predictors defined
     predictors = computational_var_df[variables].copy()
+
+    variables_to_zscore = list(variables)
+    variables_to_zscore.extend(list(covariates))
         
     # Handling of other covariates to be included (z-scoring etc) 
     if covariates is not None:
-        scaler = StandardScaler()
-        covariates_to_zscore = list(covariates)  
+        scaler = StandardScaler()  
         # Add square and sqrt of outcome_num
         if 'outcome_num' in covariates:
             computational_var_df['outcome_num_sq'] = computational_var_df['outcome_num'] ** 2
             computational_var_df['outcome_num_sqrt'] = computational_var_df['outcome_num'] ** 0.5
-            covariates_to_zscore.extend(['outcome_num_sq', 'outcome_num_sqrt'])
+            variables_to_zscore.extend(['outcome_num_sq', 'outcome_num_sqrt'])
 
         # Compute entropy if 'prior_dist' is in covariates
         if 'prior_dist' in covariates:
             p = np.clip(computational_var_df['prior_dist'], 1e-10, 1 - 1e-10)
             computational_var_df['entropy'] = -(p * np.log2(p) + (1 - p) * np.log2(1 - p))
-            covariates_to_zscore.extend(['entropy'])
+            variables_to_zscore.extend(['entropy'])
 
         # Add the previous confidence value in as a covariate
         if 'previous_conf' in covariates:
-            covariates_to_zscore.remove('previous_conf')
+            variables_to_zscore.remove('previous_conf')
             computational_var_df['previous_conf'] = computational_var_df['prior_conf'].shift(1).fillna(0)
-            covariates_to_zscore.append('previous_conf')
+            variables_to_zscore.append('previous_conf')
 
         # Add the previous change point probability value in as a covariate
         if 'previous_cpp' in covariates:
-            covariates_to_zscore.remove('previous_cpp')
+            variables_to_zscore.remove('previous_cpp')
             computational_var_df['previous_cpp'] = computational_var_df['cpp'].shift(1).fillna(0)
-            covariates_to_zscore.append('previous_cpp')
+            variables_to_zscore.append('previous_cpp')
 
-        for cov in covariates_to_zscore:
-            if cov not in computational_var_df.columns:
-                raise ValueError(f"Covariate '{cov}' not found in computational_var_df.")
+        for var in variables_to_zscore:
+            if var not in computational_var_df.columns:
+                raise ValueError(f"Covariate '{var}' not found in computational_var_df.")
 
-            if computational_var_df[cov].dtype in ['int64', 'float64']:
-                print('processing covariates...')
-                print(f'z-scoring {cov}')  
-                predictors[cov] = scaler.fit_transform(computational_var_df[[cov]]).flatten()
+            if computational_var_df[var].dtype in ['int64', 'float64']:
+                print('processing variables...')
+                print(f'z-scoring {var}')  
+                predictors[var] = scaler.fit_transform(computational_var_df[[var]]).flatten()
             else:
-                print(f'{cov} not numeric and not z-scored')
-                predictors[cov] = computational_var_df[cov]
+                print(f'{var} not numeric and not z-scored')
+                predictors[var] = computational_var_df[var]
 
     # Based on the epochs containing too much interpolated data, remove respective rows                
     if outcome_epochs_to_remove is not None:
@@ -95,7 +98,7 @@ def pupil_peristimulus_regression_analysis(participant_str, condition_str, direc
     
     # Prepare the pupil data
     epoched_pupil_data = outcome_epoched_pupil_df.copy()
-    time = epoched_pupil_data['time']
+    time = epoched_pupil_data['time'].values.astype(float)
     time_points = epoched_pupil_data.index
     epoched_pupil_data.drop(columns=['mean', 'std', 'sem', 'time'], inplace=True)
 
@@ -136,7 +139,7 @@ def pupil_peristimulus_regression_analysis(participant_str, condition_str, direc
         residuals_by_time.append(residuals)
         
         # Store the outputs for each epoch analysis
-        model_outputs['time'].append(t)
+        model_outputs['time'].append(time)
         model_outputs['intercept'].append(model.params['const'])
         model_outputs['r_squared'].append(model.rsquared)
         model_outputs['mean_squared_error'].append(mean_squared_error(y, model.fittedvalues))
