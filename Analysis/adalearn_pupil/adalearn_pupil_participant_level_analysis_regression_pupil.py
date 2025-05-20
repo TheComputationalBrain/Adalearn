@@ -17,11 +17,11 @@ dataframes = load_csvs(directory_path=directory_path, condition_str=condition_st
 
 
 
-conf_cpp_coef, pupil_regress_df, residuals_df = pupil_peristimulus_regression_analysis(participant_str=participant_str, condition_str=condition_str, directory_path=directory_path, computational_var_df=dataframes['computational_var_df'], outcome_epoched_pupil_df=dataframes['outcome_epoched_pupil_df'], outcome_epochs_to_remove=dataframes['outcome_epochs_to_remove_df'], variables=['conf_zscore', 'cpp_zscore'], covariates = ['outcome', 'outcome_num', 'task_session', 'prior_dist'], baseline_corrected=True,  plot_regression_analysis=False)
+conf_cpp_coef, pupil_regress_df, residuals_df = pupil_peristimulus_regression_analysis(participant_str=participant_str, condition_str=condition_str, directory_path=directory_path, computational_var_df=dataframes['computational_var_df'], outcome_epoched_pupil_df=dataframes['outcome_epoched_pupil_df'], outcome_epochs_to_remove=dataframes['outcome_epochs_to_remove_df'], variables=['prior_conf', 'cpp'], covariates = ['outcome', 'outcome_num', 'task_session', 'prior_dist'], baseline_corrected=True,  plot_regression_analysis=False)
 
 
 
-conf_cpp_coef_nobc, pupil_regress_df_nobc, residuals_df_nobc = pupil_peristimulus_regression_analysis(participant_str=participant_str, condition_str=condition_str, directory_path=directory_path, computational_var_df=dataframes['computational_var_df'], outcome_epoched_pupil_df=dataframes['outcome_epoched_pupil_nobc_df'], outcome_epochs_to_remove=dataframes['outcome_epochs_to_remove_nobc_df'], variables=['conf_zscore', 'cpp_zscore'], covariates = ['outcome', 'outcome_num', 'task_session', 'prior_dist'], baseline_corrected=False, plot_regression_analysis=False)
+conf_cpp_coef_nobc, pupil_regress_df_nobc, residuals_df_nobc = pupil_peristimulus_regression_analysis(participant_str=participant_str, condition_str=condition_str, directory_path=directory_path, computational_var_df=dataframes['computational_var_df'], outcome_epoched_pupil_df=dataframes['outcome_epoched_pupil_nobc_df'], outcome_epochs_to_remove=dataframes['outcome_epochs_to_remove_nobc_df'], variables=['prior_conf', 'cpp'], covariates = ['outcome', 'outcome_num', 'task_session', 'prior_dist'], baseline_corrected=False, plot_regression_analysis=False)
 
 
 
