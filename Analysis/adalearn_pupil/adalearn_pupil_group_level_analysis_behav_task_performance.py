@@ -4,6 +4,7 @@
 import pandas as pd
 import numpy as np
 from scipy import stats
+from statsmodels.stats.anova import AnovaRM
 from pathlib import Path
 import plotly.io as pio
 import plotly.graph_objects as go
@@ -41,6 +42,8 @@ for participant in participant_list:
 
     mean_abs_error_df = behavioural_performance_analysis(participant_str=participant_str, condition_str=condition_str, directory_path=directory_path, behavioural_df=behavioural_df, plot_performance=False)
 
+    mean_abs_error_df['coef_variation'] = mean_abs_error_df['std_abs_error']/ mean_abs_error_df['mean_abs_error']
+
     mean_abs_error_df['participant'] = participant_str
 
     group_mean_error_df_list.append(mean_abs_error_df)
@@ -59,9 +62,20 @@ group_level_behavioural_df = pd.concat(group_behavioural_df_list, ignore_index=T
 group_level_mean_error_df = pd.concat(group_mean_error_df_list, ignore_index=True)
 group_level_change_point_indices_df = pd.concat(group_change_point_indices_list, ignore_index=True)
 
+# Running one-way ANOVA on performance metrics
+anova_mean_error = AnovaRM(data=group_level_mean_error_df, depvar='mean_abs_error', subject='participant', within=['task_session']).fit()
+
+print('Outcome of one-way repeated measures ANOVA on mean absolute error...')
+print(f'\n{anova_mean_error}')
+
+anova_mean_cv = AnovaRM(data=group_level_mean_error_df, depvar='coef_variation', subject='participant', within=['task_session']).fit()
+
+print('Outcome of one-way repeated measures ANOVA on mean coefficient of variation...')
+print(f'\n{anova_mean_cv}')
 
 # Saving group level data to .csv files
 save_sample_dataframes_to_csv(dataframes={
+    "sample_level_analysis_behavioural_df": group_level_behavioural_df,
     "sample_level_analysis_mean_abs_error_df": group_level_mean_error_df,
     "sample_level_analysis_change_point_indices_df": group_level_change_point_indices_df
     }, 

@@ -12,11 +12,11 @@ import plotly.express as px
 from plotly.subplots import make_subplots
 pio.renderers.default='browser'
 
-from adalearn_analysis_participant_level_functions_regression_pupil import pupil_peristimulus_regression_analysis, pupil_on_learning_rate_regression_analysis, pupil_uncertainty_lr_mediation_analysis
+from adalearn_analysis_participant_level_functions_regression_pupil import pupil_peristimulus_regression_analysis
 
-from adalearn_analysis_participant_level_functions_pupil import pupil_response_around_change_point
+from adalearn_analysis_group_level_functions_data_utilities import get_participant_numbers, load_sample_csvs, save_sample_dataframes_to_csv 
 
-from adalearn_analysis_group_level_functions_data_utilities import get_participant_numbers, process_epoched_df, load_sample_csvs, save_sample_dataframes_to_csv 
+from adalearn_analysis_group_level_functions_statistical_analysis import compute_group_level_permutation_cluster_test
 
 from adalearn_pupil.adalearn_pupil_participant_info_and_parameters import base_dir, condition_str
 
@@ -90,7 +90,7 @@ for participant in participant_list:
 
     # Running peristimulus regression analysis
     print(f"\nRunning regression on baseline corrected pupil signal...")   
-    conf_cpp_coef, pupil_regress_df, residuals_df = pupil_peristimulus_regression_analysis(participant_str=participant, condition_str=condition_str, directory_path=directory_path, computational_var_df=comp_df, outcome_epoched_pupil_df=epoch_data, outcome_epochs_to_remove=epochs_to_remove, variables=['prior_conf', 'cpp'], covariates = ['outcome', 'outcome_num', 'task_session', 'prior_dist'], baseline_corrected=True,  plot_regression_analysis=False)
+    conf_cpp_coef, pupil_regress_df, residuals_df = pupil_peristimulus_regression_analysis(participant_str=participant, condition_str=condition_str, directory_path=directory_path, computational_var_df=comp_df, outcome_epoched_pupil_df=epoch_data, outcome_epochs_to_remove=epochs_to_remove, variables=['prior_conf', 'cpp'], covariates = ['outcome', 'outcome_num', 'task_session', 'prior'], baseline_corrected=True,  plot_regression_analysis=False)
 
     conf_cpp_coef['participant'] = participant
     conf_cpp_coef['count'] = range(len(conf_cpp_coef))
@@ -98,7 +98,7 @@ for participant in participant_list:
     pupil_regress_coef_df_list.append(conf_cpp_coef)
    
     print(f"\nRunning regression on non-baseline corrected pupil signal...")
-    conf_cpp_coef_nobc, pupil_regress_nobc_df, residuals_nobc_df = pupil_peristimulus_regression_analysis(participant_str=participant, condition_str=condition_str, directory_path=directory_path, computational_var_df=comp_df, outcome_epoched_pupil_df=epoch_nobc_data, outcome_epochs_to_remove=epochs_to_remove, variables=['prior_conf', 'cpp'], covariates = ['outcome', 'outcome_num', 'task_session', 'prior_dist'], baseline_corrected=True,  plot_regression_analysis=False)
+    conf_cpp_coef_nobc, pupil_regress_nobc_df, residuals_nobc_df = pupil_peristimulus_regression_analysis(participant_str=participant, condition_str=condition_str, directory_path=directory_path, computational_var_df=comp_df, outcome_epoched_pupil_df=epoch_nobc_data, outcome_epochs_to_remove=epochs_to_remove, variables=['prior_conf', 'cpp'], covariates = ['outcome', 'outcome_num', 'task_session', 'prior'], baseline_corrected=False,  plot_regression_analysis=False)
 
     conf_cpp_coef_nobc['participant'] = participant
     conf_cpp_coef_nobc['count'] = range(len(conf_cpp_coef_nobc))
@@ -109,7 +109,12 @@ for participant in participant_list:
 pupil_regress_coef_df = pd.concat(pupil_regress_coef_df_list, ignore_index=True)
 pupil_regress_coef_nobc_df = pd.concat(pupil_regress_coef_nobc_df_list, ignore_index=True)
 
-# Creating a dataframe contain the averaged response across time points within the epoch
+# Running cluster permutation analysis on signals
+cluster_based_permutation_results, significant_clusters_df = compute_group_level_permutation_cluster_test(group_level_regression_coefs_df=pupil_regress_coef_df, vars = ['prior_conf', 'cpp'], alpha=0.05)
+
+cluster_based_permutation_results_nobc, significant_clusters_nobc_df = compute_group_level_permutation_cluster_test(group_level_regression_coefs_df=pupil_regress_coef_nobc_df, vars=['prior_conf', 'cpp'], alpha=0.05)
+
+# Creating a dataframe to contain the averaged response across time points within the epoch
 print(f'\n Creating dataframe containing the averaged coefficients for the baseline corrected pupil signal')
 coefs_dict = {'cpp': [], 'cpp_error': [], 'conf': [], 'conf_error': [], 'time': []}
 
@@ -148,12 +153,15 @@ for count in pupil_regress_coef_nobc_df['count'].unique():
 
 coefs_nobc_df = pd.DataFrame(coefs_nobc_dict)
 
+
 # Saving dataframes
 save_sample_dataframes_to_csv(dataframes={
     'pupil_regress_coef_df': pupil_regress_coef_df,
     'pupil_regress_coef_nobc_df': pupil_regress_coef_nobc_df,
     'coefs_df': coefs_df,
-    'coefs_nobc_df': coefs_nobc_df
+    'coefs_nobc_df': coefs_nobc_df,
+    'cluster_permutation_analysis': significant_clusters_df,
+    'cluster_permutation_analysis_nobc': significant_clusters_nobc_df
 },
 directory_path=base_dir,
 condition_str=condition_str,

@@ -8,7 +8,7 @@ from datetime import datetime
 
 from adalearn_analysis_participant_level_functions_participant_info import read_tsv_files
 
-from adalearn_pupil.adalearn_pupil_participant_characteristics import base_dir
+from adalearn_pupil.adalearn_pupil_participant_info_and_parameters import base_dir
 
 
 

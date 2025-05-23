@@ -103,7 +103,7 @@ for participant in participant_list:
     # Processing epoch dataframes to make them aligned across participants (transposing them so time x epoch, after removing statistical)
     descriptive_stats_df, csv_pupil_epoch_df, columns_df = process_epoched_df(epoched_df=outcome_epoched_pupil_df, participant_str=participant_str)
 
-    descriptive_stats_nobc_df, csv_pupil_epoch_nobc_df, columns_nobc_df = process_epoched_df(epoched_df=outcome_epoched_pupil_df, participant_str=participant_str)
+    descriptive_stats_nobc_df, csv_pupil_epoch_nobc_df, columns_nobc_df = process_epoched_df(epoched_df=outcome_epoched_pupil_nobc_df, participant_str=participant_str)
 
 
     dfs = [

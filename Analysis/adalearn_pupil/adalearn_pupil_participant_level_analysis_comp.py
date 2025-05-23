@@ -7,7 +7,7 @@ from adalearn_analysis_participant_level_functions_comp import compute_surprise_
 
 from adalearn_analysis_participant_level_functions_data_utilities import save_dataframes_to_csv, load_csvs
 
-from adalearn_pupil.adalearn_pupil_participant_info_and_parameters import directory_path, participant_str, condition_str, P_C, P1_MIN, P1_MAX, ESTIMATE_PRIOR
+from adalearn_pupil.adalearn_pupil_participant_info_and_parameters import directory_path, participant_str, condition_str, P_C, P1_MIN, P1_MAX, ESTIMATE_PRIOR, RESOL
 
 
 
@@ -27,7 +27,7 @@ computational_var_df,_ = compute_surprise_from_observations(participant_str=part
 
 
 
-computational_var_df = compute_prior_conf_and_cpp_from_observations(participant_str=participant_str, condition_str=condition_str,directory_path=directory_path, computational_var_df=computational_var_df, change_point_indices_df=dataframes['change_point_indices'], p_c=P_C, p1_min=P1_MIN, p1_max=P1_MAX, estimate_type='mean', conf_type='prev-conf', unit='confidence', plot_distribution_mean=False, plot_prior_conf=False, plot_cpp=False)
+computational_var_df = compute_prior_conf_and_cpp_from_observations(participant_str=participant_str, condition_str=condition_str,directory_path=directory_path, computational_var_df=computational_var_df, change_point_indices_df=dataframes['change_point_indices'], resol=RESOL, p_c=P_C, p1_min=P1_MIN, p1_max=P1_MAX, conf_type='prev-conf', unit='confidence', plot_distribution_mean=False, plot_prior_conf=False, plot_cpp=False)
 
 
 
