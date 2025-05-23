@@ -1,6 +1,7 @@
 import os
 import re
 import pandas as pd
+from collections import defaultdict
 
 def get_participant_numbers(directory):
     """
@@ -37,21 +38,32 @@ def load_sample_csvs(directory_path, substrings):
     """
     load_dir = os.path.join(directory_path, "group_csv_files")
     loaded_dataframes = {}
+    match_counts = defaultdict(int)
 
     if not os.path.exists(load_dir):
         print(f"Directory does not exist: {load_dir}")
         return loaded_dataframes
 
-    # List all .csv files
+    substrings = sorted(substrings, key=len, reverse=True)  # sort by descending length
+
     for file in os.listdir(load_dir):
         if file.endswith('.csv'):
+            matched = False
             for sub in substrings:
                 if sub in file:
                     file_path = os.path.join(load_dir, file)
                     df = pd.read_csv(file_path)
-                    loaded_dataframes[sub] = df
-                    print(f"Loaded {sub} from {file_path}")
-                    break
+
+                    # Track multiple matches for same substring
+                    match_counts[sub] += 1
+                    suffix = f"_{match_counts[sub]}" if match_counts[sub] > 1 else ""
+                    key = f"{sub}{suffix}"
+
+                    loaded_dataframes[key] = df
+                    print(f"Loaded {key} from {file_path}")
+                    matched = True
+                    break  # stop after the first matching (longest) substring
+
 
     return loaded_dataframes
 

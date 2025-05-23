@@ -126,24 +126,21 @@ def plot_session_behav_comp(participant_str, condition_str, directory_path, beha
 
     if turn_on_plotting:
         fig = make_subplots(
-            rows=4, 
+            rows=3, 
             cols=2, 
             shared_xaxes=False, 
             vertical_spacing=0.1, 
             specs=[
                 [{"colspan": 2}, None],    
                 [{}, {}],                   
-                [{}, {}],                   
-                [{}, {}]                    
+                [{}, {}]                                   
             ],
             subplot_titles=(
-                "Participant's estimates (green), ideal observer model estimates (red), hidden values (blue), and outcomes",
+                "",
                 "Participant's learning rate", 
-                "Ideal observer model learning rate", 
+                "Model learning rate", 
                 "Change point probability", 
-                "Prior confidence",
-                "Surprise",
-                "Information gain (DKL)"
+                "Prior confidence"
             )
         )
 
@@ -153,7 +150,7 @@ def plot_session_behav_comp(participant_str, condition_str, directory_path, beha
                 x=task_session_behav_df['outcome_num'],
                 y=task_session_behav_df['P1'],
                 mode='lines',
-                line=dict(color='blue'),
+                line=dict(color='rgba(0,120,255,0.4)'),
                 name='Hidden proportion'
             ), row=1, col=1
         )
@@ -162,7 +159,7 @@ def plot_session_behav_comp(participant_str, condition_str, directory_path, beha
                 x=task_session_behav_df['outcome_num'],
                 y=task_session_behav_df['estimate'],
                 mode='lines',
-                line=dict(color='green'),
+                line=dict(color='rgba(220, 120, 0, 0.8)'),
                 name='Participant estimate'
             ), row=1, col=1
         )
@@ -171,8 +168,8 @@ def plot_session_behav_comp(participant_str, condition_str, directory_path, beha
                 x=task_session_behav_df['outcome_num'],
                 y=task_session_behav_df['ideal_observer'],
                 mode='lines',
-                line=dict(color='red'),
-                name='Ideal observer estimate'
+                line=dict(color='rgba(0, 130, 150, 0.8)'),
+                name='Model estimate'
             ), row=1, col=1
         )
         outcome_colors = ['blue' if val == 1 else 'yellow' for val in task_session_behav_df['outcome']]
@@ -182,7 +179,8 @@ def plot_session_behav_comp(participant_str, condition_str, directory_path, beha
                 y=[0] * len(task_session_behav_df['outcome']),
                 mode='markers',
                 marker=dict(color=outcome_colors),
-                name='Outcomes'
+                name='Outcomes',
+                showlegend=False
             ), row=1, col=1
         )
 
@@ -191,8 +189,10 @@ def plot_session_behav_comp(participant_str, condition_str, directory_path, beha
             go.Scatter(
                 x=task_session_comp_df['outcome_num'], 
                 y=task_session_comp_df['cleaned_learning_rate_estimate'], 
-                mode='lines+markers', 
-                name="Participant's learning rate"
+                mode='lines+markers',
+                marker=dict(color='rgba(220, 120, 0, 0.8)'), 
+                name="Participant's learning rate",
+                showlegend=False
             ), row=2, col=1
         )
         for cp in task_session_cp['outcome_num']:
@@ -209,8 +209,10 @@ def plot_session_behav_comp(participant_str, condition_str, directory_path, beha
             go.Scatter(
                 x=task_session_comp_df['outcome_num'], 
                 y=task_session_comp_df['cleaned_learning_rate_ideal_observer'], 
-                mode='lines+markers', 
-                name='Ideal observer model learning rate'
+                mode='lines+markers',
+                marker=dict(color='rgba(0, 130, 150, 0.8)'), 
+                name='Ideal observer model learning rate',
+                showlegend=False
             ), row=2, col=2
         )
         for cp in task_session_cp['outcome_num']:
@@ -227,8 +229,10 @@ def plot_session_behav_comp(participant_str, condition_str, directory_path, beha
             go.Scatter(
                 x=task_session_comp_df['outcome_num'], 
                 y=task_session_comp_df['cpp'], 
-                mode='lines+markers', 
-                name='Change point probability'
+                mode='lines+markers',
+                marker=dict(color='rgba(0, 130, 150, 0.8)'), 
+                name='Change point probability',
+                showlegend=False
             ), row=3, col=1
         )
         for cp in task_session_cp['outcome_num']:
@@ -245,8 +249,10 @@ def plot_session_behav_comp(participant_str, condition_str, directory_path, beha
             go.Scatter(
                 x=task_session_comp_df['outcome_num'], 
                 y=task_session_comp_df['prior_conf'], 
-                mode='lines+markers', 
-                name='Prior confidence'
+                mode='lines+markers',
+                marker=dict(color='rgba(0, 130, 150, 0.8)'), 
+                name='Prior confidence',
+                showlegend=False
             ), row=3, col=2
         )
         for cp in task_session_cp['outcome_num']:
@@ -258,43 +264,6 @@ def plot_session_behav_comp(participant_str, condition_str, directory_path, beha
                 xref='x5', yref='y5'
             )
 
-        # Subplot 6: Surprise
-        fig.add_trace(
-            go.Scatter(
-                x=task_session_comp_df['outcome_num'], 
-                y=task_session_comp_df['surprise'], 
-                mode='lines+markers', 
-                name='Surprise'
-            ), row=4, col=1
-        )
-        for cp in task_session_cp['outcome_num']:
-            fig.add_shape(
-                type="line", 
-                x0=cp, x1=cp, 
-                y0=0, y1=task_session_comp_df['surprise'].max(), 
-                line=dict(color="grey", width=2, dash="dash"),
-                xref='x6', yref='y6'
-            )
-
-        # Subplot 7: Information gain (DKL)
-        fig.add_trace(
-            go.Scatter(
-                x=task_session_comp_df['outcome_num'], 
-                y=task_session_comp_df['dkl'], 
-                mode='lines+markers', 
-                name='Information gain (DKL)'
-            ), row=4, col=2
-        )
-        for cp in task_session_cp['outcome_num']:
-            fig.add_shape(
-                type="line", 
-                x0=cp, x1=cp, 
-                y0=0, y1=task_session_comp_df['dkl'].max(), 
-                line=dict(color="grey", width=2, dash="dash"),
-                xref='x7', yref='y7'
-            )
-
-
         # Update layout
         fig.update_layout(
             title=f"Behavioural and computationally-derived parameters obtained from task session {task_session} for participant {participant_str} in condition {condition_str}",
@@ -303,7 +272,7 @@ def plot_session_behav_comp(participant_str, condition_str, directory_path, beha
             height=1200,
             width=1800,
             plot_bgcolor='rgba(255, 255, 255, 1)',
-            showlegend=False,
+            showlegend=True,
             margin=dict(l=50, r=50, t=50, b=50),
             hovermode="closest"
         )
@@ -314,21 +283,18 @@ def plot_session_behav_comp(participant_str, condition_str, directory_path, beha
                 fig.update_yaxes(showline=True, linewidth=1, linecolor='black', row=r, col=c)
 
         # Add axis titles
-        fig.update_xaxes(title_text="Outcome Number", row=1, col=1)
-        fig.update_xaxes(title_text="Outcome Number", row=2, col=1)
-        fig.update_xaxes(title_text="Outcome Number", row=2, col=2)
-        fig.update_xaxes(title_text="Outcome Number", row=3, col=1)
-        fig.update_xaxes(title_text="Outcome Number", row=3, col=2)
-        fig.update_xaxes(title_text="Outcome Number", row=4, col=1)
-        fig.update_xaxes(title_text="Outcome Number", row=4, col=2)
+        fig.update_xaxes(title_text="Outcome", row=1, col=1)
+        fig.update_xaxes(title_text="Outcome", row=2, col=1)
+        fig.update_xaxes(title_text="Outcome", row=2, col=2)
+        fig.update_xaxes(title_text="Outcome", row=3, col=1)
+        fig.update_xaxes(title_text="Outcome", row=3, col=2)
 
-        fig.update_yaxes(title_text="Hidden Values / Estimates", row=1, col=1)
-        fig.update_yaxes(title_text="Learning Rate", row=2, col=1)
-        fig.update_yaxes(title_text="Learning Rate", row=2, col=2)
-        fig.update_yaxes(title_text="Change Point Probability", row=3, col=1)
-        fig.update_yaxes(title_text="Prior Confidence", row=3, col=2)
-        fig.update_yaxes(title_text="Surprise", row=4, col=1)
-        fig.update_yaxes(title_text="Information Gain (DKL)", row=4, col=2)
+
+        fig.update_yaxes(title_text="Proportion(Blue)", row=1, col=1)
+        fig.update_yaxes(title_text="Learning rate", row=2, col=1)
+        fig.update_yaxes(title_text="Learning rate", row=2, col=2)
+        fig.update_yaxes(title_text="Change point probability", row=3, col=1)
+        fig.update_yaxes(title_text="Prior confidence", row=3, col=2)
 
         # Save the figure to the partcipant folder
         plot_dir = os.path.join(directory_path, f"ses-{condition_str}", "plots")

@@ -62,8 +62,8 @@ def pupil_peristimulus_regression_analysis(participant_str, condition_str, direc
             variables_to_zscore.extend(['outcome_num_sq', 'outcome_num_sqrt'])
 
         # Compute entropy if 'prior_dist' is in covariates
-        if 'prior_dist' in covariates:
-            p = np.clip(computational_var_df['prior_dist'], 1e-10, 1 - 1e-10)
+        if 'prior' in covariates:
+            p = np.clip(computational_var_df['prior'], 1e-10, 1 - 1e-10)
             computational_var_df['entropy'] = -(p * np.log2(p) + (1 - p) * np.log2(1 - p))
             variables_to_zscore.extend(['entropy'])
 
@@ -78,6 +78,10 @@ def pupil_peristimulus_regression_analysis(participant_str, condition_str, direc
             variables_to_zscore.remove('previous_cpp')
             computational_var_df['previous_cpp'] = computational_var_df['cpp'].shift(1).fillna(0)
             variables_to_zscore.append('previous_cpp')
+
+        variables_to_zscore = list(set(variables_to_zscore) - set(['prior_dist']))
+
+        print(f"variables to zscore: {variables_to_zscore}")
 
         for var in variables_to_zscore:
             if var not in computational_var_df.columns:

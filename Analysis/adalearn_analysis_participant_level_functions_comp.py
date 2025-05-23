@@ -16,6 +16,7 @@ pio.renderers.default='browser'
 
 sys.path.append('/home/aarongreenhouse-tucknott/Documents/Python/Ada_Learn/Analysis/Misc')
 from IdealObserver import run_inference
+from Inference_ChangePoint import compute_inference, likelihood_table, get_clipped_grid_indices
 from model_learner import ideal_learner_prob_estimates_from_outcomes, ideal_learner_prob_inference_from_outcomes, ideal_learner_prob_confidence_from_outcomes, ideal_learner_prob_cpp
 
 
@@ -597,7 +598,59 @@ def compute_surprise_from_observations(participant_str, condition_str, directory
 
 
 
-def compute_prior_conf_and_cpp_from_observations(participant_str, condition_str, directory_path, computational_var_df, change_point_indices_df, p_c, p1_min, p1_max, estimate_type, conf_type, unit = 'confidence', plot_distribution_mean = False, plot_prior_conf = False, plot_cpp = False):
+def extract_prior_means(seq, resol, p_c, p1_min, p1_max):
+    """
+    Parameters:
+    - seq: list or np.array, describes the outcome within a sequence (binary value either 0 for yellow or 1 for blue)
+    - resol: int, the resolution of the decretized grid
+    - p_c: float, true change point probability (should be 0.05)
+    - p1_min: float, the minimum value of the Bernoulli parameter (used to clip the Dirichlet prior distribution) (should be 0.1)
+    - p1_max: float, the maximum value of the Bernoulli parameter (used to clip the Dirichlet prior distribution) (should be 0.9)
+    """
+    # Extract marginal alpha, forward updated alpha and initial alpha (alpha = prior)
+    marg_Alpha, Alpha, Alpha0 = compute_inference(seq=seq, resol=resol, Nitem=2, p_c=p_c, p1_min=p1_min, p1_max=p1_max, do_inference_on_current_trial=True, return_alpha=True)
+
+    # Creating distribution grid to extract means
+    lik, grid = likelihood_table(Nitem=2, resol=20)
+    grid = np.array(grid)
+    grid_p1 = grid[:, 0]
+    clipped_grid_indices = get_clipped_grid_indices(grid, p1_min=0.1, p1_max=0.9)
+    all_indices = set(range(len(grid)))          # All indices in the grid
+    clipped_indices = set(clipped_grid_indices)  # Indices to exclude (clipped)
+    included_indices = sorted(list(all_indices - clipped_indices))
+
+    grid_p1 = np.array([p1 for (p0, p1) in grid])  # shape: (20,)
+
+    # Compute set of included indices
+    clipped_indices = set(get_clipped_grid_indices(grid, p1_min=p1_min, p1_max=p1_max))
+    all_indices = set(range(len(grid_p1)))
+    included_indices = sorted(all_indices - clipped_indices)
+
+    prior_means = []
+
+    for t in range(Alpha.shape[1]):  # 75 trials
+        if t == 0:
+            prior_alpha = Alpha0
+        else:
+            prior_alpha = Alpha[:, t - 1]
+
+        # Use only included indices (within [p1_min, p1_max])
+        prior_alpha_included = prior_alpha[included_indices]
+        grid_p1_included = grid_p1[included_indices]
+
+        # Normalize
+        prior_alpha_included /= prior_alpha_included.sum()
+
+        # Compute expected prior mean for outcome = 1
+        prior_mean_t = np.sum(grid_p1_included * prior_alpha_included)
+        prior_means.append(prior_mean_t)
+    
+    return prior_means
+
+
+
+
+def compute_prior_conf_and_cpp_from_observations(participant_str, condition_str, directory_path, computational_var_df, change_point_indices_df, resol, p_c, p1_min, p1_max, conf_type, unit = 'confidence', plot_distribution_mean = False, plot_prior_conf = False, plot_cpp = False):
     """
     Function computes the "confidence" in the prior and change point probability from each set of task session observations. Computes "confidence" and change point probability using functions within "model_learner" (created by Cedric Foucault and Florent Meyniel: https://github.com/florentmeyniel/Ada-Learn/blob/main/analysis). "Confidence" is the -log(sd) of the prior distribution, while change point probability is calculated from the conditional probability of an observation (at time t) given a change point has occurred multiplied by the true probability of a change point occurring, divided by the conditional probability of an observation (at time t) given a change point has occurred multiplied by the true probability of a change point occurring plus the conditional probability of an observation (at time t) given no change point has occurred multiplied by the true probability that a change point did not occur:
 
@@ -614,7 +667,7 @@ def compute_prior_conf_and_cpp_from_observations(participant_str, condition_str,
     - 'p_c': float, true change point probability (should be 0.05)
     - 'p1_min': float, the minimum value of the Bernoulli parameter (used to clip the Dirichlet prior distribution) (should be 0.1)
     - 'p1_max': float, the maximum value of the Bernoulli parameter (used to clip the Dirichlet prior distribution) (should be 0.9)
-    - estimate_type': string, parameter defining ideal_learner_prob_estimates_from_outcomes function. Options are "mean", "mean-pred", "median", "median-pred". The "-pred" options accountfor volatility in the estimate. Function returns the standard deviation and distribution with each distribution parameter selected (only working with "mean" at the minute. Cant get "mean_pred" to work)
+    - estimate_type': string, parameter defining ideal_learner_prob_estimates_from_outcomes function. Options are "mean", "mean-pred", "median", "median-pred". The "-pred" options account for volatility in the estimate. Function returns the standard deviation and distribution with each distribution parameter selected (only working with "mean" at the minute. Cant get "mean_pred" to work)
     - 'conf_type': string, parameter defining ideal_learner_prob_conf_from_outcomes function. Options are "prev-conf", "prev-conf-pred", "new-conf", "new-conf-pred". The "-pred" options accountfor volatility in the estimate. "Prev-conf" refers to prior variance while "new-conf" refers to posterior variance. 
     - unit: string, parameter specifying the units in which prior variability should be presented. Four options available: 'confidence', 'uncertaity_sd', 'uncertainty_log_sd', and 'uncertainty_sd_cpp'.
     - 'plot_distribution_mean: boolean, if true will plot the prior mean of the probability distribution (default = False)
@@ -627,7 +680,6 @@ def compute_prior_conf_and_cpp_from_observations(participant_str, condition_str,
     - 'p_c': interger, true change point probability  
     - 'p1_min': float, the minimum value of the Bernoulli parameter (used to clip the Dirichlet prior distribution)
     - 'p1_max': float, the maximum value of the Bernoulli parameter (used to clip the Dirichlet prior distribution)
-    - 'estimate_type': string, parameter defining ideal_learner_prob_estimates_from_outcomes function. Options are "mean", "mean-pred", "median", "median-pred". The "-pred" options accountfor volatility in the estimate. Function returns the standard deviation and distribution with each distribution parameter selected.
     - 'keys': dictionary keys, defines ideal_learner_prob_inference_from_outcomes function, specifying the parameters of the distribution to be computed (['mean', 'SD', 'dist'])
     - 'resol': float, number of bins used for discretization (for hmm). Defines ideal_learner_prob_inference_from_outcomes function. Set to 20. 
     - 'conf_type': string, parameter defining ideal_learner_prob_conf_from_outcomes function. Options are "prev-conf", "prev-conf-pred", "new-conf", "new-conf-pred". The "-pred" options accountfor volatility in the estimate. "Prev-conf" refers to prior variance while "new-conf" refers to posterior variance. 
@@ -639,9 +691,8 @@ def compute_prior_conf_and_cpp_from_observations(participant_str, condition_str,
         seq = np.array(session_data['outcome'])
 
         # Run functions to compute prior parameters, confidence and change point probability. Add data to existing data frame computational_var_df  
-        prior_dist = ideal_learner_prob_estimates_from_outcomes(
-            seq, p_c, estimate_type=estimate_type, p1_min=p1_min, p1_max=p1_max
-        )
+        prior = extract_prior_means(seq=seq, resol=resol, p_c=p_c, p1_min=p1_min, p1_max=p1_max)
+
         prior_conf = ideal_learner_prob_confidence_from_outcomes(
             seq, p_c, conf_type=conf_type, p1_min=p1_min, p1_max=p1_max
         )
@@ -662,7 +713,7 @@ def compute_prior_conf_and_cpp_from_observations(participant_str, condition_str,
 
         # Add new columns to computational_var_df
         session_indices = session_data.index
-        computational_var_df.loc[session_indices, 'prior_dist'] = prior_dist
+        computational_var_df.loc[session_indices, 'prior'] = prior
         computational_var_df.loc[session_indices, 'prior_conf'] = prior_conf
         computational_var_df.loc[session_indices, 'cpp'] = cpp
 
