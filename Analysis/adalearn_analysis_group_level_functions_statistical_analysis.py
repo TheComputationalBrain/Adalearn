@@ -10,13 +10,14 @@ pio.renderers.default='browser'
 
 
 
-def compute_group_level_permutation_cluster_test(group_level_regression_coefs_df, vars = [], alpha = 0.05):
+def compute_group_level_permutation_cluster_test(group_level_df, pivot_column = 'count', vars = [], alpha = 0.05):
     """
     Run permutation cluster 1-sample t-tests on specified regression coefficient variables.
 
     Parameters:
-    - group_level_regression_coefs_df: pd.DataFrame, contains the regression coefficients. Must contain columns ['participant', 'count'] + variables of interest.
-    - vars: list of strings, List of variable names (e.g., ['prior_conf', 'cpp']) to test. Must be within the group_level_regression_coefs_df.
+    - group_level_df: pd.DataFrame, contains the group level data. For eaxample, for the peristimulus regression analysis it contains the regression coefficients for the parameters of uncertainty. Must contain columns ['participant', 'count'] + variables of interest.
+    - pivot_column: str, column name to pivot on (default is 'count').
+    - vars: list of strings, List of variable names (e.g., ['prior_conf', 'cpp']) to test against the criterion. Must be within the group_level_df.
     - alpha: float, significance threshold for clusters.
 
     Returns:
@@ -27,8 +28,8 @@ def compute_group_level_permutation_cluster_test(group_level_regression_coefs_df
     cluster_data = []  
 
     for var in vars:
-        data_matrix = group_level_regression_coefs_df.pivot(
-            index='participant', columns='count', values=var
+        data_matrix = group_level_df.pivot(
+            index='participant', columns=pivot_column, values=var
         ).values
 
         # Remove columns that are all NaNs

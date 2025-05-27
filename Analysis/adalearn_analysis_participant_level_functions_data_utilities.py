@@ -134,20 +134,13 @@ def plot_session_behav_comp(participant_str, condition_str, directory_path, beha
                 [{"colspan": 2}, None],    
                 [{}, {}],                   
                 [{}, {}]                                   
-            ],
-            subplot_titles=(
-                "",
-                "Participant's learning rate", 
-                "Model learning rate", 
-                "Change point probability", 
-                "Prior confidence"
-            )
+            ]
         )
 
         # Subplot 1: Behavioural and computational estimates
         fig.add_trace(
             go.Scatter(
-                x=task_session_behav_df['outcome_num'],
+                x=task_session_behav_df['outcome_num']+1,
                 y=task_session_behav_df['P1'],
                 mode='lines',
                 line=dict(color='rgba(0,120,255,0.4)'),
@@ -156,29 +149,29 @@ def plot_session_behav_comp(participant_str, condition_str, directory_path, beha
         )
         fig.add_trace(
             go.Scatter(
-                x=task_session_behav_df['outcome_num'],
+                x=task_session_behav_df['outcome_num']+1,
                 y=task_session_behav_df['estimate'],
                 mode='lines',
-                line=dict(color='rgba(220, 120, 0, 0.8)'),
+                line=dict(color='rgba(0, 130, 150, 0.8)'),
                 name='Participant estimate'
             ), row=1, col=1
         )
         fig.add_trace(
             go.Scatter(
-                x=task_session_behav_df['outcome_num'],
+                x=task_session_behav_df['outcome_num']+1,
                 y=task_session_behav_df['ideal_observer'],
                 mode='lines',
-                line=dict(color='rgba(0, 130, 150, 0.8)'),
+                line=dict(color='rgba(255, 0, 0, 0.8)'),
                 name='Model estimate'
             ), row=1, col=1
         )
         outcome_colors = ['blue' if val == 1 else 'yellow' for val in task_session_behav_df['outcome']]
         fig.add_trace(
             go.Scatter(
-                x=task_session_behav_df['outcome_num'],
+                x=task_session_behav_df['outcome_num']+1,
                 y=[0] * len(task_session_behav_df['outcome']),
                 mode='markers',
-                marker=dict(color=outcome_colors),
+                marker=dict(color=outcome_colors, size=10),
                 name='Outcomes',
                 showlegend=False
             ), row=1, col=1
@@ -187,15 +180,15 @@ def plot_session_behav_comp(participant_str, condition_str, directory_path, beha
         # Subplot 2: Behavioural learning rate
         fig.add_trace(
             go.Scatter(
-                x=task_session_comp_df['outcome_num'], 
+                x=task_session_comp_df['outcome_num']+1, 
                 y=task_session_comp_df['cleaned_learning_rate_estimate'], 
                 mode='lines+markers',
-                marker=dict(color='rgba(220, 120, 0, 0.8)'), 
+                marker=dict(color='rgba(0, 130, 150, 0.8)'), 
                 name="Participant's learning rate",
                 showlegend=False
             ), row=2, col=1
         )
-        for cp in task_session_cp['outcome_num']:
+        for cp in task_session_cp['outcome_num']+1:
             fig.add_shape(
                 type="line", 
                 x0=cp, x1=cp, 
@@ -207,7 +200,7 @@ def plot_session_behav_comp(participant_str, condition_str, directory_path, beha
         # Subplot 3: Ideal observer learning rate
         fig.add_trace(
             go.Scatter(
-                x=task_session_comp_df['outcome_num'], 
+                x=task_session_comp_df['outcome_num']+1, 
                 y=task_session_comp_df['cleaned_learning_rate_ideal_observer'], 
                 mode='lines+markers',
                 marker=dict(color='rgba(0, 130, 150, 0.8)'), 
@@ -215,7 +208,7 @@ def plot_session_behav_comp(participant_str, condition_str, directory_path, beha
                 showlegend=False
             ), row=2, col=2
         )
-        for cp in task_session_cp['outcome_num']:
+        for cp in task_session_cp['outcome_num']+1:
             fig.add_shape(
                 type="line", 
                 x0=cp, x1=cp, 
@@ -227,7 +220,7 @@ def plot_session_behav_comp(participant_str, condition_str, directory_path, beha
         # Subplot 4: Change point probability
         fig.add_trace(
             go.Scatter(
-                x=task_session_comp_df['outcome_num'], 
+                x=task_session_comp_df['outcome_num']+1, 
                 y=task_session_comp_df['cpp'], 
                 mode='lines+markers',
                 marker=dict(color='rgba(0, 130, 150, 0.8)'), 
@@ -235,7 +228,7 @@ def plot_session_behav_comp(participant_str, condition_str, directory_path, beha
                 showlegend=False
             ), row=3, col=1
         )
-        for cp in task_session_cp['outcome_num']:
+        for cp in task_session_cp['outcome_num']+1:
             fig.add_shape(
                 type="line", 
                 x0=cp, x1=cp, 
@@ -247,7 +240,7 @@ def plot_session_behav_comp(participant_str, condition_str, directory_path, beha
         # Subplot 5: Prior confidence
         fig.add_trace(
             go.Scatter(
-                x=task_session_comp_df['outcome_num'], 
+                x=task_session_comp_df['outcome_num']+1, 
                 y=task_session_comp_df['prior_conf'], 
                 mode='lines+markers',
                 marker=dict(color='rgba(0, 130, 150, 0.8)'), 
@@ -255,7 +248,7 @@ def plot_session_behav_comp(participant_str, condition_str, directory_path, beha
                 showlegend=False
             ), row=3, col=2
         )
-        for cp in task_session_cp['outcome_num']:
+        for cp in task_session_cp['outcome_num']+1:
             fig.add_shape(
                 type="line", 
                 x0=cp, x1=cp, 
@@ -268,19 +261,33 @@ def plot_session_behav_comp(participant_str, condition_str, directory_path, beha
         fig.update_layout(
             title=f"Behavioural and computationally-derived parameters obtained from task session {task_session} for participant {participant_str} in condition {condition_str}",
             title_x=0.5,
-            title_font=dict(size=16, family="Arial"),
+            title_font=dict(size=16),
             height=1200,
             width=1800,
             plot_bgcolor='rgba(255, 255, 255, 1)',
             showlegend=True,
             margin=dict(l=50, r=50, t=50, b=50),
+            font=dict(size=16),
             hovermode="closest"
         )
 
         for r in range(1, 5):
             for c in range(1, 3):
-                fig.update_xaxes(showline=True, linewidth=1, linecolor='black', row=r, col=c)
-                fig.update_yaxes(showline=True, linewidth=1, linecolor='black', row=r, col=c)
+                fig.update_xaxes(
+                    showline=True,
+                    linewidth=1,
+                    linecolor='black',
+                    dtick=5,            # Tick every 5
+                    tick0=5, # Start ticks at 5 to skip 0
+                    range=[0.01, 75.99],
+                    row=r, col=c
+                )
+                fig.update_yaxes(
+                    showline=True,
+                    linewidth=1,
+                    linecolor='black',
+                    row=r, col=c
+                )
 
         # Add axis titles
         fig.update_xaxes(title_text="Outcome", row=1, col=1)
@@ -291,8 +298,8 @@ def plot_session_behav_comp(participant_str, condition_str, directory_path, beha
 
 
         fig.update_yaxes(title_text="Proportion(Blue)", row=1, col=1)
-        fig.update_yaxes(title_text="Learning rate", row=2, col=1)
-        fig.update_yaxes(title_text="Learning rate", row=2, col=2)
+        fig.update_yaxes(title_text="Learning rate (participant)", row=2, col=1)
+        fig.update_yaxes(title_text="Learning rate (model)", row=2, col=2)
         fig.update_yaxes(title_text="Change point probability", row=3, col=1)
         fig.update_yaxes(title_text="Prior confidence", row=3, col=2)
 
@@ -474,7 +481,10 @@ def evaluation_of_learning_rate(participant_str, condition_str, directory_path, 
             learning_rates.extend(subset.dropna().values)
 
         # Compute and store the average learning rate for this category
-        cp_cat_avg_lr_dict[item] = np.nanmean(learning_rates)
+        if len(learning_rates) > 0:
+            cp_cat_avg_lr_dict[item] = np.nanmean(learning_rates)
+        else:
+            cp_cat_avg_lr_dict[item] = np.nan
 
 
     # Storing all averages within a dictionary
