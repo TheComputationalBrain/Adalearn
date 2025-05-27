@@ -42,7 +42,7 @@ for participant in participant_list:
 
     mean_abs_error_df = behavioural_performance_analysis(participant_str=participant_str, condition_str=condition_str, directory_path=directory_path, behavioural_df=behavioural_df, plot_performance=False)
 
-    mean_abs_error_df['coef_variation'] = mean_abs_error_df['std_abs_error']/ mean_abs_error_df['mean_abs_error']
+    mean_abs_error_df['coef_variation'] = (mean_abs_error_df['std_abs_error']/ mean_abs_error_df['mean_abs_error']) * 100
 
     mean_abs_error_df['participant'] = participant_str
 
@@ -72,6 +72,11 @@ anova_mean_cv = AnovaRM(data=group_level_mean_error_df, depvar='coef_variation',
 
 print('Outcome of one-way repeated measures ANOVA on mean coefficient of variation...')
 print(f'\n{anova_mean_cv}')
+
+anova_mean_score = AnovaRM(data=group_level_mean_error_df, depvar='score', subject='participant', within=['task_session']).fit()
+
+print('Outcome of one-way repeated measures ANOVA on mean score...')
+print(f'\n{anova_mean_score}')
 
 # Saving group level data to .csv files
 save_sample_dataframes_to_csv(dataframes={

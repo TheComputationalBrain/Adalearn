@@ -52,12 +52,12 @@ for participant in usable_participants:
     outcome_onsets_nobc, outcome_nums_nobc, outcome_epoched_pupil_df_nobc, outcome_blink_ratio_df_nobc, outcome_epochs_to_remove_nobc, outcome_epochs_to_remove_df_nobc = all_outcome_pupil_epochs(directory_path=directory_path, participant_str=participant, list_subject_selected=list_subject_selected, condition_task_sessions=task_sessions, from_session=from_session, to_session=to_session, pupil_trig_df=pupil_trig_df, baseline_cor=[], variable_df=None, variable_column=None, select_eye=True, remove_epochs=True, plot_averaged_pupil_response=False, plot_raster_pupil_response=False)
 
     print(f"\nRunning peristimulus regression analysis on baseline corrected pupil signal...")
-    coefficients_df, pupil_regress_df, residuals_df = pupil_peristimulus_regression_analysis(participant_str = participant, directory_path = directory_path, task_session_df = task_session_df, outcome_epoched_pupil_df = outcome_epoched_pupil_df, outcome_epochs_to_remove=outcome_epochs_to_remove, variables=['prior_conf', 'cpp'], covariates=None, baseline_corrected = True, plot_regression_analysis=False)
+    coefficients_df, pupil_regress_df, residuals_df = pupil_peristimulus_regression_analysis(participant_str = participant, directory_path = directory_path, task_session_df = task_session_df, outcome_epoched_pupil_df = outcome_epoched_pupil_df, outcome_epochs_to_remove=outcome_epochs_to_remove_df, variables=['prior_conf', 'cpp'], covariates=None, baseline_corrected = True, plot_regression_analysis=False)
 
     regression_coefs_list.append(coefficients_df)
 
     print(f"\nRunning peristimulus regression analysis on non-baseline corrected pupil signal...")
-    coefficients_df_nobc, pupil_regress_df_nobc, residuals_df_nobc = pupil_peristimulus_regression_analysis(participant_str = participant, directory_path = directory_path, task_session_df = task_session_df, outcome_epoched_pupil_df = outcome_epoched_pupil_df_nobc, outcome_epochs_to_remove=outcome_epochs_to_remove_nobc, variables=['prior_conf', 'cpp'], covariates=None, baseline_corrected = False, plot_regression_analysis=False)
+    coefficients_df_nobc, pupil_regress_df_nobc, residuals_df_nobc = pupil_peristimulus_regression_analysis(participant_str = participant, directory_path = directory_path, task_session_df = task_session_df, outcome_epoched_pupil_df = outcome_epoched_pupil_df_nobc, outcome_epochs_to_remove=outcome_epochs_to_remove_df_nobc, variables=['prior_conf', 'cpp'], covariates=None, baseline_corrected = False, plot_regression_analysis=False)
 
     regression_nobc_coefs_list.append(coefficients_df_nobc)
 
@@ -96,22 +96,30 @@ baseline_corr_cluster_analysis_results = compute_group_level_permutation_cluster
 
 fig = go.Figure()
 
+# Slice your data once to keep things consistent
+time = baseline_corr_coefs_df['time'][:-1]
+conf = baseline_corr_coefs_df['conf'][:-1]
+conf_error = baseline_corr_coefs_df['conf_error'][:-1]
+cpp = baseline_corr_coefs_df['cpp'][:-1]
+cpp_error = baseline_corr_coefs_df['cpp_error'][:-1]
+
+# Line trace
 fig.add_trace(go.Scatter(
-    x=baseline_corr_coefs_df['time'], 
-    y=baseline_corr_coefs_df['cpp'], 
-    mode= 'lines',
-    line=dict(color='rgba(220, 120, 0, 0.8)'),  
+    x=time,
+    y=cpp,
+    mode='lines',
+    line=dict(color='rgba(220, 120, 0, 0.8)'),
     name='Change point probability'))
 
+# Error band trace
 fig.add_trace(go.Scatter(
-    x=list(baseline_corr_coefs_df['time']) + list(baseline_corr_coefs_df['time'][::-1]),
-    y=list(baseline_corr_coefs_df['cpp'] + baseline_corr_coefs_df['cpp_error']) + list((baseline_corr_coefs_df['cpp'] - baseline_corr_coefs_df['cpp_error'])[::-1]),
+    x=list(time) + list(time[::-1]),
+    y=list(cpp + cpp_error) + list((cpp - cpp_error)[::-1]),
     fill='toself',
     fillcolor='rgba(220, 120, 0, 0.2)',
     line=dict(color='rgba(255,255,255,0)'),
     hoverinfo="skip",
-    showlegend=False
-))
+    showlegend=False))
 
 cpp_cluster_slice = baseline_corr_cluster_analysis_results['cpp_zscore']['clusters'][0][0]
 cpp_cluster_indices = list(range(cpp_cluster_slice.start, cpp_cluster_slice.stop))  
@@ -122,27 +130,28 @@ fig.add_trace(go.Scatter(
     x=cpp_significant_times,  # Time points where the cluster is significant
     y=[-0.02] * len(cpp_significant_times),  # Set a fixed low y-value for dots (adjust if necessary)
     mode='markers',
-    marker=dict(color='rgba(220, 120, 0, 0.6)', size=6),
+    marker=dict(color='rgba(220, 120, 0, 0.6)', size=8, symbol='asterisk-open'),
     name='Significant Cluster - CPP',
     showlegend=False
 ))
 
+# Line trace
 fig.add_trace(go.Scatter(
-    x=baseline_corr_coefs_df['time'], 
-    y=baseline_corr_coefs_df['conf'], 
-    mode= 'lines',
-    line=dict(color='rgba(0, 130, 150, 0.8)'), 
+    x=time,
+    y=conf,
+    mode='lines',
+    line=dict(color='rgba(0, 130, 150, 0.8)'),
     name='Prior confidence'))
 
+# Error band trace
 fig.add_trace(go.Scatter(
-    x=list(baseline_corr_coefs_df['time']) + list(baseline_corr_coefs_df['time'][::-1]),
-    y=list(baseline_corr_coefs_df['conf'] + baseline_corr_coefs_df['conf_error']) + list((baseline_corr_coefs_df['conf'] - baseline_corr_coefs_df['conf_error'])[::-1]),
+    x=list(time) + list(time[::-1]),
+    y=list(conf +conf_error) + list((conf - conf_error)[::-1]),
     fill='toself',
     fillcolor='rgba(0, 130, 150, 0.2)',
     line=dict(color='rgba(255,255,255,0)'),
     hoverinfo="skip",
-    showlegend=False
-))
+    showlegend=False))
 
 conf_cluster_slice = baseline_corr_cluster_analysis_results['prior_conf_zscore']['clusters'][0][0]
 conf_cluster_indices = list(range(conf_cluster_slice.start, conf_cluster_slice.stop))  
@@ -184,7 +193,7 @@ fig.update_layout(
     width=1800,
     font=dict(size=18),
     legend=dict(
-        x=0.3,
+        x=0.35,
         y=0.9,
         xanchor='right',
         yanchor='top',
@@ -222,22 +231,31 @@ nonbaseline_corr_cluster_analysis_results = compute_group_level_permutation_clus
 
 fig = go.Figure()
 
+# Slice your data once to keep things consistent
+time = nonbaseline_corr_coefs_df['time'][:-1]
+conf = nonbaseline_corr_coefs_df['conf'][:-1]
+conf_error = nonbaseline_corr_coefs_df['conf_error'][:-1]
+cpp = nonbaseline_corr_coefs_df['cpp'][:-1]
+cpp_error = nonbaseline_corr_coefs_df['cpp_error'][:-1]
+
+# Line trace
 fig.add_trace(go.Scatter(
-    x=nonbaseline_corr_coefs_df['time'], 
-    y=nonbaseline_corr_coefs_df['cpp'], 
-    mode= 'lines',
-    line=dict(color='rgba(220, 120, 0, 0.8)'),  
+    x=time,
+    y=cpp,
+    mode='lines',
+    line=dict(color='rgba(220, 120, 0, 0.8)'),
     name='Change point probability'))
 
+# Error band trace
 fig.add_trace(go.Scatter(
-    x=list(nonbaseline_corr_coefs_df['time']) + list(nonbaseline_corr_coefs_df['time'][::-1]),
-    y=list(nonbaseline_corr_coefs_df['cpp'] + nonbaseline_corr_coefs_df['cpp_error']) + list((nonbaseline_corr_coefs_df['cpp'] - nonbaseline_corr_coefs_df['cpp_error'])[::-1]),
+    x=list(time) + list(time[::-1]),
+    y=list(cpp + cpp_error) + list((cpp - cpp_error)[::-1]),
     fill='toself',
     fillcolor='rgba(220, 120, 0, 0.2)',
     line=dict(color='rgba(255,255,255,0)'),
     hoverinfo="skip",
-    showlegend=False
-))
+    showlegend=False))
+
 
 cpp_nobc_cluster_slice = nonbaseline_corr_cluster_analysis_results['cpp_zscore']['clusters'][0][0]
 cpp_nobc_cluster_indices = list(range(cpp_nobc_cluster_slice.start, cpp_nobc_cluster_slice.stop))  
@@ -248,27 +266,28 @@ fig.add_trace(go.Scatter(
     x=cpp_nobc_significant_times,  # Time points where the cluster is significant
     y=[-0.1] * len(cpp_nobc_significant_times),  # Set a fixed low y-value for dots (adjust if necessary)
     mode='markers',
-    marker=dict(color='rgba(220, 120, 0, 0.6)', size=6),
+    marker=dict(color='rgba(220, 120, 0, 0.6)', size=8, symbol='asterisk-open'),
     name='Significant Cluster - CPP',
     showlegend=False
 ))
 
+# Line trace
 fig.add_trace(go.Scatter(
-    x=nonbaseline_corr_coefs_df['time'], 
-    y=nonbaseline_corr_coefs_df['conf'], 
-    mode= 'lines',
-    line=dict(color='rgba(0, 130, 150, 0.8)'), 
+    x=time,
+    y=conf,
+    mode='lines',
+    line=dict(color='rgba(0, 130, 150, 0.8)'),
     name='Prior confidence'))
 
+# Error band trace
 fig.add_trace(go.Scatter(
-    x=list(nonbaseline_corr_coefs_df['time']) + list(nonbaseline_corr_coefs_df['time'][::-1]),
-    y=list(nonbaseline_corr_coefs_df['conf'] + nonbaseline_corr_coefs_df['conf_error']) + list((nonbaseline_corr_coefs_df['conf'] - nonbaseline_corr_coefs_df['conf_error'])[::-1]),
+    x=list(time) + list(time[::-1]),
+    y=list(conf +conf_error) + list((conf - conf_error)[::-1]),
     fill='toself',
     fillcolor='rgba(0, 130, 150, 0.2)',
     line=dict(color='rgba(255,255,255,0)'),
     hoverinfo="skip",
-    showlegend=False
-))
+    showlegend=False))
 
 conf_nobc_cluster_slice = nonbaseline_corr_cluster_analysis_results['prior_conf_zscore']['clusters'][0][0]
 conf_nobc_cluster_indices = list(range(conf_nobc_cluster_slice.start, conf_nobc_cluster_slice.stop))  
@@ -310,7 +329,7 @@ fig.update_layout(
     width=1800,
     font=dict(size=18),
     legend=dict(
-        x=0.32,
+        x=0.18,
         y=1.0,
         xanchor='right',
         yanchor='top',

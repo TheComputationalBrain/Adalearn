@@ -110,9 +110,9 @@ pupil_regress_coef_df = pd.concat(pupil_regress_coef_df_list, ignore_index=True)
 pupil_regress_coef_nobc_df = pd.concat(pupil_regress_coef_nobc_df_list, ignore_index=True)
 
 # Running cluster permutation analysis on signals
-cluster_based_permutation_results, significant_clusters_df = compute_group_level_permutation_cluster_test(group_level_regression_coefs_df=pupil_regress_coef_df, vars = ['prior_conf', 'cpp'], alpha=0.05)
+cluster_based_permutation_results, significant_clusters_df = compute_group_level_permutation_cluster_test(group_level_df=pupil_regress_coef_df, vars = ['prior_conf', 'cpp'], alpha=0.05)
 
-cluster_based_permutation_results_nobc, significant_clusters_nobc_df = compute_group_level_permutation_cluster_test(group_level_regression_coefs_df=pupil_regress_coef_nobc_df, vars=['prior_conf', 'cpp'], alpha=0.05)
+cluster_based_permutation_results_nobc, significant_clusters_nobc_df = compute_group_level_permutation_cluster_test(group_level_df=pupil_regress_coef_nobc_df, vars=['prior_conf', 'cpp'], alpha=0.05)
 
 # Creating a dataframe to contain the averaged response across time points within the epoch
 print(f'\n Creating dataframe containing the averaged coefficients for the baseline corrected pupil signal')
