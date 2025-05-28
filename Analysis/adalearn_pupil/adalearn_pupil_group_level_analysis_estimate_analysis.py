@@ -88,8 +88,8 @@ behav_model_estimate_coef_df = pd.DataFrame({
 
 # Save group-level csv
 save_sample_dataframes_to_csv(dataframes={
-    'sample_level_behav_v_model_estimate_corr_df': group_behav_v_model_estimate_corr_df,
-    'sample_level_behav_v_model_estimate_coef_df': behav_model_estimate_coef_df
+    'behav_v_model_estimate_corr_df': group_behav_v_model_estimate_corr_df,
+    'behav_v_model_estimate_coef_df': behav_model_estimate_coef_df
 },
 directory_path=base_dir,
 condition_str=condition_str,

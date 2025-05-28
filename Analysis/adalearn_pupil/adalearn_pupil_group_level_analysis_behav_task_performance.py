@@ -80,9 +80,9 @@ print(f'\n{anova_mean_score}')
 
 # Saving group level data to .csv files
 save_sample_dataframes_to_csv(dataframes={
-    "sample_level_analysis_behavioural_df": group_level_behavioural_df,
-    "sample_level_analysis_mean_abs_error_df": group_level_mean_error_df,
-    "sample_level_analysis_change_point_indices_df": group_level_change_point_indices_df
+    "behavioural_df": group_level_behavioural_df,
+    "mean_abs_error_df": group_level_mean_error_df,
+    "change_point_indices_df": group_level_change_point_indices_df
     }, 
 directory_path=base_dir,
 condition_str=condition_str,

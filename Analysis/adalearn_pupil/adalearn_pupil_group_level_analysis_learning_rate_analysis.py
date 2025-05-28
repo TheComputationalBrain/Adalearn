@@ -221,14 +221,14 @@ uncertainty_params_ttest_df = pd.DataFrame({
 
 # Save group-level csv
 save_sample_dataframes_to_csv(dataframes={
-    'sample_level_behav_v_model_lr_corr_df': group_behav_v_model_lr_corr_df,
-    'sample_level_averaged_lr_around_cp_df': group_averaged_lr_around_cp_df,
-    'sample_level_lr_corr_around_cp_df': group_lr_corr_around_cp_df,
-    'sample_level_uncertainty_params_on_lr_df': group_uncertainty_params_on_lr_df,
-    'sample_level_averaged_lr_session_df': group_averaged_lr_session_df,
-    'sample_level_behav_model_lr_coef_df': behav_model_lr_coef_df,
-    'sample_level_lr_around_cp_sig_clusters': significant_clusters_df,
-    'sample_level_uncertainty_params_ttest_df': uncertainty_params_ttest_df
+    'behav_v_model_lr_corr_df': group_behav_v_model_lr_corr_df,
+    'averaged_lr_around_cp_df': group_averaged_lr_around_cp_df,
+    'lr_corr_around_cp_df': group_lr_corr_around_cp_df,
+    'uncertainty_params_on_lr_df': group_uncertainty_params_on_lr_df,
+    'averaged_lr_session_df': group_averaged_lr_session_df,
+    'behav_model_lr_coef_df': behav_model_lr_coef_df,
+    'lr_around_cp_sig_clusters': significant_clusters_df,
+    'uncertainty_params_ttest_df': uncertainty_params_ttest_df
 },
 directory_path=base_dir,
 condition_str=condition_str,

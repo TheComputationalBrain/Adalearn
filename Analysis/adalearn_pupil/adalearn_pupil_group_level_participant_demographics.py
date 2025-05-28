@@ -8,7 +8,9 @@ from datetime import datetime
 
 from adalearn_analysis_participant_level_functions_participant_info import read_tsv_files
 
-from adalearn_pupil.adalearn_pupil_participant_info_and_parameters import base_dir
+from adalearn_pupil.adalearn_pupil_participant_info_and_parameters import base_dir, condition_str
+
+from adalearn_analysis_group_level_functions_data_utilities import save_sample_dataframes_to_csv
 
 
 
@@ -52,3 +54,10 @@ group_demographic_df['Age'] = group_demographic_df['DOB'].apply(lambda dob: (tod
 avg_age = group_demographic_df['Age'].mean()
 std_age = group_demographic_df['Age'].std()
 print(f'The average age of the sample is {avg_age:.0f} +/- {std_age:.0f} years')
+
+save_sample_dataframes_to_csv(dataframes={
+    'demographics_df': group_demographic_df
+},
+directory_path=base_dir,
+condition_str=condition_str,
+task='Pupil')

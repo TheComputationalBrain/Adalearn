@@ -21,11 +21,11 @@ from adalearn_pupil.adalearn_pupil_participant_info_and_parameters import base_d
 
 
 
-dataframes = load_sample_csvs(directory_path=base_dir, substrings=['computational_var_df', 'change_point_indices_df', 'exclude_participants_pupil_analysis_df', 'group_level_outcome_epochs_descriptive_stats_df',
-    'group_level_outcome_epoched_pupil_df','group_level_outcome_epochs_columns_df',
-    'group_level_outcome_epochs_to_remove_df',
-    'group_level_outcome_epochs_descriptive_stats_nobc_df', 
-    'group_level_outcome_epoched_pupil_nobc_df', 'cluster_permutation_analysis', 'cluster_permutation_analysis_nobc'
+dataframes = load_sample_csvs(directory_path=base_dir, substrings=['computational_var_df', 'change_point_indices_df', 'exclude_participants_pupil_analysis_df', 'outcome_epochs_descriptive_stats_df',
+    'outcome_epoched_pupil_df','outcome_epochs_columns_df',
+    'outcome_epochs_to_remove_df',
+    'outcome_epochs_descriptive_stats_nobc_df', 
+    'outcome_epoched_pupil_nobc_df', 'cluster_permutation_analysis', 'cluster_permutation_analysis_nobc'
 ])
 
 participant_list = get_participant_numbers(directory=base_dir)
@@ -51,17 +51,17 @@ for participant in participant_list:
 
     change_point_indices = dataframes['change_point_indices_df'][dataframes['change_point_indices_df']['participant']==participant].copy()
 
-    epoch_data = dataframes['group_level_outcome_epoched_pupil_df'][dataframes['group_level_outcome_epoched_pupil_df']['participant'] == participant]
+    epoch_data = dataframes['outcome_epoched_pupil_df'][dataframes['outcome_epoched_pupil_df']['participant'] == participant]
 
-    epoch_nobc_data = dataframes['group_level_outcome_epoched_pupil_nobc_df'][dataframes['group_level_outcome_epoched_pupil_nobc_df']['participant'] == participant]
+    epoch_nobc_data = dataframes['outcome_epoched_pupil_nobc_df'][dataframes['outcome_epoched_pupil_nobc_df']['participant'] == participant]
 
-    epoch_descriptive_stats = dataframes['group_level_outcome_epochs_descriptive_stats_df'][dataframes['group_level_outcome_epochs_descriptive_stats_df']['participant']==participant]
+    epoch_descriptive_stats = dataframes['outcome_epochs_descriptive_stats_df'][dataframes['outcome_epochs_descriptive_stats_df']['participant']==participant]
 
-    epoch_nobc_descriptive_stats = dataframes['group_level_outcome_epochs_descriptive_stats_nobc_df'][dataframes['group_level_outcome_epochs_descriptive_stats_nobc_df']['participant']==participant]
+    epoch_nobc_descriptive_stats = dataframes['outcome_epochs_descriptive_stats_nobc_df'][dataframes['outcome_epochs_descriptive_stats_nobc_df']['participant']==participant]
 
-    analysed_epochs = dataframes['group_level_outcome_epochs_columns_df'][dataframes['group_level_outcome_epochs_columns_df']['participant']==participant]
+    analysed_epochs = dataframes['outcome_epochs_columns_df'][dataframes['outcome_epochs_columns_df']['participant']==participant]
 
-    epochs_to_remove = dataframes['group_level_outcome_epochs_to_remove_df'][dataframes['group_level_outcome_epochs_to_remove_df']['participant']==participant]
+    epochs_to_remove = dataframes['outcome_epochs_to_remove_df'][dataframes['outcome_epochs_to_remove_df']['participant']==participant]
     
     # Processing epoched dataframes
     column_titles = list(analysed_epochs['columns'].values.astype(int))
@@ -148,10 +148,10 @@ pupil_v_lr_ttest_df = pd.DataFrame({
 
 # Saving dataframes
 save_sample_dataframes_to_csv(dataframes={
-    'sample_level_pupil_v_lr_regress_coef_df': group_pupil_v_lr_regress_df,
-    'sample_level_pupil_v_lr_coef_ttest_df': pupil_v_lr_ttest_df,
-    'sample_level_pupil_bc_around_cp': group_pupil_bc_around_cp_df,
-    'sample_level_pupil_nobc_around_cp': group_pupil_nobc_around_cp_df,
+    'pupil_v_lr_regress_coef_df': group_pupil_v_lr_regress_df,
+    'pupil_v_lr_coef_ttest_df': pupil_v_lr_ttest_df,
+    'pupil_bc_around_cp': group_pupil_bc_around_cp_df,
+    'pupil_nobc_around_cp': group_pupil_nobc_around_cp_df,
 },
 directory_path=base_dir,
 condition_str=condition_str,

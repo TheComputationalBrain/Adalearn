@@ -63,7 +63,7 @@ group_level_computational_var_df = pd.concat(group_computational_var_df_list, ig
 
 # Save group-level csv
 save_sample_dataframes_to_csv(dataframes={
-    'sample_level_computational_var_df': group_level_computational_var_df
+    'computational_var_df': group_level_computational_var_df
 },
 directory_path=base_dir,
 condition_str=condition_str,
