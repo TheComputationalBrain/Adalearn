@@ -18,6 +18,8 @@ from adalearn_analysis_group_level_functions_data_utilities import get_participa
 
 from adalearn_analysis_group_level_functions_statistical_analysis import compute_group_level_permutation_cluster_test
 
+from adalearn_analysis_group_level_functions_pupil_analysis import compute_peristim_mean_sem_by_count
+
 from adalearn_pupil.adalearn_pupil_participant_info_and_parameters import base_dir, condition_str
 
 
@@ -116,43 +118,10 @@ cluster_based_permutation_results_nobc, significant_clusters_nobc_df = compute_g
 
 # Creating a dataframe to contain the averaged response across time points within the epoch
 print(f'\n Creating dataframe containing the averaged coefficients for the baseline corrected pupil signal')
-coefs_dict = {'cpp': [], 'cpp_error': [], 'conf': [], 'conf_error': [], 'time': []}
 
-for count in pupil_regress_coef_df['count'].unique():
-    data = pupil_regress_coef_df[pupil_regress_coef_df['count'] == count].sort_values(by='participant')
-    mean_cpp = data['cpp'].mean()
-    sem_cpp = stats.sem(data['cpp'])
-    mean_conf = data['prior_conf'].mean()
-    sem_conf = stats.sem(data['prior_conf'])
-    mean_time = data['time'].mean()
+coefs_df = compute_peristim_mean_sem_by_count(pupil_regress_coef_df, value_cols=['cpp', 'prior_conf'])
 
-    coefs_dict['cpp'].append(mean_cpp)
-    coefs_dict['cpp_error'].append(sem_cpp)
-    coefs_dict['conf'].append(mean_conf)
-    coefs_dict['conf_error'].append(sem_conf)
-    coefs_dict['time'].append(mean_time)
-
-coefs_df = pd.DataFrame(coefs_dict)
-
-print(f'\n Creating dataframe containing the averaged coefficients for the baseline corrected pupil signal')
-coefs_nobc_dict = {'cpp': [], 'cpp_error': [], 'conf': [], 'conf_error': [], 'time': []}
-
-for count in pupil_regress_coef_nobc_df['count'].unique():
-    data = pupil_regress_coef_nobc_df[pupil_regress_coef_nobc_df['count'] == count].sort_values(by='participant')
-    mean_cpp = data['cpp'].mean()
-    sem_cpp = stats.sem(data['cpp'])
-    mean_conf = data['prior_conf'].mean()
-    sem_conf = stats.sem(data['prior_conf'])
-    mean_time = data['time'].mean()
-
-    coefs_nobc_dict['cpp'].append(mean_cpp)
-    coefs_nobc_dict['cpp_error'].append(sem_cpp)
-    coefs_nobc_dict['conf'].append(mean_conf)
-    coefs_nobc_dict['conf_error'].append(sem_conf)
-    coefs_nobc_dict['time'].append(mean_time)
-
-coefs_nobc_df = pd.DataFrame(coefs_nobc_dict)
-
+coefs_nobc_df = compute_peristim_mean_sem_by_count(pupil_regress_coef_nobc_df, value_cols=['cpp', 'prior_conf'])
 
 # Saving dataframes
 save_sample_dataframes_to_csv(dataframes={

@@ -762,7 +762,7 @@ for i in range(1, 3):
 
 # Update y-axes
 fig.update_yaxes(showline=True, linewidth=1, linecolor='black', 
-                 title_text='Prior confidence (z-score)', row=1, col=1)
+                 title_text='Prior confidence', row=1, col=1)
 
 fig.update_yaxes(showline=True, linewidth=1, linecolor='black', 
                  title_text='Change point probability', row=2, col=1)

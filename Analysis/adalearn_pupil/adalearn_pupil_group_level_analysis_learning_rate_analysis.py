@@ -213,6 +213,8 @@ t_between_coef = stats.ttest_rel(behav_conf_coef['coefficient'], behav_cpp_coef[
 
 uncertainty_params_ttest_df = pd.DataFrame({
     'variable': ['conf_zscore', 'cpp_zscore', 'between_coef'],
+    'regression_coef': [behav_conf_coef_mean, behav_cpp_coef_mean, None],
+    'regress_coef_sem': [behav_conf_coef_sem, behav_cpp_coef_sem, None],
     't_statistic': [t_conf.statistic, t_cpp.statistic, t_between_coef.statistic],
     'p_value': [t_conf.pvalue, t_cpp.pvalue, t_between_coef.pvalue]
 })
