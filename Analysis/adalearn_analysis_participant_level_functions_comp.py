@@ -3,8 +3,8 @@ import pandas as pd
 import numpy as np
 import sys
 import statsmodels.api as sm
-from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import mean_squared_error
+from scipy.stats import zscore
 from scipy.stats import pearsonr
 from scipy.stats import sem
 import plotly.io as pio
@@ -1399,13 +1399,11 @@ def uncertainty_on_learning_rate_participant_level(participant_str, condition_st
     - learning_rate_analysis_dict: dict, contains the a cleaned dataframe used for the analysis (with z-scores calculated for variables of interest), binned output and output coefficients of correlation and regression analysis.
     """
     # Calculating zscore for computational parameters used in analysis
-    scaler = StandardScaler()
-
-    computational_var_df[f'lr_zscore_{parameter_estimate}'] = scaler.fit_transform(computational_var_df[[f'cleaned_learning_rate_{parameter_estimate}']]).flatten()
+    computational_var_df[f'lr_zscore_{parameter_estimate}'] = zscore(computational_var_df[f'cleaned_learning_rate_{parameter_estimate}'], nan_policy='omit')
     
-    computational_var_df['conf_zscore'] = scaler.fit_transform(computational_var_df[['prior_conf']]).flatten()
+    computational_var_df['conf_zscore'] = zscore(computational_var_df['prior_conf'], nan_policy='omit')
 
-    computational_var_df['cpp_zscore'] = scaler.fit_transform(computational_var_df[['cpp']]).flatten()
+    computational_var_df['cpp_zscore'] = zscore(computational_var_df['cpp'], nan_policy='omit')
 
     # Removing empty rows due to cleaning of learning rate
     df_clean = computational_var_df.copy() 
@@ -1418,7 +1416,7 @@ def uncertainty_on_learning_rate_participant_level(participant_str, condition_st
         removed_zero = before_zero_filter - len(df_clean)
         print(f"Removed {removed_zero} rows where 'cleaned_learning_rate_{parameter_estimate}' was 0.")
         # Re z-scoring data
-        df_clean[f'lr_zscore_{parameter_estimate}'] = scaler.fit_transform(df_clean[[f'cleaned_learning_rate_{parameter_estimate}']]).flatten()
+        df_clean[f'lr_zscore_{parameter_estimate}'] = zscore(df_clean[f'cleaned_learning_rate_{parameter_estimate}'], nan_policy='omit')
 
         zero_title = "-(no-update-trials-removed)"
     else:
@@ -1584,10 +1582,8 @@ def comp_parameters_on_info_gain(participant_str, condition_str, directory_path,
     - computational_var_df: pd.DataFrame, contains computed variables from the ideal observer model. With this function, the residuals of the rgession analysis is added as a column ['dkl_regress_residuals'].
     - dkl_regress_df: pd.DataFrame, contains the outputs of the regression analysis for information gain (DKL).  
     """
-    scaler = StandardScaler()
-
     # Z-score dkl values
-    computational_var_df[f'dkl_zscore'] = scaler.fit_transform(computational_var_df[['dkl']]).flatten()
+    computational_var_df[f'dkl_zscore'] = zscore(computational_var_df['dkl'], nan_policy='omit')
 
     # Evaluating correlation between compuational parameters and information gain (DKL)
     conf_dkl_corr, _ = pearsonr(x = computational_var_df['conf_zscore'], y = computational_var_df['dkl_zscore'])

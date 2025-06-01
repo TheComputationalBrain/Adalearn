@@ -101,7 +101,7 @@ def check_trig_sync_between_files(participant_str, condition_str, directory_path
 
 
 
-def plot_session_behav_comp(participant_str, condition_str, directory_path, behavioural_df, computational_df, change_point_indices, task_session=1, turn_on_plotting = False):
+def plot_session_behav_comp(participant_str, condition_str, directory_path, base_dir, behavioural_df, computational_df, change_point_indices, task_session=1, turn_on_plotting = False, plot_group_level = True):
     """
     Function to plot the behavioural and computational parameters from data of selected task sessions. 
 
@@ -109,11 +109,13 @@ def plot_session_behav_comp(participant_str, condition_str, directory_path, beha
     - participant_str: string, identifier of participant number (set to 2 numbers)
     - condition_str: string, identifier of condition order (set to 2 numbers)
     - directory_path: Path, directory path to the participant level of the data storage.
+    - base_dir: Path, directory to group level of data storage
     - behavioural_df: pd.DataFrame, contains parsed data from all .json adalearn data files for select variables.
     - computational_df: pd.DataFrame, contains the computational-derived parameters of interest for each task session.
     - change_point_indices: pd.DataFrame, with columns 'cum_outcome_num', 'rel_time', and 'task_session', containing the indices and relative times of the change points for each session, and z-score used to categorises the obvious of the change point ('change_point_cat'). (*Note: Have removed identification of the first outcome of each task session as a new change point)
     - task_session: float, the specific task session to analyze (default: 1)
     - turn_on_plotting: boolean, if True, will plot the subplots. Provides an option to turn off the plotting when collating the data across scripts.
+    - plot_group_level: boolean, if True, will save plots in group level plot folder
 
     Returns:
     - None
@@ -313,6 +315,20 @@ def plot_session_behav_comp(participant_str, condition_str, directory_path, beha
         file_path = os.path.join(plot_dir, file_name)
 
         fig.write_image(file_path)
+
+        if plot_group_level:
+            plot_dir = os.path.join(base_dir, "group_level_plots")
+            os.makedirs(plot_dir, exist_ok=True)
+
+            # Base filename (without extension)
+            base_filename = f"adalearn_pupil-example_task_session"
+            base_filepath = os.path.join(plot_dir, base_filename)
+
+            # Save as PNG
+            fig.write_image(f"{base_filepath}.png")
+
+            # Save as SVG
+            fig.write_image(f"{base_filepath}.svg") 
 
 
         fig.show()

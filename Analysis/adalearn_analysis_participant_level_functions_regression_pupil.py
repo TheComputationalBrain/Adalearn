@@ -4,7 +4,7 @@ import os
 import sys
 import pingouin
 import statsmodels.api as sm
-from sklearn.preprocessing import StandardScaler
+from scipy.stats import zscore
 from sklearn.metrics import mean_squared_error
 import plotly.io as pio
 import plotly.graph_objects as go
@@ -53,8 +53,7 @@ def pupil_peristimulus_regression_analysis(participant_str, condition_str, direc
     variables_to_zscore.extend(list(covariates))
         
     # Handling of other covariates to be included (z-scoring etc) 
-    if covariates is not None:
-        scaler = StandardScaler()  
+    if covariates is not None:  
         # Add square and sqrt of outcome_num
         if 'outcome_num' in covariates:
             computational_var_df['outcome_num_sq'] = computational_var_df['outcome_num'] ** 2
@@ -90,7 +89,7 @@ def pupil_peristimulus_regression_analysis(participant_str, condition_str, direc
             if computational_var_df[var].dtype in ['int64', 'float64']:
                 print('processing variables...')
                 print(f'z-scoring {var}')  
-                predictors[var] = scaler.fit_transform(computational_var_df[[var]]).flatten()
+                predictors[var] = zscore(computational_var_df[var])
             else:
                 print(f'{var} not numeric and not z-scored')
                 predictors[var] = computational_var_df[var]

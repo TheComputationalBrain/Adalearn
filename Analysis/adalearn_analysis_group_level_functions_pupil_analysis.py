@@ -4,7 +4,7 @@ import numpy as np
 from scipy import stats
 import pingouin
 import statsmodels.api as sm
-from sklearn.preprocessing import StandardScaler
+from scipy.stats import zscore
 from sklearn.metrics import mean_squared_error
 import plotly.io as pio
 import plotly.graph_objects as go
@@ -122,8 +122,6 @@ def pupil_response_around_change_point(directory_path, participant_str, conditio
     """
     # Reduce pupil epochs to the raw data and insert time as the index 
     outcome_epoched_pupil_df = outcome_epoched_pupil_df.copy()
-    outcome_epoched_pupil_df.set_index('time', inplace=True)  
-    outcome_epoched_pupil_df.drop(columns=['mean', 'std', 'sem'], inplace=True)  
 
     # Create a empty dictionary to store averages
     session_averages = {}
@@ -298,9 +296,8 @@ def pupil_on_learning_rate_regression_analysis(participant_str, condition_str, d
     - pupil_v_lr_df: pd.DataFrame, contains the regression coefficients 
     """
     # Calculating zscore for computational parameters used in analysis
-    scaler = StandardScaler()
 
-    computational_var_df[f'lr_zscore_{parameter_estimate}'] = scaler.fit_transform(computational_var_df[[f'cleaned_learning_rate_{parameter_estimate}']]).flatten()
+    computational_var_df[f'lr_zscore_{parameter_estimate}'] = zscore(computational_var_df[f'cleaned_learning_rate_{parameter_estimate}'], nan_policy='omit')
     
     df_clean = computational_var_df.copy() 
 
@@ -331,10 +328,10 @@ def pupil_on_learning_rate_regression_analysis(participant_str, condition_str, d
     lr_regress_df['learning_rate_zscore'] = df_clean[f'lr_zscore_{parameter_estimate}']
 
     lr_regress_df['pupil_response_bc'] = pupil_variable_bc.values 
-    lr_regress_df['pupil_response_bc_zscore'] = scaler.fit_transform(lr_regress_df[['pupil_response_bc']]).flatten()
+    lr_regress_df['pupil_response_bc_zscore'] = zscore(lr_regress_df['pupil_response_bc'], nan_policy='omit')
 
     lr_regress_df['pupil_response_nobc'] = pupil_variable_nobc.values 
-    lr_regress_df['pupil_response_nobc_zscore'] = scaler.fit_transform(lr_regress_df[['pupil_response_nobc']]).flatten()
+    lr_regress_df['pupil_response_nobc_zscore'] = zscore(lr_regress_df['pupil_response_nobc'], nan_policy='omit')
 
     title_addon = ''
     title = ''
@@ -347,7 +344,7 @@ def pupil_on_learning_rate_regression_analysis(participant_str, condition_str, d
         removed_zero = before_zero_filter - len(lr_regress_df)
         print(f"Removed {removed_zero} rows where learning rate was 0.")
         # Re z-scoring the data after zero updates removed
-        lr_regress_df['learning_rate_zscore'] = scaler.fit_transform(lr_regress_df[['cleaned_learning_rate_estimate']]).flatten()
+        lr_regress_df['learning_rate_zscore'] = zscore(lr_regress_df['cleaned_learning_rate_estimate'], nan_policy='omit')
 
         title_addon = '-(zero-excluded)'
         title = '(zero excluded)'
@@ -431,7 +428,7 @@ def pupil_on_learning_rate_regression_analysis(participant_str, condition_str, d
 
 
 
-def pupil_uncertainty_lr_mediation_analysis(participant_str, condition_str, directory_path, computational_var_df, outcome_epoched_pupil_df, outcome_epoched_pupil_df_nobc, outcome_epochs_to_remove, uncertainty_param, variables, exclude_zero=False):
+def pupil_uncertainty_lr_mediation_analysis(participant_str, condition_str, directory_path, computational_var_df, outcome_epoched_pupil_df, outcome_epoched_pupil_df_nobc, outcome_epochs_to_remove, uncertainty_param, baseline_correct_window = [], nobc_window = [], covariates = [], exclude_zero=False):
     """
     Prepares a DataFrame for mediation analysis by selecting relevant computational variables and combining with pupil response, conditioned on whether baseline correction is applied. If baseline corrected data is offered as an input, the pupil response will be the pupil amplitude following stimuli presentation (i.e. max - min within the window 0 - 1.4 s). If not, the average pupil response on non-baseline corrected data will be used (the average is taken across the whole epoch). Returns the output of the mediation analysis.
 
@@ -444,13 +441,19 @@ def pupil_uncertainty_lr_mediation_analysis(participant_str, condition_str, dire
     - outcome_epoched_pupil_df: pd.DataFrame, contains transposed epoched data (each column represents one epoch), the calculated mean, variance metrics, and timestamp across epochs.
     - outcome_epoched_pupil_df_nobc: pd.DataFrame, contains transposed epoched data (each column represents one epoch), the calculated mean, variance metrics, and timestamp across epochs.
     - outcome_epochs_to_remove: list, indices of the epochs that exceed the threshold for the amount of interpolation within.
-    - variables: list, names of the variables to be used as predictors in the regression analysis.
-    - baseline_corrected: boolean, if true, specifies that the pupil data provided is baseline-corrected and the amplitude of the response will be calculated. If false, non-baseline corrected pupil data provided and the avaerage response will be evaluated (default = True).
-    - plot_mediation_analysis: boolean, if true will plot path coefficents of the mediation analysis (default = True)
+    - uncertainty_param: list, names of the predicting variable to be used in the mediation analysis.
+    - baseline_correct_window = list (floats), contains the start and end times of the cluster window for the longest significant cluster identified in the peristimulus regression on the baseline corrected pupil signal.
+    - nobc_window = list (floats), contains the start and end times of the cluster window for the longest significant cluster identified in the peristimulus regression on the nonbaseline corrected pupil signal. 
+    - covariates: list, covariates incorporated within the mediation model.  
+    - exclude_zero: boolean, if True, will exlcude values where no updates were made in learning rate. 
 
     Returns:
     - pd.DataFrame: pd.DataFrame, contains the output statistics of the mediation analysis.
     """
+    # Checking that the correct integration of uncertainty param 
+    if isinstance(uncertainty_param, list):
+        raise ValueError("Only one uncertainty_param should be passed as a string.")
+
     # Preparing the data. Ensuring that the pupil data and "mediators" are matched in terms of the pupil epochs that can be used (do not excede the threshold of too much interpolated data)  
     predictors = computational_var_df.copy()
     outcomes_to_remove = outcome_epochs_to_remove['epochs'].values
@@ -461,7 +464,7 @@ def pupil_uncertainty_lr_mediation_analysis(participant_str, condition_str, dire
     pupil_data_bc = pupil_data_bc.drop(columns=['mean', 'std', 'sem'])
 
     # Baseline corrected specify pupil data to be examined (the average after an outcome within the window of the peristimulus effect is used as a marker of phasic pupil activity.) 
-    filtered_pupil_data_bc = pupil_data_bc.loc[(pupil_data_bc.index >= 0.6) & (pupil_data_bc.index <= 1.4)]
+    filtered_pupil_data_bc = pupil_data_bc.loc[(pupil_data_bc.index >=  baseline_correct_window[0]) & (pupil_data_bc.index <=  baseline_correct_window[1])]
     pupil_variable_bc = filtered_pupil_data_bc.mean()
 
     # The average of the non-baseline corrected pupil response before the stimulus (used as a marker of tonic activity)
@@ -469,36 +472,47 @@ def pupil_uncertainty_lr_mediation_analysis(participant_str, condition_str, dire
     pupil_data_nobc = pupil_data_nobc.set_index('time')
     pupil_data_nobc = pupil_data_nobc.drop(columns=['mean', 'std', 'sem'])
 
-    filtered_pupil_data_nobc = pupil_data_nobc.loc[(pupil_data_nobc.index >= -0.25) & (pupil_data_nobc.index <= 0)]
+    filtered_pupil_data_nobc = pupil_data_nobc.loc[(pupil_data_nobc.index >= nobc_window[0]) & (pupil_data_nobc.index <= 0)]
     pupil_variable_nobc = filtered_pupil_data_nobc.mean()
 
     # Prepare variables for mediation analysis
-    scaler = StandardScaler() 
+    mediation_df = pd.DataFrame()
+    mediation_df[uncertainty_param] = predictors[uncertainty_param].values
+    mediation_df[f'{uncertainty_param}_zscore'] = zscore(mediation_df[uncertainty_param])
 
-    mediation_df = predictors[variables].copy()
-    mediation_df['learning_rate_zscore'] = predictors['lr_zscore_estimate']
+    mediation_df['learning_rate'] = predictors['cleaned_learning_rate_estimate']
+    mediation_df['learning_rate_zscore'] = zscore(mediation_df['learning_rate'], nan_policy='omit')
+
     mediation_df['pupil_response_bc'] = pupil_variable_bc.values 
-    mediation_df['pupil_response_bc_zscore'] = scaler.fit_transform(mediation_df[['pupil_response_bc']]).flatten()
+    mediation_df['pupil_response_bc_zscore'] = zscore(mediation_df['pupil_response_bc'], nan_policy='omit')
 
     mediation_df['pupil_response_nobc'] = pupil_variable_nobc.values 
-    mediation_df['pupil_response_nobc_zscore'] = scaler.fit_transform(mediation_df[['pupil_response_nobc']]).flatten()
+    mediation_df['pupil_response_nobc_zscore'] = zscore(mediation_df['pupil_response_nobc'], nan_policy='omit')
+
+    # Optional covariates
+    if covariates:
+        for covar_name in covariates:
+            mediation_df[covar_name] = predictors[covar_name].values
+            mediation_df[f'{covar_name}_zscore'] = zscore(mediation_df[covar_name], nan_policy='omit')
+        covar_cols = [f'{c}_zscore' for c in covariates]
+    else:
+        covar_cols = None
 
     # Option to exclude no update trials
     if exclude_zero:
         before_zero_filter = len(mediation_df)
-        mediation_df['cleaned_learning_rate_estimate'] = predictors['cleaned_learning_rate_estimate']
-        mediation_df = mediation_df[mediation_df['cleaned_learning_rate_estimate'] != 0]
+        mediation_df = mediation_df[mediation_df['learning_rate'] != 0]
         removed_zero = before_zero_filter - len(mediation_df)
         print(f"Removed {removed_zero} rows where learning rate was 0.")
         # Re z-scoring the data after zero updates removed
-        mediation_df['learning_rate_zscore'] = scaler.fit_transform(mediation_df[['cleaned_learning_rate_estimate']]).flatten()
+        mediation_df['learning_rate_zscore'] = zscore(mediation_df['learning_rate'])
 
     print(f'length of mediators before removing NaN values: {len(mediation_df)}')
     mediation_df = mediation_df.dropna(subset=['learning_rate_zscore'])
     print(f'length of mediators after removing Nan: {len(mediation_df)}')
 
     # Run mediation analysis (currently no option to exclude no update trials)
-    mediation_analysis = pingouin.mediation_analysis(data=mediation_df, x=uncertainty_param, m=['pupil_response_bc', 'pupil_response_nobc'], y='learning_rate_zscore', covar=None, alpha=0.05, n_boot=500, seed=None, return_dist=False, logreg_kwargs=None)
+    mediation_analysis = pingouin.mediation_analysis(data=mediation_df, x=f'{uncertainty_param}_zscore', m=['pupil_response_nobc_zscore'], y='learning_rate_zscore', covar=covar_cols, alpha=0.05, n_boot=500, seed=None, return_dist=False, logreg_kwargs=None)
 
     
     return mediation_analysis
