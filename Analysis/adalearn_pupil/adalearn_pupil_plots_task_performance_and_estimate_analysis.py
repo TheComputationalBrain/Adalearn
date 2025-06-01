@@ -1,6 +1,7 @@
 """
 
 """
+import os
 import pandas as pd
 from scipy import stats
 import plotly.io as pio
@@ -26,7 +27,7 @@ data_behav = dataframes['behavioural_df'][dataframes['behavioural_df']['particip
 data_comp = dataframes['computational_var_df'][dataframes['computational_var_df']['participant']==participant]
 data_change_points = dataframes['change_point_indices_df'][dataframes['change_point_indices_df']['participant']==participant]
 
-plot_session_behav_comp(participant_str=str(participant), condition_str=condition_str, directory_path=directory_path, behavioural_df=data_behav, computational_df=data_comp, change_point_indices=data_change_points, task_session=20, turn_on_plotting=True)
+plot_session_behav_comp(participant_str=str(participant), condition_str=condition_str, directory_path=directory_path, base_dir =base_dir, behavioural_df=data_behav, computational_df=data_comp, change_point_indices=data_change_points, task_session=20, turn_on_plotting=True, plot_group_level=True)
 
 
 ############################################Plotting perforamnce metrics (absolute error and coefficient of variation)
@@ -111,6 +112,20 @@ fig.update_layout(
     margin=dict(l=20, r=20, t=50, b=20),
     font=dict(size=20),
 )
+
+# Save the figure to the group-level folder
+plot_dir = os.path.join(base_dir, "group_level_plots")
+os.makedirs(plot_dir, exist_ok=True)
+
+# Base filename (without extension)
+base_filename = f"adalearn_pupil-group_level_absolute_error_and_cv"
+base_filepath = os.path.join(plot_dir, base_filename)
+
+# Save as PNG
+fig.write_image(f"{base_filepath}.png")
+
+# Save as SVG
+fig.write_image(f"{base_filepath}.svg") 
 
 fig.show()
 
@@ -252,5 +267,19 @@ fig.update_layout(
     template='simple_white',
     showlegend=False
 )
+
+# Save the figure to the group-level folder
+plot_dir = os.path.join(base_dir, "group_level_plots")
+os.makedirs(plot_dir, exist_ok=True)
+
+# Base filename (without extension)
+base_filename = f"adalearn_pupil-group_level_behav_v_model_estimate_relationship"
+base_filepath = os.path.join(plot_dir, base_filename)
+
+# Save as PNG
+fig.write_image(f"{base_filepath}.png")
+
+# Save as SVG
+fig.write_image(f"{base_filepath}.svg") 
 
 fig.show()

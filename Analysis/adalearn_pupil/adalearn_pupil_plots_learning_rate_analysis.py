@@ -1,6 +1,7 @@
 """
 
 """
+import os
 import pandas as pd
 import numpy as np
 from scipy import stats
@@ -154,6 +155,20 @@ fig.update_layout(
     template='simple_white',
     showlegend=False
 )
+
+# Save the figure to the group-level folder
+plot_dir = os.path.join(base_dir, "group_level_plots")
+os.makedirs(plot_dir, exist_ok=True)
+
+# Base filename (without extension)
+base_filename = f"adalearn_pupil-group_level_behav_v_model_lr_relationship"
+base_filepath = os.path.join(plot_dir, base_filename)
+
+# Save as PNG
+fig.write_image(f"{base_filepath}.png")
+
+# Save as SVG
+fig.write_image(f"{base_filepath}.svg") 
 
 fig.show()
 
@@ -312,6 +327,19 @@ fig.update_layout(
     showlegend=False
 )
 
+# Save the figure to the group-level folder
+plot_dir = os.path.join(base_dir, "group_level_plots")
+os.makedirs(plot_dir, exist_ok=True)
+
+# Base filename (without extension)
+base_filename = f"adalearn_pupil-group_level_lr_around_change_points"
+base_filepath = os.path.join(plot_dir, base_filename)
+
+# Save as PNG
+fig.write_image(f"{base_filepath}.png")
+
+# Save as SVG
+fig.write_image(f"{base_filepath}.svg") 
 
 fig.show()
 
@@ -472,9 +500,23 @@ fig.update_layout(
     height=950,
     width=1800)
 
+# Save the figure to the group-level folder
+plot_dir = os.path.join(base_dir, "group_level_plots")
+os.makedirs(plot_dir, exist_ok=True)
+
+# Base filename (without extension)
+base_filename = f"adalearn_pupil-group_level_uncertainty_params_on_lr_regression"
+base_filepath = os.path.join(plot_dir, base_filename)
+
+# Save as PNG
+fig.write_image(f"{base_filepath}.png")
+
+# Save as SVG
+fig.write_image(f"{base_filepath}.svg") 
+
 fig.show()
 
-#######################################################Scatter graph of relationship between uncertainty params coef weights
+#######################################################Scatter plot of relationship between uncertainty params coef weights
 
 fig = go.Figure()
 
@@ -514,6 +556,19 @@ fig.update_layout(
     height=950,
     width=1800)
 
+# Save the figure to the group-level folder
+plot_dir = os.path.join(base_dir, "group_level_plots")
+os.makedirs(plot_dir, exist_ok=True)
+
+# Base filename (without extension)
+base_filename = f"adalearn_pupil-group_level_prior_conf_v_cpp_regression_weights"
+base_filepath = os.path.join(plot_dir, base_filename)
+
+# Save as PNG
+fig.write_image(f"{base_filepath}.png")
+
+# Save as SVG
+fig.write_image(f"{base_filepath}.svg") 
 
 fig.show()
 
@@ -605,6 +660,20 @@ fig.update_layout(
     font=dict(size=20),
     height=950,
     width=1800)
+
+# Save the figure to the group-level folder
+plot_dir = os.path.join(base_dir, "group_level_plots")
+os.makedirs(plot_dir, exist_ok=True)
+
+# Base filename (without extension)
+base_filename = f"adalearn_pupil-group_level_prior_conf_v_lr_relationship"
+base_filepath = os.path.join(plot_dir, base_filename)
+
+# Save as PNG
+fig.write_image(f"{base_filepath}.png")
+
+# Save as SVG
+fig.write_image(f"{base_filepath}.svg") 
 
 fig.show()
 
@@ -723,20 +792,47 @@ fig = make_subplots(rows=2, cols=1, shared_xaxes=False)
 
 # Prior confidence
 fig.add_trace(go.Scatter(
-    x=grouped_rel_pos_df['rel_pos'], 
-    y=grouped_rel_pos_df['conf_mean'], 
-    mode='markers', 
-    marker=dict(size=16, color='rgba(0, 130, 150, 0.8)'),
-    error_y=dict(type='data', array=grouped_rel_pos_df['conf_sem'], visible=True)
+    x=pd.concat([grouped_rel_pos_df['rel_pos'], grouped_rel_pos_df['rel_pos'][::-1]]),
+    y=pd.concat([
+        grouped_rel_pos_df['conf_mean'] - grouped_rel_pos_df['conf_sem'],
+        (grouped_rel_pos_df['conf_mean'] + grouped_rel_pos_df['conf_sem'])[::-1]
+    ]),
+    fill='toself',
+    fillcolor='rgba(0, 130, 150, 0.2)',
+    line=dict(color='rgba(255,255,255,0)'), 
+    hoverinfo="skip",
+    showlegend=False
 ), row=1, col=1)
+
+fig.add_trace(go.Scatter(
+    x=grouped_rel_pos_df['rel_pos'],
+    y=grouped_rel_pos_df['conf_mean'],
+    mode='lines',
+    line=dict(color='rgba(0, 130, 150, 0.8)', width=3),
+    name='Prior Confidence'
+), row=1, col=1)
+
 
 # Change point probability
 fig.add_trace(go.Scatter(
-    x=grouped_rel_pos_df['rel_pos'], 
-    y=grouped_rel_pos_df['cpp_mean'], 
-    mode='markers', 
-    marker=dict(size=16, color='rgba(0, 130, 150, 0.8)'),
-    error_y=dict(type='data', array=grouped_rel_pos_df['cpp_sem'], visible=True)
+    x=pd.concat([grouped_rel_pos_df['rel_pos'], grouped_rel_pos_df['rel_pos'][::-1]]),
+    y=pd.concat([
+        grouped_rel_pos_df['cpp_mean'] - grouped_rel_pos_df['cpp_sem'],
+        (grouped_rel_pos_df['cpp_mean'] + grouped_rel_pos_df['cpp_sem'])[::-1]
+    ]),
+    fill='toself',
+    fillcolor='rgba(0, 130, 150, 0.2)',
+    line=dict(color='rgba(255,255,255,0)'),
+    hoverinfo="skip",
+    showlegend=False
+), row=2, col=1)
+
+fig.add_trace(go.Scatter(
+    x=grouped_rel_pos_df['rel_pos'],
+    y=grouped_rel_pos_df['cpp_mean'],
+    mode='lines',
+    line=dict(color='rgba(0, 130, 150, 0.8)', width=3),
+    name='CPP'
 ), row=2, col=1)
 
 
@@ -770,6 +866,20 @@ fig.update_yaxes(showline=True, linewidth=1, linecolor='black',
 
 # Update layout
 fig.update_layout(height=600*2, width=1200, plot_bgcolor='rgba(255, 255, 255, 1)', font=dict(size=20), showlegend=False)
+
+# Save the figure to the group-level folder
+plot_dir = os.path.join(base_dir, "group_level_plots")
+os.makedirs(plot_dir, exist_ok=True)
+
+# Base filename (without extension)
+base_filename = f"adalearn_pupil-group_level_prior_conf_and_cpp_around_change_points"
+base_filepath = os.path.join(plot_dir, base_filename)
+
+# Save as PNG
+fig.write_image(f"{base_filepath}.png")
+
+# Save as SVG
+fig.write_image(f"{base_filepath}.svg") 
 
 
 fig.show()

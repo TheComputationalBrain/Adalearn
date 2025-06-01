@@ -22,6 +22,9 @@ task_sessions = [str(session).zfill(2) for session in range(from_session, to_ses
 # Read demographic .tsv file
 tsv_df = read_tsv_files(directory_path=directory_path)
 
+# exclude zero updates in learning rate from analysis
+exclude_zero = False
+
 # Task information
 P_C = 0.05
 P1_MIN = 0.1

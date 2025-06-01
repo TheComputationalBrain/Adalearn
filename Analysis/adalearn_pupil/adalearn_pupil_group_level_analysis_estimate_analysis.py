@@ -15,10 +15,13 @@ from adalearn_analysis_participant_level_functions_comp import  behav_v_model_li
 
 from adalearn_analysis_group_level_functions_data_utilities import get_participant_numbers, load_sample_csvs, save_sample_dataframes_to_csv 
 
-from adalearn_pupil.adalearn_pupil_participant_info_and_parameters import base_dir, condition_str
+from adalearn_pupil.adalearn_pupil_participant_info_and_parameters import base_dir, condition_str, exclude_zero
 
 
-dataframes = load_sample_csvs(directory_path=base_dir, substrings=['change_point_indices_df', 'computational_var_df'])
+dataframes = load_sample_csvs(directory_path=base_dir, substrings=[
+    'change_point_indices_df', 
+    'computational_var_df'
+])
 
 participant_list = get_participant_numbers(base_dir)
 
@@ -36,7 +39,7 @@ for participant in participant_list:
 
     print(f"\nAnalysing association between participants' and model estimates...")
     # Evaluating the association between participants' and model estimates
-    behav_v_model_estimate_df = behav_v_model_linear_analysis(computational_var_df=computational_var_df, participant_str=participant_str, condition_str=condition_str, directory_path=directory_path, outcome_var='estimate', pred_var='ideal_observer', exclude_zero=False, plot_behav_v_model_scatter=False, add_regression=True)
+    behav_v_model_estimate_df = behav_v_model_linear_analysis(computational_var_df=computational_var_df, participant_str=participant_str, condition_str=condition_str, directory_path=directory_path, outcome_var='estimate', pred_var='ideal_observer', exclude_zero=exclude_zero, plot_behav_v_model_scatter=False, add_regression=True)
 
     behav_v_model_estimate_df['participant'] = participant_str
 

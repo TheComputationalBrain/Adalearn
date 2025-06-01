@@ -22,7 +22,9 @@ from adalearn_pupil.adalearn_pupil_participant_info_and_parameters import base_d
 
 
 
-dataframes = load_sample_csvs(directory_path=base_dir, substrings=['change_point_indices_df'])
+dataframes = load_sample_csvs(directory_path=base_dir, substrings=[
+    'change_point_indices_df'
+])
 
 participant_list = get_participant_numbers(base_dir)
 

@@ -3,6 +3,7 @@
 """
 import pandas as pd
 import numpy as np
+import os
 from scipy import stats
 import plotly.io as pio
 import plotly.graph_objects as go
@@ -99,7 +100,20 @@ fig.update_yaxes(
     )
 
 fig.update_layout(height=950, width=1800, plot_bgcolor='rgba(255, 255, 255, 1)', font=dict(size=20))
- 
+
+# Save the figure to the group-level folder
+plot_dir = os.path.join(base_dir, "group_level_plots")
+os.makedirs(plot_dir, exist_ok=True)
+
+# Base filename (without extension)
+base_filename = f"adalearn_pupil-group_level_average_baseline_corrected_pupil_signal"
+base_filepath = os.path.join(plot_dir, base_filename)
+
+# Save as PNG
+fig.write_image(f"{base_filepath}.png")
+
+# Save as SVG
+fig.write_image(f"{base_filepath}.svg") 
 
 fig.show()
 
@@ -188,6 +202,20 @@ fig.update_yaxes(
     )
 
 fig.update_layout(height=950, width=1800, plot_bgcolor='rgba(255, 255, 255, 1)', font=dict(size=20))
+
+# Save the figure to the group-level folder
+plot_dir = os.path.join(base_dir, "group_level_plots")
+os.makedirs(plot_dir, exist_ok=True)
+
+# Base filename (without extension)
+base_filename = f"adalearn_pupil-group_level_average_non_baseline_corrected_pupil_signal"
+base_filepath = os.path.join(plot_dir, base_filename)
+
+# Save as PNG
+fig.write_image(f"{base_filepath}.png")
+
+# Save as SVG
+fig.write_image(f"{base_filepath}.svg") 
  
 
 fig.show()
@@ -286,6 +314,20 @@ fig.update_layout(
         xanchor='right',
         yanchor='top',
         bgcolor='rgba(255, 255, 255, 0.7)'))
+
+# Save the figure to the group-level folder
+plot_dir = os.path.join(base_dir, "group_level_plots")
+os.makedirs(plot_dir, exist_ok=True)
+
+# Base filename (without extension)
+base_filename = f"adalearn_pupil-group_level_baseline_corrected_peristimulus_regression"
+base_filepath = os.path.join(plot_dir, base_filename)
+
+# Save as PNG
+fig.write_image(f"{base_filepath}.png")
+
+# Save as SVG
+fig.write_image(f"{base_filepath}.svg") 
 
 
 fig.show()
@@ -387,6 +429,20 @@ fig.update_layout(
         xanchor='right',
         yanchor='top',
         bgcolor='rgba(255, 255, 255, 0.7)'))
+
+# Save the figure to the group-level folder
+plot_dir = os.path.join(base_dir, "group_level_plots")
+os.makedirs(plot_dir, exist_ok=True)
+
+# Base filename (without extension)
+base_filename = f"adalearn_pupil-group_level_non_baseline_corrected_peristimulus_regression"
+base_filepath = os.path.join(plot_dir, base_filename)
+
+# Save as PNG
+fig.write_image(f"{base_filepath}.png")
+
+# Save as SVG
+fig.write_image(f"{base_filepath}.svg") 
 
 
 fig.show()

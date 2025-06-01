@@ -15,7 +15,7 @@ from adalearn_pupil.adalearn_pupil_participant_info_and_parameters import direct
 dataframes = load_csvs(directory_path=directory_path, condition_str=condition_str, substrings=['behavioural_df', 'computational_var_df', 'change_point_indices'])
 
 
-plot_session_behav_comp(participant_str=participant_str, condition_str=condition_str, directory_path=directory_path, behavioural_df=dataframes['behavioural_df'], computational_df=dataframes['computational_var_df'], change_point_indices=dataframes['change_point_indices'], task_session=20, turn_on_plotting=False)
+plot_session_behav_comp(participant_str=participant_str, condition_str=condition_str, directory_path=directory_path, base_dir=None, behavioural_df=dataframes['behavioural_df'], computational_df=dataframes['computational_var_df'], change_point_indices=dataframes['change_point_indices'], task_session=20, turn_on_plotting=False, plot_group_level=False)
 
 
 

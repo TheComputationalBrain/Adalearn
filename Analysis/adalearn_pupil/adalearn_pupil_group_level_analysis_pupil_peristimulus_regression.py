@@ -24,8 +24,13 @@ from adalearn_pupil.adalearn_pupil_participant_info_and_parameters import base_d
 
 
 
-dataframes = load_sample_csvs(directory_path=base_dir, substrings=['computational_var_df', 'change_point_indices_df', 'exclude_participants_pupil_analysis_df', 'outcome_epochs_descriptive_stats_df',
-    'outcome_epoched_pupil_df','outcome_epochs_columns_df',
+dataframes = load_sample_csvs(directory_path=base_dir, substrings=[
+    'computational_var_df', 
+    'change_point_indices_df', 
+    'exclude_participants_pupil_analysis_df', 
+    'outcome_epochs_descriptive_stats_df',
+    'outcome_epoched_pupil_df',
+    'outcome_epochs_columns_df',
     'outcome_epochs_to_remove_df',
     'outcome_epochs_descriptive_stats_nobc_df', 
     'outcome_epoched_pupil_nobc_df'
