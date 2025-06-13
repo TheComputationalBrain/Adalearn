@@ -1381,7 +1381,7 @@ def correlation_around_change_point(participant_str, condition_str, directory_pa
 
 
 
-def uncertainty_on_learning_rate_participant_level(participant_str, condition_str, directory_path, computational_var_df, n_bins = 6, parameter_estimate = 'estimate', exclude_zero = True, plot_corr_subplots = True):
+def uncertainty_on_learning_rate_participant_level(participant_str, condition_str, directory_path, computational_var_df, n_bins = 6, parameter_estimate = 'estimate', exclude_zero = True, include_interaction = False, plot_corr_subplots = True):
     """
     Function to compute correlations and regression parameters for prior confidence and change point probability on learning rate. Returns analysis outputs and model parameters. 
 
@@ -1392,7 +1392,8 @@ def uncertainty_on_learning_rate_participant_level(participant_str, condition_st
     - computational_var_df: pd.DataFrame, contains parsed data from json adalearn data file for select variables to be used in/or provide context to model analysis.
     - n_bins: float, number of bins the prior confidence variable shuld be split into. 
     - parameter_estimate: string, column identifier of which parameter to use (can be 'estimate' for participants' estimates, or 'ideal_observer' for model estimates).
-    - exclude_zero: boolean, if true, will remove row in which no updates made (learning rate = 0) 
+    - exclude_zero: boolean, if true, will remove row in which no updates made (learning rate = 0)
+    - include_interaction: boolean, if true, will include the interaction term in the regression model (default = False). 
     - plot_corr_subplots: boolean, if true, will plot the output of the correlations and linear regression weights assessing the association between parameters of uncertainty and learning rate. 
 
     Returns:
@@ -1448,9 +1449,15 @@ def uncertainty_on_learning_rate_participant_level(participant_str, condition_st
             binned_data['conf_avg'].append(np.mean(bin_conf))
             binned_data['lr_avg'].append(np.mean(bin_lrs))
             binned_data['lr_sem'].append(sem(bin_lrs))
+
+     # Linear regression with prior confidence and change point probability predicting learning rate  
+    # Accounting for the potential interaction term
+    if include_interaction:
+        df_clean['interaction'] = df_clean['conf_zscore'] * df_clean['cpp_zscore']
+        X = df_clean[['conf_zscore', 'cpp_zscore', 'interaction']]
+    else:
+        X = df_clean[['conf_zscore', 'cpp_zscore']]
         
-    # Linear regression with prior confidence and change point probability predicting learning rate  
-    X = df_clean[['conf_zscore', 'cpp_zscore']]
     y = df_clean[f'lr_zscore_{parameter_estimate}']
 
     # Add intercept term

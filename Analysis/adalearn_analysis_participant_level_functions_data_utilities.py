@@ -137,7 +137,7 @@ def plot_session_behav_comp(participant_str, condition_str, directory_path, base
                 [{}, {}],                   
                 [{}, {}]                                   
             ]
-        )
+    )
 
         # Subplot 1: Behavioural and computational estimates
         fig.add_trace(
@@ -145,7 +145,7 @@ def plot_session_behav_comp(participant_str, condition_str, directory_path, base
                 x=task_session_behav_df['outcome_num']+1,
                 y=task_session_behav_df['P1'],
                 mode='lines',
-                line=dict(color='rgba(0,120,255,0.4)'),
+                line=dict(color='rgba(0,120,255,0.6)', dash='dot', width=4),
                 name='Hidden proportion'
             ), row=1, col=1
         )
@@ -154,7 +154,7 @@ def plot_session_behav_comp(participant_str, condition_str, directory_path, base
                 x=task_session_behav_df['outcome_num']+1,
                 y=task_session_behav_df['estimate'],
                 mode='lines',
-                line=dict(color='rgba(0, 130, 150, 0.8)'),
+                line=dict(color='rgba(0, 0, 0, 0.8)', width=2),
                 name='Participant estimate'
             ), row=1, col=1
         )
@@ -163,7 +163,7 @@ def plot_session_behav_comp(participant_str, condition_str, directory_path, base
                 x=task_session_behav_df['outcome_num']+1,
                 y=task_session_behav_df['ideal_observer'],
                 mode='lines',
-                line=dict(color='rgba(255, 0, 0, 0.8)'),
+                line=dict(color='rgba(255, 0, 0, 0.8)', width=2),
                 name='Model estimate'
             ), row=1, col=1
         )
@@ -206,7 +206,7 @@ def plot_session_behav_comp(participant_str, condition_str, directory_path, base
                 y=task_session_comp_df['cleaned_learning_rate_ideal_observer'], 
                 mode='lines+markers',
                 marker=dict(color='rgba(0, 130, 150, 0.8)'), 
-                name='Ideal observer model learning rate',
+                name='Normative model learning rate',
                 showlegend=False
             ), row=2, col=2
         )
@@ -261,15 +261,12 @@ def plot_session_behav_comp(participant_str, condition_str, directory_path, base
 
         # Update layout
         fig.update_layout(
-            title=f"Behavioural and computationally-derived parameters obtained from task session {task_session} for participant {participant_str} in condition {condition_str}",
-            title_x=0.5,
-            title_font=dict(size=16),
-            height=1200,
-            width=1800,
+            height=1900,
+            width=2500,
             plot_bgcolor='rgba(255, 255, 255, 1)',
             showlegend=True,
             margin=dict(l=50, r=50, t=50, b=50),
-            font=dict(size=16),
+            font=dict(size=42, family="times new roman"),
             hovermode="closest"
         )
 
@@ -277,16 +274,16 @@ def plot_session_behav_comp(participant_str, condition_str, directory_path, base
             for c in range(1, 3):
                 fig.update_xaxes(
                     showline=True,
-                    linewidth=1,
+                    linewidth=1.5,
                     linecolor='black',
-                    dtick=5,            # Tick every 5
+                    dtick=10,            # Tick every 10
                     tick0=5, # Start ticks at 5 to skip 0
                     range=[0.01, 75.99],
                     row=r, col=c
                 )
                 fig.update_yaxes(
                     showline=True,
-                    linewidth=1,
+                    linewidth=1.5,
                     linecolor='black',
                     row=r, col=c
                 )
