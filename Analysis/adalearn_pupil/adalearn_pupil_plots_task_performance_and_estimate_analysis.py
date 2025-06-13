@@ -67,15 +67,15 @@ for id in dataframes['mean_abs_error_df']['participant'].unique():
         x=participant_data['task_session'], 
         y=participant_data['mean_abs_error'], 
         mode='lines+markers', 
-        line=dict(color='rgba(0, 130, 150, 0.12)'),
-        marker=dict(color='rgba(0, 130, 150, 0.12)', size=8)
+        line=dict(color='rgba(0, 130, 150, 0.12)', width=1.5),
+        marker=dict(color='rgba(0, 130, 150, 0.12)', size=12)
     ), row=1, col=1)
 
     fig.add_trace(go.Scatter(
         x=mean_abs_error_avg_df['task_session'], 
         y=mean_abs_error_avg_df['mean'], 
         mode='lines+markers', 
-        marker=dict(color='rgba(0, 130, 150, 0.8)', size=16)
+        marker=dict(color='rgba(0, 130, 150, 0.8)', size=19)
     ), row=1, col=1)
 
     fig.update_yaxes(autorangeoptions_include=0, row=1, col=1)
@@ -99,18 +99,18 @@ for id in dataframes['mean_abs_error_df']['participant'].unique():
     ), row=1, col=2)
 
 
-fig.update_yaxes(title_text="Mean absolute error", showline=True, linewidth=1, linecolor='black', row=1, col=1)
-fig.update_yaxes(title_text="Coefficient of variation (%)", showline=True, linewidth=1, linecolor='black', row=1, col=2)
-fig.update_xaxes(tickvals=list(range(1, 23)), title_text="Task session", showline=True, linewidth=1, linecolor='black', row=1, col=1)
-fig.update_xaxes(tickvals=list(range(1, 23)), title_text="Task session", showline=True, linewidth=1, linecolor='black', row=1, col=2)
+fig.update_yaxes(title_text="Mean absolute error", showline=True, linewidth=1.5, linecolor='black', row=1, col=1)
+fig.update_yaxes(title_text="Coefficient of variation (%)", showline=True, linewidth=1.5, linecolor='black', row=1, col=2)
+fig.update_xaxes(tickvals=list(range(1, 23, 2)), title_text="Task session", showline=True, linewidth=1.5, linecolor='black', row=1, col=1)
+fig.update_xaxes(tickvals=list(range(1, 23, 2)), title_text="Task session", showline=True, linewidth=1.5, linecolor='black', row=1, col=2)
 
 fig.update_layout(
-    height=1000,
-    width=2000,
+    height=2*1200,
+    width=1800,
     showlegend=False,
     plot_bgcolor='rgba(255, 255, 255, 1)',
     margin=dict(l=20, r=20, t=50, b=20),
-    font=dict(size=20),
+    font=dict(size=42, family='Times New Roman'),
 )
 
 # Save the figure to the group-level folder
@@ -189,27 +189,28 @@ for participant in participant_v_model_df['participant'].unique():
         x=data['model_estimate_bin_label'], 
         y=data['avg_estimate'], 
         mode='lines+markers',
-        line=dict(color='rgba(0, 130, 150, 0.12)'),
+        line=dict(color='rgba(0, 130, 150, 0.12)', width=1.5),
+        marker=dict(color='rgba(0, 130, 150, 0.12)', size=12),
         showlegend=False))
 
 fig.add_trace(go.Scatter(
     x=group_behav_v_model_estimate_df['model_estimate_bin_label'],
     y=group_behav_v_model_estimate_df['group_avg_estimate'], 
     mode='markers',
-    marker=dict(color='rgba(0, 130, 150, 0.8)', size=14), 
+    marker=dict(color='rgba(0, 130, 150, 0.8)', size=19), 
     showlegend=False, 
     ))
 
 fig.update_xaxes(
     showline=True, 
-    linewidth=1, 
+    linewidth=1.5, 
     linecolor='black', 
     title_text="Normative estimate", 
 )
 
 fig.update_yaxes(
     showline=True, 
-    linewidth=1, 
+    linewidth=1.5, 
     linecolor='black', 
     title_text="Participant estimate",   
 )
@@ -234,35 +235,37 @@ fig.update_layout(
         range=[0, 1.0],      
         title='Correlation coefficient',
         showline=True,
-        linecolor='black'
+        linecolor='black',
+        linewidth=1.5 
     ),
     yaxis2=dict(
         domain=[0.15, 0.4],  
         anchor='x2',
         title='Count',
         showline=True,
-        linecolor='black'
+        linecolor='black',
+        linewidth=1.5, 
     )
 )
 
 fig.update_layout(
     xaxis=dict(
         range=[0.1, 0.9],  
-        title=dict(text="Model estimate", font=dict(size=24)),
+        title=dict(text="Model estimate", font=dict(size=42)),
     ),
     yaxis=dict(
-        title=dict(text="Participant estimate", font=dict(size=24))
+        title=dict(text="Participant estimate", font=dict(size=42))
     ),
     xaxis2=dict(
-        title=dict(text='Correlation coefficient', font=dict(size=18)),
-        tickfont=dict(size=14),
+        title=dict(text='Correlation coefficient', font=dict(size=42)),
+        tickfont=dict(size=36),
     ),
     yaxis2=dict(
-        title=dict(text='Count', font=dict(size=18)),
-        tickfont=dict(size=14),
+        title=dict(text='Count', font=dict(size=42)),
+        tickfont=dict(size=36),
     ),
-    font=dict(size=18), 
-    height=950,
+    font=dict(size=42, family='Times New Roman'), 
+    height=1200,
     width=1800,
     template='simple_white',
     showlegend=False

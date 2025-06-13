@@ -55,15 +55,15 @@ behav_v_model_lr_df_zero_exclude = behav_v_model_linear_analysis(participant_str
 
 
 
-learning_rate_analysis_dict = uncertainty_on_learning_rate_participant_level(participant_str=participant_str, condition_str=condition_str, directory_path=directory_path, computational_var_df=dataframes['computational_var_df'], n_bins=6, parameter_estimate='estimate', exclude_zero=False, plot_corr_subplots=False)
+learning_rate_analysis_dict = uncertainty_on_learning_rate_participant_level(participant_str=participant_str, condition_str=condition_str, directory_path=directory_path, computational_var_df=dataframes['computational_var_df'], n_bins=6, parameter_estimate='estimate', exclude_zero=False, include_interaction=False, plot_corr_subplots=False)
 
 
 
-learning_rate_analysis_dict_exclude_zero = uncertainty_on_learning_rate_participant_level(participant_str=participant_str, condition_str=condition_str, directory_path=directory_path, computational_var_df=dataframes['computational_var_df'], n_bins=6, parameter_estimate='estimate', exclude_zero=True, plot_corr_subplots=False)
+learning_rate_analysis_dict_exclude_zero = uncertainty_on_learning_rate_participant_level(participant_str=participant_str, condition_str=condition_str, directory_path=directory_path, computational_var_df=dataframes['computational_var_df'], n_bins=6, parameter_estimate='estimate', exclude_zero=True, include_interaction=False,  plot_corr_subplots=False)
 
 
 
-learning_rate_model_analysis_dict = uncertainty_on_learning_rate_participant_level(participant_str=participant_str, condition_str=condition_str, directory_path=directory_path, computational_var_df=dataframes['computational_var_df'], n_bins=6, parameter_estimate='ideal_observer', exclude_zero=False, plot_corr_subplots=False)
+learning_rate_model_analysis_dict = uncertainty_on_learning_rate_participant_level(participant_str=participant_str, condition_str=condition_str, directory_path=directory_path, computational_var_df=dataframes['computational_var_df'], n_bins=6, parameter_estimate='ideal_observer', exclude_zero=False, include_interaction=False, plot_corr_subplots=False)
 
 
 

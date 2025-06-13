@@ -82,24 +82,24 @@ fig.add_trace(go.Scatter(
     showlegend=False
 ))
 
-fig.add_vline(x=0, line_dash='dot')
-fig.add_hline(y=0, line_dash = 'dot')
+fig.add_vline(x=0, line_dash='dot', line=dict(color='black', width=1.5))
+fig.add_hline(y=0, line_dash = 'dot', line=dict(color='black', width=1.5))
 
 fig.update_xaxes(
         showline=True, 
-        linewidth=1, 
+        linewidth=1.5, 
         linecolor='black', 
         title_text="Time relative to outcome presentation (s)",
     )
 
 fig.update_yaxes(
         showline=True, 
-        linewidth=1, 
+        linewidth=1.5, 
         linecolor='black',
         title_text = 'Pupil diameter signal (z-score)' 
     )
 
-fig.update_layout(height=950, width=1800, plot_bgcolor='rgba(255, 255, 255, 1)', font=dict(size=20))
+fig.update_layout(height=1200, width=1800, plot_bgcolor='rgba(255, 255, 255, 1)', font=dict(size=42, family="Times New Roman"))
 
 # Save the figure to the group-level folder
 plot_dir = os.path.join(base_dir, "group_level_plots")
@@ -184,8 +184,8 @@ fig.add_trace(go.Scatter(
     showlegend=False
 ))
 
-fig.add_vline(x=0, line_dash='dot')
-fig.add_hline(y=0, line_dash = 'dot')
+fig.add_vline(x=0, line_dash='dot', line=dict(color='black', width=1.5))
+fig.add_hline(y=0, line_dash = 'dot', line=dict(color='black', width=1.5))
 
 fig.update_xaxes(
         showline=True, 
@@ -201,7 +201,7 @@ fig.update_yaxes(
         title_text = 'Pupil diameter signal (z-score)' 
     )
 
-fig.update_layout(height=950, width=1800, plot_bgcolor='rgba(255, 255, 255, 1)', font=dict(size=20))
+fig.update_layout(height=1200, width=1800, plot_bgcolor='rgba(255, 255, 255, 1)', font=dict(size=42, family="Times New Roman"))
 
 # Save the figure to the group-level folder
 plot_dir = os.path.join(base_dir, "group_level_plots")
@@ -264,8 +264,8 @@ fig.add_trace(go.Scatter(
 ))
 
 
-fig.add_vline(x=0, line_dash='dot')
-fig.add_hline(y=0, line_dash = 'dot')
+fig.add_vline(x=0, line_dash='dot', line=dict(color='black', width=1.5))
+fig.add_hline(y=0, line_dash = 'dot', line=dict(color='black', width=1.5))
 
 
 var_style_map = {
@@ -284,30 +284,30 @@ for _, row in baseline_corrected_clusters.iterrows():
             x=cluster_range,
             y=[style['yval']] * len(cluster_range),  # Staggered y placement
             mode='markers',
-            marker=dict(color=style['color'], size=8, symbol='asterisk-open'),
+            marker=dict(color=style['color'], size=28, symbol='asterisk-open'),
             showlegend=False,
             hoverinfo='skip'
         ))
 
 fig.update_xaxes(
     showline=True, 
-    linewidth=1, 
+    linewidth=1.5, 
     linecolor='black', 
     title_text="Time relative to outcome presentation (s)", 
 )
 
 fig.update_yaxes(
     showline=True, 
-    linewidth=1, 
+    linewidth=1.5, 
     linecolor='black', 
     title_text="Regression weights",  
 )
 
 fig.update_layout(
     plot_bgcolor='rgba(255, 255, 255, 1)',
-    height=950,
+    height=1200,
     width=1800,
-    font=dict(size=20),
+    font=dict(size=42, family="Times New Roman"),
     legend=dict(
         x=0.32,
         y=1.0,
@@ -378,8 +378,8 @@ fig.add_trace(go.Scatter(
 ))
 
 
-fig.add_vline(x=0, line_dash='dot')
-fig.add_hline(y=0, line_dash = 'dot')
+fig.add_vline(x=0, line_dash='dot', line=dict(color='black', width=1.5))
+fig.add_hline(y=0, line_dash = 'dot', line=dict(color='black', width=1.5))
 
 
 var_style_map = {
@@ -398,7 +398,7 @@ for _, row in nonbaseline_corrected_clusters.iterrows():
             x=cluster_range,
             y=[style['yval']] * len(cluster_range),  # Staggered y placement
             mode='markers',
-            marker=dict(color=style['color'], size=8, symbol='asterisk-open'),
+            marker=dict(color=style['color'], size=28, symbol='asterisk-open'),
             showlegend=False,
             hoverinfo='skip'
         ))
@@ -406,23 +406,23 @@ for _, row in nonbaseline_corrected_clusters.iterrows():
 
 fig.update_xaxes(
     showline=True, 
-    linewidth=1, 
+    linewidth=1.5, 
     linecolor='black', 
     title_text="Time relative to outcome presentation (s)", 
 )
 
 fig.update_yaxes(
     showline=True, 
-    linewidth=1, 
+    linewidth=1.5, 
     linecolor='black', 
     title_text="Regression weights",  
 )
 
 fig.update_layout(
     plot_bgcolor='rgba(255, 255, 255, 1)',
-    height=950,
+    height=1200,
     width=1800,
-    font=dict(size=20),
+    font=dict(size=42, family="Times New Roman"),
     legend=dict(
         x=0.18,
         y=1.0,

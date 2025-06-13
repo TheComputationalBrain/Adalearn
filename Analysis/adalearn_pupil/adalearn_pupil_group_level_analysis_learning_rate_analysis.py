@@ -89,10 +89,10 @@ for participant in participant_list:
 
     (f"\nComputing the effect of uncertainty parameters on learning rate...")
     # Linear regression for uncertainty parameters on participants' learning rate
-    learning_rate_analysis_dict = uncertainty_on_learning_rate_participant_level(participant_str=participant_str, condition_str=condition_str, directory_path=directory_path, computational_var_df=computational_var_df, n_bins=6, parameter_estimate='estimate', exclude_zero=exclude_zero, plot_corr_subplots=False)
+    learning_rate_analysis_dict = uncertainty_on_learning_rate_participant_level(participant_str=participant_str, condition_str=condition_str, directory_path=directory_path, computational_var_df=computational_var_df, n_bins=6, parameter_estimate='estimate', exclude_zero=exclude_zero, include_interaction=True, plot_corr_subplots=False)
 
     # Linear regression for uncertainty parameters on model learnijng rate (normative account)
-    learning_rate_model_analysis_dict = uncertainty_on_learning_rate_participant_level(participant_str=participant_str, condition_str=condition_str, directory_path=directory_path, computational_var_df=computational_var_df, n_bins=6, parameter_estimate='ideal_observer', exclude_zero=exclude_zero, plot_corr_subplots=False)
+    learning_rate_model_analysis_dict = uncertainty_on_learning_rate_participant_level(participant_str=participant_str, condition_str=condition_str, directory_path=directory_path, computational_var_df=computational_var_df, n_bins=6, parameter_estimate='ideal_observer', exclude_zero=exclude_zero, include_interaction=True, plot_corr_subplots=False)
 
     group_uncertainty_params_on_lr = pd.merge(left=learning_rate_analysis_dict['uncertainty_v_lr_df'], right=learning_rate_model_analysis_dict['uncertainty_v_lr_df'], on=['variable'], how='outer', suffixes=('', '_model'))
 

@@ -78,27 +78,28 @@ for participant in participant_v_model_df['participant'].unique():
         x=data['model_lr_bin_label'], 
         y=data['avg_lr'], 
         mode='lines+markers',
-        line=dict(color='rgba(0, 130, 150, 0.12)'),
+        line=dict(color='rgba(0, 130, 150, 0.12)', width=1.5),
+        marker=dict(color='rgba(0, 130, 150, 0.15)', size=12),
         showlegend=False))
 
 fig.add_trace(go.Scatter(
     x=group_behav_v_model_lr_df['model_lr_bin_label'],
     y=group_behav_v_model_lr_df['group_avg_lr'], 
     mode='markers',
-    marker=dict(color='rgba(0, 130, 150, 0.8)', size=14), 
+    marker=dict(color='rgba(0, 130, 150, 0.8)', size=19), 
     showlegend=False, 
     ))
 
 fig.update_xaxes(
     showline=True, 
-    linewidth=1, 
+    linewidth=1.5, 
     linecolor='black', 
     title_text="Normative learning rate", 
 )
 
 fig.update_yaxes(
     showline=True, 
-    linewidth=1, 
+    linewidth=1.5, 
     linecolor='black', 
     title_text="Participant learning rate",   
 )
@@ -136,21 +137,21 @@ fig.update_layout(
 
 fig.update_layout(
     xaxis=dict(
-        title=dict(text="Model learning rate", font=dict(size=24)),
+        title=dict(text="Model learning rate", font=dict(size=42)),
     ),
     yaxis=dict(
-        title=dict(text="Participant learning rate", font=dict(size=24))
+        title=dict(text="Participant learning rate", font=dict(size=42))
     ),
     xaxis2=dict(
-        title=dict(text='Correlation coefficient', font=dict(size=18)),
-        tickfont=dict(size=14),
+        title=dict(text='Correlation coefficient', font=dict(size=36)),
+        tickfont=dict(size=32),
     ),
     yaxis2=dict(
-        title=dict(text='Count', font=dict(size=18)),
-        tickfont=dict(size=14),
+        title=dict(text='Count', font=dict(size=36)),
+        tickfont=dict(size=32),
     ),
-    font=dict(size=18), 
-    height=950,
+    font=dict(size=42, family="Times New Roman"), 
+    height=1200,
     width=1800,
     template='simple_white',
     showlegend=False
@@ -235,7 +236,7 @@ fig.add_trace(go.Scatter(
 # Vertical line at change point (0)
 fig.add_vline(
     x=0, 
-    line=dict(color='grey', width=2, dash='dash'),
+    line=dict(color='black', width=2, dash='dash'),
 )
 
 # Plot significant clusters on behavioral subplot
@@ -247,7 +248,7 @@ for _, row in dataframes['lr_around_cp_sig_clusters'].iterrows():
             x=list(cluster_range),
             y=[style['yval']] * len(cluster_range),
             mode='markers',
-            marker=dict(color=style['color'], size=8, symbol='asterisk-open'),
+            marker=dict(color=style['color'], size=28, symbol='asterisk-open'),
             showlegend=False,
             hoverinfo='skip'
         ))
@@ -291,7 +292,7 @@ fig.add_shape(
     x0=0, x1=0,
     y0=lr_by_cp_avg_df_model['mean'].min() - 0.01,
     y1=lr_by_cp_avg_df_model['mean'].max() + 0.01,
-    line=dict(color="grey", width=2, dash="dash"),
+    line=dict(color="black", width=2, dash="dash"),
     xref="x2", yref="y2"
 )
 
@@ -299,31 +300,48 @@ fig.add_shape(
 fig.update_layout(    
     xaxis=dict(
         range=[-3, 16],
-        title=dict(text="Outcome relative to change point", font=dict(size=24)),
-        tickvals=[i for i in range(0, 16)],  # show only ticks >= 0
-        ticktext=[str(i + 1) for i in range(0, 16)],  # shift each tick label by +1
+        showline=True, 
+        linewidth=1.5, 
+        linecolor='black',
+        title=dict(text="Outcome relative to change point", font=dict(size=42)),
+        tickvals=[i for i in range(0, 16, 2)],  # show only ticks >= 0
+        ticktext=[str(i + 1) for i in range(0, 16, 2)],  # shift each tick label by +1
     ),
     yaxis=dict(
-        title=dict(text="Learning rate (participant)", font=dict(size=24)),
+        showline=True, 
+        linewidth=1.5, 
+        linecolor='black',
+        title=dict(text="Learning rate (participant)", font=dict(size=42)),
         range=[0.041, max(0.01, lr_by_cp_avg_df_behav['mean'].max() + lr_by_cp_avg_df_behav['sem'].max())]
     ),
     xaxis2=dict(
         domain=[0.7, 1.0],
         anchor="y2",
         range=[-3, 16],
-        tickvals=[i for i in range(0, 16)],  # show only ticks >= 0
-        ticktext=[str(i + 1) for i in range(0, 16)],  # shift each tick label by +1
-        title=dict(text="Outcome relative to change point", font=dict(size=18))
+        showticklabels=True,
+        showline=True,
+        linecolor='black',
+        linewidth=1.5,
+        tickvals=[i for i in range(0, 16, 2)],  # show only ticks >= 0
+        ticktext=[str(i + 1) for i in range(0, 16, 2)],  # shift each tick label by +1
+        title=dict(text="Outcome relative to change point", font=dict(size=36)),
+        tickfont=dict(size=32),
     ),
     yaxis2=dict(
         domain=[0.7, 1.0],
         anchor="x2",
-        title=dict(text="Learning rate (model)", font=dict(size=18))
+        showticklabels=True,
+        showline=True,
+        linecolor='black',
+        linewidth=1.5,
+        dtick=0.02,
+        title=dict(text="Learning rate (model)", font=dict(size=36)),
+        tickfont=dict(size=32),
     ),
-    font=dict(size=18),
-    height=950,
+    font=dict(size=42, family="times new roman"),
+    height=1200,
     width=1800,
-    template='simple_white',
+    plot_bgcolor='rgba(255, 255, 255, 1)',
     showlegend=False
 )
 
@@ -369,14 +387,14 @@ fig = go.Figure()
 
 fig.add_trace(go.Bar(
     name='Prior confidence (z-score)',
-    x=['Prior confidence (z-score)'], y=[behav_conf_coef_mean],
+    x=[0], y=[behav_conf_coef_mean],
     error_y=dict(type='data', array=[behav_conf_coef_sem]),
     showlegend=False
 ))
 
 fig.add_trace(go.Bar(
     name='Change point probability (z-score)',
-    x=['Change point probability (z-score)'], y=[behav_cpp_coef_mean],
+    x=[1], y=[behav_cpp_coef_mean],
     error_y=dict(type='data', array=[behav_cpp_coef_sem]),
     showlegend=False
 ))
@@ -384,10 +402,10 @@ fig.add_trace(go.Bar(
 fig.add_hline(y=0, line_dash='dot')
 
 # Determine y positions for stars (slightly above error bar max)
-y_offset = 0.015  # adjust as needed
-conf_star_y = behav_conf_coef_mean - behav_conf_coef_sem - y_offset
-cpp_star_y = behav_cpp_coef_mean - behav_cpp_coef_sem - y_offset
-between_star_y = max(conf_star_y, cpp_star_y) - 0.1  # higher for between comparison line
+y_offset = 0.25  # adjust as needed
+conf_star_y = behav_conf_coef_mean + behav_conf_coef_sem - y_offset
+cpp_star_y = behav_cpp_coef_mean + behav_cpp_coef_sem - y_offset
+between_star_y = max(conf_star_y, cpp_star_y) - 0.1
 
 # Add asterisks if significant
 if uncertainty_params_ttest_df.loc[
@@ -395,9 +413,9 @@ if uncertainty_params_ttest_df.loc[
 ].values[0] < 0.05:
     fig.add_annotation(
         text='*',
-        x='Prior confidence (z-score)', y=conf_star_y,
+        x=0, y=conf_star_y,
         showarrow=False,
-        font=dict(size=24)
+        font=dict(size=60)
     )
 
 if uncertainty_params_ttest_df.loc[
@@ -405,9 +423,9 @@ if uncertainty_params_ttest_df.loc[
 ].values[0] < 0.05:
     fig.add_annotation(
         text='*',
-        x='Change point probability (z-score)', y=cpp_star_y,
+        x=1, y=cpp_star_y,
         showarrow=False,
-        font=dict(size=24)
+        font=dict(size=60)
     )
 
 # Optional: Add a bar and star for between-group comparison
@@ -417,12 +435,12 @@ if uncertainty_params_ttest_df.loc[
     fig.add_shape(type='line',
                   x0=0, x1=1,
                   y0=between_star_y, y1=between_star_y,
-                  line=dict(color='black', width=1))
+                  line=dict(color='black', width=1.5))
     fig.add_annotation(
         text='*',
         x=0.5, y=between_star_y - 0.02,
         showarrow=False,
-        font=dict(size=24)
+        font=dict(size=60)
     )
 
 fig.update_traces(
@@ -431,13 +449,48 @@ fig.update_traces(
     marker_line_width=1.0,
 )
 
-fig.update_xaxes(showline=True, linewidth=1, linecolor='black')
-fig.update_yaxes(showline=True, linewidth=1, linecolor='black',  title_text="Regression weight (participant)")
+x_positions = {'Prior confidence (z-score)': 0, 'Change point probability (z-score)': 1}
+
+# Jitter width
+jitter_width = 0.08
+
+# Jittered scatter x values
+np.random.seed(42)
+
+# Generate jittered x values for each group
+x_jittered_conf = np.random.normal(loc=x_positions['Prior confidence (z-score)'], scale=jitter_width, size=len(behav_conf_coef))
+x_jittered_cpp = np.random.normal(loc=x_positions['Change point probability (z-score)'], scale=jitter_width, size=len(behav_cpp_coef))
+
+# Add jittered scatter points — use numeric jittered x, actual y
+fig.add_trace(go.Scatter(
+    x=x_jittered_conf,
+    y=behav_conf_coef['coefficient'],
+    mode='markers',
+    marker=dict(color='rgba(0, 130, 150, 0.3)', size=16),
+    showlegend=False,
+))
+
+fig.add_trace(go.Scatter(
+    x=x_jittered_cpp,
+    y=behav_cpp_coef['coefficient'],
+    mode='markers',
+    marker=dict(color='rgba(0, 130, 150, 0.3)', size=16),
+    showlegend=False,
+))
+
+fig.update_xaxes(showline=True, linewidth=1.5, linecolor='black')
+fig.update_yaxes(showline=True, linewidth=1.5, linecolor='black',  title_text="Regression weight (participant)")
+
+fig.update_xaxes(
+    tickvals=[0, 1],
+    ticktext=['Prior confidence (z-score)', 'Change point probability (z-score)'],
+    showline=True, linewidth=1.5, linecolor='black'
+)
 
 # Add inset bars (model) - assigned to secondary x2/y2 axes
 fig.add_trace(go.Bar(
     name='Model Prior confidence',
-    x=['Prior conf. (z-score)'], y=[model_conf_coef_mean],
+    x=['Prior conf'], y=[model_conf_coef_mean],
     error_y=dict(type='data', array=[model_conf_coef_sem]),
     showlegend=False,
     xaxis='x2',
@@ -449,7 +502,7 @@ fig.add_trace(go.Bar(
 
 fig.add_trace(go.Bar(
     name='Model Change point probability',
-    x=['CPP (z-score)'], y=[model_cpp_coef_mean],
+    x=['CPP'], y=[model_cpp_coef_mean],
     error_y=dict(type='data', array=[model_cpp_coef_sem]),
     showlegend=False,
     xaxis='x2',
@@ -467,7 +520,7 @@ fig.add_shape(
     xref="x2", yref="y2",
     line=dict(
         color="black",
-        width=1,
+        width=1.5,
         dash="dot"
     ),
     layer="above"
@@ -475,29 +528,29 @@ fig.add_shape(
 
 fig.update_layout(
     xaxis2=dict(
-        domain=[0.70, 0.95],  # inset x position (change to relocate)
+        domain=[0.1, 0.35],  # inset x position (change to relocate)
         anchor='y2',
         showticklabels=True,
         showline=True,
         linecolor='black',
-        linewidth=1,
-        tickfont=dict(size=16),     
-        titlefont=dict(size=16)
+        linewidth=1.5,
+        tickfont=dict(size=36),     
+        titlefont=dict(size=32)
     ),
     yaxis2=dict(
         title_text="Regression weight (model)",
-        domain=[0.3, 0.55],  # inset y position (change to resize/relocate)
+        domain=[0.7, 0.95],  # inset y position (change to resize/relocate)
         anchor='x2',
         showticklabels=True,
         showline=True,
         linecolor='black',
-        linewidth=1,
-        tickfont=dict(size=16),       
-        titlefont=dict(size=16)
+        linewidth=1.5,
+        tickfont=dict(size=36),       
+        titlefont=dict(size=32)
     ),
     plot_bgcolor='rgba(255, 255, 255, 1)',
-    font=dict(size=20),
-    height=950,
+    font=dict(size=42, family="Times New Roman"),
+    height=1200,
     width=1800)
 
 # Save the figure to the group-level folder
@@ -525,18 +578,18 @@ fig.add_trace(go.Scatter(
     x=behav_conf_coef['coefficient'], 
     y=behav_cpp_coef['coefficient'], 
     mode='markers', 
-    marker=dict(color='rgba(0, 130, 150, 0.6)', size=16),
+    marker=dict(color='rgba(0, 130, 150, 0.6)', size=19),
     showlegend=False
 ))
 
 # Add horizontal and vertical lines for scatter plot
-fig.add_hline(y=0, line_dash='dot')
-fig.add_vline(x=0, line_dash='dot')
+fig.add_hline(y=0, line_dash='dot', line=dict(color='black', width=1.5))
+fig.add_vline(x=0, line_dash='dot', line=dict(color='black', width=1.5))
 
 # Update x and y axes for the second subplot (right)
 fig.update_xaxes(
     showline=True, 
-    linewidth=1, 
+    linewidth=1.5, 
     linecolor='black', 
     title_text="Prior confidence (beta)", 
     range=[-0.6, 0.6]
@@ -544,7 +597,7 @@ fig.update_xaxes(
 
 fig.update_yaxes(
     showline=True, 
-    linewidth=1, 
+    linewidth=1.5, 
     linecolor='black', 
     title_text="Change point probability (beta)",  
     range=[-0.6, 0.6]
@@ -552,8 +605,8 @@ fig.update_yaxes(
 
 fig.update_layout(
     plot_bgcolor='rgba(255, 255, 255, 1)',
-    font=dict(size=20),
-    height=950,
+    font=dict(size=42, family="Times New Roman"),
+    height=1200,
     width=1800)
 
 # Save the figure to the group-level folder
@@ -633,8 +686,8 @@ fig.add_trace(go.Scatter(
             y=behav_group_conf_lr_df['group_avg_lr'], 
             mode='lines+markers', 
             showlegend=False, 
-            line = dict(color = 'teal'),
-            marker=dict(size=16),
+            line = dict(color = 'teal', width=2),
+            marker=dict(size=19),
             error_y=dict(
                 type='data',
                 array=behav_group_conf_lr_df['group_sem_lr'],
@@ -643,22 +696,22 @@ fig.add_trace(go.Scatter(
         
 fig.update_xaxes(
     showline=True, 
-    linewidth=1, 
+    linewidth=1.5, 
     linecolor='black', 
     title_text="Prior confidence (-log(sd))"
 )
 
 fig.update_yaxes(
     showline=True, 
-    linewidth=1, 
+    linewidth=1.5, 
     linecolor='black', 
-    title_text="Learning rate"
+    title_text="Learning rate (participant)"
 )
 
 fig.update_layout(
     plot_bgcolor='rgba(255, 255, 255, 1)',
-    font=dict(size=20),
-    height=950,
+    font=dict(size=42, family="Times New Roman"),
+    height=1200,
     width=1800)
 
 # Save the figure to the group-level folder
@@ -852,7 +905,9 @@ for i in range(1, 3):
     linecolor='black',
     tickmode='array',
     tickvals=list(range(-5, 6)),
-    ticktext=["", "", "", "", "", "Change point", "", "", "", "", ""],
+    ticktext=["", "", "", "", "", "(change point)", "", "", "", "", ""],
+    tickangle=0,
+    range=[-5.5, 6.5], 
     row=i, col=1
 )
 
@@ -865,7 +920,7 @@ fig.update_yaxes(showline=True, linewidth=1, linecolor='black',
 
 
 # Update layout
-fig.update_layout(height=600*2, width=1200, plot_bgcolor='rgba(255, 255, 255, 1)', font=dict(size=20), showlegend=False)
+fig.update_layout(height=2*1200, width=1800, plot_bgcolor='rgba(255, 255, 255, 1)', font=dict(size=42, family="Times New Roman"), showlegend=False)
 
 # Save the figure to the group-level folder
 plot_dir = os.path.join(base_dir, "group_level_plots")
