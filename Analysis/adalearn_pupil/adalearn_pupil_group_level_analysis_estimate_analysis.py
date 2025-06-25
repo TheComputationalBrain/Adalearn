@@ -1,4 +1,7 @@
 """
+This script performs group-level analysis of estimates in the Pupil task of the Adalearn project. It loads participant-level data, computes the association between participants' behavioural data and model estimates, and performs statistical tests to assess the significance of these associations. The results are saved to .csv files for further analysis. The following scripts need to be run before this script to load the relevant .csv files:
+- adalearn_pupil/adalearn_pupil_group_level_analysis_behav_task_performance.py
+- adalearn_pupil/adalearn_pupil_group_level_analysis_model_parameters.py
 
 """
 import pandas as pd
@@ -11,19 +14,18 @@ import plotly.express as px
 from plotly.subplots import make_subplots
 pio.renderers.default='browser'
 
-from adalearn_analysis_participant_level_functions_comp import  behav_v_model_linear_analysis
-
-from adalearn_analysis_group_level_functions_data_utilities import get_participant_numbers, load_sample_csvs, save_sample_dataframes_to_csv 
+import adalearn_analysis_group_level_functions_data_utilities as group_data_utils 
+import adalearn_analysis_participant_level_functions_comp as comp
 
 from adalearn_pupil.adalearn_pupil_participant_info_and_parameters import base_dir, condition_str, exclude_zero
 
 
-dataframes = load_sample_csvs(directory_path=base_dir, substrings=[
+dataframes = group_data_utils.load_sample_csvs(directory_path=base_dir, substrings=[
     'change_point_indices_df', 
     'computational_var_df'
 ])
 
-participant_list = get_participant_numbers(base_dir)
+participant_list = group_data_utils.get_participant_numbers(base_dir)
 
 group_behav_v_model_estimate_corr_list = []
 
@@ -39,7 +41,7 @@ for participant in participant_list:
 
     print(f"\nAnalysing association between participants' and model estimates...")
     # Evaluating the association between participants' and model estimates
-    behav_v_model_estimate_df = behav_v_model_linear_analysis(computational_var_df=computational_var_df, participant_str=participant_str, condition_str=condition_str, directory_path=directory_path, outcome_var='estimate', pred_var='ideal_observer', exclude_zero=exclude_zero, plot_behav_v_model_scatter=False, add_regression=True)
+    behav_v_model_estimate_df = comp.behav_v_model_linear_analysis(computational_var_df=computational_var_df, participant_str=participant_str, condition_str=condition_str, directory_path=directory_path, outcome_var='estimate', pred_var='ideal_observer', exclude_zero=exclude_zero, plot_behav_v_model_scatter=False, add_regression=True)
 
     behav_v_model_estimate_df['participant'] = participant_str
 
@@ -90,7 +92,7 @@ behav_model_estimate_coef_df = pd.DataFrame({
 })
 
 # Save group-level csv
-save_sample_dataframes_to_csv(dataframes={
+group_data_utils.save_sample_dataframes_to_csv(dataframes={
     'behav_v_model_estimate_corr_df': group_behav_v_model_estimate_corr_df,
     'behav_v_model_estimate_coef_df': behav_model_estimate_coef_df
 },

@@ -1,5 +1,7 @@
 """
-
+This script performs group-level analysis of learning rate across participants in the Pupil task in the Adalearn project. It evaluates the association between participants' learning rates and those predicted by a normative model, computes learning rates around change points, and assesses the impact of uncertainty parameters on learning rates. The results are saved to .csv files for further analysis. The following script are required to be run before this script to load the required .csv files:
+- adalearn_pupil/adalearn_pupil_participant_level_analysis_behav_task_performance.py
+- adalearn_pupil/adalearn_pupil_participant_level_analysis_model_parameters.py
 """
 import pandas as pd
 import numpy as np
@@ -11,25 +13,23 @@ import plotly.express as px
 from plotly.subplots import make_subplots
 pio.renderers.default='browser'
 
-from adalearn_analysis_participant_level_functions_comp import learning_rate_by_change_point, behav_v_model_linear_analysis, uncertainty_on_learning_rate_participant_level, correlation_around_change_point
-
-from adalearn_analysis_group_level_functions_statistical_analysis import compute_group_level_permutation_cluster_test
-
-from adalearn_analysis_participant_level_functions_data_utilities import evaluation_of_learning_rate
-
-from adalearn_analysis_group_level_functions_data_utilities import get_participant_numbers, load_sample_csvs, save_sample_dataframes_to_csv 
+import adalearn_analysis_group_level_functions_data_utilities as group_data_utils
+import adalearn_analysis_group_level_functions_statistical_analysis as group_stat_analysis 
+import adalearn_analysis_participant_level_functions_comp as comp
+import adalearn_analysis_participant_level_functions_data_utilities as data_utils
 
 from adalearn_pupil.adalearn_pupil_participant_info_and_parameters import base_dir, condition_str, exclude_zero
 
 
-dataframes = load_sample_csvs(directory_path=base_dir, substrings=[
+dataframes = group_data_utils.load_sample_csvs(directory_path=base_dir, substrings=[
     'behavioural_df', 
     'change_point_indices_df', 
     'computational_var_df'
 ])
 
-participant_list = get_participant_numbers(base_dir)
+participant_list = group_data_utils.get_participant_numbers(base_dir)
 
+group_update_task_session_list = []
 group_averaged_lr_session_list = []
 group_behav_v_model_lr_corr_list = []
 group_averaged_lr_around_cp_list = []
@@ -50,15 +50,30 @@ for participant in participant_list:
     behavioural_df = dataframes['behavioural_df'][dataframes['behavioural_df']['participant'] == participant].copy()
 
     # Evaluating the learning rate to extract baseline learning rate
-    lr_evaluation_dict = evaluation_of_learning_rate(participant_str=participant_str, condition_str=condition_str, directory_path=directory_path, behavioural_df=behavioural_df, computational_var_df=computational_var_df, change_point_indices=change_point_indices, quantile_baseline=0.2, parameter_estimate='estimate', baseline_method='quantile_over_sessions', plot_lr_evaluation=False)
+    lr_evaluation_dict = data_utils.evaluation_of_learning_rate(participant_str=participant_str, condition_str=condition_str, directory_path=directory_path, behavioural_df=behavioural_df, computational_var_df=computational_var_df, change_point_indices=change_point_indices, quantile_baseline=0.2, parameter_estimate='estimate', baseline_method='quantile_over_sessions', plot_lr_evaluation=False)
 
     lr_evaluation_dict['avg_lr_session_df']['participant'] = participant_str
 
     group_averaged_lr_session_list.append(lr_evaluation_dict['avg_lr_session_df'])
 
+    # Extracting the update proportion for each task session
+    update_dict = {'participant': [], 'task_session': [], 'update_count': [], 'update_percentage': []}
+   
+    for session in computational_var_df['task_session'].unique():
+        update_data = computational_var_df[computational_var_df['task_session'] == session].copy()
+        sum_update = update_data['was_updated_estimate'].sum()
+
+        update_dict['participant'].append(participant_str)
+        update_dict['task_session'].append(session)
+        update_dict['update_count'].append(sum_update)
+        update_dict['update_percentage'].append(sum_update / len(update_data) * 100)
+
+    update_df = pd.DataFrame(update_dict)
+    group_update_task_session_list.append(update_df)
+
     print(f"\nAnalysing association between participants' and model learning rate...")
     # Evaluating the association between participants' and model learning rates
-    behav_v_model_lr_df = behav_v_model_linear_analysis(participant_str=participant_str, condition_str=condition_str, directory_path=directory_path, computational_var_df=computational_var_df
+    behav_v_model_lr_df = comp.behav_v_model_linear_analysis(participant_str=participant_str, condition_str=condition_str, directory_path=directory_path, computational_var_df=computational_var_df
     , outcome_var='cleaned_learning_rate_estimate', pred_var='cleaned_learning_rate_ideal_observer', exclude_zero=exclude_zero, plot_behav_v_model_scatter=False, add_regression=True)
 
     behav_v_model_lr_df['participant'] = participant_str
@@ -67,10 +82,10 @@ for participant in participant_list:
 
     print(f"\nAnalysing association between participants' and model learning rates around change points...")
     # Computing the learning rate around change point (participants' estimates)
-    filtered_behav_learning_rate_by_cp, averaged_behav_learning_rate_by_cp = learning_rate_by_change_point(participant_str=participant_str, condition_str=condition_str, directory_path=directory_path,computational_var_df=computational_var_df, change_point_indices=change_point_indices, learning_rate_parameter='estimate', pre=2, post=15, exclude_zero=exclude_zero, plot_learning_rate_by_cp=False)
+    filtered_behav_learning_rate_by_cp, averaged_behav_learning_rate_by_cp = comp.learning_rate_by_change_point(participant_str=participant_str, condition_str=condition_str, directory_path=directory_path,computational_var_df=computational_var_df, change_point_indices=change_point_indices, learning_rate_parameter='estimate', pre=2, post=15, exclude_zero=exclude_zero, plot_learning_rate_by_cp=False)
 
     # Computing the learning rate around change points (model estimates)
-    filtered_model_learning_rate_by_cp, averaged_model_learning_rate_by_cp = learning_rate_by_change_point(participant_str=participant_str, condition_str=condition_str, directory_path=directory_path,computational_var_df=computational_var_df, change_point_indices=change_point_indices, learning_rate_parameter='ideal_observer', pre=2, post=15, exclude_zero = exclude_zero, plot_learning_rate_by_cp=False)
+    filtered_model_learning_rate_by_cp, averaged_model_learning_rate_by_cp = comp.learning_rate_by_change_point(participant_str=participant_str, condition_str=condition_str, directory_path=directory_path,computational_var_df=computational_var_df, change_point_indices=change_point_indices, learning_rate_parameter='ideal_observer', pre=2, post=15, exclude_zero = exclude_zero, plot_learning_rate_by_cp=False)
 
     averaged_learning_rate_by_cp = pd.merge(left=averaged_behav_learning_rate_by_cp, right=averaged_model_learning_rate_by_cp, on=['relative_position'], how='outer', suffixes=('', '_model'))
 
@@ -81,7 +96,7 @@ for participant in participant_list:
     group_filtered_lr_around_cp_list.append(filtered_behav_learning_rate_by_cp)
 
     # Evaluating the correlation between participants' and model estimates around change points
-    change_point_avg_lrs_df, lr_around_cp_corr_df = correlation_around_change_point(participant_str=participant_str, condition_str=condition_str, directory_path=directory_path,filtered_learning_rate_by_cp=filtered_behav_learning_rate_by_cp, average_over='position', plot_correlation_round_cp=False)
+    change_point_avg_lrs_df, lr_around_cp_corr_df = comp.correlation_around_change_point(participant_str=participant_str, condition_str=condition_str, directory_path=directory_path,filtered_learning_rate_by_cp=filtered_behav_learning_rate_by_cp, average_over='position', plot_correlation_round_cp=False)
 
     change_point_avg_lrs_df['participant'] = participant_str
 
@@ -89,10 +104,10 @@ for participant in participant_list:
 
     (f"\nComputing the effect of uncertainty parameters on learning rate...")
     # Linear regression for uncertainty parameters on participants' learning rate
-    learning_rate_analysis_dict = uncertainty_on_learning_rate_participant_level(participant_str=participant_str, condition_str=condition_str, directory_path=directory_path, computational_var_df=computational_var_df, n_bins=6, parameter_estimate='estimate', exclude_zero=exclude_zero, include_interaction=True, plot_corr_subplots=False)
+    learning_rate_analysis_dict = comp.uncertainty_on_learning_rate_participant_level(participant_str=participant_str, condition_str=condition_str, directory_path=directory_path, computational_var_df=computational_var_df, n_bins=6, parameter_estimate='estimate', exclude_zero=exclude_zero, include_interaction=True, plot_corr_subplots=False)
 
     # Linear regression for uncertainty parameters on model learnijng rate (normative account)
-    learning_rate_model_analysis_dict = uncertainty_on_learning_rate_participant_level(participant_str=participant_str, condition_str=condition_str, directory_path=directory_path, computational_var_df=computational_var_df, n_bins=6, parameter_estimate='ideal_observer', exclude_zero=exclude_zero, include_interaction=True, plot_corr_subplots=False)
+    learning_rate_model_analysis_dict = comp.uncertainty_on_learning_rate_participant_level(participant_str=participant_str, condition_str=condition_str, directory_path=directory_path, computational_var_df=computational_var_df, n_bins=6, parameter_estimate='ideal_observer', exclude_zero=exclude_zero, include_interaction=True, plot_corr_subplots=False)
 
     group_uncertainty_params_on_lr = pd.merge(left=learning_rate_analysis_dict['uncertainty_v_lr_df'], right=learning_rate_model_analysis_dict['uncertainty_v_lr_df'], on=['variable'], how='outer', suffixes=('', '_model'))
 
@@ -101,6 +116,7 @@ for participant in participant_list:
     group_uncertainty_params_on_lr_list.append(group_uncertainty_params_on_lr)
 
 # Collate lists to dataframes
+group_update_task_session_df = pd.concat(group_update_task_session_list, ignore_index=True)
 group_behav_v_model_lr_corr_df = pd.concat(group_behav_v_model_lr_corr_list, ignore_index=True)
 group_averaged_lr_around_cp_df = pd.concat(group_averaged_lr_around_cp_list, ignore_index=True)
 group_filtered_lr_around_cp_df = pd.concat(group_filtered_lr_around_cp_list, ignore_index=True)
@@ -108,6 +124,21 @@ group_lr_corr_around_cp_df = pd.concat(group_lr_corr_around_cp_list, ignore_inde
 group_uncertainty_params_on_lr_df = pd.concat(group_uncertainty_params_on_lr_list)
 group_averaged_lr_session_df = pd.concat(group_averaged_lr_session_list, ignore_index=True)
 #group_lr_metrics_across_sessions_df = pd.concat(group_lr_metrics_across_sessions_list, ignore_index=True)
+
+# Getting the average update percentage across task sessions for each participant
+average_update_percent_dict = {
+    'participant': [],
+    'avg_update_percentage': []
+}
+
+for participant in group_update_task_session_df['participant'].unique():
+    participant_df = group_update_task_session_df[group_update_task_session_df['participant'] == participant].copy()
+    avg_update_percentage = participant_df['update_percentage'].mean()
+
+    average_update_percent_dict['participant'].append(participant)
+    average_update_percent_dict['avg_update_percentage'].append(avg_update_percentage)
+    
+group_average_update_percent_df = pd.DataFrame(average_update_percent_dict)
 
 # Perform group-level correlation and regression parameter assessment on learning rate across all task sessions
 # Collating regression parameters at participant level
@@ -198,7 +229,7 @@ for id in group_filtered_lr_around_cp_df['participant'].unique():
 cluster_analysis_df = pd.concat(cluster_analysis_values_list, ignore_index=True)
 cluster_analysis_df.rename(columns={'adjusted_lr': 'cluster_data', 'relative_position': 'time_point'}, inplace=True)
 
-cluster_based_permutation_results, significant_clusters_df = compute_group_level_permutation_cluster_test(group_level_df=cluster_analysis_df, pivot_column='time_point', vars = ['cluster_data'], alpha=0.05)
+cluster_based_permutation_results, significant_clusters_df = group_stat_analysis.compute_group_level_permutation_cluster_test(group_level_df=cluster_analysis_df, pivot_column='time_point', vars = ['cluster_data'], alpha=0.05)
 
 # Perform group_level analysis of uncertainty parameters on learning rate
 # Collate regression weights and then perform 1-sample and paired-sample t-tests
@@ -224,7 +255,8 @@ uncertainty_params_ttest_df = pd.DataFrame({
 })
 
 # Save group-level csv
-save_sample_dataframes_to_csv(dataframes={
+group_data_utils.save_sample_dataframes_to_csv(dataframes={
+    'update_freq_df': group_average_update_percent_df,
     'behav_v_model_lr_corr_df': group_behav_v_model_lr_corr_df,
     'averaged_lr_around_cp_df': group_averaged_lr_around_cp_df,
     'lr_corr_around_cp_df': group_lr_corr_around_cp_df,

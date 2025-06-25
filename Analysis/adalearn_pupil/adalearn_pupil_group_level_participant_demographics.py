@@ -6,11 +6,11 @@ from pathlib import Path
 import pandas as pd
 from datetime import datetime
 
-from adalearn_analysis_participant_level_functions_participant_info import read_tsv_files
+import adalearn_analysis_participant_level_functions_participant_info as participant_info
+
+import adalearn_analysis_group_level_functions_data_utilities as data_utils
 
 from adalearn_pupil.adalearn_pupil_participant_info_and_parameters import base_dir, condition_str
-
-from adalearn_analysis_group_level_functions_data_utilities import save_sample_dataframes_to_csv
 
 
 
@@ -23,7 +23,7 @@ print(f'Participants excluded from analysis: {excluded_participants}')
 
 for sub_folder in base_path.iterdir():
     if sub_folder.name not in excluded_participants:
-        tsv_df = read_tsv_files(directory_path=sub_folder)
+        tsv_df = participant_info.read_tsv_files(directory_path=sub_folder)
         group_demographic_df = pd.concat([group_demographic_df, tsv_df], ignore_index=True)
 
 group_demographic_df.sort_values('ParticipantNumber')
@@ -55,7 +55,7 @@ avg_age = group_demographic_df['Age'].mean()
 std_age = group_demographic_df['Age'].std()
 print(f'The average age of the sample is {avg_age:.0f} +/- {std_age:.0f} years')
 
-save_sample_dataframes_to_csv(dataframes={
+data_utils.save_sample_dataframes_to_csv(dataframes={
     'demographics_df': group_demographic_df
 },
 directory_path=base_dir,

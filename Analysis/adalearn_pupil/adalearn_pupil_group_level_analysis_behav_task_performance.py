@@ -1,5 +1,5 @@
 """
-
+This script performs group-level analysis of task performance data for the Pupil task in the Adalearn project. It loads individual participant data, computes performance metrics, conducts statistical analyses, and saves the results to .csv files.
 """
 import pandas as pd
 import numpy as np
@@ -12,15 +12,14 @@ import plotly.express as px
 from plotly.subplots import make_subplots
 pio.renderers.default='browser'
 
-from adalearn_analysis_group_level_functions_data_utilities import get_participant_numbers, save_sample_dataframes_to_csv 
-
-from adalearn_analysis_participant_level_functions_behav import load_behavioural_data, behavioural_change_point_analysis, behavioural_performance_analysis
+import adalearn_analysis_group_level_functions_data_utilities as group_data_utils 
+import adalearn_analysis_participant_level_functions_behav as behav
 
 from adalearn_pupil.adalearn_pupil_participant_info_and_parameters import base_dir, condition_str, task_sessions
 
 
 
-participant_list = get_participant_numbers(base_dir)
+participant_list = group_data_utils.get_participant_numbers(base_dir)
 
 group_behavioural_df_list = []
 group_mean_error_df_list = []
@@ -34,13 +33,13 @@ for participant in participant_list:
 
     print(f"\nLoading task data and computing task performance...")
 
-    behavioural_df, _ = load_behavioural_data( participant_str=participant_str, condition_str=condition_str, directory_path=directory_path, condition_task_sessions=task_sessions, plot_behav_data=False)
+    behavioural_df, _ = behav.load_behavioural_data( participant_str=participant_str, condition_str=condition_str, directory_path=directory_path, condition_task_sessions=task_sessions, plot_behav_data=False)
 
     behavioural_df['participant'] = participant_str
 
     group_behavioural_df_list.append(behavioural_df)
 
-    mean_abs_error_df = behavioural_performance_analysis(participant_str=participant_str, condition_str=condition_str, directory_path=directory_path, behavioural_df=behavioural_df, plot_performance=False)
+    mean_abs_error_df = behav.behavioural_performance_analysis(participant_str=participant_str, condition_str=condition_str, directory_path=directory_path, behavioural_df=behavioural_df, plot_performance=False)
 
     mean_abs_error_df['coef_variation'] = (mean_abs_error_df['std_abs_error']/ mean_abs_error_df['mean_abs_error']) * 100
 
@@ -50,7 +49,7 @@ for participant in participant_list:
 
     print(f"\nExtracting change point indices...")
 
-    num_change_points, change_points_per_session, change_point_indices, behavioural_df = behavioural_change_point_analysis(participant_str=participant_str, condition_str=condition_str, directory_path=directory_path, behavioural_df=behavioural_df, plot_histogram_zscores=False)
+    num_change_points, change_points_per_session, change_point_indices, behavioural_df = behav.behavioural_change_point_analysis(participant_str=participant_str, condition_str=condition_str, directory_path=directory_path, behavioural_df=behavioural_df, plot_histogram_zscores=False)
 
     change_point_indices['participant'] = participant_str
 
@@ -79,7 +78,7 @@ print('Outcome of one-way repeated measures ANOVA on mean score...')
 print(f'\n{anova_mean_score}')
 
 # Saving group level data to .csv files
-save_sample_dataframes_to_csv(dataframes={
+group_data_utils.save_sample_dataframes_to_csv(dataframes={
     "behavioural_df": group_level_behavioural_df,
     "mean_abs_error_df": group_level_mean_error_df,
     "change_point_indices_df": group_level_change_point_indices_df

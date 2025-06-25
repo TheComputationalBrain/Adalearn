@@ -1,4 +1,10 @@
 """
+This script performs group-level analysis for pupil effects on learning rate and the mediating influence of pupil responses on uncertainty-associated effects on learning rates. It computes the coefficients for the mediating baseline-corrected and non-baseline-corrected pupil responses at a participant level, before evaluating the coefficients at a group level. The results are saved in .csv files for further analysis. The following script need to be run before this script to obtain the relevant .csv files:
+- adalearn_pupil/adalearn_pupil_group_level_analysis_behav_task_performance.py
+- adalearn_pupil/adalearn_pupil_group_level_analysis_model_parameters.py
+- adalearn_pupil/adalearn_pupil_group_level_analysis_learning_rate_analysis.py
+- adalearn_pupil/adalearn_pupil_group_level_analysis_pupil_assessment.py
+- adalearn_pupil/adalearn_pupil_group_level_analysis_pupil_peristimulus_regression.py
 
 """
 import pandas as pd
@@ -15,16 +21,14 @@ import plotly.express as px
 from plotly.subplots import make_subplots
 pio.renderers.default='browser'
 
-
-from adalearn_analysis_group_level_functions_data_utilities import get_participant_numbers, load_sample_csvs, save_sample_dataframes_to_csv 
-
-from adalearn_analysis_group_level_functions_pupil_analysis import extract_cluster_times, pupil_response_around_change_point
+import adalearn_analysis_group_level_functions_data_utilities as group_data_utils
+import adalearn_analysis_group_level_functions_pupil_analysis as group_pupil
 
 from adalearn_pupil.adalearn_pupil_participant_info_and_parameters import base_dir, condition_str, exclude_zero
 
 
 
-dataframes = load_sample_csvs(directory_path=base_dir, substrings=[
+dataframes = group_data_utils.load_sample_csvs(directory_path=base_dir, substrings=[
     'computational_var_df', 
     'change_point_indices_df', 
     'exclude_participants_pupil_analysis_df', 
@@ -39,7 +43,7 @@ dataframes = load_sample_csvs(directory_path=base_dir, substrings=[
     'uncertainty_params_ttest_df'
 ])
 
-participant_list = get_participant_numbers(directory=base_dir)
+participant_list = group_data_utils.get_participant_numbers(directory=base_dir)
 
 excluded_participants = list(dataframes['exclude_participants_pupil_analysis_df']['exclude_participant'])
 
@@ -108,12 +112,12 @@ for participant in participant_list:
     epoch_nobc_data['time'] = epoch_nobc_descriptive_stats['time'].values.astype(float)
 
     # Extracting cluster times to set window for regression and mediation analyses
-    baseline_cor_start_time, baseline_cor_end_time = extract_cluster_times(
+    baseline_cor_start_time, baseline_cor_end_time = group_pupil.extract_cluster_times(
         dataframes['cluster_permutation_analysis'],
         epoch_data['time']
     )
 
-    nobc_start_time, nobc_end_time = extract_cluster_times(
+    nobc_start_time, nobc_end_time = group_pupil.extract_cluster_times(
         dataframes['cluster_permutation_analysis_nobc'],
         epoch_nobc_data['time']
     )
@@ -178,11 +182,11 @@ for participant in participant_list:
 
     # Examining pupil response around change points
     print(f'\nExamining pupil responses around change points...')
-    pupil_bc_effect_around_cp_df = pupil_response_around_change_point(directory_path=directory_path, participant_str=participant_str, condition_str=condition_str, outcome_epoched_pupil_df=epoch_data, change_point_indices=change_point_indices, baseline_correct_window=[baseline_cor_start_time, baseline_cor_end_time], nobc_window=[nobc_start_time, nobc_end_time], before=5, after=5, estimate_type='baseline_corrected_effect', plot_pupil_around_change_point=False)
+    pupil_bc_effect_around_cp_df = group_pupil.pupil_response_around_change_point(directory_path=directory_path, participant_str=participant_str, condition_str=condition_str, outcome_epoched_pupil_df=epoch_data, change_point_indices=change_point_indices, baseline_correct_window=[baseline_cor_start_time, baseline_cor_end_time], nobc_window=[nobc_start_time, nobc_end_time], before=5, after=5, estimate_type='baseline_corrected_effect', plot_pupil_around_change_point=False)
 
     pupil_bc_effect_around_cp_df['participant'] = participant_str
 
-    pupil_nobc_effect_around_cp_df = pupil_response_around_change_point(directory_path=directory_path, participant_str=participant_str, condition_str=condition_str, outcome_epoched_pupil_df=epoch_nobc_data, change_point_indices=change_point_indices, baseline_correct_window=[baseline_cor_start_time, baseline_cor_end_time], nobc_window=[nobc_start_time, nobc_end_time], before=5, after=5, estimate_type='nonbaseline_corrected_effect', plot_pupil_around_change_point=False)
+    pupil_nobc_effect_around_cp_df = group_pupil.pupil_response_around_change_point(directory_path=directory_path, participant_str=participant_str, condition_str=condition_str, outcome_epoched_pupil_df=epoch_nobc_data, change_point_indices=change_point_indices, baseline_correct_window=[baseline_cor_start_time, baseline_cor_end_time], nobc_window=[nobc_start_time, nobc_end_time], before=5, after=5, estimate_type='nonbaseline_corrected_effect', plot_pupil_around_change_point=False)
 
     pupil_nobc_effect_around_cp_df['participant'] = participant_str
 
@@ -302,7 +306,7 @@ for path in group_mediation_df['path'].unique():
 print(group_mediation_analysis_df)
 
 # Saving dataframes
-save_sample_dataframes_to_csv(dataframes={
+group_data_utils.save_sample_dataframes_to_csv(dataframes={
     'pupil_v_lr_regress_coef_df': group_pupil_v_lr_dfs,
     'pupil_v_lr_coef_ttest_df': pupil_v_lr_ttest_df,
     'pupil_bc_around_cp': group_pupil_bc_around_cp_df,
