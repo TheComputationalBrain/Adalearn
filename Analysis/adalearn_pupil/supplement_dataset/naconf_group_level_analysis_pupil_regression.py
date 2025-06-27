@@ -1,3 +1,7 @@
+"""
+This scripts runs peristimulus pupil regression analysis for a supplementary dataset of the Adalearn project (NACONF). The effect of uncertainty parameters (prior confidence and change point probability) is examined on both phasic- and tonic-associated pupil signal epochs. Permutation cluster-based analysis compares effects against zero. Plots are generated within the script. 
+"""
+
 import pandas as pd
 import numpy as np
 from scipy import stats
@@ -8,14 +12,10 @@ import plotly.express as px
 from plotly.subplots import make_subplots
 pio.renderers.default='browser'
 
-
-from adalearn_pupil.supplement_dataset.naconf_ideal_observer_model_functions import load_task_behavioural_data, load_constants, change_point_analysis, compute_surprise_from_observations, compute_prior_conf_and_cpp_from_observations
-
-from adalearn_pupil.supplement_dataset.naconf_pupil_functions import load_and_process_pupil_data, all_outcome_pupil_epochs
-
-from adalearn_pupil.supplement_dataset.naconf_pupil_regression_functions import pupil_peristimulus_regression_analysis
-
-from adalearn_pupil.supplement_dataset.naconf_group_level_analysis_functions import compute_group_level_permutation_cluster_test
+import adalearn_pupil.supplement_dataset.naconf_ideal_observer_model_functions as model
+import adalearn_pupil.supplement_dataset.naconf_pupil_functions as pupil
+import adalearn_pupil.supplement_dataset.naconf_pupil_regression_functions as pupil_regress
+import adalearn_pupil.supplement_dataset.naconf_group_level_analysis_functions as analysis
 
 from adalearn_pupil.supplement_dataset.naconf_participant_list import usable_participants
 
@@ -32,32 +32,32 @@ for participant in usable_participants:
     directory_path = Path(f'{base_dir}/sub-{participant}')
 
     print(f"\nLoading task data and computing model derived variables...")
-    task_session_df = load_task_behavioural_data(directory_path=directory_path, selected_participant=participant, task_sessions=task_sessions)
+    task_session_df = model.load_task_behavioural_data(directory_path=directory_path, selected_participant=participant, task_sessions=task_sessions)
 
-    num_change_points, change_points_per_session, change_point_indices, task_session_df = change_point_analysis(participant_str=participant, directory_path=directory_path, task_session_df=task_session_df)
+    num_change_points, change_points_per_session, change_point_indices, task_session_df = model.change_point_analysis(participant_str=participant, directory_path=directory_path, task_session_df=task_session_df)
 
-    constants, P_C, P_MIN, P_MAX = load_constants(directory_path=directory_path, task_sessions=task_sessions)
+    constants, P_C, P_MIN, P_MAX = model.load_constants(directory_path=directory_path, task_sessions=task_sessions)
 
-    task_session_df = compute_surprise_from_observations(participant_str=participant, directory_path=directory_path, task_session_df=task_session_df, change_point_indices_df=change_point_indices, p_c=P_C, p_min=P_MIN, p_max=P_MAX, plot_surprise = False)
+    task_session_df = model.compute_surprise_from_observations(participant_str=participant, directory_path=directory_path, task_session_df=task_session_df, change_point_indices_df=change_point_indices, p_c=P_C, p_min=P_MIN, p_max=P_MAX, plot_surprise = False)
 
-    task_session_df = compute_prior_conf_and_cpp_from_observations(participant_str=participant, directory_path=directory_path, task_session_df=task_session_df, change_point_indices_df=change_point_indices, p_c=P_C, p_min=P_MIN, p_max=P_MAX, estimate_type = 'mean', conf_type = 'prev-conf', unit = 'confidence', plot_prior_conf = False, plot_cpp = False)
+    task_session_df = model.compute_prior_conf_and_cpp_from_observations(participant_str=participant, directory_path=directory_path, task_session_df=task_session_df, change_point_indices_df=change_point_indices, p_c=P_C, p_min=P_MIN, p_max=P_MAX, estimate_type = 'mean', conf_type = 'prev-conf', unit = 'confidence', plot_prior_conf = False, plot_cpp = False)
 
     task_session_df_list.append(task_session_df)
 
     print(f"\nLoading, preprocessing and epoching pupil data...")
-    preprocessed_pupil_df, pupil_trig_df, pupil_ses_df, blink_df, epoched_pupil_df, blink_ratio_epoch_df, epochs_to_remove = load_and_process_pupil_data(directory_path=directory_path, participant_str=participant, list_subject_selected=list_subject_selected, condition_task_sessions=task_sessions, from_session=from_session, to_session=to_session, dict_onsets=None, dict_num=None, session_list=None, outlier_limit_std=10, outlier_correct_average_amount=15, window_start_before=0.25, window_end_after=2.0, baseline_cor=[-0.25, 0], lpf=[5], select_eye=True, remove_epochs=False, z_score=True, plot_interpolation_process=False) 
+    preprocessed_pupil_df, pupil_trig_df, pupil_ses_df, blink_df, epoched_pupil_df, blink_ratio_epoch_df, epochs_to_remove = pupil.load_and_process_pupil_data(directory_path=directory_path, participant_str=participant, list_subject_selected=list_subject_selected, condition_task_sessions=task_sessions, from_session=from_session, to_session=to_session, dict_onsets=None, dict_num=None, session_list=None, outlier_limit_std=10, outlier_correct_average_amount=15, window_start_before=0.25, window_end_after=2.0, baseline_cor=[-0.25, 0], lpf=[5], select_eye=True, remove_epochs=False, z_score=True, plot_interpolation_process=False) 
 
-    outcome_onsets, outcome_nums, outcome_epoched_pupil_df, outcome_blink_ratio_df, outcome_epochs_to_remove, outcome_epochs_to_remove_df = all_outcome_pupil_epochs(directory_path=directory_path, participant_str=participant, list_subject_selected=list_subject_selected, condition_task_sessions=task_sessions, from_session=from_session, to_session=to_session, pupil_trig_df=pupil_trig_df, baseline_cor=[-0.25, 0], variable_df=None, variable_column=None, select_eye=True, remove_epochs=True, plot_averaged_pupil_response=False, plot_raster_pupil_response=False)
+    outcome_onsets, outcome_nums, outcome_epoched_pupil_df, outcome_blink_ratio_df, outcome_epochs_to_remove, outcome_epochs_to_remove_df = pupil.all_outcome_pupil_epochs(directory_path=directory_path, participant_str=participant, list_subject_selected=list_subject_selected, condition_task_sessions=task_sessions, from_session=from_session, to_session=to_session, pupil_trig_df=pupil_trig_df, baseline_cor=[-0.25, 0], variable_df=None, variable_column=None, select_eye=True, remove_epochs=True, plot_averaged_pupil_response=False, plot_raster_pupil_response=False)
 
-    outcome_onsets_nobc, outcome_nums_nobc, outcome_epoched_pupil_df_nobc, outcome_blink_ratio_df_nobc, outcome_epochs_to_remove_nobc, outcome_epochs_to_remove_df_nobc = all_outcome_pupil_epochs(directory_path=directory_path, participant_str=participant, list_subject_selected=list_subject_selected, condition_task_sessions=task_sessions, from_session=from_session, to_session=to_session, pupil_trig_df=pupil_trig_df, baseline_cor=[], variable_df=None, variable_column=None, select_eye=True, remove_epochs=True, plot_averaged_pupil_response=False, plot_raster_pupil_response=False)
+    outcome_onsets_nobc, outcome_nums_nobc, outcome_epoched_pupil_df_nobc, outcome_blink_ratio_df_nobc, outcome_epochs_to_remove_nobc, outcome_epochs_to_remove_df_nobc = pupil.all_outcome_pupil_epochs(directory_path=directory_path, participant_str=participant, list_subject_selected=list_subject_selected, condition_task_sessions=task_sessions, from_session=from_session, to_session=to_session, pupil_trig_df=pupil_trig_df, baseline_cor=[], variable_df=None, variable_column=None, select_eye=True, remove_epochs=True, plot_averaged_pupil_response=False, plot_raster_pupil_response=False)
 
     print(f"\nRunning peristimulus regression analysis on baseline corrected pupil signal...")
-    coefficients_df, pupil_regress_df, residuals_df = pupil_peristimulus_regression_analysis(participant_str = participant, directory_path = directory_path, task_session_df = task_session_df, outcome_epoched_pupil_df = outcome_epoched_pupil_df, outcome_epochs_to_remove=outcome_epochs_to_remove_df, variables=['prior_conf', 'cpp'], covariates=None, baseline_corrected = True, plot_regression_analysis=False)
+    coefficients_df, pupil_regress_df, residuals_df = pupil_regress.pupil_peristimulus_regression_analysis(participant_str = participant, directory_path = directory_path, task_session_df = task_session_df, outcome_epoched_pupil_df = outcome_epoched_pupil_df, outcome_epochs_to_remove=outcome_epochs_to_remove_df, variables=['prior_conf', 'cpp'], covariates=None, baseline_corrected = True, plot_regression_analysis=False)
 
     regression_coefs_list.append(coefficients_df)
 
     print(f"\nRunning peristimulus regression analysis on non-baseline corrected pupil signal...")
-    coefficients_df_nobc, pupil_regress_df_nobc, residuals_df_nobc = pupil_peristimulus_regression_analysis(participant_str = participant, directory_path = directory_path, task_session_df = task_session_df, outcome_epoched_pupil_df = outcome_epoched_pupil_df_nobc, outcome_epochs_to_remove=outcome_epochs_to_remove_df_nobc, variables=['prior_conf', 'cpp'], covariates=None, baseline_corrected = False, plot_regression_analysis=False)
+    coefficients_df_nobc, pupil_regress_df_nobc, residuals_df_nobc = pupil_regress.pupil_peristimulus_regression_analysis(participant_str = participant, directory_path = directory_path, task_session_df = task_session_df, outcome_epoched_pupil_df = outcome_epoched_pupil_df_nobc, outcome_epochs_to_remove=outcome_epochs_to_remove_df_nobc, variables=['prior_conf', 'cpp'], covariates=None, baseline_corrected = False, plot_regression_analysis=False)
 
     regression_nobc_coefs_list.append(coefficients_df_nobc)
 
@@ -91,7 +91,7 @@ for count in group_level_regression_coefs_df['count'].unique():
 baseline_corr_coefs_df = pd.DataFrame(baseline_corr_coefs_dict)
 
 
-baseline_corr_cluster_analysis_results = compute_group_level_permutation_cluster_test(group_level_regression_coefs_df, vars=['prior_conf_zscore', 'cpp_zscore'])
+baseline_corr_cluster_analysis_results = analysis.compute_group_level_permutation_cluster_test(group_level_regression_coefs_df, vars=['prior_conf_zscore', 'cpp_zscore'])
 
 
 fig = go.Figure()
@@ -226,7 +226,7 @@ for count in group_level_regression_nobc_coefs_df['count'].unique():
 nonbaseline_corr_coefs_df = pd.DataFrame(nonbaseline_corr_coefs_dict)
 
 
-nonbaseline_corr_cluster_analysis_results = compute_group_level_permutation_cluster_test(group_level_regression_nobc_coefs_df, vars=['prior_conf_zscore', 'cpp_zscore'])
+nonbaseline_corr_cluster_analysis_results = analysis.compute_group_level_permutation_cluster_test(group_level_regression_nobc_coefs_df, vars=['prior_conf_zscore', 'cpp_zscore'])
 
 
 fig = go.Figure()

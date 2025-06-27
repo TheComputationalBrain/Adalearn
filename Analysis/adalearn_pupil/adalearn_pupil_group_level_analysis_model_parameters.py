@@ -46,7 +46,7 @@ for participant in participant_list:
     computational_var_df = comp.ideal_observer_learning_rate_analysis( participant_str=participant_str, condition_str=condition_str, directory_path=directory_path, computational_var_df=computational_var_df, change_point_indices_df=change_point_indices, estimate_prior=ESTIMATE_PRIOR, plot_learning_rate_by_ses=False)
 
     # Computing surprise of each observation
-    computational_var_df,_ = comp.compute_surprise_from_observations(participant_str=participant_str, condition_str=condition_str, directory_path=directory_path, computational_var_df=computational_var_df, change_point_indices_df=change_point_indices, plot_surprise=False, plot_posterior_conf=False, plot_posterior_dist_means=False)
+    computational_var_df,_ = comp.run_inference_from_observations(participant_str=participant_str, condition_str=condition_str, directory_path=directory_path, computational_var_df=computational_var_df, change_point_indices_df=change_point_indices, p_c=P_C, p1_min=P1_MIN, p1_max=P1_MAX, resol=RESOL, plot_surprise=False, plot_posterior_conf=False, plot_posterior_dist_means=False)
 
     # Computing prior confidence and change point probability of each observation
     computational_var_df = comp.compute_prior_conf_and_cpp_from_observations(participant_str=participant_str, condition_str=condition_str,directory_path=directory_path, computational_var_df=computational_var_df, change_point_indices_df=change_point_indices, resol=RESOL, p_c=P_C, p1_min=P1_MIN, p1_max=P1_MAX, conf_type='prev-conf', unit='confidence', plot_distribution_mean=False, plot_prior_conf=False, plot_cpp=False)

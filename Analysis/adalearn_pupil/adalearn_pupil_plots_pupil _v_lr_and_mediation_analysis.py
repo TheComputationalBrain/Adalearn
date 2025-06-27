@@ -10,14 +10,13 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 pio.renderers.default='browser'
 
-from adalearn_analysis_group_level_functions_data_utilities import load_sample_csvs
-
-from adalearn_analysis_group_level_functions_pupil_analysis import extract_cluster_times
+import adalearn_analysis_group_level_functions_data_utilities as group_data_utils
+import adalearn_analysis_group_level_functions_pupil_analysis as pupil_analysis
 
 from adalearn_pupil.adalearn_pupil_participant_info_and_parameters import directory_path, base_dir, condition_str
 
 
-dataframes = load_sample_csvs(directory_path=base_dir, substrings=[
+dataframes = group_data_utils.load_sample_csvs(directory_path=base_dir, substrings=[
 'computational_var_df',
 'change_point_indices_df',
 'pupil_v_lr_regress_coef_df',
@@ -220,8 +219,8 @@ for participant in epoch_data['participant'].unique():
     pupil_data_nobc.columns = column_titles
     pupil_data_nobc['time'] = epoch_descriptive_stats[epoch_descriptive_stats['participant'] == participant]['time'].values.astype(float)
 
-    baseline_cor_start_time, baseline_cor_end_time = extract_cluster_times(dataframes['cluster_permutation_analysis'], pupil_data['time'])
-    nobc_start_time, nobc_end_time = extract_cluster_times(dataframes['cluster_permutation_analysis_nobc'], pupil_data_nobc['time'])
+    baseline_cor_start_time, baseline_cor_end_time = pupil_analysis.extract_cluster_times(dataframes['cluster_permutation_analysis'], pupil_data['time'])
+    nobc_start_time, nobc_end_time = pupil_analysis.extract_cluster_times(dataframes['cluster_permutation_analysis_nobc'], pupil_data_nobc['time'])
 
     pupil_data = pupil_data.set_index('time')
     pupil_data_nobc = pupil_data_nobc.set_index('time')

@@ -10,12 +10,12 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 pio.renderers.default='browser'
 
-from adalearn_analysis_group_level_functions_data_utilities import load_sample_csvs
+import adalearn_analysis_group_level_functions_data_utilities as group_data_utils
 
 from adalearn_pupil.adalearn_pupil_participant_info_and_parameters import directory_path, base_dir, condition_str
 
 
-dataframes = load_sample_csvs(directory_path=base_dir, substrings=['epoched_pupil_df', 'epoched_pupil_nobc_df', 'outcome_epochs_descriptive_stats_df', 'outcome_epochs_descriptive_stats_nobc_df', 'coefs_df', 'coefs_nobc_df', 'cluster_permutation_analysis', 'cluster_permutation_analysis_nobc'])
+dataframes = group_data_utils.load_sample_csvs(directory_path=base_dir, substrings=['epoched_pupil_df', 'epoched_pupil_nobc_df', 'outcome_epochs_descriptive_stats_df', 'outcome_epochs_descriptive_stats_nobc_df', 'coefs_df', 'coefs_nobc_df', 'cluster_permutation_analysis', 'cluster_permutation_analysis_nobc'])
 
 
 ############################Average pupil response (baseline-corrected)

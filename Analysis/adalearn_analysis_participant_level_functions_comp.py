@@ -385,9 +385,9 @@ def learning_rate_by_change_point(participant_str, condition_str, directory_path
 
 
 
-def compute_surprise_from_observations(participant_str, condition_str, directory_path, computational_var_df, change_point_indices_df, plot_surprise = False, plot_posterior_conf = False, plot_posterior_dist_means = False):
+def run_inference_from_observations(participant_str, condition_str, directory_path, computational_var_df, change_point_indices_df, p_c, p1_min, p1_max, resol, plot_surprise = False, plot_posterior_conf = False, plot_posterior_dist_means = False):
     """
-    Function computes the level of surprise of each set of task session observations. Achieves this using the "run_inference" function (created by Cedric Foucault and Florent Meyniel: https://github.com/florentmeyniel/Ada-Learn/blob/main/analysis) to generate posterior inferences of generative probabilities of the data sequence (seq). Surprise is calculated as:
+    Function runs ideal observer model inference from observations. It also computes the level of surprise of each set of task session observations. Achieves this using the "run_inference" function (created by Cedric Foucault and Florent Meyniel: https://github.com/florentmeyniel/Ada-Learn/blob/main/analysis) to generate posterior inferences of generative probabilities of the data sequence (seq). Surprise is calculated as:
 
                                                                        S(x) =  -log2 P(x)
 
@@ -423,9 +423,7 @@ def compute_surprise_from_observations(participant_str, condition_str, directory
     """
 
     # Define options for "run inference" function
-    options = {'p_c': 0.05, 'resol': 20, 'p1_min': 0.1, 'p1_max': 0.9}
-
-    task_session_surprise_list = []  # List to store session DataFrames
+    options = {'p_c': p_c, 'resol': resol, 'p1_min': p1_min, 'p1_max': p1_max}
 
     for task_session, session_data in computational_var_df.groupby('task_session'):
         seq = np.array(session_data['outcome'])
@@ -445,7 +443,6 @@ def compute_surprise_from_observations(participant_str, condition_str, directory
         computational_var_df.loc[session_indices, 'model_post_prob_1'] = model_post_prob_1
         computational_var_df.loc[session_indices, 'model_post_prob_0'] = model_post_prob_0
         computational_var_df.loc[session_indices, 'model_post_prob_var'] = model_post_prob_var
-
 
     # Removing null values from the start of each task session and replacing with a surprise value of 1
     null_values = computational_var_df['surprise'].isna()
@@ -1767,3 +1764,62 @@ def comp_parameters_on_info_gain(participant_str, condition_str, directory_path,
         fig.show()
 
     return computational_var_df, dkl_regress_df
+
+
+
+def inference_and_mse(pars, data, p1_min, p1_max, resol):
+    """
+    Function to compute the mean squared error (MSE) between the estimated and ideal observer's estimates for a new p_c value. Posterior distributions are generated given the new values before the mean squared error is calculated. 
+
+    Parameters:
+    - pars: array, contains p_c value to be used in specifying the inference model.
+    - data: pd.Dataframe, contains the participants estimates and outcome sequences for model inference to be performed. 
+
+    model specifications: 
+    'p1_min': the minimum value of the Bernoulli parameter (used to clip the Dirichlet prior distribution)
+    'p1_max': the maximum value of the Bernoulli parameter (used to clip the Dirichlet prior distribution)
+    'resol': number of bins used for discretization (for hmm)
+
+    Returns:
+    - mse: float, the mean squared error between model predictions and participant estimates
+    """
+    p_c = pars[0]
+
+    # Define options for "run inference" function
+    options = {'p_c': p_c, 'resol': resol, 'p1_min': p1_min, 'p1_max': p1_max}
+
+    task_session_list = []  # List to store session DataFrames
+
+    #for participant in data['participant'].unique():
+    for task_session, session_data in data.groupby('task_session'):
+        seq = np.array(session_data['outcome'])
+
+        # Run inference to compute posterior probabilities
+        output = run_inference(seq, options=options)
+
+        posterior = output[(1,)]['mean']
+
+        # Store the posterior probabilities in the DataFrame
+        new_inference = pd.DataFrame()
+        new_inference['task_session'] = task_session
+        new_inference['outcome'] = seq
+        new_inference['ideal_observer'] = posterior
+        new_inference['estimate'] = session_data['estimate'].values       
+
+        task_session_list.append(new_inference)
+
+    # Concatenate all session DataFrames into a single DataFrame
+    new_inference_df = pd.concat(task_session_list, ignore_index=True)
+
+    predicted_response = new_inference_df['ideal_observer']
+
+    # Compute squared errors
+    squared_errors = (predicted_response - new_inference_df['estimate']) ** 2
+    
+    # sum of squared error
+    sse = np.sum(squared_errors)
+    
+    # mean squared error
+    mse = sse / len(predicted_response)  
+            
+    return mse

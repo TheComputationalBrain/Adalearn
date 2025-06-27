@@ -9,15 +9,12 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 pio.renderers.default='browser'
 
-
-from adalearn_analysis_participant_level_functions_data_utilities import plot_session_behav_comp
-
-from adalearn_analysis_group_level_functions_data_utilities import load_sample_csvs
-
+import adalearn_analysis_participant_level_functions_data_utilities as data_utils 
+import adalearn_analysis_group_level_functions_data_utilities as group_data_utils
 from adalearn_pupil.adalearn_pupil_participant_info_and_parameters import directory_path, base_dir, condition_str
 
 
-dataframes = load_sample_csvs(directory_path=base_dir, substrings=['behavioural_df', 'computational_var_df', 'change_point_indices_df', 'mean_abs_error_df', 'behav_v_model_estimate_corr_df', 'behav_v_model_estimate_coef_df'])
+dataframes = group_data_utils.load_sample_csvs(directory_path=base_dir, substrings=['behavioural_df', 'computational_var_df', 'change_point_indices_df', 'mean_abs_error_df', 'behav_v_model_estimate_corr_df', 'behav_v_model_estimate_coef_df'])
 
 ###########################################Plotting example task session parameters
 
@@ -27,7 +24,7 @@ data_behav = dataframes['behavioural_df'][dataframes['behavioural_df']['particip
 data_comp = dataframes['computational_var_df'][dataframes['computational_var_df']['participant']==participant]
 data_change_points = dataframes['change_point_indices_df'][dataframes['change_point_indices_df']['participant']==participant]
 
-plot_session_behav_comp(participant_str=str(participant), condition_str=condition_str, directory_path=directory_path, base_dir =base_dir, behavioural_df=data_behav, computational_df=data_comp, change_point_indices=data_change_points, task_session=20, turn_on_plotting=True, plot_group_level=True)
+data_utils.plot_session_behav_comp(participant_str=str(participant), condition_str=condition_str, directory_path=directory_path, base_dir =base_dir, behavioural_df=data_behav, computational_df=data_comp, change_point_indices=data_change_points, task_session=20, turn_on_plotting=True, plot_group_level=True)
 
 
 ############################################Plotting perforamnce metrics (absolute error and coefficient of variation)
