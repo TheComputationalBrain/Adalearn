@@ -1,0 +1,2 @@
+variable,cluster_idx,cluster_start,cluster_end,p_value
+cpp_zscore,0,492,825,0.037

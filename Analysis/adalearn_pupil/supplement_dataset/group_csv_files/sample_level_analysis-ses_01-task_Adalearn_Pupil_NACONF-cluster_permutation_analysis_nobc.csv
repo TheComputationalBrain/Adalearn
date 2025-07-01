@@ -1,0 +1,2 @@
+variable,cluster_idx,cluster_start,cluster_end,p_value
+prior_conf_zscore,0,0,825,0.008
