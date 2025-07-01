@@ -1,25 +1,24 @@
 """
-This scripts runs peristimulus pupil regression analysis for a supplementary dataset of the Adalearn project (NACONF). The effect of uncertainty parameters (prior confidence and change point probability) is examined on both phasic- and tonic-associated pupil signal epochs. Permutation cluster-based analysis compares effects against zero. Plots are generated within the script. 
+This scripts runs peristimulus pupil regression analysis for a supplementary dataset (NACONF) within the Pupil task of the Adalearn project. The effect of uncertainty parameters (prior confidence and change point probability) is examined on both phasic- and tonic-associated pupil signal epochs. Permutation cluster-based analysis compares effects against zero. Plots are generated within the script. 
 """
 
 import pandas as pd
-import numpy as np
 from scipy import stats
+import os
 from pathlib import Path
 import plotly.io as pio
 import plotly.graph_objects as go
-import plotly.express as px
-from plotly.subplots import make_subplots
 pio.renderers.default='browser'
 
+import adalearn_analysis_group_level_functions_data_utilities as group_data_utils
+import adalearn_analysis_group_level_functions_pupil_analysis as group_pupil
+import adalearn_analysis_group_level_functions_statistical_analysis as group_stats
 import adalearn_pupil.supplement_dataset.naconf_ideal_observer_model_functions as model
 import adalearn_pupil.supplement_dataset.naconf_pupil_functions as pupil
 import adalearn_pupil.supplement_dataset.naconf_pupil_regression_functions as pupil_regress
-import adalearn_pupil.supplement_dataset.naconf_group_level_analysis_functions as analysis
 
 from adalearn_pupil.supplement_dataset.naconf_participant_list import usable_participants
-
-from adalearn_pupil.supplement_dataset.naconf_participant_info_and_parameters import base_dir, list_subject_selected, task_sessions, from_session, to_session
+from adalearn_pupil.supplement_dataset.naconf_participant_info_and_parameters import NACONF_base_dir, list_subject_selected, task_sessions, from_session, to_session
 
 
 task_session_df_list = []
@@ -29,7 +28,7 @@ regression_nobc_coefs_list = []
 for participant in usable_participants:
     print(f"\n\n\nProcessing participant {participant}...")
     # Define the directory path for the participant
-    directory_path = Path(f'{base_dir}/sub-{participant}')
+    directory_path = Path(f'{NACONF_base_dir}/data/sub-{participant}')
 
     print(f"\nLoading task data and computing model derived variables...")
     task_session_df = model.load_task_behavioural_data(directory_path=directory_path, selected_participant=participant, task_sessions=task_sessions)
@@ -38,7 +37,7 @@ for participant in usable_participants:
 
     constants, P_C, P_MIN, P_MAX = model.load_constants(directory_path=directory_path, task_sessions=task_sessions)
 
-    task_session_df = model.compute_surprise_from_observations(participant_str=participant, directory_path=directory_path, task_session_df=task_session_df, change_point_indices_df=change_point_indices, p_c=P_C, p_min=P_MIN, p_max=P_MAX, plot_surprise = False)
+    task_session_df = model.run_inference_from_observations(participant_str=participant, directory_path=directory_path, task_session_df=task_session_df, change_point_indices_df=change_point_indices, p_c=P_C, p_min=P_MIN, p_max=P_MAX, plot_surprise = False)
 
     task_session_df = model.compute_prior_conf_and_cpp_from_observations(participant_str=participant, directory_path=directory_path, task_session_df=task_session_df, change_point_indices_df=change_point_indices, p_c=P_C, p_min=P_MIN, p_max=P_MAX, estimate_type = 'mean', conf_type = 'prev-conf', unit = 'confidence', plot_prior_conf = False, plot_cpp = False)
 
@@ -66,274 +65,23 @@ group_level_task_session_df = pd.concat(task_session_df_list, ignore_index=True)
 group_level_regression_coefs_df = pd.concat(regression_coefs_list, ignore_index=True)
 group_level_regression_nobc_coefs_df = pd.concat(regression_nobc_coefs_list, ignore_index=True)
 
+# Create dataframes for storing data
+coefs_df = group_pupil.compute_peristim_mean_sem_by_count(group_level_regression_coefs_df, value_cols=['cpp_zscore', 'prior_conf_zscore'])
+coefs_nobc_df = group_pupil.compute_peristim_mean_sem_by_count(group_level_regression_nobc_coefs_df, value_cols=['cpp_zscore', 'prior_conf_zscore'])
 
+# Permutation cluster analysis
+baseline_corr_cluster_analysis_results, significant_clusters_df = group_stats.compute_group_level_permutation_cluster_test(group_level_regression_coefs_df, vars=['prior_conf_zscore', 'cpp_zscore'], alpha=0.05)
+nonbaseline_corr_cluster_analysis_results, significant_clusters_nobc_df = group_stats.compute_group_level_permutation_cluster_test(group_level_regression_nobc_coefs_df, vars=['prior_conf_zscore', 'cpp_zscore'],  alpha=0.05)
 
-# Analysis of baseline corrected pupil signal --------------------
-# Create dictionary for plotting
-baseline_corr_coefs_dict = {'cpp': [], 'cpp_error': [], 'conf': [], 'conf_error': [], 'time': [], 'count': []}
-
-for count in group_level_regression_coefs_df['count'].unique():
-    data = group_level_regression_coefs_df[group_level_regression_coefs_df['count'] == count].sort_values(by='participant')
-    mean_cpp = data['cpp_zscore'].mean()
-    sem_cpp = stats.sem(data['cpp_zscore'])
-    mean_conf = data['prior_conf_zscore'].mean()
-    sem_conf = stats.sem(data['prior_conf_zscore'])
-    mean_time = data['time'].mean()
-    i_count = count
-
-    baseline_corr_coefs_dict['cpp'].append(mean_cpp)
-    baseline_corr_coefs_dict['cpp_error'].append(sem_cpp)
-    baseline_corr_coefs_dict['conf'].append(mean_conf)
-    baseline_corr_coefs_dict['conf_error'].append(sem_conf)
-    baseline_corr_coefs_dict['time'].append(mean_time)
-    baseline_corr_coefs_dict['count'].append(i_count)
-
-baseline_corr_coefs_df = pd.DataFrame(baseline_corr_coefs_dict)
-
-
-baseline_corr_cluster_analysis_results = analysis.compute_group_level_permutation_cluster_test(group_level_regression_coefs_df, vars=['prior_conf_zscore', 'cpp_zscore'])
-
-
-fig = go.Figure()
-
-# Slice your data once to keep things consistent
-time = baseline_corr_coefs_df['time'][:-1]
-conf = baseline_corr_coefs_df['conf'][:-1]
-conf_error = baseline_corr_coefs_df['conf_error'][:-1]
-cpp = baseline_corr_coefs_df['cpp'][:-1]
-cpp_error = baseline_corr_coefs_df['cpp_error'][:-1]
-
-# Line trace
-fig.add_trace(go.Scatter(
-    x=time,
-    y=cpp,
-    mode='lines',
-    line=dict(color='rgba(220, 120, 0, 0.8)'),
-    name='Change point probability'))
-
-# Error band trace
-fig.add_trace(go.Scatter(
-    x=list(time) + list(time[::-1]),
-    y=list(cpp + cpp_error) + list((cpp - cpp_error)[::-1]),
-    fill='toself',
-    fillcolor='rgba(220, 120, 0, 0.2)',
-    line=dict(color='rgba(255,255,255,0)'),
-    hoverinfo="skip",
-    showlegend=False))
-
-cpp_cluster_slice = baseline_corr_cluster_analysis_results['cpp_zscore']['clusters'][0][0]
-cpp_cluster_indices = list(range(cpp_cluster_slice.start, cpp_cluster_slice.stop))  
-cpp_significant_times = baseline_corr_coefs_df['time'].iloc[cpp_cluster_indices]
-
-# Add dots for significant clusters (at the time points of the cluster)
-fig.add_trace(go.Scatter(
-    x=cpp_significant_times,  # Time points where the cluster is significant
-    y=[-0.02] * len(cpp_significant_times),  # Set a fixed low y-value for dots (adjust if necessary)
-    mode='markers',
-    marker=dict(color='rgba(220, 120, 0, 0.6)', size=8, symbol='asterisk-open'),
-    name='Significant Cluster - CPP',
-    showlegend=False
-))
-
-# Line trace
-fig.add_trace(go.Scatter(
-    x=time,
-    y=conf,
-    mode='lines',
-    line=dict(color='rgba(0, 130, 150, 0.8)'),
-    name='Prior confidence'))
-
-# Error band trace
-fig.add_trace(go.Scatter(
-    x=list(time) + list(time[::-1]),
-    y=list(conf +conf_error) + list((conf - conf_error)[::-1]),
-    fill='toself',
-    fillcolor='rgba(0, 130, 150, 0.2)',
-    line=dict(color='rgba(255,255,255,0)'),
-    hoverinfo="skip",
-    showlegend=False))
-
-conf_cluster_slice = baseline_corr_cluster_analysis_results['prior_conf_zscore']['clusters'][0][0]
-conf_cluster_indices = list(range(conf_cluster_slice.start, conf_cluster_slice.stop))  
-conf_significant_times = baseline_corr_coefs_df['time'].iloc[conf_cluster_indices]
-
-# Add dots for significant clusters (at the time points of the cluster)
-fig.add_trace(go.Scatter(
-    x=conf_significant_times,  # Time points where the cluster is significant
-    y=[-0.025] * len(conf_significant_times),  # Set a fixed low y-value for dots (adjust if necessary)
-    mode='markers',
-    marker=dict(color='rgba(0, 130, 150, 0.6)', size=6),
-    name='Significant Cluster - Prior Confidence',
-    showlegend=False
-))
-
-fig.add_vline(x=0, line_dash='dot')
-fig.add_hline(y=0, line_dash = 'dot')
-
-fig.update_xaxes(
-    showline=True, 
-    linewidth=1, 
-    linecolor='black', 
-    title_text="Time relative to outcome presentation (s)", 
-)
-
-fig.update_yaxes(
-    showline=True, 
-    linewidth=1, 
-    linecolor='black', 
-    title_text="Regression weights",  
-)
-
-fig.update_layout(
-    title=dict(
-            text="Peristimulus regression weights for prior confidence and change point probability on the baseline corrected pupil signal"
-        ),
-    plot_bgcolor='rgba(255, 255, 255, 1)',
-    height=950,
-    width=1800,
-    font=dict(size=18),
-    legend=dict(
-        x=0.35,
-        y=0.9,
-        xanchor='right',
-        yanchor='top',
-        bgcolor='rgba(255, 255, 255, 0.7)'))
-
-
-fig.show()
-
-
-# Analysis of non-baseline corrected pupil signal --------------------
-# Create dictionary for plotting
-nonbaseline_corr_coefs_dict = {'cpp': [], 'cpp_error': [], 'conf': [], 'conf_error': [], 'time': [], 'count': []}
-
-for count in group_level_regression_nobc_coefs_df['count'].unique():
-    data = group_level_regression_nobc_coefs_df[group_level_regression_nobc_coefs_df['count'] == count].sort_values(by='participant')
-    mean_cpp = data['cpp_zscore'].mean()
-    sem_cpp = stats.sem(data['cpp_zscore'])
-    mean_conf = data['prior_conf_zscore'].mean()
-    sem_conf = stats.sem(data['prior_conf_zscore'])
-    mean_time = data['time'].mean()
-    i_count = count
-
-    nonbaseline_corr_coefs_dict['cpp'].append(mean_cpp)
-    nonbaseline_corr_coefs_dict['cpp_error'].append(sem_cpp)
-    nonbaseline_corr_coefs_dict['conf'].append(mean_conf)
-    nonbaseline_corr_coefs_dict['conf_error'].append(sem_conf)
-    nonbaseline_corr_coefs_dict['time'].append(mean_time)
-    nonbaseline_corr_coefs_dict['count'].append(i_count)
-
-nonbaseline_corr_coefs_df = pd.DataFrame(nonbaseline_corr_coefs_dict)
-
-
-nonbaseline_corr_cluster_analysis_results = analysis.compute_group_level_permutation_cluster_test(group_level_regression_nobc_coefs_df, vars=['prior_conf_zscore', 'cpp_zscore'])
-
-
-fig = go.Figure()
-
-# Slice your data once to keep things consistent
-time = nonbaseline_corr_coefs_df['time'][:-1]
-conf = nonbaseline_corr_coefs_df['conf'][:-1]
-conf_error = nonbaseline_corr_coefs_df['conf_error'][:-1]
-cpp = nonbaseline_corr_coefs_df['cpp'][:-1]
-cpp_error = nonbaseline_corr_coefs_df['cpp_error'][:-1]
-
-# Line trace
-fig.add_trace(go.Scatter(
-    x=time,
-    y=cpp,
-    mode='lines',
-    line=dict(color='rgba(220, 120, 0, 0.8)'),
-    name='Change point probability'))
-
-# Error band trace
-fig.add_trace(go.Scatter(
-    x=list(time) + list(time[::-1]),
-    y=list(cpp + cpp_error) + list((cpp - cpp_error)[::-1]),
-    fill='toself',
-    fillcolor='rgba(220, 120, 0, 0.2)',
-    line=dict(color='rgba(255,255,255,0)'),
-    hoverinfo="skip",
-    showlegend=False))
-
-
-cpp_nobc_cluster_slice = nonbaseline_corr_cluster_analysis_results['cpp_zscore']['clusters'][0][0]
-cpp_nobc_cluster_indices = list(range(cpp_nobc_cluster_slice.start, cpp_nobc_cluster_slice.stop))  
-cpp_nobc_significant_times = nonbaseline_corr_coefs_df['time'].iloc[cpp_nobc_cluster_indices]
-
-# Add dots for significant clusters (at the time points of the cluster)
-fig.add_trace(go.Scatter(
-    x=cpp_nobc_significant_times,  # Time points where the cluster is significant
-    y=[-0.1] * len(cpp_nobc_significant_times),  # Set a fixed low y-value for dots (adjust if necessary)
-    mode='markers',
-    marker=dict(color='rgba(220, 120, 0, 0.6)', size=8, symbol='asterisk-open'),
-    name='Significant Cluster - CPP',
-    showlegend=False
-))
-
-# Line trace
-fig.add_trace(go.Scatter(
-    x=time,
-    y=conf,
-    mode='lines',
-    line=dict(color='rgba(0, 130, 150, 0.8)'),
-    name='Prior confidence'))
-
-# Error band trace
-fig.add_trace(go.Scatter(
-    x=list(time) + list(time[::-1]),
-    y=list(conf +conf_error) + list((conf - conf_error)[::-1]),
-    fill='toself',
-    fillcolor='rgba(0, 130, 150, 0.2)',
-    line=dict(color='rgba(255,255,255,0)'),
-    hoverinfo="skip",
-    showlegend=False))
-
-conf_nobc_cluster_slice = nonbaseline_corr_cluster_analysis_results['prior_conf_zscore']['clusters'][0][0]
-conf_nobc_cluster_indices = list(range(conf_nobc_cluster_slice.start, conf_nobc_cluster_slice.stop))  
-conf_nobc_significant_times = nonbaseline_corr_coefs_df['time'].iloc[conf_nobc_cluster_indices]
-
-# Add dots for significant clusters (at the time points of the cluster)
-fig.add_trace(go.Scatter(
-    x=conf_nobc_significant_times,  # Time points where the cluster is significant
-    y=[-0.105] * len(conf_nobc_significant_times),  # Set a fixed low y-value for dots (adjust if necessary)
-    mode='markers',
-    marker=dict(color='rgba(0, 130, 150, 0.6)', size=6),
-    name='Significant Cluster - Prior Confidence',
-    showlegend=False
-))
-
-fig.add_vline(x=0, line_dash='dot')
-fig.add_hline(y=0, line_dash = 'dot')
-
-fig.update_xaxes(
-    showline=True, 
-    linewidth=1, 
-    linecolor='black', 
-    title_text="Time relative to outcome presentation (s)", 
-)
-
-fig.update_yaxes(
-    showline=True, 
-    linewidth=1, 
-    linecolor='black', 
-    title_text="Regression weights",  
-)
-
-fig.update_layout(
-    title=dict(
-            text="Peristimulus regression weights for prior confidence and change point probability on the non-baseline corrected pupil signal"
-        ),
-    plot_bgcolor='rgba(255, 255, 255, 1)',
-    height=950,
-    width=1800,
-    font=dict(size=18),
-    legend=dict(
-        x=0.18,
-        y=1.0,
-        xanchor='right',
-        yanchor='top',
-        bgcolor='rgba(255, 255, 255, 0.7)'))
-
-
-fig.show()
+# Save data to .csv files
+group_data_utils.save_sample_dataframes_to_csv(dataframes={
+    'pupil_regress_coef_df': group_level_regression_coefs_df,
+    'pupil_regress_coef_nobc_df': group_level_regression_nobc_coefs_df,
+    'coefs_df': coefs_df,
+    'coefs_nobc_df': coefs_nobc_df,
+    'cluster_permutation_analysis': significant_clusters_df,
+    'cluster_permutation_analysis_nobc': significant_clusters_nobc_df
+},
+directory_path=NACONF_base_dir,
+condition_str='01',
+task='Pupil_NACONF') 

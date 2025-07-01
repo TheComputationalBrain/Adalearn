@@ -5,12 +5,12 @@ This script defines the participant analysed. To change participant, the user si
 from pathlib import Path
 
 
-base_dir = '/home/aarongreenhouse-tucknott/Desktop/behaviour_eyeTracker_data'
+NACONF_base_dir = '/home/aarongreenhouse-tucknott/Documents/Python/Ada_Learn/Analysis/Analysis/adalearn_pupil/supplement_dataset'
 
 selected_participant = 4
 
 list_subject_selected = [selected_participant]
-directory_path = Path(f'{base_dir}/sub-{selected_participant}')
+directory_path = Path(f'{NACONF_base_dir}/data/sub-{selected_participant}')
 condition_str = '01' 
 from_session =  1
 to_session =  4

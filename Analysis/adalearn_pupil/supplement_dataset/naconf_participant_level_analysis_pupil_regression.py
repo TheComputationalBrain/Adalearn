@@ -9,7 +9,13 @@ from adalearn_pupil.supplement_dataset.naconf_participant_info_and_parameters im
 
 
 
-dataframes = data_utils.load_csvs(directory_path=directory_path, condition_str='01', substrings=['task_session_df',  'outcome_epoched_pupil_df', 'outcome_epochs_to_remove_df', 'outcome_epoched_pupil_nobc_df',  'outcome_epochs_to_remove_nobc_df'])
+dataframes = data_utils.load_csvs(directory_path=directory_path, condition_str='01', substrings=[
+    'task_session_df',  
+    'outcome_epoched_pupil_df', 
+    'outcome_epochs_to_remove_df', 
+    'outcome_epoched_pupil_nobc_df',  
+    'outcome_epochs_to_remove_nobc_df'
+])
 
 coefficients_df, pupil_regress_df, residuals_df = pupil_regress.pupil_peristimulus_regression_analysis(participant_str = selected_participant, directory_path = directory_path, task_session_df = dataframes['task_session_df'], outcome_epoched_pupil_df = dataframes['outcome_epoched_pupil_df'], outcome_epochs_to_remove=dataframes['outcome_epochs_to_remove_df'], variables=['prior_conf', 'cpp'], covariates=None, baseline_corrected = True, plot_regression_analysis=False)
 

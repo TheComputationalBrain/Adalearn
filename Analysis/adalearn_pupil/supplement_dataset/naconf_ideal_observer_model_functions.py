@@ -10,7 +10,7 @@ import plotly.express as px
 from plotly.subplots import make_subplots
 pio.renderers.default='browser'
 
-from adalearn_pupil.supplement_dataset.naconf_participant_info_and_parameters import base_dir, directory_path, selected_participant, task_sessions
+from adalearn_pupil.supplement_dataset.naconf_participant_info_and_parameters import NACONF_base_dir, directory_path, selected_participant, task_sessions
 
 sys.path.append('/home/aarongreenhouse-tucknott/Documents/Python/Ada_Learn/Analysis/Misc')
 from IdealObserver import run_inference
@@ -175,9 +175,9 @@ def change_point_analysis(participant_str, directory_path, task_session_df,):
 
 
 
-def compute_surprise_from_observations(participant_str, directory_path, task_session_df, change_point_indices_df, p_c, p_min, p_max, plot_surprise = False):
+def run_inference_from_observations(participant_str, directory_path, task_session_df, change_point_indices_df, p_c, p_min, p_max, plot_surprise = False):
     """
-    Function computes the level of surprise of each set of task session observations. Achieves this using the "run_inference" function (created by Cedric Foucault and Florent Meyniel: https://github.com/florentmeyniel/Ada-Learn/blob/main/analysis) to generate posterior inferences of generative probabilities of the data sequence (seq). Surprise is calculated as:
+     Function runs ideal observer model inference from observations. It also computes the level of surprise of each set of task session observations. Achieves this using the "run_inference" function (created by Cedric Foucault and Florent Meyniel: https://github.com/florentmeyniel/Ada-Learn/blob/main/analysis) to generate posterior inferences of generative probabilities of the data sequence (seq). Surprise is calculated as:
 
                                                                        S(x) =  -log2 P(x)
 

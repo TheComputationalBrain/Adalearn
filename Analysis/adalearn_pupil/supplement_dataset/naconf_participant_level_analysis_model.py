@@ -13,7 +13,7 @@ num_change_points, change_points_per_session, change_point_indices, task_session
 
 constants, P_C, P_MIN, P_MAX = model.load_constants(directory_path=directory_path, task_sessions=task_sessions)
 
-task_session_df = model.compute_surprise_from_observations(participant_str=selected_participant, directory_path=directory_path, task_session_df=task_session_df, change_point_indices_df=change_point_indices, p_c=P_C, p_min=P_MIN, p_max=P_MAX, plot_surprise = False)
+task_session_df = model.run_inference_from_observations(participant_str=selected_participant, directory_path=directory_path, task_session_df=task_session_df, change_point_indices_df=change_point_indices, p_c=P_C, p_min=P_MIN, p_max=P_MAX, plot_surprise = False)
 
 task_session_df = model.compute_prior_conf_and_cpp_from_observations(participant_str=selected_participant, directory_path=directory_path, task_session_df=task_session_df, change_point_indices_df=change_point_indices, p_c=P_C, p_min=P_MIN, p_max=P_MAX, estimate_type = 'mean', conf_type = 'prev-conf', unit = 'confidence', plot_prior_conf = False, plot_cpp = False)
 
