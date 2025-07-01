@@ -1,5 +1,5 @@
 """
-This script processes pupil data for each participant, extracting epochs around outcome presentations, checking for excessive interpolation, and saving the results to .csv files.
+This script processes pupil data for each participant for the Pupil task of the Adalearn project. The script extracts epochs around outcome presentations, checking for excessive interpolation, before saving the results to .csv files.
 """
 import pandas as pd
 import os

@@ -1,5 +1,5 @@
 """
-This script performs group-level analysis for pupil effects on learning rate and the mediating influence of pupil responses on uncertainty-associated effects on learning rates. It computes the coefficients for the mediating baseline-corrected and non-baseline-corrected pupil responses at a participant level, before evaluating the coefficients at a group level. The results are saved in .csv files for further analysis. The following script need to be run before this script to obtain the relevant .csv files:
+This script evaluate pupil effects on learning rate and the mediating influence of pupil responses on uncertainty-associated effects on learning rates for participants undertaking the Pupil task in the adalearn project. It computes the coefficients for the mediating baseline-corrected and non-baseline-corrected pupil responses at a participant level, before evaluating the coefficients at a group level. The results are saved in .csv files for further analysis. The following script need to be run before this script to obtain the relevant .csv files:
 - adalearn_pupil/adalearn_pupil_group_level_analysis_behav_task_performance.py
 - adalearn_pupil/adalearn_pupil_group_level_analysis_model_parameters.py
 - adalearn_pupil/adalearn_pupil_group_level_analysis_learning_rate_analysis.py

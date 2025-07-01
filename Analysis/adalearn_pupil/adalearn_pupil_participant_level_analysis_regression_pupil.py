@@ -1,5 +1,5 @@
 """
-This script calls and runs functions related to the participant level regression analysis between pupil epochs and latent parameters of uncertainty, performed at a participant level. The analysis runs the analysis for both baseline corrected and non-baseline corrected pupil data (defined by separable calls of the function; the non-baseline corrected analysis is typically specified by an ending of "_nobc"). The analysis also runs plot checks to examine pupil responses around change points before running mediation analysis for both baseline corrected and non-baseline corrected pupil data, with and without zero exclusion.
+This script calls and runs functions for participant level regression analysis between pupil epochs and latent parameters of uncertainty. The script runs the analysis for both baseline corrected and non-baseline corrected pupil data (defined by separable calls of the function; the non-baseline corrected analysis is typically specified by an ending of "_nobc"). The analysis also runs plot checks to examine pupil responses around change points before running mediation analysis for both baseline corrected and non-baseline corrected pupil data, with and without zero exclusion.
 """
 import adalearn_analysis_participant_level_functions_regression_pupil as pupil
 import adalearn_analysis_participant_level_functions_data_utilities as data_utils 

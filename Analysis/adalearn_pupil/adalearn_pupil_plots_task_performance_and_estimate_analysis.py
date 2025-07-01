@@ -1,5 +1,8 @@
 """
-
+This script plots figures related to performance on the task for participants undertaking the Pupil task in the Adalearn project. The following plots are generated:
+- Task session responses for an example participant alongside model estimates and parameter dynamics
+- Participants' estimate absolute error and coefficient of variation
+- Relationship between participants' and model estimates   
 """
 import os
 import pandas as pd
@@ -14,7 +17,15 @@ import adalearn_analysis_group_level_functions_data_utilities as group_data_util
 from adalearn_pupil.adalearn_pupil_participant_info_and_parameters import directory_path, base_dir, condition_str
 
 
-dataframes = group_data_utils.load_sample_csvs(directory_path=base_dir, substrings=['behavioural_df', 'computational_var_df', 'change_point_indices_df', 'mean_abs_error_df', 'behav_v_model_estimate_corr_df', 'behav_v_model_estimate_coef_df'])
+
+dataframes = group_data_utils.load_sample_csvs(directory_path=base_dir, substrings=[
+    'behavioural_df', 
+    'computational_var_df', 
+    'change_point_indices_df', 
+    'mean_abs_error_df', 
+    'behav_v_model_estimate_corr_df', 
+    'behav_v_model_estimate_coef_df'
+])
 
 ###########################################Plotting example task session parameters
 

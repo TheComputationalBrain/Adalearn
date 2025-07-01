@@ -1,5 +1,5 @@
 """
-This script performs group-level analysis of estimates in the Pupil task of the Adalearn project. It loads participant-level data, computes the association between participants' behavioural data and model estimates, and performs statistical tests to assess the significance of these associations. The results are saved to .csv files for further analysis. The following scripts need to be run before this script to load the relevant .csv files:
+This script performs group-level analysis of estimates for performance of the Pupil task of the Adalearn project. It loads participant-level data, computes the association between participants' behavioural data and model estimates, and performs statistical tests to assess the significance of these associations. The results are saved to .csv files for further analysis. The following scripts need to be run before this script to load the relevant .csv files:
 - adalearn_pupil/adalearn_pupil_group_level_analysis_behav_task_performance.py
 - adalearn_pupil/adalearn_pupil_group_level_analysis_model_parameters.py
 

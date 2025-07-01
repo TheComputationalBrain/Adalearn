@@ -1,5 +1,5 @@
 """
-This script performs group-level analysis of learning rate across participants in the Pupil task in the Adalearn project. It evaluates the association between participants' learning rates and those predicted by a normative model, computes learning rates around change points, and assesses the impact of uncertainty parameters on learning rates. The results are saved to .csv files for further analysis. The following script are required to be run before this script to load the required .csv files:
+This script performs group-level analysis of learning rate across participants undertaking the Pupil task in the Adalearn project. It evaluates the association between participants' learning rates and those predicted by a normative model, computes learning rates around change points, and assesses the impact of uncertainty parameters on learning rates. The results are saved to .csv files. The following script are required to be run before this script to load the required .csv files:
 - adalearn_pupil/adalearn_pupil_participant_level_analysis_behav_task_performance.py
 - adalearn_pupil/adalearn_pupil_participant_level_analysis_model_parameters.py
 """
@@ -106,7 +106,7 @@ for participant in participant_list:
     # Linear regression for uncertainty parameters on participants' learning rate
     learning_rate_analysis_dict = comp.uncertainty_on_learning_rate_participant_level(participant_str=participant_str, condition_str=condition_str, directory_path=directory_path, computational_var_df=computational_var_df, n_bins=6, parameter_estimate='estimate', exclude_zero=exclude_zero, include_interaction=True, plot_corr_subplots=False)
 
-    # Linear regression for uncertainty parameters on model learnijng rate (normative account)
+    # Linear regression for uncertainty parameters on model learning rate (normative account)
     learning_rate_model_analysis_dict = comp.uncertainty_on_learning_rate_participant_level(participant_str=participant_str, condition_str=condition_str, directory_path=directory_path, computational_var_df=computational_var_df, n_bins=6, parameter_estimate='ideal_observer', exclude_zero=exclude_zero, include_interaction=True, plot_corr_subplots=False)
 
     group_uncertainty_params_on_lr = pd.merge(left=learning_rate_analysis_dict['uncertainty_v_lr_df'], right=learning_rate_model_analysis_dict['uncertainty_v_lr_df'], on=['variable'], how='outer', suffixes=('', '_model'))

@@ -1,6 +1,11 @@
 """
-
+The script plots figure examining the association between pupil responses and learning rate and the mediating influence of pupil responses on the relationship between prior confidence and learning rate for participant perfoming the Pupil task in the Adalearn project. The following plots are generated:
+- Baseline corrected pupil signal dynamics around change points
+- Non-baseline corrected pupil signal dynamics arounf change points
+- Regression analysis on the effect of pupil signals on learning rates
+- Mediating influence of non-baseline corrected pupil signal on the relatinship between prior confidence and learning rate
 """
+
 import os
 import pandas as pd
 import numpy as np
@@ -14,6 +19,7 @@ import adalearn_analysis_group_level_functions_data_utilities as group_data_util
 import adalearn_analysis_group_level_functions_pupil_analysis as pupil_analysis
 
 from adalearn_pupil.adalearn_pupil_participant_info_and_parameters import directory_path, base_dir, condition_str
+
 
 
 dataframes = group_data_utils.load_sample_csvs(directory_path=base_dir, substrings=[
@@ -36,9 +42,7 @@ dataframes = group_data_utils.load_sample_csvs(directory_path=base_dir, substrin
 'pupil_v_lr_coef_ttest_df' 
 ])
 
-
 ##########################################################Plotting baseline-corrected and non-baseline corrected pupil effect window signals around change points
-
 pupil_bc_around_cp = dataframes['pupil_bc_around_cp'].copy()
 pupil_nobc_around_cp = dataframes['pupil_nobc_around_cp'].copy()
 change_point_indices_df = dataframes['change_point_indices_df'].copy()

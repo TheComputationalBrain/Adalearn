@@ -1,5 +1,5 @@
 """
-This script performs group-level analysis of the peristimulus epoched pupil data using multiple linear regression. It computes the coefficients for the prior confidence and change point probability (cpp) variables, both with and without baseline correction (for phasic- and tonic-associated pupil responses, respectively). The script also performs cluster-based permutation tests to identify significant clusters in the regression coefficients across participants. The results are saved in .csv files for further analysis. The following script need to be run before this script to obtain the relevant .csv files:
+This script performs group-level analysis of the peristimulus epoched pupil signals in the Pupil task of the Adalearn project. Using multiple linear rgeression, it computes the coefficients for the prior confidence and change point probability (cpp) variables, both with and without baseline correction (for phasic- and tonic-associated pupil responses, respectively). The script also performs cluster-based permutation tests to identify significant clusters in the regression coefficients across participants. The results are saved in .csv files for further analysis. The following script need to be run before this script to obtain the relevant .csv files:
 - adalearn_pupil/adalearn_pupil_group_level_analysis_behav_task_performance.py
 - adalearn_pupil/adalearn_pupil_group_level_analysis_model_parameters.py
 - adalearn_pupil/adalearn_pupil_group_level_analysis_pupil_assessment.py
@@ -118,14 +118,12 @@ pupil_regress_coef_nobc_df = pd.concat(pupil_regress_coef_nobc_df_list, ignore_i
 
 # Running cluster permutation analysis on signals
 cluster_based_permutation_results, significant_clusters_df = group_stats_analysis.compute_group_level_permutation_cluster_test(group_level_df=pupil_regress_coef_df, vars = ['prior_conf', 'cpp'], alpha=0.05)
-
 cluster_based_permutation_results_nobc, significant_clusters_nobc_df = group_stats_analysis.compute_group_level_permutation_cluster_test(group_level_df=pupil_regress_coef_nobc_df, vars=['prior_conf', 'cpp'], alpha=0.05)
 
 # Creating a dataframe to contain the averaged response across time points within the epoch
 print(f'\n Creating dataframe containing the averaged coefficients for the baseline corrected pupil signal')
 
 coefs_df = group_pupil.compute_peristim_mean_sem_by_count(pupil_regress_coef_df, value_cols=['cpp', 'prior_conf'])
-
 coefs_nobc_df = group_pupil.compute_peristim_mean_sem_by_count(pupil_regress_coef_nobc_df, value_cols=['cpp', 'prior_conf'])
 
 # Saving dataframes

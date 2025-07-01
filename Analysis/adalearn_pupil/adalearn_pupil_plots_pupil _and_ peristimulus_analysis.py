@@ -1,6 +1,11 @@
 """
-
+This script plots figures for the analysis of the pupil signal for participants undertaking the Pupil task of the Adalearn project. The following figures are generated:
+- The average baseline corrected epoched pupil signal
+- The average non-baseline corrected epoched pupil signal
+- Perstimulus regression coeficients for prior confidence and change point probability on the baseline correct pupil signal
+- Perstimulus regression coeficients for prior confidence and change point probability on the non-baseline correct pupil signal
 """
+
 import pandas as pd
 import numpy as np
 import os
@@ -15,8 +20,17 @@ import adalearn_analysis_group_level_functions_data_utilities as group_data_util
 from adalearn_pupil.adalearn_pupil_participant_info_and_parameters import directory_path, base_dir, condition_str
 
 
-dataframes = group_data_utils.load_sample_csvs(directory_path=base_dir, substrings=['epoched_pupil_df', 'epoched_pupil_nobc_df', 'outcome_epochs_descriptive_stats_df', 'outcome_epochs_descriptive_stats_nobc_df', 'coefs_df', 'coefs_nobc_df', 'cluster_permutation_analysis', 'cluster_permutation_analysis_nobc'])
 
+dataframes = group_data_utils.load_sample_csvs(directory_path=base_dir, substrings=[
+    'epoched_pupil_df', 
+    'epoched_pupil_nobc_df', 
+    'outcome_epochs_descriptive_stats_df', 
+    'outcome_epochs_descriptive_stats_nobc_df', 
+    'coefs_df', 
+    'coefs_nobc_df', 
+    'cluster_permutation_analysis', 
+    'cluster_permutation_analysis_nobc'
+    ])
 
 ############################Average pupil response (baseline-corrected)
 baseline_corrected_epochs = dataframes['epoched_pupil_df']
@@ -116,9 +130,6 @@ fig.write_image(f"{base_filepath}.png")
 fig.write_image(f"{base_filepath}.svg") 
 
 fig.show()
-
-
-
 
 ############################Average pupil response (nonbaseline-corrected)
 nonbaseline_corrected_epochs = dataframes['epoched_pupil_nobc_df']
@@ -220,9 +231,7 @@ fig.write_image(f"{base_filepath}.svg")
 
 fig.show()
 
-
 ############################################################Peristimulus regression (baseline corrected)
-
 baseline_corrected_coefs = dataframes['coefs_df']
 baseline_corrected_clusters = dataframes['cluster_permutation_analysis']
 
@@ -309,7 +318,7 @@ fig.update_layout(
     width=1800,
     font=dict(size=42, family="Times New Roman"),
     legend=dict(
-        x=0.32,
+        x=0.45,
         y=1.0,
         xanchor='right',
         yanchor='top',
@@ -332,10 +341,7 @@ fig.write_image(f"{base_filepath}.svg")
 
 fig.show()
 
-
-
 ####################################################################Peristimulus regression (nonbaseline-corrected)
-
 nonbaseline_corrected_coefs = dataframes['coefs_nobc_df']
 nonbaseline_corrected_clusters = dataframes['cluster_permutation_analysis_nobc']
 
@@ -424,7 +430,7 @@ fig.update_layout(
     width=1800,
     font=dict(size=42, family="Times New Roman"),
     legend=dict(
-        x=0.18,
+        x=0.50,
         y=1.0,
         xanchor='right',
         yanchor='top',
@@ -446,8 +452,3 @@ fig.write_image(f"{base_filepath}.svg")
 
 
 fig.show()
-
-
-
-#########################################################################
-

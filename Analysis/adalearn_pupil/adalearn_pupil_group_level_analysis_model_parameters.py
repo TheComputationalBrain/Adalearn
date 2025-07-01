@@ -1,5 +1,5 @@
 """
-This script computes the model parameters for each participant in the group-level analysis of the Pupil task of the Adalearn project. It loads individual participant data, computes various computational variables such as learning rates, surprise, prior confidence, change point probability, and information gain, and saves the results to a group-level .csv file. The following files need to be run prior to running this script to load the relevant .csv files:
+This script computes ideal observer model parameters for each participant in the group-level analysis of the Pupil task in the Adalearn project. It loads individual participant data, computes various computational variables such as learning rates, surprise, prior confidence, change point probability, and information gain, and saves the results to a group-level .csv file. The following files need to be run prior to running this script to load the relevant .csv files:
 - adalearn_pupil/adalearn_pupil_group_level_analysis_behav_task_performance.py
 """
 import pandas as pd

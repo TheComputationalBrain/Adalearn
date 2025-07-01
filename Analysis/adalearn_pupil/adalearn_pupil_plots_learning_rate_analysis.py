@@ -1,6 +1,13 @@
 """
-
+This script plots figures for analysis of learning rate for participants undertaking the Pupil task in the Adalearn project.  The following figures are generated:
+- The relationship between participants' and model learning rates
+- The dynamics of learning rate around change points (with normative predictions)
+- Regression coefficients of prior confidence and change point probability on learning rate
+- Scatterplot of individual regression coefficients for prior confidence and change point probability
+- Relationship between (binned) prior confidence and learning rate
+- Dynamics of prior confidence and change point probability around change points
 """
+
 import os
 import pandas as pd
 import numpy as np
@@ -15,8 +22,17 @@ import adalearn_analysis_group_level_functions_data_utilities as group_data_util
 from adalearn_pupil.adalearn_pupil_participant_info_and_parameters import directory_path, base_dir, condition_str
 
 
-dataframes = group_data_utils.load_sample_csvs(directory_path=base_dir, substrings=['behavioural_df', 'computational_var_df', 'change_point_indices_df', 'behav_v_model_lr_corr_df',  'averaged_lr_around_cp_df', 'lr_around_cp_sig_clusters', 'uncertainty_params_on_lr_df', 'uncertainty_params_ttest_df'])
 
+dataframes = group_data_utils.load_sample_csvs(directory_path=base_dir, substrings=[
+    'behavioural_df', 
+    'computational_var_df', 
+    'change_point_indices_df', 
+    'behav_v_model_lr_corr_df',  
+    'averaged_lr_around_cp_df', 
+    'lr_around_cp_sig_clusters', 
+    'uncertainty_params_on_lr_df', 
+    'uncertainty_params_ttest_df'
+    ])
 
 ############################################Plotting the relationship between participants' and model learning rates
 

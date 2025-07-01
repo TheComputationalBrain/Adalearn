@@ -1,5 +1,5 @@
 """
-This script reads .tsv files within each participants data directory folder to obtain demographic information for the sample. A dataframe is created with the demographic information for each participant. 
+This script reads .tsv files within each participants data directory folder to obtain demographic information for the sample in the Pupil task of the Adalearn project. A dataframe is created with the demographic information for each participant. 
 """
 
 from pathlib import Path
