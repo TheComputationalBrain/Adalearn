@@ -14,7 +14,9 @@ This repository contains essential elements for running and analysing the studie
 
 ## **Overview of the repository**
 
-The project repository contains folders relating to each of the three studies of the project. Each study folder contains essential elements defining the task, data and analysis scripts that can be used to replicate and build upon this work. Within each folder additional elements related to the specific study may also be found (e.g. supplementary datasets, applications, etc). The three studies share a common methodological framework and therefore draw upon general functions that are presented within the top level of the repository. External functions that have not been created specifically within this project, but are essential to the analysis, are also shared within the folder ['external_reference_functions'](#external_reference_functions).     
+The project repository contains folders relating to each of the three studies of the project. Each study folder contains essential elements defining the task, data and analysis scripts that can be used to replicate and build upon this work. Within each folder additional elements related to the specific study may also be found (e.g. supplementary datasets, applications, etc). The three studies share a common methodological framework and therefore draw upon general functions that are presented within the top level of the repository. External functions that have not been created specifically within this project, but are essential to the analysis, are also shared within the folder ['external_reference_functions'](#external_reference_functions).   
+
+![Alt_text](https://www.dl.dropboxusercontent.com/scl/fi/1hru1i5q3rw7v7j5hfk78/repo_structure.png?rlkey=2h41m8lrr5himi5tbw5zmcut4&st=7xglvhu1&dl=0) 
 
 
 ## **Tasks**
