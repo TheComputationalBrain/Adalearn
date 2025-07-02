@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Participant Data</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 14px;
+            margin: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 6px;
+        }
+
+        input {
+            width: 50%;
+            padding: 1px;
+            margin-bottom: 20px;
+        }
+
+        button {
+            padding: 10px;
+            background-color: #e71a1a;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        .row {
+            margin-bottom: 20px;
+            /* Adjust this value to set the desired space */
+        }
+    </style>
+</head>
+
+<body>
+
+    <h2>Participant Data Collection</h2>
+
+    <form id="experimentForm">
+        <label for="ParticipantNumber">Participant Number (format XX):</label>
+        <input type="number" id="ParticipantNumber" required>
+
+
+        <label for="Initials">Participant Initials (format NNss):</label>
+        <input type="text" id="Initials" required>
+
+        <label for="DOB">Date of birth:</label>
+        <input type="date" id="DOB" required>
+
+        <label for="Age">Age:</label>
+        <input type="number" id="Age" required>
+
+        <div class="row">
+            <label for="Gender">Gender:</label>
+            <select id="Gender" required>
+                <option value="male">Male</option>
+                <option value="female">Female</option>
+            </select>
+        </div>
+
+        <div class="row">
+            <label for="Handedness">Handedness:</label>
+            <select id="Handedness" required>
+                <option value="Left">Left</option>
+                <option value="Right">Right</option>
+            </select>
+        </div>
+
+
+        <div class="row">
+            <label for="Pathology">Participant Pathology:</label>
+            <select id="Pathology" required>
+                <option value="depression">Depression</option>
+                <option value="epilespy">Epilespy</option>
+            </select>
+        </div>
+
+        <div class="row">
+            <label for="ClinicalProtocol">Clinical Protocol:</label>
+            <select id="ClinicalProtocol" required>
+                <option value="DEPVNS">DEPVNS</option>
+                <option value="Epilespy">Epilespy</option>
+            </select>
+        </div>
+
+        <label for="NumberInProtocol">Participant Number in clinical protocool:</label>
+        <input type="text" id="NumberInProtocol" required>
+
+        <label for="SurgeryDate">Date of surgery:</label>
+        <input type="date" id="SurgeryDate" required>
+
+        <label for="ExperimentDate">Date of experiment:</label>
+        <input type="date" id="ExperimentDate" required>
+
+        <label for="SessionNumber">Session number:</label>
+        <input type="number" id="SessionNumber" required>
+
+        <label for="StimulationIntensity">Intensity of VN stimulation:</label>
+        <input type="number" id="StimulationIntensity" required>
+
+        <label for="DurationOFF">Duration OFF stimulation (in sec):</label>
+        <input type="number" id="DurationOFF" required>
+
+        <label for="DurationON">Duration ON stimulation (in sec):</label>
+        <input type="number" id="DurationON" required>
+
+        <label for="StimulationFrequency">Pulse Frequency:</label>
+        <input type="number" id="StimulationFrequency" required>
+
+        <label for="PulseWidth">Pulse Width:</label>
+        <input type="number" id="PulseWidth" required>
+
+        <button type="button" onclick="submitForm()">Start Experiment</button>
+    </form>
+
+    <script>
+        function submitForm() {
+            var number = document.getElementById('ParticipantNumber').value;
+            var initials = document.getElementById('Initials').value;
+            var dob = document.getElementById('DOB').value;
+            var age = document.getElementById('Age').value;
+            var gender = document.getElementById('Gender').value;
+            var handedness = document.getElementById('Handedness').value;
+            var pathology = document.getElementById('Pathology').value;
+            var clinicalprotocol = document.getElementById('ClinicalProtocol').value;
+            var numberinprotocol = document.getElementById('NumberInProtocol').value;
+            var surgerydate = document.getElementById('SurgeryDate').value;
+            var experimentdate = document.getElementById('ExperimentDate').value;
+            var session = document.getElementById('SessionNumber').value;
+            var intensity = document.getElementById('StimulationIntensity').value;
+            var durationoff = document.getElementById('DurationOFF').value;
+            var durationon = document.getElementById('DurationON').value;
+            var stimfreq = document.getElementById('StimulationFrequency').value;
+            var pulsewidth = document.getElementById('PulseWidth').value;
+            
+            // Create a TSV string
+            var tsvContent = "ParticipantNumber\tInitials\tDOB\tAge\tGender\tHandedness\tPathology\tClinicalProtocol\tNumberInProtocol\tSurgeryDate\tExperimentDate\tSessionNumber\tStimulationIntensity\tDurationOFF\tDurationON\tStimulationFrequency\tPulseWidth\n" +
+                number + "\t" + initials + "\t" + dob + "\t" + age + "\t" + gender + "\t" + handedness + "\t" + pathology + "\t" + clinicalprotocol + "\t" + numberinprotocol + "\t" + surgerydate  + "\t" + experimentdate + "\t" + session + "\t" + intensity + "\t" + durationoff + "\t" + durationon + "\t" + stimfreq + "\t" + pulsewidth;
+
+            // Generate a dynamic file name
+            var fileName = 'participant_' + number.toLowerCase().replace(/\s+/g, '_') + 'session_' + session.toLowerCase().replace(/\s+/g, '_') + '.tsv';
+
+            // Create a Blob containing the CSV data
+            //var blob = new Blob([csvContent], { type: 'text/csv' });
+            var blob = new Blob([tsvContent], { type: 'text/tab-separated-values' });
+
+            // Create a download link
+            var a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = fileName;
+
+            // Append the link to the body and click it programmatically
+            document.body.appendChild(a);
+            a.click();
+
+            // Remove the link from the DOM
+            document.body.removeChild(a);
+        }
+
+        document.getElementById('ExperimentDate').valueAsDate = new Date();
+
+    </script>
+
+</body>
+
+</html>

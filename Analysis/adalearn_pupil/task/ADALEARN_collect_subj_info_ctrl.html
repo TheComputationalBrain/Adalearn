@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Participant Data</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 14px;
+            margin: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 6px;
+        }
+
+        input {
+            width: 50%;
+            padding: 1px;
+            margin-bottom: 20px;
+        }
+
+        button {
+            padding: 10px;
+            background-color: #e71a1a;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        .row {
+            margin-bottom: 20px;
+            /* Adjust this value to set the desired space */
+        }
+    </style>
+</head>
+
+<body>
+
+    <h2>Participant Data Collection</h2>
+
+    <form id="experimentForm">
+        <label for="ParticipantNumber">Numero de participant (format XX):</label>
+        <input type="number" id="ParticipantNumber" required>
+
+        <label for="DOB">Date de naissance:</label>
+        <input type="date" id="DOB" required>
+
+        <div class="row">
+            <label for="Gender">Genre:</label>
+            <select id="Gender" required>
+                <option value="male">Homme</option>
+                <option value="female">Femme</option>
+                <option value="noanswer">Je ne souhaite pas répondre</option>
+            </select>
+        </div>
+
+        <div class="row">
+            <label for="Handedness">Latéralité:</label>
+            <select id="Handedness" required>
+                <option value="Left">Gaucher</option>
+                <option value="Right">Droitier</option>
+            </select>
+        </div>
+
+
+        <div class="row">
+            <label for="HistoryPathology">Antécédent de troubles neurologiques ou psychiatriques:</label>
+            <select id="HistoryPathology" required>
+                <option value="yes">Oui</option>
+                <option value="no">Non</option>
+            </select>
+        </div>
+
+        <label for="EducationLevel">Nombre d'année d'enseignement supérieur (post baccalauréat):</label>
+        <input type="number" id="EducationLevel" required>
+
+        <div class="row">
+            <label for="MathsTraining">Apprentissage approfondi des mathématiques :</label>
+            <select id="MathsTraining" required>
+                <option value="yes">Oui</option>
+                <option value="no">Non</option>
+            </select>
+        </div>
+
+        <label for="ExperimentDate">Date de l'expérience:</label>
+        <input type="date" id="ExperimentDate" required>
+
+         <button type="button" onclick="submitForm()">Commencez l'expérience</button>
+    </form>
+
+    <script>
+        function submitForm() {
+            var number = document.getElementById('ParticipantNumber').value;
+            var dob = document.getElementById('DOB').value;
+            var gender = document.getElementById('Gender').value;
+            var handedness = document.getElementById('Handedness').value;
+            var pathology = document.getElementById('HistoryPathology').value;
+            var education = document.getElementById('EducationLevel').value;
+            var maths = document.getElementById('MathsTraining').value;
+            var experimentdate = document.getElementById('ExperimentDate').value;
+            
+            // Create a TSV string
+            var tsvContent = "ParticipantNumber\tDOB\tGender\tHandedness\tDisorderHistory\tEducationLevel\tMathsTraining\tExperimentDate\n" +
+                number + "\t" + dob + "\t" + gender + "\t" + handedness + "\t" + pathology + "\t" + education + "\t" + maths + "\t" + experimentdate;
+
+            // Generate a dynamic file name
+            var fileName = 'participant_' + number.toLowerCase().replace(/\s+/g, '_') + '_session_' + experimentdate.toLowerCase().replace(/\s+/g, '_') + '.tsv';
+
+            // Create a Blob containing the CSV data
+            //var blob = new Blob([csvContent], { type: 'text/csv' });
+            var blob = new Blob([tsvContent], { type: 'text/tab-separated-values' });
+
+            // Create a download link
+            var a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = fileName;
+
+            // Append the link to the body and click it programmatically
+            document.body.appendChild(a);
+            a.click();
+
+            // Remove the link from the DOM
+            document.body.removeChild(a);
+        }
+
+        document.getElementById('ExperimentDate').valueAsDate = new Date();
+
+    </script>
+
+</body>
+
+</html>
