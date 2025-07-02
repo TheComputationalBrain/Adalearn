@@ -1,32 +1,95 @@
-## **Project**
+# ADALEARN Project
 
-This repository contains essential elements for running and analysing the studies within the ADALEARN project. The ADALEARN project seeks to understand mechanisms driving adaptive changes in learning rate within a dynamically changing probability learning task. The primary investigated mechanisms focus on the role of neuromodulators and specifically noradrenaline. The project contains 3 studies: ADALEARN: Pupil, ADALEARN: VNS, ADALEARN: Atomoxetine. 
+This repository contains core materials for running and analyzing the studies in the **ADALEARN** project.
 
-## **Table of contents**
-- [Overview of the repository](#overview-of-the-repository)
+The ADALEARN project investigates mechanisms that drive adaptive changes in learning rate within a dynamically changing probabilistic learning task, with a specific focus on the putative role of **noradrenaline**.
+
+The project includes three separate studies:
+- [`adalearn_pupil`](#adalearn_pupil)
+- [`adalearn_VNS`](#adalearn_vns)
+- [`adalearn_atomoxetine`](#adalearn_atomoxetine)
+
+---
+
+## Table of Contents
+
+- [Overview](#overview)
 - [Tasks](#tasks)
 - [Data](#data)
 - [Analyses](#analyses)
 - [Requirements](#requirements)
 - [Contact](#contact)
 
+---
 
-## **Overview of the repository**
+## Overview
 
-The project repository contains folders housing the task, data (?) and analysis scripts used in each of the studies within the project. Additional elements related to individual studies may also be contained in the study-specific folders. 
+The repository is organized into folders corresponding to each of the three studies. Each study folder includes:
 
-## **Tasks**
+- The task implementation
+- Raw and processed data
+- Analysis scripts
 
-The task folder contains an update to the original design (paper: https://doi.org/10.1162/opmi_a_00139; github: https://github.com/cedricfoucault/ada-learn), enabling compatability with pupil recordings...
+Because the studies share a common methodological framework, general-purpose functions (used across all studies) are placed at the root level of the repository. External dependencies or helper functions from outside the ADALEARN project are stored in the [`external_reference_functions`](#external_reference_functions) folder.
 
-## **Data**
+<div align="center">
+  <img src="https://www.dl.dropboxusercontent.com/scl/fi/1hru1i5q3rw7v7j5hfk78/repo_structure.png?rlkey=2h41m8lrr5himi5tbw5zmcut4&st=7xglvhu1&dl=0" width="600">
+</div>
 
-## **Analyses**
+---
 
-The analyses folder is structured as follows: The top level contains functions used for analysis across all studies. Study specific folders represent the second level. In each folder, scripts call functions for the specific analysis of that study. In each study specific folder, analysis scripts are generated to perform analysis at both a participat level and group level. To obtain the presented study outcomes, participant level analysis can be ignored, with only group level scripts required.   
+## Tasks
 
-![Alt text](https://www.dropbox.com/scl/fi/6bulgql8d997l4tyt8z8j/code_structure.png?rlkey=ey8u9gpsit7x3v189ravmooik&raw=1)
+The same probabilistic learning task is used across all three studies. It is adapted from the original implementation (for more information on the task, please see the original repository):
+- Paper: [https://doi.org/10.1162/opmi_a_00139](https://doi.org/10.1162/opmi_a_00139)
+- GitHub: [cedricfoucault/ada-learn](https://github.com/cedricfoucault/ada-learn)
 
-## **Requirements**
+In this repository, the task has been extended to support:
+- Pupil diameter data collection
+- Heartbeat/physiological signal recording
 
-## **Contact**
+This is achieved via **WebSocket communication**, which allows task events to be streamed in real time for synchronization with physiological recordings.
+
+---
+
+## Data
+
+Each study contains a `data/` folder, which holds behavioral and physiological recordings in their original acquisition format. Data is organized into participant-specific subfolders.
+
+The data is typically split into:
+- `behav/`: Behavioral task output
+- `eye/`: Eye-tracking or pupil diameter recordings (if applicable)
+- `physio/`: Physiological recordings such as ECG, EMG, etc. (used in `adalearn_VNS` and `adalearn_atomoxetine`)
+
+> ⚠️ A cleaned and structured dataset is not yet included, but will be added in future updates to simplify usage.
+
+---
+
+## Analyses
+
+Analysis scripts are provided in the `analysis/` folder of each study. Each script corresponds to a specific figure or result in the project.
+
+- Scripts are written in Python and include docstrings describing their purpose.
+- Each script can be run independently.
+- Results (e.g., plots, CSV outputs) are saved in structured output directories.
+
+To run all analyses for a study....
+
+---
+
+## Requirements
+
+To install all required dependencies:
+
+1. Make sure you have **Python 3.11**
+2. Run the following from the root of the repository:
+
+```bash
+pip install -r requirements.txt
+```
+
+---
+
+## Contact
+
+email: agreenhousetucknott@gmail.com
