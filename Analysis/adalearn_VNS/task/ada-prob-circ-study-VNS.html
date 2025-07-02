@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Ada-Prob Study</title>
+  <link rel="stylesheet" href="ada-task.css">
+  <!-- 
+  /!\ In this project, we do not use the javascript 'import' statement
+  to load code dependencies from other JavaScript files.
+  This is a deliberate choice, because imports (modules) do not work
+  when running the code locally with the file:// protocol.
+  Instead, we make sure that all dependencies of a given javascript file
+  have been loaded previously from the HTML file.
+  This means we need to be careful with the order with which we load the javascript
+  files here in the HTML file. This is a bit cumbersome but I have not found a better
+  way to handle javascript dependencies while still keeping the ability to run the code with file://.
+  -->
+  <script src="load-url-search-params.js"></script>
+  <script src="prolific-info.js"></script>
+  <script src="utils.js"></script>
+  <script src="ada-learn-study-params-VNS.js"></script>
+  <script>
+    initStudyParams(ADA_PROB);
+    studyParams.useCircularDisplay = true;
+    studyParams.studyName = "ada-prob-circ";
+    studyParams.nInstructions = 26;
+  </script>
+  <script src="ada-study-data.js"></script>
+  <script src="ada-study-step.js"></script>
+  <script src="animation.js"></script>
+  <script src="run-loop-VNS.js"></script>
+  <script>
+    const SEQUENCE_DATA_FILE = "seq-data/seq-data_prob_nsessions-150_ntrials-75_seed-1_pc-1by20_min-run-length-6_apply-min-for-last-run-length_max-run-length-60_min-odd-change-4.js";
+  </script>
+  <script src="seq-data/seq-data_prob_nsessions-150_ntrials-75_seed-1_pc-1by20_min-run-length-6_apply-min-for-last-run-length_max-run-length-60_min-odd-change-4.js"></script>
+  <script src="lang-VNS.js"></script>
+  <script src="ada-learn-task-UI.js"></script>
+  <script src="ada-learn-task-score.js"></script>
+  <!-- for pavlovia -->
+  <script src="pavlovia/vendors/jspsych-6.0.0/jspsych.js"></script>
+  <script src="pavlovia/vendors/jquery-2.2.0.min.js"></script>
+  <script src="pavlovia/jspsych-pavlovia-3.0.0.js"></script>
+  <script src="ada-study-pavlovia-manager.js"></script>
+</head>
+<body>
+  <canvas id="canvas" hidden></canvas>
+  <script src="ada-learn-task-VNS.js"></script>
+  <script src="check-requirements.js"></script>
+</body>
+
+
+
+<dialog class="modal_websocket" id ="modal_websocket">
+    <h2> Warning </h2>
+    <p> The connexion with Python via WebSocket is needed for th experiment </p>
+    <p> Run python_websocket then refresh the page please, otherwise you can not go further in the experiment </p>
+  </dialog>
+
+  <dialog class="modal_tobii_synchro" id ="modal_tobii_synchro">
+    <h2> The local Network is established  </h2>
+    <p> Now you need to turn on and synchronise Tobii, the eyetracker </p>
+    <p> Make sure Tobii is alimented and looking in you direction </p>
+    <button onClick="Tobii_synchro_and_close_popup()">Synchronise Tobii</button>
+  </dialog>
+
+  <dialog class="modal_break" id ="modal_break">
+    <h2> Need a break ?  </h2>
+    <p> You can take take a break if you want </p>
+    <button onClick="Tobii_open_txt_file_StartRecording()"> I'm okay, let's continu</button>
+  </dialog>
+
+
+</body>
+
+<!--
+<script src="ada-study-pavlovia-manager.js"></script>
+-->
+
+
+<script> // WebSocket part : Connexion with Tobii
+
+    // Create websocket connection
+    const socket =new WebSocket('ws://localhost:5000');
+    var connexion_websocket = false;
+  
+    // Connection opened
+    socket.addEventListener('open', function(event){
+        console.log('connected to WS Server !')
+        connexion_websocket = true
+        console.log(connexion_websocket)
+    });
+  
+    // Connection closed
+    socket.addEventListener('close', function(event){
+        console.log('Disconnected to WS Server !')
+        connexion_websocket = false
+        console.log(connexion_websocket)
+  
+    });
+  
+    // Listen for messages
+    socket.addEventListener('message', function(event){
+        console.log('Message from server', event.data);
+    });
+  
+  
+    // Send a message to the websocket (locak network) => Python and Tobii
+  //    const Tobii_synchro_and_close_popup = () => {
+  //      socket.send('synchronisation');
+  //      modal_tobii_synchro.close();
+  //  }
+  
+    const Tobii_synchro = (sessionnum) => {
+      socket.send('synchronisation');
+    }
+  
+    const Tobii_Send_info_to_python = (info) => {
+        socket.send('info from Ada : ' + info);
+    }
+  
+    const Tobii_Send_info_1_to_python = () => {
+      socket.send('stim_1');
+    }
+  
+    const Tobii_Send_info_0_to_python = () => {
+      socket.send('stim_0');
+    }
+  
+    const Tobii_session_end = () => { 
+        socket.send('session ends');
+    }
+  
+    const Tobii_save_txt_file_StopRecording = () => {
+        socket.send('end session and stop recording');
+    }
+  
+    //const Tobii_open_txt_file_StartRecording = () => {
+    //    socket.send('new session : start recording and open new txt file');
+    //    modal_break.close();
+    //}
+   
+  
+    // Not useful for now
+    const Tobii_stop_recording = () => {
+        socket.send('stop_recording');
+    }
+    const Tobii_close_Websocket = () => {
+        socket.send('close_websocket');
+    }
+  
+  </script>
+  
+  
+  </html>
