@@ -17,7 +17,7 @@ pio.renderers.default='browser'
 
 import adalearn_analysis_group_level_functions_data_utilities as group_data_utils
 
-from adalearn_pupil.adalearn_pupil_participant_info_and_parameters import selected_participant, directory_path, base_dir, condition_str
+from adalearn_pupil.adalearn_pupil_participant_info_and_parameters import selected_participant,base_dir
 
 
 # Loading individual volatility data 
@@ -105,7 +105,7 @@ fig.update_layout(
         bgcolor='rgba(255, 255, 255, 0.7)'))
 
 # Save the figure to the group-level folder
-plot_dir = os.path.join(base_dir, "group_level_plots")
+plot_dir = os.path.join(base_dir, "plots")
 os.makedirs(plot_dir, exist_ok=True)
 
 # Base filename (without extension)
@@ -316,7 +316,7 @@ fig.update_layout(
 )
 
 # Save the figure to the group-level folder
-plot_dir = os.path.join(base_dir, "group_level_plots")
+plot_dir = os.path.join(base_dir, "plots")
 os.makedirs(plot_dir, exist_ok=True)
 
 # Base filename (without extension)
@@ -425,7 +425,7 @@ fig.update_layout(
         bgcolor='rgba(255, 255, 255, 0.7)'))
 
 # Save the figure to the group-level folder
-plot_dir = os.path.join(base_dir, "group_level_plots")
+plot_dir = os.path.join(base_dir, "plots")
 os.makedirs(plot_dir, exist_ok=True)
 
 # Base filename (without extension)
@@ -535,7 +535,7 @@ fig.update_layout(
         bgcolor='rgba(255, 255, 255, 0.7)'))
 
 # Save the figure to the group-level folder
-plot_dir = os.path.join(base_dir, "group_level_plots")
+plot_dir = os.path.join(base_dir, "plots")
 os.makedirs(plot_dir, exist_ok=True)
 
 # Base filename (without extension)

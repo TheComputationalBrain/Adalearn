@@ -314,7 +314,7 @@ def plot_session_behav_comp(participant_str, condition_str, directory_path, base
         fig.write_image(file_path)
 
         if plot_group_level:
-            plot_dir = os.path.join(base_dir, "group_level_plots")
+            plot_dir = os.path.join(base_dir, "plots")
             os.makedirs(plot_dir, exist_ok=True)
 
             # Base filename (without extension)

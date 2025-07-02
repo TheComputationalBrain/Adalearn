@@ -19,7 +19,7 @@ pio.renderers.default='browser'
 
 import adalearn_analysis_group_level_functions_data_utilities as group_data_utils
 
-from adalearn_pupil.adalearn_pupil_participant_info_and_parameters import directory_path, base_dir, condition_str
+from adalearn_pupil.adalearn_pupil_participant_info_and_parameters import base_dir
 
 
 
@@ -174,7 +174,7 @@ fig.update_layout(
 )
 
 # Save the figure to the group-level folder
-plot_dir = os.path.join(base_dir, "group_level_plots")
+plot_dir = os.path.join(base_dir, "plots")
 os.makedirs(plot_dir, exist_ok=True)
 
 # Base filename (without extension)
@@ -362,7 +362,7 @@ fig.update_layout(
 )
 
 # Save the figure to the group-level folder
-plot_dir = os.path.join(base_dir, "group_level_plots")
+plot_dir = os.path.join(base_dir, "plots")
 os.makedirs(plot_dir, exist_ok=True)
 
 # Base filename (without extension)
@@ -570,7 +570,7 @@ fig.update_layout(
     width=1800)
 
 # Save the figure to the group-level folder
-plot_dir = os.path.join(base_dir, "group_level_plots")
+plot_dir = os.path.join(base_dir, "plots")
 os.makedirs(plot_dir, exist_ok=True)
 
 # Base filename (without extension)
@@ -626,7 +626,7 @@ fig.update_layout(
     width=1800)
 
 # Save the figure to the group-level folder
-plot_dir = os.path.join(base_dir, "group_level_plots")
+plot_dir = os.path.join(base_dir, "plots")
 os.makedirs(plot_dir, exist_ok=True)
 
 # Base filename (without extension)
@@ -731,7 +731,7 @@ fig.update_layout(
     width=1800)
 
 # Save the figure to the group-level folder
-plot_dir = os.path.join(base_dir, "group_level_plots")
+plot_dir = os.path.join(base_dir, "plots")
 os.makedirs(plot_dir, exist_ok=True)
 
 # Base filename (without extension)
@@ -939,7 +939,7 @@ fig.update_yaxes(showline=True, linewidth=1, linecolor='black',
 fig.update_layout(height=2*1200, width=1800, plot_bgcolor='rgba(255, 255, 255, 1)', font=dict(size=42, family="Times New Roman"), showlegend=False)
 
 # Save the figure to the group-level folder
-plot_dir = os.path.join(base_dir, "group_level_plots")
+plot_dir = os.path.join(base_dir, "plots")
 os.makedirs(plot_dir, exist_ok=True)
 
 # Base filename (without extension)

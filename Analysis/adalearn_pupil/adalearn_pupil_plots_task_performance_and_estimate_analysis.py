@@ -122,7 +122,7 @@ fig.update_layout(
 )
 
 # Save the figure to the group-level folder
-plot_dir = os.path.join(base_dir, "group_level_plots")
+plot_dir = os.path.join(base_dir, "plots")
 os.makedirs(plot_dir, exist_ok=True)
 
 # Base filename (without extension)
@@ -280,7 +280,7 @@ fig.update_layout(
 )
 
 # Save the figure to the group-level folder
-plot_dir = os.path.join(base_dir, "group_level_plots")
+plot_dir = os.path.join(base_dir, "plots")
 os.makedirs(plot_dir, exist_ok=True)
 
 # Base filename (without extension)
