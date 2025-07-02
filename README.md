@@ -1,59 +1,95 @@
-## **Project**
+# ADALEARN Project
 
-This repository contains essential elements for running and analysing the studies within the ADALEARN project. The ADALEARN project seeks to understand mechanisms driving adaptive changes in learning rate within a dynamically changing probability learning task, with a specific focus on the putative role of noradrenaline. The project contains 3 studies: [adalearn_pupil](#adalearn_pupil); [adalearn_VNS](#adalearn_VNS); [adalearn_atomoxetine](#adalearn_atomoxetine). 
+This repository contains core materials for running and analyzing the studies in the **ADALEARN** project.
 
+The ADALEARN project investigates mechanisms that drive adaptive changes in learning rate within a dynamically changing probabilistic learning task, with a specific focus on the putative role of **noradrenaline**.
 
-## **Table of contents**
-- [Overview of the repository](#overview-of-the-repository)
+The project includes three separate studies:
+- [`adalearn_pupil`](#adalearn_pupil)
+- [`adalearn_VNS`](#adalearn_vns)
+- [`adalearn_atomoxetine`](#adalearn_atomoxetine)
+
+---
+
+## Table of Contents
+
+- [Overview](#overview)
 - [Tasks](#tasks)
 - [Data](#data)
 - [Analyses](#analyses)
 - [Requirements](#requirements)
 - [Contact](#contact)
 
+---
 
-## **Overview of the repository**
+## Overview
 
-The project repository contains folders relating to each of the three studies of the project. Each study folder contains essential elements defining the task, data and analysis scripts that can be used to replicate and build upon this work. Within each folder additional elements related to the specific study may also be found (e.g. supplementary datasets, applications, etc). The three studies share a common methodological framework and therefore draw upon general functions that are presented within the top level of the repository. External functions that have not been created specifically within this project, but are essential to the analysis, are also shared within the folder ['external_reference_functions'](#external_reference_functions).   
+The repository is organized into folders corresponding to each of the three studies. Each study folder includes:
 
-![Alt_text](https://www.dl.dropboxusercontent.com/scl/fi/1hru1i5q3rw7v7j5hfk78/repo_structure.png?rlkey=2h41m8lrr5himi5tbw5zmcut4&st=7xglvhu1&dl=0) 
+- The task implementation
+- Raw and processed data
+- Analysis scripts
 
+Because the studies share a common methodological framework, general-purpose functions (used across all studies) are placed at the root level of the repository. External dependencies or helper functions from outside the ADALEARN project are stored in the [`external_reference_functions`](#external_reference_functions) folder.
 
-## **Tasks**
+<div align="center">
+  <img src="https://www.dl.dropboxusercontent.com/scl/fi/1hru1i5q3rw7v7j5hfk78/repo_structure.png?rlkey=2h41m8lrr5himi5tbw5zmcut4&st=7xglvhu1&dl=0" width="600">
+</div>
 
-The tasks utilised for each of the studies is held within the task folder. The task is common to all studies and is largely based upon the original presented in previous work (paper: https://doi.org/10.1162/opmi_a_00139; github: https://github.com/cedricfoucault/ada-learn) - for more specific information about the task, please read the README of the original project. 
+---
 
-The original task could be simply executed within a web browser. The tasks have been updated to make them compatible with the collection and analysis of pupil diameter signal and heart beat recordings. To achieve this, the tasks utilise a websocket to extract real-time events from the task protocol within the physiological recordings.   
+## Tasks
 
+The same probabilistic learning task is used across all three studies. It is adapted from the original implementation (for more information on the task, please see the original repository):
+- Paper: [https://doi.org/10.1162/opmi_a_00139](https://doi.org/10.1162/opmi_a_00139)
+- GitHub: [cedricfoucault/ada-learn](https://github.com/cedricfoucault/ada-learn)
 
-## **Data**
+In this repository, the task has been extended to support:
+- Pupil diameter data collection
+- Heartbeat/physiological signal recording
 
-The data folder within each study contains all of the behavioural data that was collected for that study.
+This is achieved via **WebSocket communication**, which allows task events to be streamed in real time for synchronization with physiological recordings.
 
-The data is presented in its original acquisition format, which is contained in a participant-specific folder. This data is used within the analysis scripts held in this repository. The data for each participant is split based on the type of data collected: [behav](#behav); [eye](#eye); [physio](#physio) (relating to adalearn_VNS and adlearn_atomoxetine only).
+---
 
-An aggregated structured dataset has not been generated to ease comprehension and manipulation (though will be forthcoming).  
+## Data
 
+Each study contains a `data/` folder, which holds behavioral and physiological recordings in their original acquisition format. Data is organized into participant-specific subfolders.
 
-## **Analyses**
+The data is typically split into:
+- `behav/`: Behavioral task output
+- `eye/`: Eye-tracking or pupil diameter recordings (if applicable)
+- `physio/`: Physiological recordings such as ECG, EMG, etc. (used in `adalearn_VNS` and `adalearn_atomoxetine`)
 
-The data analyses are implemented by Python scripts stored in each of the studies folder. These allow the user to reproduce all the results and figures. Each script performs one analysis. A docstring describing the analysis is provided at the top of the file.
+> ⚠️ A cleaned and structured dataset is not yet included, but will be added in future updates to simplify usage.
 
-To run all of the analysis...(to complete)
+---
 
+## Analyses
 
-## **Requirements**
+Analysis scripts are provided in the `analysis/` folder of each study. Each script corresponds to a specific figure or result in the project.
 
-To run the analysis code, you will need to install Python and the necessary Python modules. The required modules are listed in the [`requirements.txt`](requirements.txt) file. You can install them using `pip`
-by running the following command in the terminal from the root of the repository:
+- Scripts are written in Python and include docstrings describing their purpose.
+- Each script can be run independently.
+- Results (e.g., plots, CSV outputs) are saved in structured output directories.
 
-```
+To run all analyses for a study....
+
+---
+
+## Requirements
+
+To install all required dependencies:
+
+1. Make sure you have **Python 3.11**
+2. Run the following from the root of the repository:
+
+```bash
 pip install -r requirements.txt
 ```
 
-The results of the paper were produced using Python 3.11 and the module versions listed in [`requirements.txt`](requirements.txt). Using these versions ensures that the code runs correctly and that the results are exactly reproduced. 
+---
 
-
-## **Contact**
+## Contact
 
 email: agreenhousetucknott@gmail.com
