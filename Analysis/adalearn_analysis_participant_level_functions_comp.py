@@ -14,7 +14,7 @@ from plotly.subplots import make_subplots
 pio.renderers.default='browser'
 
 
-sys.path.append('/home/aarongreenhouse-tucknott/Documents/Python/Ada_Learn/Analysis/Misc')
+sys.path.append('/home/aarongreenhouse-tucknott/Documents/Python/Ada_Learn/Analysis/Analysis/external_reference_functions')
 from IdealObserver import run_inference
 from Inference_ChangePoint import compute_inference, likelihood_table, get_clipped_grid_indices
 from model_learner import ideal_learner_prob_estimates_from_outcomes, ideal_learner_prob_inference_from_outcomes, ideal_learner_prob_confidence_from_outcomes, ideal_learner_prob_cpp

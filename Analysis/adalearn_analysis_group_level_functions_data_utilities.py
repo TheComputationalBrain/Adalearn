@@ -3,6 +3,8 @@ import re
 import pandas as pd
 from collections import defaultdict
 
+
+
 def get_participant_numbers(directory):
     """
     Function to obtain the participant identifiers within the directory containing the data. 

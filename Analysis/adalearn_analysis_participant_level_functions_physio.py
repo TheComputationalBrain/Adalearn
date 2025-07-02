@@ -17,6 +17,7 @@ from plotly.subplots import make_subplots
 pio.renderers.default='browser'
 
 
+
 def load_biopac_data(directory_path, participant_str, condition_str, run_ranges):
     """
     Function to load biopac .edf files. Sets the working directory to the relevant file, before loading and storing the data for each task session for a given condition. 
