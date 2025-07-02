@@ -2,17 +2,10 @@
 This script performs group-level analysis of estimates for performance of the Pupil task of the Adalearn project. It loads participant-level data, computes the association between participants' behavioural data and model estimates, and performs statistical tests to assess the significance of these associations. The results are saved to .csv files for further analysis. The following scripts need to be run before this script to load the relevant .csv files:
 - adalearn_pupil/adalearn_pupil_group_level_analysis_behav_task_performance.py
 - adalearn_pupil/adalearn_pupil_group_level_analysis_model_parameters.py
-
 """
 import pandas as pd
-import numpy as np
 from scipy import stats
 from pathlib import Path
-import plotly.io as pio
-import plotly.graph_objects as go
-import plotly.express as px
-from plotly.subplots import make_subplots
-pio.renderers.default='browser'
 
 import adalearn_analysis_group_level_functions_data_utilities as group_data_utils 
 import adalearn_analysis_participant_level_functions_comp as comp
@@ -25,7 +18,7 @@ dataframes = group_data_utils.load_sample_csvs(directory_path=base_dir, substrin
     'computational_var_df'
 ])
 
-participant_list = group_data_utils.get_participant_numbers(base_dir)
+participant_list = group_data_utils.get_participant_numbers(Path(f'{base_dir}/data'))
 
 group_behav_v_model_estimate_corr_list = []
 
@@ -33,7 +26,7 @@ group_behav_v_model_estimate_corr_list = []
 for participant in participant_list:
     participant_str = str(participant).zfill(2)
     print(f"\n\n\nProcessing participant {participant_str}...")
-    directory_path = Path(f'{base_dir}/sub-{participant_str}')
+    directory_path = Path(f'{base_dir}/data/sub-{participant_str}')
 
     change_point_indices = dataframes['change_point_indices_df'][dataframes['change_point_indices_df']['participant'] == participant].copy()
     

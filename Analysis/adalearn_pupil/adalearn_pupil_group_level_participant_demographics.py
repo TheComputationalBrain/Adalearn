@@ -7,7 +7,6 @@ import pandas as pd
 from datetime import datetime
 
 import adalearn_analysis_participant_level_functions_participant_info as participant_info
-
 import adalearn_analysis_group_level_functions_data_utilities as data_utils
 
 from adalearn_pupil.adalearn_pupil_participant_info_and_parameters import base_dir, condition_str
@@ -16,7 +15,7 @@ from adalearn_pupil.adalearn_pupil_participant_info_and_parameters import base_d
 
 group_demographic_df = pd.DataFrame()
 
-base_path = Path(base_dir)
+base_path = Path(f'{base_dir}/data')
 
 excluded_participants = []
 print(f'Participants excluded from analysis: {excluded_participants}')

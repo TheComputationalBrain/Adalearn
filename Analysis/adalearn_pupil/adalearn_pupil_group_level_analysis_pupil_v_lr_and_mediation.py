@@ -8,18 +8,12 @@ This script evaluate pupil effects on learning rate and the mediating influence 
 
 """
 import pandas as pd
-import os
 import numpy as np
 from scipy import stats
 from pathlib import Path
 from sklearn.metrics import mean_squared_error
 import pingouin
 import statsmodels.api as sm
-import plotly.io as pio
-import plotly.graph_objects as go
-import plotly.express as px
-from plotly.subplots import make_subplots
-pio.renderers.default='browser'
 
 import adalearn_analysis_group_level_functions_data_utilities as group_data_utils
 import adalearn_analysis_group_level_functions_pupil_analysis as group_pupil
@@ -43,7 +37,7 @@ dataframes = group_data_utils.load_sample_csvs(directory_path=base_dir, substrin
     'uncertainty_params_ttest_df'
 ])
 
-participant_list = group_data_utils.get_participant_numbers(directory=base_dir)
+participant_list = group_data_utils.get_participant_numbers(directory=Path(f'{base_dir}/data'))
 
 excluded_participants = list(dataframes['exclude_participants_pupil_analysis_df']['exclude_participant'])
 
@@ -71,7 +65,7 @@ for participant in participant_list:
     if participant not in excluded_participants:
         participant_str = str(participant).zfill(2)
         print(f"\n\n\nProcessing participant {participant_str}...")
-        directory_path = Path(f'{base_dir}/sub-{participant_str}')
+        directory_path = Path(f'{base_dir}/data/sub-{participant_str}')
     else:
         continue
 

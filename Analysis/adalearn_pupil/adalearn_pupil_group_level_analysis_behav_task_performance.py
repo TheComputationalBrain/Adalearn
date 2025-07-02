@@ -2,15 +2,8 @@
 This script performs group-level analysis of task performance data for the Pupil task in the Adalearn project. It loads individual participant data, computes performance metrics, conducts statistical analyses, and saves the results to .csv files.
 """
 import pandas as pd
-import numpy as np
-from scipy import stats
 from statsmodels.stats.anova import AnovaRM
 from pathlib import Path
-import plotly.io as pio
-import plotly.graph_objects as go
-import plotly.express as px
-from plotly.subplots import make_subplots
-pio.renderers.default='browser'
 
 import adalearn_analysis_group_level_functions_data_utilities as group_data_utils 
 import adalearn_analysis_participant_level_functions_behav as behav
@@ -19,7 +12,7 @@ from adalearn_pupil.adalearn_pupil_participant_info_and_parameters import base_d
 
 
 
-participant_list = group_data_utils.get_participant_numbers(base_dir)
+participant_list = group_data_utils.get_participant_numbers(Path(f'{base_dir}/data'))
 
 group_behavioural_df_list = []
 group_mean_error_df_list = []
@@ -29,7 +22,7 @@ group_change_point_indices_list = []
 for participant in participant_list:
     participant_str = str(participant).zfill(2)
     print(f"\n\n\nProcessing participant {participant_str}...")
-    directory_path = Path(f'{base_dir}/sub-{participant_str}')
+    directory_path = Path(f'{base_dir}/data/sub-{participant_str}')
 
     print(f"\nLoading task data and computing task performance...")
 
