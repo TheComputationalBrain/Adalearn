@@ -9,7 +9,7 @@ import plotly.express as px
 from plotly.subplots import make_subplots
 pio.renderers.default='browser'
 
-sys.path.append('/home/aarongreenhouse-tucknott/Documents/Python/Ada_Learn/Analysis/Misc')
+sys.path.append('/home/aarongreenhouse-tucknott/Documents/Python/Ada_Learn/Analysis/Analysis/external_reference_functions')
 from preprocess_eyedata import pupil
 
 
