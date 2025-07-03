@@ -1,5 +1,6 @@
 """
 This script computes ideal observer model parameters for each participant in the group-level analysis of the Pupil task in the Adalearn project. It loads individual participant data, computes various computational variables such as learning rates, surprise, prior confidence, change point probability, and information gain, and saves the results to a group-level .csv file. The following files need to be run prior to running this script to load the relevant .csv files:
+- adalearn_pupil_group_level_participant_demographics.py
 - adalearn_pupil/adalearn_pupil_group_level_analysis_behav_task_performance.py
 """
 import pandas as pd
@@ -14,18 +15,24 @@ from adalearn_pupil.adalearn_pupil_participant_info_and_parameters import base_d
 
 
 dataframes = group_data_utils.load_sample_csvs(directory_path=base_dir, substrings=[
+    'exclude_participants_behav_cor_df',
     'change_point_indices_df'
 ])
 
 participant_list = group_data_utils.get_participant_numbers(Path(f'{base_dir}/data'))
 
+excluded_participants = list(dataframes['exclude_participants_behav_cor_df']['participant'])
+
 group_computational_var_df_list = []
 
 # For loop, extracting data from behavioural files for each participant within data list and then computing the model parameters for the sequences within each observed sequence
 for participant in participant_list:
-    participant_str = str(participant).zfill(2)
-    print(f"\n\n\nProcessing participant {participant_str}...")
-    directory_path = Path(f'{base_dir}/data/sub-{participant_str}')
+    if participant not in excluded_participants:
+        participant_str = str(participant).zfill(2)
+        print(f"\n\n\nProcessing participant {participant_str}...")
+        directory_path = Path(f'{base_dir}/data/sub-{participant_str}')
+    else:
+        continue
 
     change_point_indices = dataframes['change_point_indices_df'][dataframes['change_point_indices_df']['participant'] == participant].copy()
 

@@ -1,5 +1,7 @@
 """
-This script processes pupil data for each participant for the Pupil task of the Adalearn project. The script extracts epochs around outcome presentations, checking for excessive interpolation, before saving the results to .csv files.
+This script processes pupil data for each participant for the Pupil task of the Adalearn project. The script extracts epochs around outcome presentations, checking for excessive interpolation, before saving the results to .csv files. Thefollowing scripts need to be run to obtain the relevant .csv files:
+- adalearn_pupil_group_level_participant_demographics.py
+- adalearn_pupil_group_level_analysis_behav_task_performance.py
 """
 import pandas as pd
 import os
@@ -13,10 +15,13 @@ from adalearn_pupil.adalearn_pupil_participant_info_and_parameters import base_d
 
 
 dataframes = group_data_utils.load_sample_csvs(directory_path=base_dir, substrings=[
+    'exclude_participants_behav_cor_df',
     'change_point_indices_df'
 ])
 
 participant_list = group_data_utils.get_participant_numbers(directory=Path(f'{base_dir}/data'))
+
+excluded_participants = list(dataframes['exclude_participants_behav_cor_df']['participant'])
 
 exclude_participants = []
 preprocessed_pupil_df_list = [] 
@@ -34,9 +39,12 @@ outcome_epochs_columns_nobc_df_list = []
 
 
 for participant in participant_list:
-    participant_str = str(participant).zfill(2)
-    print(f"\n\n\nProcessing participant {participant_str}...")
-    directory_path = Path(f'{base_dir}/data/sub-{participant_str}')
+    if participant not in excluded_participants:
+        participant_str = str(participant).zfill(2)
+        print(f"\n\n\nProcessing participant {participant_str}...")
+        directory_path = Path(f'{base_dir}/data/sub-{participant_str}')
+    else:
+        continue
 
     # Checking whether pupil data files are correct and can be processed
     print(f"\nIntial check on file quality before analysing pupil epochs...")

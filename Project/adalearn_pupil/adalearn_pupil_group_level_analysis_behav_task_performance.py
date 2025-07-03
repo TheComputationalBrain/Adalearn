@@ -1,5 +1,6 @@
 """
-This script performs group-level analysis of task performance data for the Pupil task in the Adalearn project. It loads individual participant data, computes performance metrics, conducts statistical analyses, and saves the results to .csv files.
+This script performs group-level analysis of task performance data for the Pupil task in the Adalearn project. It loads individual participant data, computes performance metrics, conducts statistical analyses, and saves the results to .csv files. The following files need to be run before this file t get the relevant .csv files:
+- adalearn_pupil_group_level_participant_demographics.py
 """
 import pandas as pd
 from statsmodels.stats.anova import AnovaRM
@@ -12,7 +13,13 @@ from adalearn_pupil.adalearn_pupil_participant_info_and_parameters import base_d
 
 
 
+dataframes = group_data_utils.load_sample_csvs(directory_path=base_dir, substrings=[
+    'exclude_participants_behav_cor_df', 
+])
+
 participant_list = group_data_utils.get_participant_numbers(Path(f'{base_dir}/data'))
+
+excluded_participants = list(dataframes['exclude_participants_behav_cor_df']['participant'])
 
 group_behavioural_df_list = []
 group_mean_error_df_list = []
@@ -20,9 +27,12 @@ group_change_point_indices_list = []
 
 # For loop, extracting data from behavioural files for each participant within data list
 for participant in participant_list:
-    participant_str = str(participant).zfill(2)
-    print(f"\n\n\nProcessing participant {participant_str}...")
-    directory_path = Path(f'{base_dir}/data/sub-{participant_str}')
+    if participant not in excluded_participants:
+        participant_str = str(participant).zfill(2)
+        print(f"\n\n\nProcessing participant {participant_str}...")
+        directory_path = Path(f'{base_dir}/data/sub-{participant_str}')
+    else:
+        continue
 
     print(f"\nLoading task data and computing task performance...")
 

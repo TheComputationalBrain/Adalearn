@@ -1,5 +1,6 @@
 """
 This script performs group-level analysis of estimates for performance of the Pupil task of the Adalearn project. It loads participant-level data, computes the association between participants' behavioural data and model estimates, and performs statistical tests to assess the significance of these associations. The results are saved to .csv files for further analysis. The following scripts need to be run before this script to load the relevant .csv files:
+- adalearn_pupil_group_level_participant_demographics.py
 - adalearn_pupil/adalearn_pupil_group_level_analysis_behav_task_performance.py
 - adalearn_pupil/adalearn_pupil_group_level_analysis_model_parameters.py
 """
@@ -14,19 +15,25 @@ from adalearn_pupil.adalearn_pupil_participant_info_and_parameters import base_d
 
 
 dataframes = group_data_utils.load_sample_csvs(directory_path=base_dir, substrings=[
+    'exclude_participants_behav_cor_df',
     'change_point_indices_df', 
     'computational_var_df'
 ])
 
 participant_list = group_data_utils.get_participant_numbers(Path(f'{base_dir}/data'))
 
+excluded_participants = list(dataframes['exclude_participants_behav_cor_df']['participant'])
+
 group_behav_v_model_estimate_corr_list = []
 
 # For loop, loading the behavioural data and computed model parameters and then evaluating the effect on learning rate
 for participant in participant_list:
-    participant_str = str(participant).zfill(2)
-    print(f"\n\n\nProcessing participant {participant_str}...")
-    directory_path = Path(f'{base_dir}/data/sub-{participant_str}')
+    if participant not in excluded_participants:
+        participant_str = str(participant).zfill(2)
+        print(f"\n\n\nProcessing participant {participant_str}...")
+        directory_path = Path(f'{base_dir}/data/sub-{participant_str}')
+    else:
+        continue
 
     change_point_indices = dataframes['change_point_indices_df'][dataframes['change_point_indices_df']['participant'] == participant].copy()
     

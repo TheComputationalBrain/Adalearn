@@ -1,5 +1,6 @@
 """
 This script performs group-level analysis of the peristimulus epoched pupil signals in the Pupil task of the Adalearn project. Using multiple linear rgeression, it computes the coefficients for the prior confidence and change point probability (cpp) variables, both with and without baseline correction (for phasic- and tonic-associated pupil responses, respectively). The script also performs cluster-based permutation tests to identify significant clusters in the regression coefficients across participants. The results are saved in .csv files for further analysis. The following script need to be run before this script to obtain the relevant .csv files:
+- adalearn_pupil_group_level_participant_demographics.py
 - adalearn_pupil/adalearn_pupil_group_level_analysis_behav_task_performance.py
 - adalearn_pupil/adalearn_pupil_group_level_analysis_model_parameters.py
 - adalearn_pupil/adalearn_pupil_group_level_analysis_pupil_assessment.py
@@ -17,9 +18,10 @@ from adalearn_pupil.adalearn_pupil_participant_info_and_parameters import base_d
 
 
 dataframes = group_data_utils.load_sample_csvs(directory_path=base_dir, substrings=[
+    'exclude_participants_behav_cor_df',
+    'exclude_participants_pupil_analysis_df', 
     'computational_var_df', 
     'change_point_indices_df', 
-    'exclude_participants_pupil_analysis_df', 
     'outcome_epochs_descriptive_stats_df',
     'outcome_epoched_pupil_df',
     'outcome_epochs_columns_df',
@@ -30,7 +32,10 @@ dataframes = group_data_utils.load_sample_csvs(directory_path=base_dir, substrin
 
 participant_list = group_data_utils.get_participant_numbers(directory=Path(f'{base_dir}/data'))
 
-excluded_participants = list(dataframes['exclude_participants_pupil_analysis_df']['exclude_participant'])
+excluded_participants = list(set(
+    list(dataframes['exclude_participants_behav_cor_df']['participant']) +
+    list(dataframes['exclude_participants_pupil_analysis_df']['exclude_participant'])
+))
 
 pupil_regress_coef_df_list = []
 pupil_regress_coef_nobc_df_list = []
