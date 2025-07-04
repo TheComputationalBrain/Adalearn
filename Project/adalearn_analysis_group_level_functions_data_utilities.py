@@ -5,6 +5,7 @@ import numpy as np
 from pathlib import Path
 from collections import defaultdict
 
+
 import adalearn_analysis_participant_level_functions_behav as behav
 
 
@@ -151,16 +152,18 @@ def check_behavioural_responses(participant_list, base_dir, condition_str, task_
 
 
 
-def load_sample_csvs(directory_path, substrings):
+def load_sample_csvs(directory_path, substrings, prefix):
     """
-    Loads sample level .csv files whose filenames contain any of the given substrings.
+    Load .csv files whose filename stem *after* the given prefix exactly matches
+    one of the substrings.
 
     Parameters:
-    - directory_path: string/Path, base directory where the files are stored.
-    - substrings (list): List of substrings to search for in filenames.
+    - directory_path: str or Path to directory containing files
+    - substrings: list of target substrings to match (the part after prefix)
+    - prefix: string prefix all filenames share before the substring
 
     Returns:
-    - loaded_dataframes: Dictionary, contains the loaded DataFrames with keys matching the matched filenames (without .csv).
+    - dict of DataFrames keyed by substring
     """
     load_dir = os.path.join(directory_path, "group_csv_files")
     loaded_dataframes = {}
@@ -170,28 +173,30 @@ def load_sample_csvs(directory_path, substrings):
         print(f"Directory does not exist: {load_dir}")
         return loaded_dataframes
 
-    substrings = sorted(substrings, key=len, reverse=True)  # sort by descending length
-
     for file in os.listdir(load_dir):
-        if file.endswith('.csv'):
-            matched = False
-            for sub in substrings:
-                if sub in file:
-                    file_path = os.path.join(load_dir, file)
-                    df = pd.read_csv(file_path)
+        if not file.endswith('.csv'):
+            continue
 
-                    # Track multiple matches for same substring
-                    match_counts[sub] += 1
-                    suffix = f"_{match_counts[sub]}" if match_counts[sub] > 1 else ""
-                    key = f"{sub}{suffix}"
+        if not file.startswith(prefix):
+            continue
 
-                    loaded_dataframes[key] = df
-                    print(f"Loaded {key} from {file_path}")
-                    matched = True
-                    break  # stop after the first matching (longest) substring
+        # Extract substring between prefix and '.csv'
+        substring_part = file[len(prefix):-4]  # remove prefix and '.csv'
 
+        if substring_part in substrings:
+            file_path = os.path.join(load_dir, file)
+            df = pd.read_csv(file_path)
+
+            # Handle duplicate substring keys (optional)
+            match_counts[substring_part] += 1
+            suffix = f"_{match_counts[substring_part]}" if match_counts[substring_part] > 1 else ""
+            key = f"{substring_part}{suffix}"
+
+            loaded_dataframes[key] = df
+            print(f"Loaded {key} from {file_path}")
 
     return loaded_dataframes
+
 
 
 
@@ -256,3 +261,18 @@ def process_epoched_df(epoched_df, participant_str):
     csv_pupil_epoch_df['participant'] = participant_str
 
     return descriptive_stats_df, csv_pupil_epoch_df, columns_df
+
+
+
+def results_dict_to_df(results_dict):
+    records = []
+    for (x_key, y_key), (coef, raw_p, fdr_p, reject) in results_dict.items():
+        records.append({
+            "x_var": x_key,
+            "y_var": y_key,
+            "correlation": coef,
+            "pval_raw": raw_p,
+            "pval_fdr": fdr_p,
+            "significant_fdr": reject
+        })
+    return pd.DataFrame(records)

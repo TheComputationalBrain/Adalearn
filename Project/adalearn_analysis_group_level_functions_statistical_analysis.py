@@ -66,3 +66,18 @@ def compute_group_level_permutation_cluster_test(group_level_df, pivot_column = 
 
     significant_clusters_df = pd.DataFrame(cluster_data)
     return results, significant_clusters_df
+
+
+
+def corr_with_alt(x, y):
+    """
+    Helper function for Pearson correlation with alternative hypothesis included
+
+    Parameters:
+    - x: pd.Dataframe, column of the x variable
+    - y: pd.Dataframe, column of the y variable
+
+    Returns
+    - Output of the stats.pearsonr
+    """
+    return stats.pearsonr(x, y, alternative='two-sided')
