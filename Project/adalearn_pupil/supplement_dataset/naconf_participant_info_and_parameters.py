@@ -5,7 +5,7 @@ This script defines the participant analysed. To change participant, the user si
 from pathlib import Path
 
 
-NACONF_base_dir = '/home/aarongreenhouse-tucknott/Documents/Python/Ada_Learn/Analysis/Analysis/adalearn_pupil/supplement_dataset'
+NACONF_base_dir = '/home/aarongreenhouse-tucknott/Documents/Python/Ada_Learn/Analysis/Project/adalearn_pupil/supplement_dataset'
 
 selected_participant = 4
 

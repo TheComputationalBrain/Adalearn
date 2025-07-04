@@ -12,7 +12,7 @@ pio.renderers.default='browser'
 
 from adalearn_pupil.supplement_dataset.naconf_participant_info_and_parameters import NACONF_base_dir, directory_path, selected_participant, task_sessions
 
-sys.path.append('/home/aarongreenhouse-tucknott/Documents/Python/Ada_Learn/Analysis/Analysis/external_reference_functions')
+sys.path.append('/home/aarongreenhouse-tucknott/Documents/Python/Ada_Learn/Analysis/Project/external_reference_functions')
 from IdealObserver import run_inference
 from model_learner import ideal_learner_prob_estimates_from_outcomes, ideal_learner_prob_confidence_from_outcomes, ideal_learner_prob_cpp
 
