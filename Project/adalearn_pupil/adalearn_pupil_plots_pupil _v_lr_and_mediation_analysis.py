@@ -22,25 +22,28 @@ from adalearn_pupil.adalearn_pupil_participant_info_and_parameters import base_d
 
 
 
-dataframes = group_data_utils.load_sample_csvs(directory_path=base_dir, substrings=[
-'computational_var_df',
-'change_point_indices_df',
-'pupil_v_lr_regress_coef_df',
-'pupil_v_lr_coef_ttest_df',
-'pupil_bc_around_cp',
-'pupil_nobc_around_cp',
-'pupil_lr_uncert_mediation',
-'exclude_participants_pupil_analysis_df', 
-'outcome_epochs_descriptive_stats_df', 
-'outcome_epoched_pupil_df',
-'outcome_epochs_columns_df', 
-'outcome_epochs_to_remove_df',
-'outcome_epochs_descriptive_stats_nobc_df', 
-'outcome_epoched_pupil_nobc_df', 
-'cluster_permutation_analysis', 
-'cluster_permutation_analysis_nobc',
-'pupil_v_lr_coef_ttest_df' 
-])
+dataframes = group_data_utils.load_sample_csvs(
+    directory_path=base_dir, 
+    substrings=[
+        'computational_var_df',
+        'change_point_indices_df',
+        'pupil_v_lr_regress_coef_df',
+        'pupil_v_lr_coef_ttest_df',
+        'pupil_bc_around_cp',
+        'pupil_nobc_around_cp',
+        'pupil_lr_uncert_mediation',
+        'exclude_participants_pupil_analysis_df', 
+        'outcome_epochs_descriptive_stats_df', 
+        'outcome_epoched_pupil_df',
+        'outcome_epochs_columns_df', 
+        'outcome_epochs_to_remove_df',
+        'outcome_epochs_descriptive_stats_nobc_df', 
+        'outcome_epoched_pupil_nobc_df', 
+        'cluster_permutation_analysis', 
+        'cluster_permutation_analysis_nobc',
+        'pupil_v_lr_coef_ttest_df'
+        ],
+    prefix='sample_level_analysis-ses_01-task_Adalearn_Pupil-')
 
 ##########################################################Plotting baseline-corrected and non-baseline corrected pupil effect window signals around change points
 pupil_bc_around_cp = dataframes['pupil_bc_around_cp'].copy()

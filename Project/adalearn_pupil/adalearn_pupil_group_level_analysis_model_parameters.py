@@ -14,10 +14,13 @@ from adalearn_pupil.adalearn_pupil_participant_info_and_parameters import base_d
 
 
 
-dataframes = group_data_utils.load_sample_csvs(directory_path=base_dir, substrings=[
-    'exclude_participants_behav_cor_df',
-    'change_point_indices_df'
-])
+dataframes = group_data_utils.load_sample_csvs(
+    directory_path=base_dir,
+    substrings=[
+        'exclude_participants_behav_cor_df',
+        'change_point_indices_df'
+        ],
+    prefix='sample_level_analysis-ses_01-task_Adalearn_Pupil-')
 
 participant_list = group_data_utils.get_participant_numbers(Path(f'{base_dir}/data'))
 

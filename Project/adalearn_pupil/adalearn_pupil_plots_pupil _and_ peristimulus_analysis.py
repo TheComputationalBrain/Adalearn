@@ -20,19 +20,22 @@ from adalearn_pupil.adalearn_pupil_participant_info_and_parameters import base_d
 
 
 
-dataframes = group_data_utils.load_sample_csvs(directory_path=base_dir, substrings=[
-    'epoched_pupil_df', 
-    'epoched_pupil_nobc_df', 
-    'outcome_epochs_descriptive_stats_df', 
-    'outcome_epochs_descriptive_stats_nobc_df', 
-    'coefs_df', 
-    'coefs_nobc_df', 
-    'cluster_permutation_analysis', 
-    'cluster_permutation_analysis_nobc'
-    ])
+dataframes = group_data_utils.load_sample_csvs(
+    directory_path=base_dir, 
+    substrings=[
+        'outcome_epoched_pupil_df', 
+        'outcome_epoched_pupil_nobc_df', 
+        'outcome_epochs_descriptive_stats_df', 
+        'outcome_epochs_descriptive_stats_nobc_df', 
+        'coefs_df', 
+        'coefs_nobc_df', 
+        'cluster_permutation_analysis', 
+        'cluster_permutation_analysis_nobc'
+        ],
+    prefix='sample_level_analysis-ses_01-task_Adalearn_Pupil-')
 
 ############################Average pupil response (baseline-corrected)
-baseline_corrected_epochs = dataframes['epoched_pupil_df']
+baseline_corrected_epochs = dataframes['outcome_epoched_pupil_df']
 
 baseline_corrected_descriptives = dataframes['outcome_epochs_descriptive_stats_df']
 
@@ -131,7 +134,7 @@ fig.write_image(f"{base_filepath}.svg")
 fig.show()
 
 ############################Average pupil response (nonbaseline-corrected)
-nonbaseline_corrected_epochs = dataframes['epoched_pupil_nobc_df']
+nonbaseline_corrected_epochs = dataframes['outcome_epoched_pupil_nobc_df']
 
 nonbaseline_corrected_descriptives = dataframes['outcome_epochs_descriptive_stats_nobc_df']
 

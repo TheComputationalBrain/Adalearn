@@ -23,18 +23,21 @@ from adalearn_pupil.adalearn_pupil_participant_info_and_parameters import base_d
 
 
 # Loading data
-dataframes = group_data_utils.load_sample_csvs(directory_path=base_dir, substrings=[
-    'exclude_participants_behav_cor_df',
-    'exclude_participants_pupil_analysis_df', 
-    'change_point_indices_df', 
-    'computational_var_df', 
-    'outcome_epochs_descriptive_stats_df',
-    'outcome_epoched_pupil_df',
-    'outcome_epochs_columns_df',
-    'outcome_epochs_to_remove_df',
-    'outcome_epochs_descriptive_stats_nobc_df', 
-    'outcome_epoched_pupil_nobc_df'
-])
+dataframes = group_data_utils.load_sample_csvs(
+    directory_path=base_dir,
+    substrings=[
+        'exclude_participants_behav_cor_df',
+        'exclude_participants_pupil_analysis_df', 
+        'change_point_indices_df', 
+        'computational_var_df', 
+        'outcome_epochs_descriptive_stats_df',
+        'outcome_epoched_pupil_df',
+        'outcome_epochs_columns_df',
+        'outcome_epochs_to_remove_df',
+        'outcome_epochs_descriptive_stats_nobc_df', 
+        'outcome_epoched_pupil_nobc_df'
+        ],
+    prefix='sample_level_analysis-ses_01-task_Adalearn_Pupil-')
 
 # Setting random seed for reproducibility
 np.random.seed(42)

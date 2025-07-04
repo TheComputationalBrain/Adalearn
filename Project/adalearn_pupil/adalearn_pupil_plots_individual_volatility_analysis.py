@@ -21,17 +21,20 @@ from adalearn_pupil.adalearn_pupil_participant_info_and_parameters import select
 
 
 # Loading individual volatility data 
-dataframes = group_data_utils.load_sample_csvs(directory_path=base_dir, substrings=[
-    'individual_p_c_df',
-    'ind_vol_comp_df',
-    'computational_var_df', 
-    'ind_vol_uncertainty_params_on_lr_df',
-    'ind_vol_uncertainty_params_ttest_df',
-    'ind_vol_coefs_df', 
-    'ind_vol_coefs_nobc_df', 
-    'ind_vol_cluster_permutation_analysis', 
-    'ind_vol_cluster_permutation_analysis_nobc'
-    ])
+dataframes = group_data_utils.load_sample_csvs(
+    directory_path=base_dir, 
+    substrings=[
+        'individual_p_c_df',
+        'ind_vol_comp_df',
+        'computational_var_df', 
+        'ind_vol_uncertainty_params_on_lr_df',
+        'ind_vol_uncertainty_params_ttest_df',
+        'ind_vol_coefs_df', 
+        'ind_vol_coefs_nobc_df', 
+        'ind_vol_cluster_permutation_analysis', 
+        'ind_vol_cluster_permutation_analysis_nobc'
+        ],
+    prefix='sample_level_analysis-ses_01-task_Adalearn_Pupil-')
 
 ################################################# Example change in change point probability with individual volatility for a single participant 
 # Creating dataframe for comaprison of generator and individual volatility

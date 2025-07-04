@@ -23,21 +23,23 @@ from adalearn_pupil.adalearn_pupil_participant_info_and_parameters import base_d
 
 
 
-dataframes = group_data_utils.load_sample_csvs(directory_path=base_dir, substrings=[
-    'exclude_participants_behav_cor_df',
-    'exclude_participants_pupil_analysis_df', 
-    'computational_var_df', 
-    'change_point_indices_df', 
-    'outcome_epochs_descriptive_stats_df', 
-    'outcome_epoched_pupil_df',
-    'outcome_epochs_columns_df', 
-    'outcome_epochs_to_remove_df',
-    'outcome_epochs_descriptive_stats_nobc_df', 
-    'outcome_epoched_pupil_nobc_df', 
-    'cluster_permutation_analysis', 
-    'cluster_permutation_analysis_nobc', 
-    'uncertainty_params_ttest_df'
-])
+dataframes = group_data_utils.load_sample_csvs(
+    directory_path=base_dir, 
+    substrings=[
+        'exclude_participants_behav_cor_df',
+        'exclude_participants_pupil_analysis_df', 
+        'computational_var_df', 
+        'change_point_indices_df', 
+        'outcome_epochs_descriptive_stats_df', 
+        'outcome_epoched_pupil_df',
+        'outcome_epochs_columns_df', 
+        'outcome_epochs_to_remove_df',
+        'outcome_epochs_descriptive_stats_nobc_df', 
+        'outcome_epoched_pupil_nobc_df', 
+        'cluster_permutation_analysis', 
+        'cluster_permutation_analysis_nobc', 
+        'uncertainty_params_ttest_df'],
+    prefix='sample_level_analysis-ses_01-task_Adalearn_Pupil-')
 
 participant_list = group_data_utils.get_participant_numbers(directory=Path(f'{base_dir}/data'))
 
@@ -47,6 +49,8 @@ excluded_participants = list(set(
 ))
 
 dataframe_list = []
+pupil_bc_effect = []
+pupil_nobc_effect =[]
 pupil_bc_around_cp_list = []
 pupil_nobc_around_cp_list = []
 pupil_v_lr_regress_coef_df_list = []
@@ -139,12 +143,26 @@ for participant in participant_list:
     pupil_variable_bc = np.array(filtered_pupil_data_bc.mean())
     pupil_bc_zscore = stats.zscore(pupil_variable_bc, nan_policy='omit')
 
+    avg_pupil_bc_effect = pd.DataFrame({
+        'participant': [participant_str],
+        'avg_pupil_effect': [pupil_variable_bc.mean()]
+    })
+
+    pupil_bc_effect.append(avg_pupil_bc_effect)
+
     epoch_nobc_data = epoch_nobc_data.set_index('time')
 
     # The non-baseline corrected response refers to the average of the pupil signal from the beginning of the observed peristimulus effect to outcome presentation
     filtered_pupil_data_nobc = epoch_nobc_data.loc[(epoch_nobc_data.index >= nobc_start_time) & (epoch_nobc_data.index <= 0)]
     pupil_variable_nobc = np.array(filtered_pupil_data_nobc.mean())
     pupil_nobc_zscore = stats.zscore(pupil_variable_nobc, nan_policy='omit')
+
+    avg_pupil_nobc_effect = pd.DataFrame({
+        'participant': [participant_str],
+        'avg_pupil_effect': [pupil_variable_nobc.mean()]
+    })
+
+    pupil_nobc_effect.append(avg_pupil_nobc_effect)
 
     # Collating a regression variable dataframe
     print('\nCreating regression variable dataframe...')
@@ -239,6 +257,8 @@ for participant in participant_list:
     mediation_results_list.append(mediation_analysis)
 
 group_dfs = pd.concat(dataframe_list, ignore_index=True)
+group_pupil_bc_avg_effect_signal_df = pd.concat(pupil_bc_effect, ignore_index=True)
+group_pupil_nobc_avg_effect_signal_df = pd.concat(pupil_nobc_effect, ignore_index=True)
 group_pupil_bc_around_cp_df = pd.concat(pupil_bc_around_cp_list, ignore_index=True)
 group_pupil_nobc_around_cp_df = pd.concat(pupil_nobc_around_cp_list, ignore_index=True)
 group_pupil_v_lr_dfs = pd.concat(pupil_v_lr_regress_coef_df_list, ignore_index=True)
@@ -306,6 +326,8 @@ print(group_mediation_analysis_df)
 
 # Saving dataframes
 group_data_utils.save_sample_dataframes_to_csv(dataframes={
+    'average_bc_pupil_effect_signal': group_pupil_bc_avg_effect_signal_df,
+    'average_nobc_pupil_effect_signal': group_pupil_nobc_avg_effect_signal_df,
     'pupil_v_lr_regress_coef_df': group_pupil_v_lr_dfs,
     'pupil_v_lr_coef_ttest_df': pupil_v_lr_ttest_df,
     'pupil_bc_around_cp': group_pupil_bc_around_cp_df,
