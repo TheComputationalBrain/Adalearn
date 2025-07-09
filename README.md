@@ -73,7 +73,11 @@ Analysis scripts are provided in the `analysis/` folder of each study. Each scri
 - Each script can be run independently.
 - Results (e.g., plots, CSV outputs) are saved in structured output directories.
 
-To run all analyses for a study....
+Given the dependency of some scripts on the presence of relevant .csv files, the analysis scripts have a natural order in which they should be run (this is specified in the docstring at the top of each script). To make it easier to run, for certain projects (e.g. adalearn_pupil) a meta_script is available that can produce all of the data by executing the files in the correct order. This meta-script can be run in the terminal after navigating to its directory: 
+
+```python
+python run_adalearn_pupil_analysis_pipeline.py
+```
 
 ---
 
