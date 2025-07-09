@@ -14,7 +14,11 @@ from scipy import stats
 from pathlib import Path
 from sklearn.metrics import mean_squared_error
 import pingouin
+import sys
 import statsmodels.api as sm
+
+parent_dir = Path(__file__).resolve().parent.parent
+sys.path.append(str(parent_dir))
 
 import adalearn_analysis_group_level_functions_data_utilities as group_data_utils
 import adalearn_analysis_group_level_functions_pupil_analysis as group_pupil

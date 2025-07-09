@@ -5,8 +5,12 @@ This script performs group-level analysis of learning rate across participants u
 - adalearn_pupil/adalearn_pupil_participant_level_analysis_model_parameters.py
 """
 import pandas as pd
+import sys
 from scipy import stats
 from pathlib import Path
+
+parent_dir = Path(__file__).resolve().parent.parent
+sys.path.append(str(parent_dir))
 
 import adalearn_analysis_group_level_functions_data_utilities as group_data_utils
 import adalearn_analysis_group_level_functions_statistical_analysis as group_stat_analysis 

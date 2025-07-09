@@ -2,9 +2,13 @@
 This script reads .tsv files within each participants data directory folder to obtain demographic information for the sample in the Pupil task of the Adalearn project. A dataframe is created with the demographic information for each participant. 
 """
 
-from pathlib import Path
 import pandas as pd
+import sys
+from pathlib import Path
 from datetime import datetime
+
+parent_dir = Path(__file__).resolve().parent.parent
+sys.path.append(str(parent_dir))
 
 import adalearn_analysis_participant_level_functions_participant_info as participant_info
 import adalearn_analysis_group_level_functions_data_utilities as data_utils

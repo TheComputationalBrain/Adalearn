@@ -3,8 +3,12 @@ This script performs group-level analysis of task performance data for the Pupil
 - adalearn_pupil_group_level_participant_demographics.py
 """
 import pandas as pd
+import sys
 from statsmodels.stats.anova import AnovaRM
 from pathlib import Path
+
+parent_dir = Path(__file__).resolve().parent.parent
+sys.path.append(str(parent_dir))
 
 import adalearn_analysis_group_level_functions_data_utilities as group_data_utils 
 import adalearn_analysis_participant_level_functions_behav as behav

@@ -14,7 +14,12 @@ The following scripts need to be run before running this analysis to obtain the 
 - adalearn_pupil_group_level_analysis_pupil_v_lr_and_mediation
 """
 import pandas as pd
+import sys
+from pathlib import Path
 from statsmodels.stats.multitest import fdrcorrection
+
+parent_dir = Path(__file__).resolve().parent.parent
+sys.path.append(str(parent_dir))
 
 import adalearn_analysis_group_level_functions_data_utilities as group_data_utils 
 import adalearn_analysis_group_level_functions_statistical_analysis as group_stats 

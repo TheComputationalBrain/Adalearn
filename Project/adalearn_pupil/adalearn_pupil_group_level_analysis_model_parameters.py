@@ -4,7 +4,11 @@ This script computes ideal observer model parameters for each participant in the
 - adalearn_pupil/adalearn_pupil_group_level_analysis_behav_task_performance.py
 """
 import pandas as pd
+import sys
 from pathlib import Path
+
+parent_dir = Path(__file__).resolve().parent.parent
+sys.path.append(str(parent_dir))
 
 import adalearn_analysis_group_level_functions_data_utilities as group_data_utils 
 import adalearn_analysis_participant_level_functions_behav as behav

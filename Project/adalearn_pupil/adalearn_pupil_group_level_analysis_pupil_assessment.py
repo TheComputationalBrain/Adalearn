@@ -5,7 +5,11 @@ This script processes pupil data for each participant for the Pupil task of the 
 """
 import pandas as pd
 import os
+import sys
 from pathlib import Path
+
+parent_dir = Path(__file__).resolve().parent.parent
+sys.path.append(str(parent_dir))
 
 import adalearn_analysis_group_level_functions_data_utilities as group_data_utils
 import adalearn_analysis_participant_level_functions_pupil as pupil
