@@ -293,9 +293,9 @@ for _, row in baseline_corrected_clusters.iterrows():
         cluster_range = baseline_corrected_coefs['time'].iloc[row['cluster_start']:row['cluster_end']+1]
         fig.add_trace(go.Scatter(
             x=cluster_range,
-            y=[style['yval']] * len(cluster_range),  # Staggered y placement
-            mode='markers',
-            marker=dict(color=style['color'], size=28, symbol='asterisk-open'),
+            y=[style['yval']] * len(cluster_range), 
+            mode='lines',
+            line=dict(color=style['color'], width=8),
             showlegend=False,
             hoverinfo='skip'
         ))
@@ -404,9 +404,9 @@ for _, row in nonbaseline_corrected_clusters.iterrows():
         cluster_range = nonbaseline_corrected_coefs['time'].iloc[row['cluster_start']:row['cluster_end']+1]
         fig.add_trace(go.Scatter(
             x=cluster_range,
-            y=[style['yval']] * len(cluster_range),  # Staggered y placement
-            mode='markers',
-            marker=dict(color=style['color'], size=28, symbol='asterisk-open'),
+            y=[style['yval']] * len(cluster_range),  
+            mode='lines',
+            line=dict(color=style['color'], width=8),
             showlegend=False,
             hoverinfo='skip'
         ))

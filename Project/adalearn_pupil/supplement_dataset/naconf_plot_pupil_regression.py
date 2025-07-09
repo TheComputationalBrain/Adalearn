@@ -14,12 +14,15 @@ import adalearn_analysis_group_level_functions_data_utilities as group_data_util
 from adalearn_pupil.supplement_dataset.naconf_participant_info_and_parameters import NACONF_base_dir
 
 
-dataframes = group_data_utils.load_sample_csvs(directory_path=NACONF_base_dir, substrings=[ 
-    'coefs_df', 
-    'coefs_nobc_df', 
-    'cluster_permutation_analysis', 
-    'cluster_permutation_analysis_nobc'
-    ])
+dataframes = group_data_utils.load_sample_csvs(
+    directory_path=NACONF_base_dir, 
+    substrings=[ 
+        'coefs_df', 
+        'coefs_nobc_df', 
+        'cluster_permutation_analysis', 
+        'cluster_permutation_analysis_nobc'
+    ],
+    prefix='sample_level_analysis-ses_01-task_Adalearn_Pupil_NACONF-')
 
 ###################################################Baseline corrected peristimulus regression 
 coefs_df = dataframes['coefs_df']
@@ -89,8 +92,8 @@ for _, row in clusters_df.iterrows():
         fig.add_trace(go.Scatter(
             x=cluster_range,
             y=[style['yval']] * len(cluster_range),
-            mode='markers',
-            marker=dict(color=style['color'], size=28, symbol='asterisk-open'),
+            mode='lines',
+            line=dict(color=style['color'], width=8),
             showlegend=False,
             hoverinfo='skip'
         ))
@@ -205,8 +208,8 @@ for _, row in clusters_nobc_df.iterrows():
         fig.add_trace(go.Scatter(
             x=cluster_range,
             y=[style['yval']] * len(cluster_range),
-            mode='markers',
-            marker=dict(color=style['color'], size=28, symbol='asterisk-open'),
+            mode='lines',
+            line=dict(color=style['color'], width=8),
             showlegend=False,
             hoverinfo='skip'
         ))

@@ -116,8 +116,8 @@ fig.update_xaxes(tickvals=list(range(1, 23, 2)), title_text="Task session", show
 fig.update_xaxes(tickvals=list(range(1, 23, 2)), title_text="Task session", showline=True, linewidth=1.5, linecolor='black', row=1, col=2)
 
 fig.update_layout(
-    height=2*1200,
-    width=1800,
+    height=1500,
+    width=2400,
     showlegend=False,
     plot_bgcolor='rgba(255, 255, 255, 1)',
     margin=dict(l=20, r=20, t=50, b=20),
