@@ -7,13 +7,18 @@ The script plots figure examining the association between pupil responses and le
 """
 
 import os
+import sys
 import pandas as pd
 import numpy as np
 from scipy import stats
+from pathlib import Path
 import plotly.io as pio
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 pio.renderers.default='browser'
+
+parent_dir = Path(__file__).resolve().parent.parent
+sys.path.append(str(parent_dir))
 
 import adalearn_analysis_group_level_functions_data_utilities as group_data_utils
 import adalearn_analysis_group_level_functions_pupil_analysis as pupil_analysis

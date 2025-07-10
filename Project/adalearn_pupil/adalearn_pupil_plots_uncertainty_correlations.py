@@ -2,18 +2,23 @@
 This script plots figures for correlation analysis examining relationships between various variables and uncertainty-associated effects on learning rate and pupil signals. the following files must be run before executing this file to obtain the relevant .csv files: 
 - adalearn_pupil_group_level_analysis_uncertainty_correlations
 """
+import os
+import sys
+import numpy as np
+from pathlib import Path
 from math import ceil
 from scipy.stats import linregress
-import numpy as np
-import os
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import plotly.io as pio
 pio.renderers.default='browser'
 
+parent_dir = Path(__file__).resolve().parent.parent
+sys.path.append(str(parent_dir))
+
 import adalearn_analysis_group_level_functions_data_utilities as group_data_utils 
 
-from adalearn_pupil.adalearn_pupil_participant_info_and_parameters import base_dir, condition_str
+from adalearn_pupil.adalearn_pupil_participant_info_and_parameters import base_dir
 
 
 

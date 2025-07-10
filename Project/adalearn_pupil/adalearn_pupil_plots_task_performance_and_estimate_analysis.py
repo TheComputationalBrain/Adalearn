@@ -5,15 +5,21 @@ This script plots figures related to performance on the task for participants un
 - Relationship between participants' and model estimates   
 """
 import os
+import sys
 import pandas as pd
 from scipy import stats
+from pathlib import Path
 import plotly.io as pio
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 pio.renderers.default='browser'
 
+parent_dir = Path(__file__).resolve().parent.parent
+sys.path.append(str(parent_dir))
+
 import adalearn_analysis_participant_level_functions_data_utilities as data_utils 
 import adalearn_analysis_group_level_functions_data_utilities as group_data_utils
+
 from adalearn_pupil.adalearn_pupil_participant_info_and_parameters import directory_path, base_dir, condition_str
 
 

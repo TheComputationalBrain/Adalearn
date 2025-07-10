@@ -6,14 +6,19 @@ This script plots figures for analysis examining the effect of defining individu
 - Prior confidence and change point probabilty on non-baseline corrected peristimulus regression
 """
 
+import os
+import sys
 import pandas as pd
 import numpy as np
-import os
+from pathlib import Path
 from scipy import stats
 import plotly.io as pio
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 pio.renderers.default='browser'
+
+parent_dir = Path(__file__).resolve().parent.parent
+sys.path.append(str(parent_dir))
 
 import adalearn_analysis_group_level_functions_data_utilities as group_data_utils
 
@@ -395,8 +400,8 @@ for _, row in baseline_corrected_clusters.iterrows():
         fig.add_trace(go.Scatter(
             x=cluster_range,
             y=[style['yval']] * len(cluster_range),  # Staggered y placement
-            mode='markers',
-            marker=dict(color=style['color'], size=28, symbol='asterisk-open'),
+            mode='lines',
+            line=dict(color=style['color'], width=8),
             showlegend=False,
             hoverinfo='skip'
         ))
@@ -504,8 +509,8 @@ for _, row in nonbaseline_corrected_clusters.iterrows():
         fig.add_trace(go.Scatter(
             x=cluster_range,
             y=[style['yval']] * len(cluster_range),  # Staggered y placement
-            mode='markers',
-            marker=dict(color=style['color'], size=28, symbol='asterisk-open'),
+            mode='lines',
+            line=dict(color=style['color'], width=8),
             showlegend=False,
             hoverinfo='skip'
         ))

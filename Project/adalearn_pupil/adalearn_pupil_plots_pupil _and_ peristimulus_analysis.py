@@ -6,13 +6,18 @@ This script plots figures for the analysis of the pupil signal for participants 
 - Perstimulus regression coeficients for prior confidence and change point probability on the non-baseline correct pupil signal
 """
 
+import os
+import sys
 import pandas as pd
 import numpy as np
-import os
+from pathlib import Path
 from scipy import stats
 import plotly.io as pio
 import plotly.graph_objects as go
 pio.renderers.default='browser'
+
+parent_dir = Path(__file__).resolve().parent.parent
+sys.path.append(str(parent_dir))
 
 import adalearn_analysis_group_level_functions_data_utilities as group_data_utils
 
