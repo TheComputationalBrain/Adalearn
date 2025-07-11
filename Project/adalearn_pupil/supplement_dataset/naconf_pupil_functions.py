@@ -312,10 +312,6 @@ def load_and_process_pupil_data(directory_path, participant_str, list_subject_se
 
         numeric_data = epoched_pupil_df.iloc[:, :]
 
-        epoched_pupil_df['mean'] = numeric_data.mean(axis=1)
-        epoched_pupil_df['std'] = numeric_data.std(axis=1)
-        epoched_pupil_df['sem'] = epoched_pupil_df['std'] / np.sqrt(numeric_data.shape[1])
-
         # Trim the DataFrame to match the length
         target_length = len(data_eyelink.epochs_times)
         epoched_pupil_df = epoched_pupil_df.iloc[:target_length].reset_index(drop=True)

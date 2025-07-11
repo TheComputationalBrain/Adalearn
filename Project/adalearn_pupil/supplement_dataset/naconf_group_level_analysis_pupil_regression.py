@@ -1,14 +1,17 @@
 """
 This scripts runs peristimulus pupil regression analysis for a supplementary dataset (NACONF) within the Pupil task of the Adalearn project. The effect of uncertainty parameters (prior confidence and change point probability) is examined on both phasic- and tonic-associated pupil signal epochs. Permutation cluster-based analysis compares effects against zero. Plots are generated within the script. 
 """
-
+import os
+import sys
 import pandas as pd
 from scipy import stats
-import os
 from pathlib import Path
 import plotly.io as pio
 import plotly.graph_objects as go
 pio.renderers.default='browser'
+
+root_dir = Path(__file__).resolve().parent.parent.parent
+sys.path.append(str(root_dir))
 
 import adalearn_analysis_group_level_functions_data_utilities as group_data_utils
 import adalearn_analysis_group_level_functions_pupil_analysis as group_pupil

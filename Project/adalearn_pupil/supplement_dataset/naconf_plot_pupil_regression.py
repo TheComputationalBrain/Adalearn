@@ -5,9 +5,14 @@ This script plots figures for the peristimulus analysis of the supplemental data
 """
 
 import os
+import sys
+from pathlib import Path
 import plotly.io as pio
 import plotly.graph_objects as go
 pio.renderers.default='browser'
+
+root_dir = Path(__file__).resolve().parent.parent.parent
+sys.path.append(str(root_dir))
 
 import adalearn_analysis_group_level_functions_data_utilities as group_data_utils
 

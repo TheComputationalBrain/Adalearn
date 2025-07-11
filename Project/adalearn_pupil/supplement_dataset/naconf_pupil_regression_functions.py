@@ -113,7 +113,7 @@ def pupil_peristimulus_regression_analysis(participant_str, directory_path, task
     epoched_pupil_data = outcome_epoched_pupil_df.copy()
     time = epoched_pupil_data['time']
     time_points = epoched_pupil_data.index
-    epoched_pupil_data.drop(columns=['mean', 'std', 'sem', 'time'], inplace=True)
+    epoched_pupil_data.drop(columns=['time'], inplace=True)
 
     # Ensure there are no epochs containing nan values
     nan_epochs = predictors[predictors.isna().any(axis=1)].index
