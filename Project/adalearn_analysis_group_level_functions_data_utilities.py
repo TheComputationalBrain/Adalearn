@@ -242,16 +242,13 @@ def process_epoched_df(epoched_df, participant_str):
     - columns_df: pd.DataFrame, contains the columm headers and therefore the epoch numbers of the surviving epochs to be analysed for each participant
     """
     # Create descriptive stats DataFrame
-    descriptive_stats_df = pd.DataFrame({
-        'mean': epoched_df['mean'],
-        'std': epoched_df['std'],
-        'sem': epoched_df['sem'],
+    epoch_time_df = pd.DataFrame({
         'time': epoched_df['time'],
         'participant': participant_str
     }) 
 
     # Drop statistical columns and transpose
-    csv_pupil_epoch_df = epoched_df.drop(columns=['mean', 'std', 'sem', 'time']).copy()
+    csv_pupil_epoch_df = epoched_df.drop(columns=['time']).copy()
     columns_df = pd.DataFrame({
         'columns': csv_pupil_epoch_df.columns,
         'participant': participant_str
@@ -260,7 +257,7 @@ def process_epoched_df(epoched_df, participant_str):
     csv_pupil_epoch_df = csv_pupil_epoch_df.T
     csv_pupil_epoch_df['participant'] = participant_str
 
-    return descriptive_stats_df, csv_pupil_epoch_df, columns_df
+    return epoch_time_df, csv_pupil_epoch_df, columns_df
 
 
 

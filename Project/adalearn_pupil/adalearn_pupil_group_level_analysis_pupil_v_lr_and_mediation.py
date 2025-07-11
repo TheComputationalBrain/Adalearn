@@ -34,11 +34,11 @@ dataframes = group_data_utils.load_sample_csvs(
         'exclude_participants_pupil_analysis_df', 
         'computational_var_df', 
         'change_point_indices_df', 
-        'outcome_epochs_descriptive_stats_df', 
+        'outcome_epochs_time_df', 
         'outcome_epoched_pupil_df',
         'outcome_epochs_columns_df', 
         'outcome_epochs_to_remove_df',
-        'outcome_epochs_descriptive_stats_nobc_df', 
+        'outcome_epochs_time_nobc_df', 
         'outcome_epoched_pupil_nobc_df', 
         'cluster_permutation_analysis', 
         'cluster_permutation_analysis_nobc', 
@@ -92,9 +92,9 @@ for participant in participant_list:
 
     epoch_nobc_data = dataframes['outcome_epoched_pupil_nobc_df'][dataframes['outcome_epoched_pupil_nobc_df']['participant'] == participant]
 
-    epoch_descriptive_stats = dataframes['outcome_epochs_descriptive_stats_df'][dataframes['outcome_epochs_descriptive_stats_df']['participant']==participant]
+    epoch_time = dataframes['outcome_epochs_time_df'][dataframes['outcome_epochs_time_df']['participant']==participant]
 
-    epoch_nobc_descriptive_stats = dataframes['outcome_epochs_descriptive_stats_nobc_df'][dataframes['outcome_epochs_descriptive_stats_nobc_df']['participant']==participant]
+    epoch_nobc_time = dataframes['outcome_epochs_time_nobc_df'][dataframes['outcome_epochs_time_nobc_df']['participant']==participant]
 
     analysed_epochs = dataframes['outcome_epochs_columns_df'][dataframes['outcome_epochs_columns_df']['participant']==participant]
 
@@ -111,12 +111,12 @@ for participant in participant_list:
     epoch_data = epoch_data.drop(columns=['participant'])
     epoch_data = epoch_data.T
     epoch_data.columns = column_titles
-    epoch_data['time'] = epoch_descriptive_stats['time'].values.astype(float)
+    epoch_data['time'] = epoch_time['time'].values.astype(float)
 
     epoch_nobc_data = epoch_nobc_data.drop(columns=['participant'])
     epoch_nobc_data = epoch_nobc_data.T
     epoch_nobc_data.columns = column_titles
-    epoch_nobc_data['time'] = epoch_nobc_descriptive_stats['time'].values.astype(float)
+    epoch_nobc_data['time'] = epoch_nobc_time['time'].values.astype(float)
 
     # Extracting cluster times to set window for regression and mediation analyses
     baseline_cor_start_time, baseline_cor_end_time = group_pupil.extract_cluster_times(

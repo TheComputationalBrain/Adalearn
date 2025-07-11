@@ -13,8 +13,10 @@ The following scripts need to be run before running this analysis to obtain the 
 - adalearn_pupil_group_level_analysis_learning_rate_analysis
 - adalearn_pupil_group_level_analysis_pupil_v_lr_and_mediation
 """
-import pandas as pd
+
 import sys
+import pandas as pd
+import numpy as np
 from pathlib import Path
 from statsmodels.stats.multitest import fdrcorrection
 
@@ -22,7 +24,8 @@ parent_dir = Path(__file__).resolve().parent.parent
 sys.path.append(str(parent_dir))
 
 import adalearn_analysis_group_level_functions_data_utilities as group_data_utils 
-import adalearn_analysis_group_level_functions_statistical_analysis as group_stats 
+import adalearn_analysis_group_level_functions_statistical_analysis as group_stats
+import adalearn_analysis_group_level_functions_pupil_analysis as group_pupil 
 
 from adalearn_pupil.adalearn_pupil_participant_info_and_parameters import base_dir, condition_str
 
@@ -37,8 +40,10 @@ dataframes = group_data_utils.load_sample_csvs(
         'update_freq_df', 
         'uncertainty_params_on_lr_df',
         'behav_v_model_estimate_corr_df',
-        'average_bc_pupil_effect_signal',
-        'average_nobc_pupil_effect_signal',
+        'pupil_regress_coef_df',
+        'pupil_regress_coef_nobc_df',
+        'cluster_permutation_analysis', 
+        'cluster_permutation_analysis_nobc',
         ],
     prefix='sample_level_analysis-ses_01-task_Adalearn_Pupil-')
 
@@ -53,7 +58,10 @@ demographics = dataframes['demographics_df']
 update_freq = dataframes['update_freq_df']
 individual_pc = dataframes['individual_p_c_df']
 
-# Variables to correlate against the two uncertainty coefficients
+pupil_bc_coefs = dataframes['pupil_regress_coef_df']
+pupil_nobc_coefs = dataframes['pupil_regress_coef_nobc_df']
+
+#### Variables to correlate against the two uncertainty coefficients
 x_vars = {
     'Age': demographics['Age'],
     'EducationLevel': demographics['EducationLevel'],
@@ -98,7 +106,8 @@ for i, key in enumerate(results_lr.keys()):
     coef, _ = results_lr[key]
     results_lr[key] = (coef, lr_pvals[i], lr_pvals_fdr[i], lr_reject[i])
 
-# Prepare filtered dataframes for pupil signal uncertainty effects
+### Variables to correlate pupil effects against
+# Prepare filtered dataframes for pupil signal uncertainty effects (few participants due to exclusion due to excessive interpolation)
 exclude = dataframes['exclude_participants_pupil_analysis_df']['exclude_participant']
 
 filtered_demographics = demographics[~demographics['ParticipantNumber'].isin(exclude)]
@@ -106,10 +115,65 @@ filtered_individual_pc = individual_pc[~individual_pc['participant'].isin(exclud
 filtered_update_freq = update_freq[~update_freq['participant'].isin(exclude)]
 filtered_estmodcor = est_model_corr[~est_model_corr['participant'].isin(exclude)]
 
+# Extracting pupil effects
+pupil_bc_effect = []
+pupil_nobc_effect = []
+
+for participant in pupil_bc_coefs['participant'].unique():
+    # Extracting the period in the epoch data where effects of uncertainty seen
+    epoch_bc_data = pupil_bc_coefs[pupil_bc_coefs['participant'] == participant]
+    epoch_nobc_data = pupil_nobc_coefs[pupil_nobc_coefs['participant'] == participant]
+
+    # Extracting cluster times to set window for regression and mediation analyses
+    effect_bc_variable = dataframes['cluster_permutation_analysis']['variable'].unique()[0]
+
+    baseline_cor_start_time, baseline_cor_end_time = group_pupil.extract_cluster_times(
+        dataframes['cluster_permutation_analysis'],
+        epoch_bc_data['time']
+    )
+
+    effect_nobc_variable = dataframes['cluster_permutation_analysis_nobc']['variable'].unique()[0]
+
+    nobc_start_time, nobc_end_time = group_pupil.extract_cluster_times(
+        dataframes['cluster_permutation_analysis_nobc'],
+        epoch_nobc_data['time']
+    )
+
+    epoch_bc_data = epoch_bc_data.set_index('time')
+    epoch_nobc_data = epoch_nobc_data.set_index('time')
+
+    # Baseline corrected response refers to the average of the pupil signal over the window of a significant effect of cpp within the peristimulus regression
+    filtered_pupil_data_bc = epoch_bc_data[f'{effect_bc_variable}'].loc[(epoch_bc_data.index >=  baseline_cor_start_time) & (epoch_bc_data.index <=  baseline_cor_end_time)]
+
+    average_bc_pupil_effect = np.array(filtered_pupil_data_bc.mean())
+
+    avg_pupil_bc_effect = pd.DataFrame({
+        'participant': [participant],
+        'avg_pupil_effect': [average_bc_pupil_effect.mean()]
+    })
+
+    pupil_bc_effect.append(avg_pupil_bc_effect)
+    
+    # Non-baseline corrected response refers to the average of the pupil signal over the window of a significant effect of prior conf within the peristimulus regression
+    filtered_pupil_data_nobc = epoch_nobc_data[f'{effect_nobc_variable}'].loc[(epoch_nobc_data.index >= nobc_start_time) & (epoch_nobc_data.index <= 0)]
+
+    average_nobc_pupil_effect = np.array(filtered_pupil_data_nobc.mean())
+
+    avg_pupil_nobc_effect = pd.DataFrame({
+        'participant': [participant],
+        'avg_pupil_effect': [average_nobc_pupil_effect.mean()]
+    })
+
+    pupil_nobc_effect.append(avg_pupil_nobc_effect)
+
+# Concatenate all participant dataframes into a single dataframe
+pupil_bc_effect_df = pd.concat(pupil_bc_effect, ignore_index=True)
+pupil_nobc_effect_df = pd.concat(pupil_nobc_effect, ignore_index=True)
+
 # Targets for pupil signal
 pupil_targets = {
-    'bc_pupil': dataframes['average_bc_pupil_effect_signal']['avg_pupil_effect'],
-    'nobc_pupil': dataframes['average_nobc_pupil_effect_signal']['avg_pupil_effect']
+    'bc_pupil': pupil_bc_effect_df['avg_pupil_effect'],
+    'nobc_pupil': pupil_nobc_effect_df['avg_pupil_effect']
 }
 
 # Predictor variables after filtering

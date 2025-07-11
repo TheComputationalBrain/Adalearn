@@ -36,12 +36,12 @@ pupil_trig_df_list = []
 outcome_epoched_pupil_df_list = []
 outcome_blink_ratio_df_list = []
 outcome_epochs_to_remove_df_list = []
-outcome_epochs_descriptive_stats_df_list = []
+outcome_epochs_time_df_list = []
 outcome_epochs_columns_df_list = []
 outcome_epoched_pupil_nobc_df_list = []
 outcome_blink_ratio_nobc_df_list = []
 outcome_epochs_to_remove_nobc_df_list = []
-outcome_epochs_descriptive_stats_nobc_df_list = []
+outcome_epochs_time_nobc_df_list = []
 outcome_epochs_columns_nobc_df_list = []
 
 
@@ -110,18 +110,18 @@ for participant in participant_list:
         continue
 
     # Processing epoch dataframes to make them aligned across participants (transposing them so time x epoch, after removing statistical)
-    descriptive_stats_df, csv_pupil_epoch_df, columns_df = group_data_utils.process_epoched_df(epoched_df=outcome_epoched_pupil_df, participant_str=participant_str)
+    epoch_time_df, csv_pupil_epoch_df, columns_df = group_data_utils.process_epoched_df(epoched_df=outcome_epoched_pupil_df, participant_str=participant_str)
 
-    descriptive_stats_nobc_df, csv_pupil_epoch_nobc_df, columns_nobc_df = group_data_utils.process_epoched_df(epoched_df=outcome_epoched_pupil_nobc_df, participant_str=participant_str)
+    epoch_time_nobc_df, csv_pupil_epoch_nobc_df, columns_nobc_df = group_data_utils.process_epoched_df(epoched_df=outcome_epoched_pupil_nobc_df, participant_str=participant_str)
 
 
     dfs = [
-    descriptive_stats_df,
+    epoch_time_df,
     csv_pupil_epoch_df,
     columns_df,
     outcome_blink_ratio_df,
     outcome_epochs_to_remove_df,
-    descriptive_stats_nobc_df,
+    epoch_time_nobc_df,
     csv_pupil_epoch_nobc_df,
     columns_nobc_df,
     outcome_blink_ratio_nobc_df,
@@ -129,12 +129,12 @@ for participant in participant_list:
     ]
 
     df_lists = [
-        outcome_epochs_descriptive_stats_df_list,
+        outcome_epochs_time_df_list,
         outcome_epoched_pupil_df_list,
         outcome_epochs_columns_df_list,
         outcome_blink_ratio_df_list,
         outcome_epochs_to_remove_df_list,
-        outcome_epochs_descriptive_stats_nobc_df_list,
+        outcome_epochs_time_nobc_df_list,
         outcome_epoched_pupil_nobc_df_list,
         outcome_epochs_columns_nobc_df_list,
         outcome_blink_ratio_nobc_df_list,
@@ -147,12 +147,12 @@ for participant in participant_list:
 
 
 # Collating lists to group-level dataframes
-group_level_outcome_epochs_descriptive_stats_df = pd.concat(outcome_epochs_descriptive_stats_df_list, ignore_index=True)
+group_level_outcome_epochs_time_df = pd.concat(outcome_epochs_time_df_list, ignore_index=True)
 group_level_outcome_epoched_pupil_df = pd.concat(outcome_epoched_pupil_df_list, ignore_index=True)
 group_level_outcome_epochs_columns_df = pd.concat(outcome_epochs_columns_df_list, ignore_index=True)
 group_level_outcome_blink_ratio_df = pd.concat(outcome_blink_ratio_df_list, ignore_index=True)
 group_level_outcome_epochs_to_remove_df = pd.concat(outcome_epochs_to_remove_df_list, ignore_index=True)
-group_level_outcome_epochs_descriptive_stats_nobc_df = pd.concat(outcome_epochs_descriptive_stats_nobc_df_list, ignore_index=True)
+group_level_outcome_epochs_time_nobc_df = pd.concat(outcome_epochs_time_nobc_df_list, ignore_index=True)
 group_level_outcome_epoched_pupil_nobc_df = pd.concat(outcome_epoched_pupil_nobc_df_list, ignore_index=True)
 group_level_outcome_epochs_columns_nobc_df = pd.concat(outcome_epochs_columns_nobc_df_list, ignore_index=True)
 group_level_outcome_blink_ratio_nobc_df = pd.concat(outcome_blink_ratio_nobc_df_list, ignore_index=True)
@@ -162,12 +162,12 @@ exclude_participants_pupil_analysis_df = pd.concat(exclude_participants, ignore_
 # Saving files to .csv
 group_data_utils.save_sample_dataframes_to_csv(dataframes={
     'exclude_participants_pupil_analysis_df': exclude_participants_pupil_analysis_df,
-    'outcome_epochs_descriptive_stats_df': group_level_outcome_epochs_descriptive_stats_df,
+    'outcome_epochs_time_df': group_level_outcome_epochs_time_df,
     'outcome_epoched_pupil_df': group_level_outcome_epoched_pupil_df,
     'outcome_epochs_columns_df': group_level_outcome_epochs_columns_df,
     'outcome_blink_ratio_df': group_level_outcome_blink_ratio_df,
     'outcome_epochs_to_remove_df': group_level_outcome_epochs_to_remove_df,
-    'outcome_epochs_descriptive_stats_nobc_df': group_level_outcome_epochs_descriptive_stats_nobc_df,
+    'outcome_epochs_time_nobc_df': group_level_outcome_epochs_time_nobc_df,
     'outcome_epoched_pupil_nobc_df': group_level_outcome_epoched_pupil_nobc_df,
     'outcome_epochs_columns_nobc_df': group_level_outcome_epochs_columns_nobc_df,
     'outcome_blink_ratio_nobc_df': group_level_outcome_blink_ratio_nobc_df,
