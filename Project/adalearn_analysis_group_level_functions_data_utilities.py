@@ -222,7 +222,7 @@ def save_sample_dataframes_to_csv(dataframes, directory_path, condition_str, tas
             print(f"Skipping {name} (not a DataFrame)")
             continue
         file_path = os.path.join(save_dir, f"sample_level_analysis-ses_{condition_str}-task_Adalearn_{task}-{name}.csv")
-        df.to_csv(file_path, index=False)
+        df.to_csv(file_path, index=False, float_format="%.12f")
 
         print(f"Saved {name} to {file_path}")
 
