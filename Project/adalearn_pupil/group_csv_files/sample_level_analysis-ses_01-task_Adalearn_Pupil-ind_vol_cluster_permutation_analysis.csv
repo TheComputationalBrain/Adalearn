@@ -1,2 +1,2 @@
 variable,cluster_idx,cluster_start,cluster_end,p_value
-cpp,0,55,100,0.003
+cpp,0,55,100,0.003000000000

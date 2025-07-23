@@ -1,2 +1,2 @@
 variable,cluster_idx,cluster_start,cluster_end,p_value
-prior_conf,0,0,100,0.001
+prior_conf,0,0,100,0.001000000000
