@@ -38,11 +38,11 @@ dataframes = group_data_utils.load_sample_csvs(
         'pupil_nobc_around_cp',
         'pupil_lr_uncert_mediation',
         'exclude_participants_pupil_analysis_df', 
-        'outcome_epochs_descriptive_stats_df', 
+        'outcome_epochs_time_df', 
         'outcome_epoched_pupil_df',
         'outcome_epochs_columns_df', 
         'outcome_epochs_to_remove_df',
-        'outcome_epochs_descriptive_stats_nobc_df', 
+        'outcome_epochs_time_nobc_df', 
         'outcome_epoched_pupil_nobc_df', 
         'cluster_permutation_analysis', 
         'cluster_permutation_analysis_nobc',
@@ -213,7 +213,7 @@ pupil_v_lr_nobc_sem = stats.sem(pupil_nobc_coef['coefficient'])
 comp_df = dataframes['computational_var_df']
 epoch_data = dataframes['outcome_epoched_pupil_df']
 epoch_data_nobc = dataframes['outcome_epoched_pupil_nobc_df']
-epoch_descriptive_stats = dataframes['outcome_epochs_descriptive_stats_df']
+epoch_times = dataframes['outcome_epochs_time_df']
 analysed_epochs = dataframes['outcome_epochs_columns_df']
 epochs_to_remove = dataframes['outcome_epochs_to_remove_df']
 
@@ -225,11 +225,11 @@ for participant in epoch_data['participant'].unique():
     pupil_data = epoch_data[epoch_data['participant'] == participant].drop(columns=['participant']).T
     column_titles = analysed_epochs[analysed_epochs['participant'] == participant]['columns'].values.astype(int)
     pupil_data.columns = column_titles
-    pupil_data['time'] = epoch_descriptive_stats[epoch_descriptive_stats['participant'] == participant]['time'].values.astype(float)
+    pupil_data['time'] = epoch_times[epoch_times['participant'] == participant]['time'].values.astype(float)
 
     pupil_data_nobc = epoch_data_nobc[epoch_data_nobc['participant'] == participant].drop(columns=['participant']).T
     pupil_data_nobc.columns = column_titles
-    pupil_data_nobc['time'] = epoch_descriptive_stats[epoch_descriptive_stats['participant'] == participant]['time'].values.astype(float)
+    pupil_data_nobc['time'] = epoch_times[epoch_times['participant'] == participant]['time'].values.astype(float)
 
     baseline_cor_start_time, baseline_cor_end_time = pupil_analysis.extract_cluster_times(dataframes['cluster_permutation_analysis'], pupil_data['time'])
     nobc_start_time, nobc_end_time = pupil_analysis.extract_cluster_times(dataframes['cluster_permutation_analysis_nobc'], pupil_data_nobc['time'])

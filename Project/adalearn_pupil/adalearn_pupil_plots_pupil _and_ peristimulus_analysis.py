@@ -30,8 +30,8 @@ dataframes = group_data_utils.load_sample_csvs(
     substrings=[
         'outcome_epoched_pupil_df', 
         'outcome_epoched_pupil_nobc_df', 
-        'outcome_epochs_descriptive_stats_df', 
-        'outcome_epochs_descriptive_stats_nobc_df', 
+        'outcome_epochs_time_df', 
+        'outcome_epochs_time_nobc_df', 
         'coefs_df', 
         'coefs_nobc_df', 
         'cluster_permutation_analysis', 
@@ -42,7 +42,7 @@ dataframes = group_data_utils.load_sample_csvs(
 ############################Average pupil response (baseline-corrected)
 baseline_corrected_epochs = dataframes['outcome_epoched_pupil_df']
 
-baseline_corrected_descriptives = dataframes['outcome_epochs_descriptive_stats_df']
+baseline_corrected_epoch_times = dataframes['outcome_epochs_time_df']
 
 average_pupil_df_list = []
 
@@ -57,7 +57,7 @@ for participant in baseline_corrected_epochs['participant'].unique():
 
     pupil_sem =  stats.sem(data, axis=0)
 
-    time = baseline_corrected_descriptives[baseline_corrected_descriptives['participant']==participant]['time'].values
+    time = baseline_corrected_epoch_times[baseline_corrected_epoch_times['participant']==participant]['time'].values
 
     average_pupil_df = pd.DataFrame({
         'pupil_signal': pupil_mean,
@@ -141,7 +141,7 @@ fig.show()
 ############################Average pupil response (nonbaseline-corrected)
 nonbaseline_corrected_epochs = dataframes['outcome_epoched_pupil_nobc_df']
 
-nonbaseline_corrected_descriptives = dataframes['outcome_epochs_descriptive_stats_nobc_df']
+nonbaseline_corrected_epoch_times = dataframes['outcome_epochs_time_nobc_df']
 
 average_pupil_df_list = []
 
@@ -156,7 +156,7 @@ for participant in nonbaseline_corrected_epochs['participant'].unique():
 
     pupil_sem =  stats.sem(data, axis=0)
 
-    time = nonbaseline_corrected_descriptives[nonbaseline_corrected_descriptives['participant']==participant]['time'].values
+    time = nonbaseline_corrected_epoch_times[nonbaseline_corrected_epoch_times['participant']==participant]['time'].values
 
     average_pupil_df = pd.DataFrame({
         'pupil_signal': pupil_mean,
