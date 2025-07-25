@@ -131,7 +131,7 @@ for participant in participant_list:
     comp_df,_ = comp.run_inference_from_observations(participant_str=participant_str, condition_str=condition_str, directory_path=directory_path, computational_var_df=comp_df, change_point_indices_df=change_points, p_c=x_min, p1_min=P1_MIN, p1_max=P1_MAX, resol=RESOL, plot_surprise=False, plot_posterior_conf=False, plot_posterior_dist_means=False)
 
     # Computing prior confidence and change point probability of each observation
-    comp_df = comp.compute_prior_conf_and_cpp_from_observations(participant_str=participant_str, condition_str=condition_str,directory_path=directory_path, computational_var_df=comp_df, change_point_indices_df=change_points, resol=RESOL, p_c=x_min, p1_min=P1_MIN, p1_max=P1_MAX, conf_type='prev-conf', unit='confidence', plot_distribution_mean=False, plot_prior_conf=False, plot_cpp=False)
+    comp_df = comp.compute_prior_conf_and_cpp_from_observations(participant_str=participant_str, condition_str=condition_str,directory_path=directory_path, computational_var_df=comp_df, change_point_indices_df=change_points, resol=RESOL, p_c=x_min, p1_min=P1_MIN, p1_max=P1_MAX, conf_type='prev-conf-pred', unit='confidence', plot_distribution_mean=False, plot_prior_conf=False, plot_cpp=False)
 
     # Running uncertainty-associated analysis on learning rate
     (f"Computing the effect of uncertainty parameters on learning rate...")
