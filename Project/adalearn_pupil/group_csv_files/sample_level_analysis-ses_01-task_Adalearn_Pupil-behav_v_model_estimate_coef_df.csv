@@ -1,2 +1,3 @@
-mean_intercept,std_intercept,sem_intercept,mean_slope,std_slope,sem_slope,slope_tvalue_against_zero,slope_pvalue_against_zero,slope_tvalue_against_one,slope_pvalue_against_one,mean_corr,std_corr,sem_corr,corr_tvalue_against_zero,corr_pvalue_against_zero
--0.021577734665,0.115281179246,0.020705111016,1.043762288969,0.115281179246,0.020705111016,25.958969079882,0.000000000000,1.088393323086,0.285088213576,0.810081929180,0.100841100557,0.018111596322,44.727251798472,0.000000000000
+version https://git-lfs.github.com/spec/v1
+oid sha256:8bf40e964b92311ac1289d0e72efe27114e66aed94b1cc838625a1c4c52df4c7
+size 482

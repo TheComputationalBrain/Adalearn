@@ -1,2 +1,3 @@
-variable,cluster_idx,cluster_start,cluster_end,p_value
-cluster_data,0,2,10,0.001000000000
+version https://git-lfs.github.com/spec/v1
+oid sha256:5404429f1ddbeaa4e5780136cccfef0cca18ee9afe1d14b779190cce9f561827
+size 90
