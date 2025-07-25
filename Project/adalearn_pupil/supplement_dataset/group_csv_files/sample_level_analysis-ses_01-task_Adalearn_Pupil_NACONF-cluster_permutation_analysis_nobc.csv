@@ -1,2 +1,3 @@
-variable,cluster_idx,cluster_start,cluster_end,p_value
-prior_conf_zscore,0,0,825,0.008
+version https://git-lfs.github.com/spec/v1
+oid sha256:32984a17e92281cdd5333e17f14e43c0164b721da6411e59537388ff2ab7eec7
+size 96
