@@ -266,13 +266,13 @@ fig.add_vline(
 # Plot significant clusters on behavioral subplot
 for _, row in dataframes['lr_around_cp_sig_clusters'].iterrows():
     if row['p_value'] < 0.05:
-        style = {'color': 'rgba(0, 0, 0, 1.0)', 'yval': 0.045}
+        style = {'color': 'rgba(0, 130, 150, 0.8)', 'yval': 0.045}
         cluster_range = range(row['cluster_start'], row['cluster_end'] + 1)
         fig.add_trace(go.Scatter(
             x=list(cluster_range),
             y=[style['yval']] * len(cluster_range),
-            mode='markers',
-            marker=dict(color=style['color'], size=28, symbol='asterisk-open'),
+           mode='lines',
+            line=dict(color=style['color'], width=8),
             showlegend=False,
             hoverinfo='skip'
         ))
@@ -563,7 +563,7 @@ fig.update_layout(
     ),
     yaxis2=dict(
         title_text="Regression weight (model)",
-        domain=[0.7, 0.95],  # inset y position (change to resize/relocate)
+        domain=[0.75, 1.0],  # inset y position (change to resize/relocate)
         anchor='x2',
         showticklabels=True,
         showline=True,

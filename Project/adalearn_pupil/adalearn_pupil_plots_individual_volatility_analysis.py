@@ -308,7 +308,7 @@ fig.update_layout(
     ),
     yaxis2=dict(
         title_text="Regression weight (model)",
-        domain=[0.7, 0.95],  # inset y position (change to resize/relocate)
+        domain=[0.75, 1.0],  # inset y position (change to resize/relocate)
         anchor='x2',
         showticklabels=True,
         showline=True,

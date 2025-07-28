@@ -39,7 +39,9 @@ dataframes = group_data_utils.load_sample_csvs(
         ],
     prefix='sample_level_analysis-ses_01-task_Adalearn_Pupil-')
 
-############################Average pupil response (baseline-corrected)
+example_participant =  11 # Change this to the participant you want to plot
+
+############################Average pupil response (baseline-corrected) plus example individual participant
 baseline_corrected_epochs = dataframes['outcome_epoched_pupil_df']
 
 baseline_corrected_epoch_times = dataframes['outcome_epochs_time_df']
@@ -72,6 +74,59 @@ for participant in baseline_corrected_epochs['participant'].unique():
 
 group_avg_pupil_df = pd.concat(average_pupil_df_list, ignore_index=True)
 
+# Plot the average pupil response for a specific participant
+example_participant_data = group_avg_pupil_df[group_avg_pupil_df['participant'] == example_participant]
+
+fig = go.Figure()
+
+fig.add_trace(go.Scatter(x=example_participant_data['time'], y=example_participant_data['pupil_signal'], mode = 'lines', line=dict(color='rgba(0, 130, 150, 0.8)'), showlegend=False))
+
+fig.add_trace(go.Scatter(
+    x=list(example_participant_data['time']) + list(example_participant_data['time'][::-1]),
+    y=list(example_participant_data['pupil_signal'] + example_participant_data['pupil_signal_sem']) + list((example_participant_data['pupil_signal'] - example_participant_data['pupil_signal_sem'])[::-1]),
+    fill='toself',
+    fillcolor='rgba(0, 130, 150, 0.2)',
+    line=dict(color='rgba(255,255,255,0)'),
+    hoverinfo="skip",
+    showlegend=False
+))
+
+fig.add_vline(x=0, line_dash='dot', line=dict(color='black', width=1.5))
+fig.add_hline(y=0, line_dash = 'dot', line=dict(color='black', width=1.5))
+
+fig.update_xaxes(
+        showline=True, 
+        linewidth=1.5, 
+        linecolor='black', 
+        title_text="Time relative to outcome presentation (s)",
+    )
+
+fig.update_yaxes(
+        showline=True, 
+        linewidth=1.5, 
+        linecolor='black',
+        title_text = 'Pupil diameter signal (z-score)' 
+    )
+
+fig.update_layout(height=1200, width=1800, plot_bgcolor='rgba(255, 255, 255, 1)', font=dict(size=42, family="Times New Roman"))
+
+# Save the figure to the group-level folder
+plot_dir = os.path.join(base_dir, "plots")
+os.makedirs(plot_dir, exist_ok=True)
+
+# Base filename (without extension)
+base_filename = f"adalearn_pupil-average_baseline_corrected_pupil_signal_example_participant_{example_participant}"
+base_filepath = os.path.join(plot_dir, base_filename)
+
+# Save as PNG
+fig.write_image(f"{base_filepath}.png")
+
+# Save as SVG
+fig.write_image(f"{base_filepath}.svg") 
+
+fig.show()
+
+# Plot the group-level average pupil response
 
 group_pupil_dict = {'mean_pupil': [], 'sem_pupil': [], 'time': []}
 
@@ -171,6 +226,59 @@ for participant in nonbaseline_corrected_epochs['participant'].unique():
 
 group_avg_pupil_df = pd.concat(average_pupil_df_list, ignore_index=True)
 
+# Plot the average pupil response for a specific participant
+example_participant_data = group_avg_pupil_df[group_avg_pupil_df['participant'] == example_participant]
+
+fig = go.Figure()
+
+fig.add_trace(go.Scatter(x=example_participant_data['time'], y=example_participant_data['pupil_signal'], mode = 'lines', line=dict(color='rgba(0, 130, 150, 0.8)'), showlegend=False))
+
+fig.add_trace(go.Scatter(
+    x=list(example_participant_data['time']) + list(example_participant_data['time'][::-1]),
+    y=list(example_participant_data['pupil_signal'] + example_participant_data['pupil_signal_sem']) + list((example_participant_data['pupil_signal'] - example_participant_data['pupil_signal_sem'])[::-1]),
+    fill='toself',
+    fillcolor='rgba(0, 130, 150, 0.2)',
+    line=dict(color='rgba(255,255,255,0)'),
+    hoverinfo="skip",
+    showlegend=False
+))
+
+fig.add_vline(x=0, line_dash='dot', line=dict(color='black', width=1.5))
+fig.add_hline(y=0, line_dash = 'dot', line=dict(color='black', width=1.5))
+
+fig.update_xaxes(
+        showline=True, 
+        linewidth=1.5, 
+        linecolor='black', 
+        title_text="Time relative to outcome presentation (s)",
+    )
+
+fig.update_yaxes(
+        showline=True, 
+        linewidth=1.5, 
+        linecolor='black',
+        title_text = 'Pupil diameter signal (z-score)' 
+    )
+
+fig.update_layout(height=1200, width=1800, plot_bgcolor='rgba(255, 255, 255, 1)', font=dict(size=42, family="Times New Roman"))
+
+# Save the figure to the group-level folder
+plot_dir = os.path.join(base_dir, "plots")
+os.makedirs(plot_dir, exist_ok=True)
+
+# Base filename (without extension)
+base_filename = f"adalearn_pupil-average_nonbaseline_corrected_pupil_signal_example_participant_{example_participant}"
+base_filepath = os.path.join(plot_dir, base_filename)
+
+# Save as PNG
+fig.write_image(f"{base_filepath}.png")
+
+# Save as SVG
+fig.write_image(f"{base_filepath}.svg") 
+
+fig.show()
+
+# Plot the group-level average pupil response
 
 group_pupil_dict = {'mean_pupil': [], 'sem_pupil': [], 'time': []}
 
