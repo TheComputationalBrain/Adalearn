@@ -1,0 +1,2 @@
+ParticipantNumber	Initials	DOB	Age	Gender	Handedness	Pathology	ClinicalProtocol	NumberInProtocol	SurgeryDate	ExperimentDate	SessionNumber	StimulationIntensity	DurationOFF	DurationON	StimulationFrequency
+01	HUch	1977-03-08	47	female	Right	depression	DEPVNS	002-0001-H-C	2024-03-25	2024-04-24	01	0.75	300	30	30

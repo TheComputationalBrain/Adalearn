@@ -1,0 +1,2 @@
+ParticipantNumber	Initials	DOB	Age	Gender	Handedness	Pathology	ClinicalProtocol	NumberInProtocol	SurgeryDate	ExperimentDate	SessionNumber	StimulationIntensity	DurationOFF	DurationON	StimulationFrequency	PulseWidth
+05	MUma	1991-12-01	34	male	Right	depression	DEPVNS	002-0015-MM	2025-01-20	2025-02-05	1	0.75	300	30	30	250

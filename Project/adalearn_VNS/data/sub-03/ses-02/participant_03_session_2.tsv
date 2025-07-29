@@ -1,0 +1,2 @@
+ParticipantNumber	Initials	DOB	Age	Gender	Handedness	Pathology	ClinicalProtocol	NumberInProtocol	SurgeryDate	ExperimentDate	SessionNumber	StimulationIntensity	DurationOFF	DurationON	StimulationFrequency	PulseWidth
+03	SP	1978-02-19	46	female	Right	depression	DEPVNS	04	2024-07-02	2024-07-25	2	0.25	300	30	20	250
