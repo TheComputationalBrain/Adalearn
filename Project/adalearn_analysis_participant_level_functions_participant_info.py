@@ -56,7 +56,7 @@ def read_tsv_files(directory_path):
 
 
 
-def participant_characteristics(participant, base_dir, c1_vns_task_sessions=None, c2_vns_task_sessions=None):
+def vns_condition_characteristics(participant, directory_path, c1_vns_task_sessions=None, c2_vns_task_sessions=None):
     """
     Function to load and extract session information for a given participant. Presents stimulator information, and file numbers that can then be passed to other functions to load the data. 
 
@@ -76,12 +76,9 @@ def participant_characteristics(participant, base_dir, c1_vns_task_sessions=None
     - c2_from_session, c2_to_session: range of task sessions for condition 2
     - c1_run_ranges, c2_run_ranges: extracted run ranges for physiological files    
     """
-    base_dir = Path(base_dir)
-
     participant_str = str(participant).zfill(2)
     list_subject_selected = [participant]
 
-    directory_path = Path(f'{base_dir}/sub-{participant_str}')
 
     # Initializing parameters with None to ensure they exist before use
     c1_from_session, c1_to_session = None, None
@@ -96,35 +93,6 @@ def participant_characteristics(participant, base_dir, c1_vns_task_sessions=None
     # Initialize condition strings
     condition_1_str, condition_2_str = None, None
 
-    # Create condition strings
-    #if tsv_df:
-    #        variable_name = f"condition_{key}_str"
-    #        globals()[variable_name] = f"{int(key):02d}"
-    #        if key == 1 and condition_1_str is None:
-     #           condition_1_str = globals()[variable_name]
-     #       elif key == 2 and condition_2_str is None:
-     #           condition_2_str = globals()[variable_name]
-     #       print(f"Condition string created: {variable_name}")
-
-        # Print key information about VNS parameters
-    #    for key, df in tsv_df.items():
-    #        print(f"For session {df['SessionNumber'].iloc[0]}, the VNS parameters were:")
-    #        print(f"Stimulation intensity: {df['StimulationIntensity'].iloc[0]} mA")
-    #        print(f"Stimulation frequency: {df['StimulationFrequency'].iloc[0]} Hz")
-    #        print(f"Stimulation pulse width: {df['PulseWidth'].iloc[0]} µs")
-    #        print(f"ON duration: {df['DurationON'].iloc[0]} s")
-    #        print(f"OFF duration: {df['DurationOFF'].iloc[0]} s")
-
-        # Define high vs low VNS conditions
-    #    if tsv_df[1]['StimulationIntensity'].iloc[0] > tsv_df[2]['StimulationIntensity'].iloc[0]:
-    #        print("The high VNS intensity condition is condition 1 and the low VNS intensity condition is condition 2")
-    #        high_vns_condition = f"{1:02d}"
-    #        low_vns_condition = f"{2:02d}"
-    #    elif tsv_df[1]['StimulationIntensity'].iloc[0] < tsv_df[2]['StimulationIntensity'].iloc[0]:
-    #        print("The low VNS intensity condition is condition 1 and the low VNS intensity condition is condition 2")
-    #        high_vns_condition = f"{2:02d}"
-    #        low_vns_condition = f"{1:02d}"
-
     if not tsv_df.empty:
         # Print key information about VNS parameters
         for session_num in tsv_df['SessionNumber'].unique():
@@ -132,7 +100,9 @@ def participant_characteristics(participant, base_dir, c1_vns_task_sessions=None
             print(f"For session {session_num}, the VNS parameters were:")
             print(f"Stimulation intensity: {session_data['StimulationIntensity'].iloc[0]} mA")
             print(f"Stimulation frequency: {session_data['StimulationFrequency'].iloc[0]} Hz")
-            print(f"Stimulation pulse width: {session_data['PulseWidth'].iloc[0]} µs")
+            if 'PulseWidth' in session_data.columns:
+                # Check if 'PulseWidth' column exists before accessing it
+                print(f"Stimulation pulse width: {session_data['PulseWidth'].iloc[0]} µs")
             print(f"ON duration: {session_data['DurationON'].iloc[0]} s")
             print(f"OFF duration: {session_data['DurationOFF'].iloc[0]} s")
 
@@ -161,22 +131,20 @@ def participant_characteristics(participant, base_dir, c1_vns_task_sessions=None
     # Extract task session information for condition 1
     if condition_1_str is not None:
         print("Task sessions extracted from file names in condition 1")
-        print("Filenames extracted from behavioural data files:")
+        print("Filenames extracted from behavioural data files")
         c1_from_session_behav, c1_to_session_behav, c1_task_sessions_behav, c1_is_continuous_behav = extract_max_min(directory_path=directory_path, condition_str=condition_1_str, file_folder='behav', file_extension='.json')
 
         if c1_is_continuous_behav is False:
             print("ERROR: Continuous range of task sessions not extracted from behavioural file names")
 
-        print("Filenames extracted from eyetracker data files:")
+        print("Filenames extracted from eyetracker data files")
         c1_from_session_eye, c1_to_session_eye, c1_task_sessions_eye, c1_is_continuous_eye = extract_max_min(directory_path=directory_path, condition_str=condition_1_str, file_folder='eye', file_extension='.txt')
 
         if c1_is_continuous_eye is False:
             print("ERROR: Continuous range of task sessions not extracted from eyetracker file names")
         
-        print("Filenames extracted from physiological data files:")
+        print("Filenames extracted from physiological data files")
         c1_run_ranges = extract_phys_run_ranges(directory_path=directory_path, condition_str=condition_1_str)
-
-        print(f"Run ranges in physiological files: {c1_run_ranges}")
 
         # Check if task sessions match and set the session range
         print("Checking if behavioural and eyetracker files contain the same task sessions...")
@@ -212,8 +180,6 @@ def participant_characteristics(participant, base_dir, c1_vns_task_sessions=None
         print("Filenames extracted from physiological data files:")
         c2_run_ranges = extract_phys_run_ranges(directory_path=directory_path, condition_str=condition_2_str)
 
-        print(f"Run ranges in physiological files: {c2_run_ranges}")
-
         # Check if task sessions match and set the session range
         print("Checking if behavioural and eyetracker files contain the same task sessions...")
         if c2_task_sessions_behav == c2_task_sessions_eye:
@@ -239,8 +205,47 @@ def participant_characteristics(participant, base_dir, c1_vns_task_sessions=None
         c2_vns_task_sessions =  read_vns_task_ses_txt(directory_path=directory_path, condition_str=condition_2_str)
     print(f"VNS task session in condition {condition_2_str} are: {c2_vns_task_sessions}")
 
+    # Create a dictionary to hold VNS condition information
+    vns_info_dict = {}
 
-    return participant_str, list_subject_selected, directory_path, tsv_df, high_vns_condition, low_vns_condition, condition_1_str, condition_2_str, c1_task_sessions, c1_from_session, c1_to_session, c2_task_sessions, c2_from_session, c2_to_session, c1_run_ranges, c2_run_ranges, c1_vns_task_sessions, c2_vns_task_sessions 
+    if high_vns_condition == condition_1_str:
+        vns_info_dict['high_intensity'] = {
+            'condition': condition_1_str,
+            'vns_task_sessions': c1_vns_task_sessions,
+            'run_ranges': c1_run_ranges,
+            'from_session': c1_from_session,
+            'to_session': c1_to_session,
+            'task_sessions': [str(session).zfill(2) for session in range(c1_from_session, c1_to_session + 1)]
+        }
+        vns_info_dict['low_intensity'] = {
+            'condition': condition_2_str,
+            'vns_task_sessions': c2_vns_task_sessions,
+            'run_ranges': c2_run_ranges,
+            'from_session': c2_from_session,
+            'to_session': c2_to_session,
+            'task_sessions': [str(session).zfill(2) for session in range(c2_from_session, c2_to_session + 1)]
+        }
+    elif high_vns_condition == condition_2_str:
+        vns_info_dict['high_intensity'] = {
+            'condition': condition_2_str,
+            'vns_task_sessions': c2_vns_task_sessions,
+            'run_ranges': c2_run_ranges,
+            'from_session': c2_from_session,
+            'to_session': c2_to_session,
+            'task_sessions': [str(session).zfill(2) for session in range(c2_from_session, c2_to_session + 1)]
+        }
+        vns_info_dict['low_intensity'] = {
+            'condition': condition_1_str,
+            'vns_task_sessions': c1_vns_task_sessions,
+            'run_ranges': c1_run_ranges,
+            'from_session': c1_from_session,
+            'to_session': c1_to_session,
+            'task_sessions': [str(session).zfill(2) for session in range(c1_from_session, c1_to_session + 1)]
+        }
+    else:
+        print("WARNING: Could not determine high/low VNS intensity condition mapping.")
+
+    return participant_str, list_subject_selected, directory_path, tsv_df, vns_info_dict
 
 
 
@@ -269,7 +274,6 @@ def extract_max_min(directory_path, condition_str, file_folder, file_extension):
 
     # Get a list of all files with the specified extension in the directory
     file_names = [f.name for f in file_path.iterdir() if f.is_file() and f.suffix == file_extension and not f.name.startswith("._")]
-    print(file_names)
 
     for file_name in file_names:
         match = re.search(r"run-(\d+)", file_name)
@@ -309,7 +313,6 @@ def extract_phys_run_ranges(directory_path, condition_str):
 
     # Get a list of all files with the specified extension in the directory
     file_names = [f.name for f in physio_path.iterdir() if f.is_file() and f.suffix == file_extension and not f.name.startswith("._")]
-    print(file_names)
 
     for file_name in file_names:
         match = re.search(r"run-(\d+)to(\d+)", file_name)
