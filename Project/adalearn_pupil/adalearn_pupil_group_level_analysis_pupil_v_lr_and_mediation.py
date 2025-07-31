@@ -58,7 +58,8 @@ pupil_nobc_effect =[]
 pupil_bc_around_cp_list = []
 pupil_nobc_around_cp_list = []
 pupil_v_lr_regress_coef_df_list = []
-mediation_results_list = []
+nobc_mediation_results_list = []
+bc_mediation_results_list = []
 
 # Setting the variables for the mediation analysis
 uncertainty_on_lr_var = dataframes['uncertainty_params_ttest_df']
@@ -254,11 +255,18 @@ for participant in participant_list:
 
     # Running mediation analysis
     print(f'Running mediation analysis...')
-    mediation_analysis = pingouin.mediation_analysis(data=regression_df_filtered, x='conf_zscore', m=['pupil_nobc_zscore'], y='lr_zscore', covar=None, alpha=0.05, n_boot=500, seed=None, return_dist=False, logreg_kwargs=None)
+    nobc_mediation_analysis = pingouin.mediation_analysis(data=regression_df_filtered, x='conf_zscore', m=['pupil_nobc_zscore'], y='lr_zscore', covar=None, alpha=0.05, n_boot=500, seed=None, return_dist=False, logreg_kwargs=None)
 
-    mediation_analysis['participant'] = participant_str
+    nobc_mediation_analysis['participant'] = participant_str
 
-    mediation_results_list.append(mediation_analysis)
+    nobc_mediation_results_list.append(nobc_mediation_analysis)
+
+    #Supplement mediation analysis (cpp and bc pupil effect)
+    bc_mediation_analysis = pingouin.mediation_analysis(data=regression_df_filtered, x='cpp_zscore', m=['pupil_bc_zscore'], y='lr_zscore', covar=None, alpha=0.05, n_boot=500, seed=None, return_dist=False, logreg_kwargs=None)
+
+    bc_mediation_analysis['participant'] = participant_str
+
+    bc_mediation_results_list.append(bc_mediation_analysis)
 
 group_dfs = pd.concat(dataframe_list, ignore_index=True)
 group_pupil_bc_avg_effect_signal_df = pd.concat(pupil_bc_effect, ignore_index=True)
@@ -266,7 +274,8 @@ group_pupil_nobc_avg_effect_signal_df = pd.concat(pupil_nobc_effect, ignore_inde
 group_pupil_bc_around_cp_df = pd.concat(pupil_bc_around_cp_list, ignore_index=True)
 group_pupil_nobc_around_cp_df = pd.concat(pupil_nobc_around_cp_list, ignore_index=True)
 group_pupil_v_lr_dfs = pd.concat(pupil_v_lr_regress_coef_df_list, ignore_index=True)
-group_mediation_df = pd.concat(mediation_results_list, ignore_index=True)
+group_nobc_mediation_df = pd.concat(nobc_mediation_results_list, ignore_index=True)
+group_bc_mediation_df = pd.concat(bc_mediation_results_list, ignore_index=True)
 
 # Running t-tests on pupil on learning rate regression 
 pupil_v_lr_bc_coef = group_pupil_v_lr_dfs[group_pupil_v_lr_dfs['variable'] == 'pupil_bc_zscore'].sort_values('participant').copy()
@@ -294,12 +303,12 @@ pupil_v_lr_ttest_df = pd.DataFrame({
 print(pupil_v_lr_ttest_df)
 
 # Collating the mediation analysis
-group_mediation_analysis_df = pd.DataFrame()
+group_nobc_mediation_analysis_df = pd.DataFrame()
 
 n_boot = 5000 
 
-for path in group_mediation_df['path'].unique():
-    data = group_mediation_df[group_mediation_df['path'] == path]
+for path in group_nobc_mediation_df['path'].unique():
+    data = group_nobc_mediation_df[group_nobc_mediation_df['path'] == path]
     coefs = data['coef'].values
     mean = data['coef'].mean()
     path_label = data['path'].values[0]
@@ -315,7 +324,7 @@ for path in group_mediation_df['path'].unique():
     boot_mean = np.mean(boot_means)
     boot_sem = np.std(boot_means, ddof=1)
 
-    df_mediation = pd.DataFrame({
+    nobc_df_mediation = pd.DataFrame({
         'path': [path_label],
         'sample_mean': [mean],
         'boot_mean': [boot_mean],
@@ -324,9 +333,42 @@ for path in group_mediation_df['path'].unique():
         'ci_upper': [ci_upper]
     })
 
-    group_mediation_analysis_df = pd.concat([group_mediation_analysis_df, df_mediation], ignore_index=True)
+    group_nobc_mediation_analysis_df = pd.concat([group_nobc_mediation_analysis_df, nobc_df_mediation], ignore_index=True)
 
-print(group_mediation_analysis_df)
+print(group_nobc_mediation_analysis_df)
+
+
+group_bc_mediation_analysis_df = pd.DataFrame()
+
+for path in group_bc_mediation_df['path'].unique():
+    data = group_bc_mediation_df[group_bc_mediation_df['path'] == path]
+    coefs = data['coef'].values
+    mean = data['coef'].mean()
+    path_label = data['path'].values[0]
+
+    # Bootstrap sampling
+    boot_means = []
+    for _ in range(n_boot):
+        sample = np.random.choice(coefs, size=len(coefs), replace=True)
+        boot_means.append(np.mean(sample))
+
+    # Get 95% CI from bootstrap distribution
+    ci_lower, ci_upper = np.percentile(boot_means, [2.5, 97.5])
+    boot_mean = np.mean(boot_means)
+    boot_sem = np.std(boot_means, ddof=1)
+
+    bc_df_mediation = pd.DataFrame({
+        'path': [path_label],
+        'sample_mean': [mean],
+        'boot_mean': [boot_mean],
+        'sem': [boot_sem],
+        'ci_lower': [ci_lower],
+        'ci_upper': [ci_upper]
+    })
+
+    group_bc_mediation_analysis_df = pd.concat([group_bc_mediation_analysis_df, bc_df_mediation], ignore_index=True)
+
+print(group_bc_mediation_analysis_df)
 
 # Saving dataframes
 group_data_utils.save_sample_dataframes_to_csv(dataframes={
@@ -336,7 +378,8 @@ group_data_utils.save_sample_dataframes_to_csv(dataframes={
     'pupil_v_lr_coef_ttest_df': pupil_v_lr_ttest_df,
     'pupil_bc_around_cp': group_pupil_bc_around_cp_df,
     'pupil_nobc_around_cp': group_pupil_nobc_around_cp_df,
-    'pupil_lr_uncert_mediation': group_mediation_analysis_df
+    'pupil_lr_uncert_nobc_mediation': group_nobc_mediation_analysis_df,
+    'pupil_lr_uncert_bc_mediation': group_bc_mediation_analysis_df,
 },
 directory_path=base_dir,
 condition_str=condition_str,
