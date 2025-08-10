@@ -146,7 +146,7 @@ def plot_session_behav_comp(participant_str, condition_str, directory_path, base
                 y=task_session_behav_df['P1'],
                 mode='lines',
                 line=dict(color='rgba(0,120,255,0.6)', dash='dot', width=4),
-                name='Hidden proportion'
+                name='Generative probability'
             ), row=1, col=1
         )
         fig.add_trace(
@@ -185,7 +185,7 @@ def plot_session_behav_comp(participant_str, condition_str, directory_path, base
                 x=task_session_comp_df['outcome_num']+1, 
                 y=task_session_comp_df['cleaned_learning_rate_estimate'], 
                 mode='lines+markers',
-                marker=dict(color='rgba(0, 130, 150, 0.8)'), 
+                marker=dict(color='rgba(91, 55, 103, 0.8)'), 
                 name="Participant's learning rate",
                 showlegend=False
             ), row=2, col=1
@@ -205,7 +205,7 @@ def plot_session_behav_comp(participant_str, condition_str, directory_path, base
                 x=task_session_comp_df['outcome_num']+1, 
                 y=task_session_comp_df['cleaned_learning_rate_ideal_observer'], 
                 mode='lines+markers',
-                marker=dict(color='rgba(0, 130, 150, 0.8)'), 
+                marker=dict(color='rgba(91, 55, 103, 0.8)'), 
                 name='Normative model learning rate',
                 showlegend=False
             ), row=2, col=2
