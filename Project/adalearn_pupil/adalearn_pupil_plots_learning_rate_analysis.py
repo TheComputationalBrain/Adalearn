@@ -708,10 +708,9 @@ fig = go.Figure()
 fig.add_trace(go.Scatter(
             x=behav_group_conf_lr_df['prior_conf_bin_label'],
             y=behav_group_conf_lr_df['group_avg_lr'], 
-            mode='lines+markers', 
-            showlegend=False, 
-            line = dict(color = 'teal', width=2),
-            marker=dict(size=19),
+            mode='markers', 
+            showlegend=False,
+            marker=dict(size=19, color='rgba(0, 130, 150, 0.8)'),
             error_y=dict(
                 type='data',
                 array=behav_group_conf_lr_df['group_sem_lr'],
@@ -864,10 +863,9 @@ for i in rel_pos_df['rel_pos'].unique():
 
 grouped_rel_pos_df = pd.DataFrame(grouped_rel_pos_dict)
 
+# Prior Confidence around change points
+fig = go.Figure()
 
-fig = make_subplots(rows=2, cols=1, shared_xaxes=False)
-
-# Prior confidence
 fig.add_trace(go.Scatter(
     x=pd.concat([grouped_rel_pos_df['rel_pos'], grouped_rel_pos_df['rel_pos'][::-1]]),
     y=pd.concat([
@@ -879,79 +877,47 @@ fig.add_trace(go.Scatter(
     line=dict(color='rgba(255,255,255,0)'), 
     hoverinfo="skip",
     showlegend=False
-), row=1, col=1)
+))
 
 fig.add_trace(go.Scatter(
     x=grouped_rel_pos_df['rel_pos'],
     y=grouped_rel_pos_df['conf_mean'],
     mode='lines',
     line=dict(color='rgba(0, 130, 150, 0.8)', width=3),
-    name='Prior Confidence'
-), row=1, col=1)
-
-
-# Change point probability
-fig.add_trace(go.Scatter(
-    x=pd.concat([grouped_rel_pos_df['rel_pos'], grouped_rel_pos_df['rel_pos'][::-1]]),
-    y=pd.concat([
-        grouped_rel_pos_df['cpp_mean'] - grouped_rel_pos_df['cpp_sem'],
-        (grouped_rel_pos_df['cpp_mean'] + grouped_rel_pos_df['cpp_sem'])[::-1]
-    ]),
-    fill='toself',
-    fillcolor='rgba(0, 130, 150, 0.2)',
-    line=dict(color='rgba(255,255,255,0)'),
-    hoverinfo="skip",
+    name='Prior confidence',
     showlegend=False
-), row=2, col=1)
+))
 
-fig.add_trace(go.Scatter(
-    x=grouped_rel_pos_df['rel_pos'],
-    y=grouped_rel_pos_df['cpp_mean'],
-    mode='lines',
-    line=dict(color='rgba(0, 130, 150, 0.8)', width=3),
-    name='CPP'
-), row=2, col=1)
-
-
-# Add vertical and horizontal lines for all subplots
-for i in range(1, 3):  # Rows 1 to 3
-    fig.add_shape(type="line", x0=0, x1=0, y0=0, y1=1, 
+fig.add_shape(type="line", x0=0, x1=0, y0=0, y1=1, 
                   line=dict(dash="dot", color="black"), 
-                  xref="x", yref="y domain", row=i, col=1)
-    
+                  xref="x", yref="y domain")
+
 
 # Update x-axes
-for i in range(1, 3):
-    fig.update_xaxes(
+fig.update_xaxes(
     title_text="Outcomes relative to change point",
     showline=True,
     linewidth=1,
     linecolor='black',
     tickmode='array',
     tickvals=list(range(-5, 6)),
-    ticktext=["", "", "", "", "", "(change point)", "", "", "", "", ""],
+    ticktext=["-5", "-4", "-3", "-2", "-1", "1", "2", "3", "4", "5", "6"],
     tickangle=0,
     range=[-5.5, 6.5], 
-    row=i, col=1
 )
 
-# Update y-axes
 fig.update_yaxes(showline=True, linewidth=1, linecolor='black', 
-                 title_text='Prior confidence', row=1, col=1)
-
-fig.update_yaxes(showline=True, linewidth=1, linecolor='black', 
-                 title_text='Change point probability', row=2, col=1)
-
+                 title_text='Prior confidence')
 
 # Update layout
-fig.update_layout(height=2*1200, width=1800, plot_bgcolor='rgba(255, 255, 255, 1)', font=dict(size=42, family="Times New Roman"), showlegend=False)
+fig.update_layout(height=1200, width=1800, plot_bgcolor='rgba(255, 255, 255, 1)', font=dict(size=42, family="Times New Roman"), showlegend=False)
 
 # Save the figure to the group-level folder
 plot_dir = os.path.join(base_dir, "plots")
 os.makedirs(plot_dir, exist_ok=True)
 
 # Base filename (without extension)
-base_filename = f"adalearn_pupil-group_level_prior_conf_and_cpp_around_change_points"
+base_filename = f"adalearn_pupil-group_level_prior_conf_around_change_points"
 base_filepath = os.path.join(plot_dir, base_filename)
 
 # Save as PNG
@@ -960,7 +926,70 @@ fig.write_image(f"{base_filepath}.png")
 # Save as SVG
 fig.write_image(f"{base_filepath}.svg") 
 
-
 fig.show()
 
-   
+
+# Change point probability around change points
+fig = go.Figure()
+
+fig.add_trace(go.Scatter(
+    x=pd.concat([grouped_rel_pos_df['rel_pos'], grouped_rel_pos_df['rel_pos'][::-1]]),
+    y=pd.concat([
+        grouped_rel_pos_df['cpp_mean'] - grouped_rel_pos_df['cpp_sem'],
+        (grouped_rel_pos_df['cpp_mean'] + grouped_rel_pos_df['cpp_sem'])[::-1]
+    ]),
+    fill='toself',
+    fillcolor='rgba(0, 130, 150, 0.2)',
+    line=dict(color='rgba(255,255,255,0)'), 
+    hoverinfo="skip",
+    showlegend=False
+))
+
+fig.add_trace(go.Scatter(
+    x=grouped_rel_pos_df['rel_pos'],
+    y=grouped_rel_pos_df['cpp_mean'],
+    mode='lines',
+    line=dict(color='rgba(0, 130, 150, 0.8)', width=3),
+    name='Change point probability',
+    showlegend=False
+))
+
+fig.add_shape(type="line", x0=0, x1=0, y0=0, y1=1, 
+                  line=dict(dash="dot", color="black"), 
+                  xref="x", yref="y domain")
+
+
+# Update x-axes
+fig.update_xaxes(
+    title_text="Outcomes relative to change point",
+    showline=True,
+    linewidth=1,
+    linecolor='black',
+    tickmode='array',
+    tickvals=list(range(-5, 6)),
+    ticktext=["-5", "-4", "-3", "-2", "-1", "1", "2", "3", "4", "5", "6"],
+    tickangle=0,
+    range=[-5.5, 6.5], 
+)
+
+fig.update_yaxes(showline=True, linewidth=1, linecolor='black', 
+                 title_text='Change point probability')
+
+# Update layout
+fig.update_layout(height=1200, width=1800, plot_bgcolor='rgba(255, 255, 255, 1)', font=dict(size=42, family="Times New Roman"), showlegend=False)
+
+# Save the figure to the group-level folder
+plot_dir = os.path.join(base_dir, "plots")
+os.makedirs(plot_dir, exist_ok=True)
+
+# Base filename (without extension)
+base_filename = f"adalearn_pupil-group_level_cpp_around_change_points"
+base_filepath = os.path.join(plot_dir, base_filename)
+
+# Save as PNG
+fig.write_image(f"{base_filepath}.png")
+
+# Save as SVG
+fig.write_image(f"{base_filepath}.svg") 
+
+fig.show()

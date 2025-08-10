@@ -89,13 +89,9 @@ for i in pupil_nobc_around_cp['stimulus_rel_cp'].unique():
 
 grouped_pupil_nobc_cp_rel_pos_df = pd.DataFrame(grouped_pupil_nobc_cp_pos_dict)
 
+# Baseline corrected pupil effect window
+fig = go.Figure()
 
-
-fig = make_subplots(rows=2, cols=1, shared_xaxes=False, subplot_titles=
-                    ['Average baseline corrected pupil signal across effect window',
-                     'Average non-baseline corrected pupil signal across effect window'])
-
-# Pupil baseline-corrected effect window
 fig.add_trace(go.Scatter(
     x=pd.concat([
         grouped_pupil_bc_cp_rel_pos_df['rel_pos'], 
@@ -110,17 +106,58 @@ fig.add_trace(go.Scatter(
     line=dict(color='rgba(255,255,255,0)'),
     hoverinfo="skip",
     showlegend=False
-), row=1, col=1)
+))
 
 fig.add_trace(go.Scatter(
     x=grouped_pupil_bc_cp_rel_pos_df['rel_pos'],
     y=grouped_pupil_bc_cp_rel_pos_df['pupil_bc_mean'],
     mode='lines',
     line=dict(color='rgba(0, 130, 150, 0.8)', width=3),
-    name='Pupil (Baseline Corrected)'
-), row=1, col=1)
+    name='Pupil (Baseline corrected effect window)',
+    showlegend=True
+))
 
-# Pupil nonbaseline-corrected effect window
+fig.add_shape(type="line", x0=0, x1=0, y0=0, y1=1, 
+                line=dict(dash="dot", color="black"), 
+                xref="x", yref="y domain")
+    
+
+fig.update_xaxes(
+    title_text="Outcomes relative to change point",
+    showline=True,
+    linewidth=1,
+    linecolor='black',
+    tickmode='array',
+    tickvals=list(range(-5, 6)),
+    ticktext=["-5", "-4", "-3", "-2", "-1", "1", "2", "3", "4", "5", "6"],
+    range=[-5.5, 6.5]
+)
+
+fig.update_yaxes(showline=True, linewidth=1, linecolor='black', 
+                 title_text='Baseline corrected pupil effect window (z-score)')
+
+fig.update_layout(height=1200, width=1800, plot_bgcolor='rgba(255, 255, 255, 1)', font=dict(size=42, family="Times New Roman"), showlegend=False)
+
+# Save the figure to the group-level folder
+plot_dir = os.path.join(base_dir, "plots")
+os.makedirs(plot_dir, exist_ok=True)
+
+# Base filename (without extension)
+base_filename = f"adalearn_pupil-group_level_bc_pupil_responses_around_change_points"
+base_filepath = os.path.join(plot_dir, base_filename)
+
+# Save as PNG
+fig.write_image(f"{base_filepath}.png")
+
+# Save as SVG
+fig.write_image(f"{base_filepath}.svg") 
+
+
+fig.show()
+
+# Non-baseline corrected pupil effect window
+fig = go.Figure()
+
 fig.add_trace(go.Scatter(
     x=pd.concat([
         grouped_pupil_nobc_cp_rel_pos_df['rel_pos'], 
@@ -135,55 +172,44 @@ fig.add_trace(go.Scatter(
     line=dict(color='rgba(255,255,255,0)'),
     hoverinfo="skip",
     showlegend=False
-), row=2, col=1)
+))
 
 fig.add_trace(go.Scatter(
     x=grouped_pupil_nobc_cp_rel_pos_df['rel_pos'],
     y=grouped_pupil_nobc_cp_rel_pos_df['pupil_nobc_mean'],
     mode='lines',
     line=dict(color='rgba(0, 130, 150, 0.8)', width=3),
-    name='Pupil (Non-Baseline Corrected)'
-), row=2, col=1)
+    name='Pupil (Non-baseline corrected effect window)',
+    showlegend=True
+))
 
-
-# Add vertical and horizontal lines for all subplots
-for i in range(1, 3):  # Rows 1 to 3
-    fig.add_shape(type="line", x0=0, x1=0, y0=0, y1=1, 
-                  line=dict(dash="dot", color="black"), 
-                  xref="x", yref="y domain", row=i, col=1)
+fig.add_shape(type="line", x0=0, x1=0, y0=0, y1=1, 
+                line=dict(dash="dot", color="black"), 
+                xref="x", yref="y domain")
     
 
-# Update x-axes
-for i in range(1, 3):
-    fig.update_xaxes(
+fig.update_xaxes(
     title_text="Outcomes relative to change point",
     showline=True,
     linewidth=1,
     linecolor='black',
     tickmode='array',
     tickvals=list(range(-5, 6)),
-    ticktext=["", "", "", "", "", "(change point)", "", "", "", "", ""],
-    range=[-5.5, 6.5],
-    row=i, col=1
+    ticktext=["-5", "-4", "-3", "-2", "-1", "1", "2", "3", "4", "5", "6"],
+    range=[-5.5, 6.5]
 )
 
-# Update y-axes
 fig.update_yaxes(showline=True, linewidth=1, linecolor='black', 
-                 title_text='Pupil diameter signal (z-score)', row=1, col=1)
+                 title_text='Non-baseline corrected pupil effect window (z-score)')
 
-fig.update_yaxes(showline=True, linewidth=1, linecolor='black', 
-                 title_text='Pupil diameter signal (z-score)', row=2, col=1)
-
-
-# Update layout
-fig.update_layout(height=1200*2, width=1800, plot_bgcolor='rgba(255, 255, 255, 1)', font=dict(size=42, family="Times New Roman"), showlegend=False)
+fig.update_layout(height=1200, width=1800, plot_bgcolor='rgba(255, 255, 255, 1)', font=dict(size=42, family="Times New Roman"), showlegend=False)
 
 # Save the figure to the group-level folder
 plot_dir = os.path.join(base_dir, "plots")
 os.makedirs(plot_dir, exist_ok=True)
 
 # Base filename (without extension)
-base_filename = f"adalearn_pupil-group_level_pupil_responses_around_change_points"
+base_filename = f"adalearn_pupil-group_level_nobc_pupil_responses_around_change_points"
 base_filepath = os.path.join(plot_dir, base_filename)
 
 # Save as PNG
@@ -194,7 +220,6 @@ fig.write_image(f"{base_filepath}.svg")
 
 
 fig.show()
-
 
 ##################################################################################pupil effects on learning rate 
 pupil_v_lr_regress_df = dataframes['pupil_v_lr_regress_coef_df']
