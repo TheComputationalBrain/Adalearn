@@ -10,8 +10,8 @@ import plotly.io as pio
 import plotly.graph_objects as go
 pio.renderers.default='browser'
 
-root_dir = Path(__file__).resolve().parent.parent.parent
-sys.path.append(str(root_dir))
+parent_dir = Path(__file__).resolve().parent.parent.parent
+sys.path.append(str(parent_dir))
 
 import adalearn_analysis_group_level_functions_data_utilities as group_data_utils
 import adalearn_analysis_group_level_functions_pupil_analysis as group_pupil
