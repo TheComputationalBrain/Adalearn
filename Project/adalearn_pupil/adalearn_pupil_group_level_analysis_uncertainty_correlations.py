@@ -17,8 +17,9 @@ The following scripts need to be run before running this analysis to obtain the 
 import sys
 import pandas as pd
 import numpy as np
+import scipy.stats as stats
 from pathlib import Path
-from statsmodels.stats.multitest import fdrcorrection
+from statsmodels.stats.multitest import multipletests
 
 parent_dir = Path(__file__).resolve().parent.parent
 sys.path.append(str(parent_dir))
@@ -40,189 +41,168 @@ dataframes = group_data_utils.load_sample_csvs(
         'update_freq_df', 
         'uncertainty_params_on_lr_df',
         'behav_v_model_estimate_corr_df',
-        'pupil_regress_coef_df',
-        'pupil_regress_coef_nobc_df',
-        'cluster_permutation_analysis', 
-        'cluster_permutation_analysis_nobc',
         ],
     prefix='sample_level_analysis-ses_01-task_Adalearn_Pupil-')
 
+foucault_meyniel_dataframes = group_data_utils.load_sample_csvs(
+    directory_path=Path(base_dir, 'foucault_meyniel_2024_reanalysis'),
+    substrings=[
+        'foucault_meyniel_2024_comp_params_df',
+        'foucault_meyniel_2024_estimate_v_model_corr_df',
+        'foucault_meyniel_2024_update_freq_df',
+        'foucault_meyniel_2024_ind_volatility_df',
+        'foucault_meyniel_2024_uncert_lr_regress_coefs_df'
+    ],
+    prefix='sample_level_analysis-ses_01-task_Adalearn_Pupil-'
+)
 
-# Extract key subsets from loaed dataframes
+# Extract key subsets from loaded dataframes
+# Present study
 uncertainty_df = dataframes['uncertainty_params_on_lr_df']
-conf_lr_coef = uncertainty_df[uncertainty_df['variable'] == 'conf_zscore']['coefficient']
-cpp_lr_coef = uncertainty_df[uncertainty_df['variable'] == 'cpp_zscore']['coefficient']
-est_model_corr = dataframes['behav_v_model_estimate_corr_df'][dataframes['behav_v_model_estimate_corr_df']['variable']=='ideal_observer']
+conf_lr_coef = uncertainty_df[uncertainty_df['variable'] == 'conf_zscore']['coefficient'].copy()
+cpp_lr_coef = uncertainty_df[uncertainty_df['variable'] == 'cpp_zscore']['coefficient'].copy()
+est_model_corr = dataframes['behav_v_model_estimate_corr_df'][dataframes['behav_v_model_estimate_corr_df']['variable']=='ideal_observer'].copy()
+update_freq = dataframes['update_freq_df'].copy()
+individual_pc = dataframes['individual_p_c_df'].copy()
 
-demographics = dataframes['demographics_df']
-update_freq = dataframes['update_freq_df']
-individual_pc = dataframes['individual_p_c_df']
+present_study_var_df = update_freq.copy()
+present_study_var_df['est_model_corr'] = est_model_corr['correlation'].values
+present_study_var_df['individual_pc'] = individual_pc['optimal_p_c']
+present_study_var_df['conf_lr_coef'] = conf_lr_coef.values
+present_study_var_df['cpp_lr_coef'] = cpp_lr_coef.values
+present_study_var_df['study'] = 'present_study'
 
-pupil_bc_coefs = dataframes['pupil_regress_coef_df']
-pupil_nobc_coefs = dataframes['pupil_regress_coef_nobc_df']
+# Foucault & Meyniel 2024 study
+foucault_meyniel_uncertainty_df = foucault_meyniel_dataframes['foucault_meyniel_2024_uncert_lr_regress_coefs_df'].copy()
+foucault_meyniel_conf_lr_coef = foucault_meyniel_uncertainty_df[foucault_meyniel_uncertainty_df['variable'] == 'conf_zscore']['coefficient'].copy()
+foucault_meyniel_cpp_lr_coef = foucault_meyniel_uncertainty_df[foucault_meyniel_uncertainty_df['variable'] == 'cpp_zscore']['coefficient'].copy()
+foucault_meyniel_est_model_corr = foucault_meyniel_dataframes['foucault_meyniel_2024_estimate_v_model_corr_df'][foucault_meyniel_dataframes['foucault_meyniel_2024_estimate_v_model_corr_df']['variable']=='ideal_observer'].copy()
+foucault_meyniel_update_freq = foucault_meyniel_dataframes['foucault_meyniel_2024_update_freq_df'].copy()
+foucault_meyniel_individual_pc = foucault_meyniel_dataframes['foucault_meyniel_2024_ind_volatility_df'].copy()
 
-#### Variables to correlate against the two uncertainty coefficients
-x_vars = {
-    'Age': demographics['Age'],
-    'EducationLevel': demographics['EducationLevel'],
-    'avg_update_percentage': update_freq['avg_update_percentage'],
-    'optimal_p_c': individual_pc['optimal_p_c'],
-    'est_corr': est_model_corr['correlation']
-}
 
-y_vars = {
-    'conf_lr_coef': conf_lr_coef,
-    'cpp_lr_coef': cpp_lr_coef
-}
+average_update_freq_list = []
 
-# Storing raw data in dataframes
-raw_lr_cor_data_dict = {}
+for participant in foucault_meyniel_update_freq['participant'].unique():
+    task_sessions = foucault_meyniel_update_freq[foucault_meyniel_update_freq['participant'] == participant]
 
-for x_key, x_data in x_vars.items():
-    # Always add or overwrite — this ensures it's added on first encounter
-    raw_lr_cor_data_dict[x_key] = x_data.reset_index(drop=True)
-
-for y_key, y_data in y_vars.items():
-    # Always add or overwrite — this ensures it's added on first encounter
-    raw_lr_cor_data_dict[y_key] = y_data.reset_index(drop=True)
-
-raw_lr_cor_data = pd.DataFrame(raw_lr_cor_data_dict)
-
-# Compute correlations for learning rate uncertainty effects
-results_lr = {}
-for y_key, y_data in y_vars.items():
-    for x_key, x_data in x_vars.items():
-        coef, pval = group_stats.corr_with_alt(x_data, y_data)
-        results_lr[(x_key, y_key)] = (coef, pval)
-
-# Extract p-values
-lr_pvals = [p for (_, p) in results_lr.values()]
-
-# Apply FDR correction
-lr_reject, lr_pvals_fdr = fdrcorrection(lr_pvals, alpha=0.05)
-
-# Update results_lr with adjusted p-values
-for i, key in enumerate(results_lr.keys()):
-    coef, _ = results_lr[key]
-    results_lr[key] = (coef, lr_pvals[i], lr_pvals_fdr[i], lr_reject[i])
-
-### Variables to correlate pupil effects against
-# Prepare filtered dataframes for pupil signal uncertainty effects (few participants due to exclusion due to excessive interpolation)
-exclude = dataframes['exclude_participants_pupil_analysis_df']['exclude_participant']
-
-filtered_demographics = demographics[~demographics['ParticipantNumber'].isin(exclude)]
-filtered_individual_pc = individual_pc[~individual_pc['participant'].isin(exclude)]
-filtered_update_freq = update_freq[~update_freq['participant'].isin(exclude)]
-filtered_estmodcor = est_model_corr[~est_model_corr['participant'].isin(exclude)]
-
-# Extracting pupil effects
-pupil_bc_effect = []
-pupil_nobc_effect = []
-
-for participant in pupil_bc_coefs['participant'].unique():
-    # Extracting the period in the epoch data where effects of uncertainty seen
-    epoch_bc_data = pupil_bc_coefs[pupil_bc_coefs['participant'] == participant]
-    epoch_nobc_data = pupil_nobc_coefs[pupil_nobc_coefs['participant'] == participant]
-
-    # Extracting cluster times to set window for regression and mediation analyses
-    effect_bc_variable = dataframes['cluster_permutation_analysis']['variable'].unique()[0]
-
-    baseline_cor_start_time, baseline_cor_end_time = group_pupil.extract_cluster_times(
-        dataframes['cluster_permutation_analysis'],
-        epoch_bc_data['time']
-    )
-
-    effect_nobc_variable = dataframes['cluster_permutation_analysis_nobc']['variable'].unique()[0]
-
-    nobc_start_time, nobc_end_time = group_pupil.extract_cluster_times(
-        dataframes['cluster_permutation_analysis_nobc'],
-        epoch_nobc_data['time']
-    )
-
-    epoch_bc_data = epoch_bc_data.set_index('time')
-    epoch_nobc_data = epoch_nobc_data.set_index('time')
-
-    # Baseline corrected response refers to the average of the pupil signal over the window of a significant effect of cpp within the peristimulus regression
-    filtered_pupil_data_bc = epoch_bc_data[f'{effect_bc_variable}'].loc[(epoch_bc_data.index >=  baseline_cor_start_time) & (epoch_bc_data.index <=  baseline_cor_end_time)]
-
-    average_bc_pupil_effect = np.array(filtered_pupil_data_bc.mean())
-
-    avg_pupil_bc_effect = pd.DataFrame({
+    average_update_freq_df = pd.DataFrame({
         'participant': [participant],
-        'avg_pupil_effect': [average_bc_pupil_effect.mean()]
+        'avg_update_percentage': [task_sessions['update_percentage'].mean()]
     })
 
-    pupil_bc_effect.append(avg_pupil_bc_effect)
+    average_update_freq_list.append(average_update_freq_df)
+
+foucault_meyniel_average_update_freq = pd.concat(average_update_freq_list, ignore_index=True)
+
+foucault_meyniel_var_df = foucault_meyniel_average_update_freq.copy()
+foucault_meyniel_var_df['est_model_corr'] = foucault_meyniel_est_model_corr['correlation'].values
+foucault_meyniel_var_df['individual_pc'] = foucault_meyniel_individual_pc['optimal_p_c']
+foucault_meyniel_var_df['conf_lr_coef'] = foucault_meyniel_conf_lr_coef.values
+foucault_meyniel_var_df['cpp_lr_coef'] = foucault_meyniel_cpp_lr_coef.values
+foucault_meyniel_var_df['study'] = 'foucault_meyniel_2024'
+
+# Combine both DataFrames for comparison
+combined_var_df = pd.concat([present_study_var_df, foucault_meyniel_var_df], ignore_index=True)
+
+# Store dataframes in dictionary
+study_dataframe_dict = {
+    'present_study': present_study_var_df,
+    'foucault_meyniel_2024': foucault_meyniel_var_df,
+    'combined': combined_var_df
+}
+
+# Comparison of average variables between studies
+exclude_cols = ['participant', 'study']
+
+cols_to_test = [col for col in present_study_var_df.select_dtypes(include='number').columns 
+                if col not in exclude_cols]
+
+ttest_results = []
+
+for col in cols_to_test:
+    data1 = present_study_var_df[col]
+    data2 = foucault_meyniel_var_df[col]
+
+    # Run independent t-test
+    t_stat, p_val = stats.ttest_ind(data1, data2, equal_var=False)  
     
-    # Non-baseline corrected response refers to the average of the pupil signal over the window of a significant effect of prior conf within the peristimulus regression
-    filtered_pupil_data_nobc = epoch_nobc_data[f'{effect_nobc_variable}'].loc[(epoch_nobc_data.index >= nobc_start_time) & (epoch_nobc_data.index <= 0)]
-
-    average_nobc_pupil_effect = np.array(filtered_pupil_data_nobc.mean())
-
-    avg_pupil_nobc_effect = pd.DataFrame({
-        'participant': [participant],
-        'avg_pupil_effect': [average_nobc_pupil_effect.mean()]
+    # Degrees of freedom for Welch's t-test
+    n1, n2 = len(data1), len(data2)
+    s1, s2 = np.var(data1, ddof=1), np.var(data2, ddof=1)
+    df = (s1/n1 + s2/n2)**2 / (((s1/n1)**2 / (n1 - 1)) + ((s2/n2)**2 / (n2 - 1)))
+    
+    ttest_results.append({
+        'column': col,
+        't_stat': t_stat,
+        'p_value': p_val,
+        'df': df,
+        'n1': n1,
+        'n2': n2,
+        'mean1': data1.mean(),
+        'mean2': data2.mean()
     })
 
-    pupil_nobc_effect.append(avg_pupil_nobc_effect)
+var_ttest_df = pd.DataFrame(ttest_results)
 
-# Concatenate all participant dataframes into a single dataframe
-pupil_bc_effect_df = pd.concat(pupil_bc_effect, ignore_index=True)
-pupil_nobc_effect_df = pd.concat(pupil_nobc_effect, ignore_index=True)
+reject, pvals_corrected, _, _ = multipletests(var_ttest_df['p_value'], 
+                                              alpha=0.05, 
+                                              method='fdr_bh')
 
-# Targets for pupil signal
-pupil_targets = {
-    'bc_pupil': pupil_bc_effect_df['avg_pupil_effect'],
-    'nobc_pupil': pupil_nobc_effect_df['avg_pupil_effect']
-}
+# Add adjusted p-values 
+var_ttest_df['p_value_adj'] = pvals_corrected
+var_ttest_df['reject_null'] = reject
 
-# Predictor variables after filtering
-x_vars_filtered = {
-    'Age': filtered_demographics['Age'],
-    'EducationLevel': filtered_demographics['EducationLevel'],
-    'avg_update_percentage': filtered_update_freq['avg_update_percentage'],
-    'optimal_p_c': filtered_individual_pc['optimal_p_c'],
-    'est_corr': filtered_estmodcor['correlation']
-}
+# Correlations within each study dataframe
+correlation_results = []
 
-# Storing raw pupil correlations in dataframes
-raw_pupil_cor_data_dict = {}
+target_vars = ['conf_lr_coef', 'cpp_lr_coef']
+exclude_vars = target_vars + ['participant', 'study']  
 
-for x_key, x_data in x_vars_filtered.items():
-    # Always add or overwrite — this ensures it's added on first encounter
-    raw_pupil_cor_data_dict[x_key] = x_data.reset_index(drop=True)
+for key, df in study_dataframe_dict.items():
+    for target in target_vars:
+        for col in df.columns:
+            if col not in exclude_vars:
+                x = df[col].dropna()
+                y = df[target].dropna()  # correlate within same study dataframe
 
-for y_key, y_data in pupil_targets.items():
-    # Always add or overwrite — this ensures it's added on first encounter
-    raw_pupil_cor_data_dict[y_key] = y_data.reset_index(drop=True)
+                # Align indices after dropping NaNs
+                common_idx = x.index.intersection(y.index)
+                x = x.loc[common_idx]
+                y = y.loc[common_idx]
 
-raw_pupil_cor_data = pd.DataFrame(raw_pupil_cor_data_dict)
+                if len(common_idx) > 1:  # need at least 2 points
+                    r, p = stats.pearsonr(x, y)
+                    correlation_results.append({
+                        'study': key,
+                        'target': target,
+                        'predictor': col,
+                        'r': r,
+                        'p_value': p,
+                        'n': len(common_idx)
+                    })
 
-# Compute correlations for pupil effects
-results_pupil = {}
-for y_key, y_data in pupil_targets.items():
-    for x_key, x_data in x_vars_filtered.items():
-        coef, pval = group_stats.corr_with_alt(x_data, y_data)
-        results_pupil[(x_key, y_key)] = (coef, pval)
+correlation_df = pd.DataFrame(correlation_results)
 
-pupil_pvals = [p for (_, p) in results_pupil.values()]
+# Apply multiple comparisons correction per study
+adjusted_results = []
+for study, subdf in correlation_df.groupby('study'):
+    reject, pvals_corrected, _, _ = multipletests(subdf['p_value'], 
+                                                  alpha=0.05, 
+                                                  method='fdr_bh')
+    subdf = subdf.copy()
+    subdf['p_value_adj'] = pvals_corrected
+    subdf['reject_null'] = reject
+    adjusted_results.append(subdf)
 
-pupil_reject, pupil_pvals_fdr = fdrcorrection(pupil_pvals, alpha=0.05)
-
-for i, key in enumerate(results_pupil.keys()):
-    coef, _ = results_pupil[key]
-    results_pupil[key] = (coef, pupil_pvals[i], pupil_pvals_fdr[i], pupil_reject[i])
-
-# Collate correlation coefficients into dataframes
-lr_effects_df = group_data_utils.results_dict_to_df(results_lr)
-pupil_effects_df = group_data_utils.results_dict_to_df(results_pupil)
+correlation_df = pd.concat(adjusted_results, ignore_index=True)
 
 # Saving group level data to .csv files
 group_data_utils.save_sample_dataframes_to_csv(dataframes={
-    "uncertainty_lr_effects_cor_df": lr_effects_df,
-    "uncertainty_pupil_effects_cor_df": pupil_effects_df,
-    "uncertainty_lr_cor_data": raw_lr_cor_data,
-    "uncertainty_pupil_cor_data": raw_pupil_cor_data
+    "present_study_corr_var_df": present_study_var_df,
+    "foucault_meyniel_2024_corr_var_df": foucault_meyniel_var_df,
+    "present_v_foucault_meyniel_var_ttest_df": var_ttest_df,
+    "uncertainty_determinants_corr_df": correlation_df,
     }, 
 directory_path=base_dir,
 condition_str=condition_str,

@@ -126,6 +126,49 @@ fig.write_image(f"{base_filepath}.svg")
 
 fig.show()
 
+# All individual baseline corrected pupil responses on the same plot
+fig = go.Figure()
+
+for participant in group_avg_pupil_df['participant'].unique():
+    participant_data = group_avg_pupil_df[group_avg_pupil_df['participant'] == participant]
+
+    fig.add_trace(go.Scatter(x=participant_data['time'], y=participant_data['pupil_signal'], mode='lines', line=dict(color='rgba(0, 130, 150, 0.4)'), showlegend=False))
+
+fig.add_vline(x=0, line_dash='dot', line=dict(color='black', width=1.5))
+fig.add_hline(y=0, line_dash = 'dot', line=dict(color='black', width=1.5))
+
+fig.update_xaxes(
+        showline=True, 
+        linewidth=1.5, 
+        linecolor='black', 
+        title_text="Time relative to outcome presentation (s)",
+    )
+
+fig.update_yaxes(
+        showline=True, 
+        linewidth=1.5, 
+        linecolor='black',
+        title_text = 'Pupil diameter signal (z-score)' 
+    )
+
+fig.update_layout(height=1200, width=1800, plot_bgcolor='rgba(255, 255, 255, 1)', font=dict(size=42, family="Times New Roman"))
+
+# Save the figure to the group-level folder
+plot_dir = os.path.join(base_dir, "plots")
+os.makedirs(plot_dir, exist_ok=True)
+
+# Base filename (without extension)
+base_filename = f"adalearn_pupil-average_baseline_corrected_pupil_signal_all_participant_traces"
+base_filepath = os.path.join(plot_dir, base_filename)
+
+# Save as PNG
+fig.write_image(f"{base_filepath}.png")
+
+# Save as SVG
+fig.write_image(f"{base_filepath}.svg") 
+
+fig.show() 
+
 # Plot the group-level average pupil response
 
 group_pupil_dict = {'mean_pupil': [], 'sem_pupil': [], 'time': []}

@@ -131,7 +131,6 @@ group_filtered_lr_around_cp_df = pd.concat(group_filtered_lr_around_cp_list, ign
 group_lr_corr_around_cp_df = pd.concat(group_lr_corr_around_cp_list, ignore_index=True)
 group_uncertainty_params_on_lr_df = pd.concat(group_uncertainty_params_on_lr_list)
 group_averaged_lr_session_df = pd.concat(group_averaged_lr_session_list, ignore_index=True)
-#group_lr_metrics_across_sessions_df = pd.concat(group_lr_metrics_across_sessions_list, ignore_index=True)
 
 # Getting the average update percentage across task sessions for each participant
 average_update_percent_dict = {

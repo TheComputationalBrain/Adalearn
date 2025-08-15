@@ -36,7 +36,7 @@ dataframes = group_data_utils.load_sample_csvs(
         'pupil_v_lr_coef_ttest_df',
         'pupil_bc_around_cp',
         'pupil_nobc_around_cp',
-        'pupil_lr_uncert_mediation',
+        'pupil_lr_uncert_nobc_mediation',
         'exclude_participants_pupil_analysis_df', 
         'outcome_epochs_time_df', 
         'outcome_epoched_pupil_df',
@@ -392,10 +392,9 @@ fig = make_subplots(
 fig.add_trace(go.Scatter(
     x=behav_group_pupil_bc_lr_df['pupil_bc_bin_label'],
     y=behav_group_pupil_bc_lr_df['group_avg_lr'], 
-    mode='lines+markers', 
-    name='Baseline corrected', 
-    line=dict(color='rgba(128, 0, 128, 0.8)', width=2),
-    marker=dict(size=19),
+    mode='markers', 
+    name='Phasic-associated', 
+    marker=dict(color='rgba(128, 0, 128, 0.8)', size=19),
     error_y=dict(
         type='data',
         array=behav_group_pupil_bc_lr_df['group_sem_lr'],
@@ -406,10 +405,9 @@ fig.add_trace(go.Scatter(
 fig.add_trace(go.Scatter(
     x=behav_group_pupil_nobc_lr_df['pupil_nobc_bin_label'],
     y=behav_group_pupil_nobc_lr_df['group_avg_lr'], 
-    mode='lines+markers', 
-    name='Non-baseline corrected', 
-    line=dict(color='rgba(255, 165, 0, 0.8)', width=2),
-    marker=dict(size=19),
+    mode='markers', 
+    name='Tonic-associated', 
+    marker=dict(color='rgba(255, 165, 0, 0.8)', size=19),
     error_y=dict(
         type='data',
         array=behav_group_pupil_nobc_lr_df['group_sem_lr'],
@@ -429,7 +427,7 @@ x_jittered_bc = np.random.normal(loc=0, scale=jitter_width, size=len(pupil_bc_co
 x_jittered_nobc = np.random.normal(loc=1, scale=jitter_width, size=len(pupil_nobc_coef))
 
 fig.add_trace(go.Bar(
-    name='Baseline corrected pupil signal',
+    name='Phasic-associated pupil signal',
     x=[0], y=[pupil_v_lr_bc_mean],
     error_y=dict(type='data', array=[pupil_v_lr_bc_sem]),
     marker=dict(color='rgba(128, 0, 128, 0.5)'),
@@ -440,7 +438,7 @@ fig.add_trace(go.Bar(
 
 # Bar 2
 fig.add_trace(go.Bar(
-    name='Non-baseline corrected pupil signal',
+    name='Tonic-associated pupil signal',
     x=[1], y=[pupil_v_lr_nobc_mean],
     error_y=dict(type='data', array=[pupil_v_lr_nobc_sem]),
     marker=dict(color='rgba(255, 165, 0, 0.5)'),
@@ -567,7 +565,7 @@ fig.update_layout(
         anchor='y2',
         tickmode='array',
         tickvals=[0, 1],
-        ticktext=['Baseline corrected', 'Non-baseline corrected'],
+        ticktext=['Phasic-associated', 'Tonic-associated'],
         showline=True,        
         linewidth=1.5,          
         linecolor='black',    
@@ -620,7 +618,7 @@ fig.write_image(f"{base_filepath}.svg")
 fig.show()
 
 ############################################################################################### Mediation analysis
-mediation_group = dataframes['pupil_lr_uncert_mediation']
+mediation_group = dataframes['pupil_lr_uncert_nobc_mediation']
 
 
 def format_annotation_text(title, coef, sem, ci_lower, ci_upper):

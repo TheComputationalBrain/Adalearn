@@ -98,7 +98,7 @@ for participant in participant_list:
 
     outcome_onsets_nobc, outcome_nums_nobc, outcome_epoched_pupil_nobc_df, outcome_blink_ratio_nobc_df, outcome_epochs_to_remove_nobc, outcome_epochs_to_remove_nobc_df = pupil.all_outcome_pupil_epochs(directory_path=directory_path, participant_str=participant_str, list_subject_selected=[participant], condition_str=condition_str, condition_task_sessions=task_sessions, from_session=from_session, to_session=to_session, pupil_trig_df=pupil_trig_df, baseline_cor=[], variable_df=None, variable_column=None, select_eye=True, remove_epochs=True, plot_averaged_pupil_response=False, plot_raster_pupil_response=False)
 
-    # Excluding participant if number of epochs removed due to excessive interpolation exceeds 50%
+    # Excluding participant if number of epochs removed due to excessive interpolation exceeds 55% (Was initially defined as 50% [which is used in the supplement dataset], but 2 participants were very close to this threshold. Prioritised maximizing participant data retention, so increased threshold to 55%).
     percent_epochs_removed = outcome_blink_ratio_df['above_threshold'].sum() / len(outcome_blink_ratio_df) * 100
     if percent_epochs_removed >= 55:
         print(f"\nMore than 55% epochs removed due to excessive interpolation for {participant_str} — excluding from further pupil analysis.")

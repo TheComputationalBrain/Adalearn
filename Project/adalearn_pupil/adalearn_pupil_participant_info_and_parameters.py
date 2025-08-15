@@ -6,7 +6,7 @@ from pathlib import Path
 
 import adalearn_analysis_participant_level_functions_participant_info as participant_info
 
-
+project_dir = '/home/aarongreenhouse-tucknott/Documents/Python/Ada_Learn/Analysis/Project'
 base_dir = '/home/aarongreenhouse-tucknott/Documents/Python/Ada_Learn/Analysis/Project/adalearn_pupil'
 
 selected_participant = 36
