@@ -1,0 +1,10 @@
+# Ignore folders
+misc
+
+# Ignore files
+adalearn_pupil/adalearn_pupil_participant_level_analysis_regression_pupil.py
+adalearn_pupil/adalearn_pupil_participant_level_analysis_pupil.py
+adalearn_pupil/adalearn_pupil_participant_level_analysis_pupil_plot_checks.py
+adalearn_pupil/adalearn_pupil_participant_level_analysis_comp.py
+adalearn_pupil/adalearn_pupil_participant_level_analysis_comp_analysis.py
+adalearn_pupil/adalearn_pupil_participant_level_analysis_behav.py
