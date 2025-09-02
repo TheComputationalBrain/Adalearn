@@ -1,5 +1,5 @@
 """
-This script reanalyses the uncertainty determinants of learning rate across participants in the Foucault & Meyniel 2024 study. It also derives update frequency and individual volatility estimates that will be used in future correlation analysis. The results are saved to .csv files. The data from the Foucault & Meyniel 2024 study needs to be downloaded first before running the script. To download the data follow the instructions outlined in the README.md file on the repository: https://github.com/cedricfoucault/ada-learn.
+This script reanalyses the uncertainty determinants of learning rate across participants in the Foucault & Meyniel 2024 study. It also derives update frequency and individual volatility estimates that will be used in future correlation analysis. The results are saved to .csv files. The data from the Foucault & Meyniel 2024 study needs to be downloaded first. Running the script automatically clones the repository: https://github.com/cedricfoucault/ada-learn.
 """
 import os
 import sys
