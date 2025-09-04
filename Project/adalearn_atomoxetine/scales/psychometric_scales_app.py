@@ -20,10 +20,9 @@ if page == "Informations du participant":
     st.title("Informations du participant")
 
     time_points = {
-        'time1': 'Baseline (H:-0.5)',
-        'time2': '1 hour after admin (H:1)',
-        'time3': 'Post task (H:3)'
-    }
+        'time1': 'Baseline (H:0)',
+        'time2': 'Post task (H:3)'    
+        }
 
     with st.form("participant_info_form"):
         participant_id = st.text_input("ID du participant")
@@ -46,7 +45,8 @@ if page == "Informations du participant":
                 st.session_state.assessment_time = selected_label  
                 st.session_state.info_collected = True
                 st.session_state.page = "STAI-Y"
-                st.rerun()
+                st.session_state._rerun_triggered = True
+                st.stop()
 
 
 # --- Page 2: STAI Questionnaire ---
@@ -182,7 +182,8 @@ elif page == "STAI-Y":
 
             if st.button("Suivant"):
                 st.session_state.page = "BDI-II"  # or your next page key
-                st.rerun()
+                st.session_state._rerun_triggered = True
+                st.stop()
 
 # --- Page 3: BDI Questionnaire ---
 elif page == "BDI-II":
@@ -359,10 +360,12 @@ elif page == "BDI-II":
             if st.button("Voir les résultats BDI-II"):
                 st.subheader("Réponses BDI-II")
                 st.dataframe(st.session_state.bdi_results_df)
+                st.success(f"Score Total : {st.session_state.bdi_results_df['total_score'].iloc[0]}")
 
             if st.button("Suivant"):
                 st.session_state.page = "EVA"  # your next page key
-                st.rerun()
+                st.session_state._rerun_triggered = True
+                st.stop()
 
 # --- Page 4: Visual Analogue Scales ---
 elif page == "EVA":
@@ -406,10 +409,14 @@ elif page == "EVA":
             if st.button("Voir les résultats EVA"):
                 st.subheader("Réponses EVA")
                 st.dataframe(st.session_state.eva_results_df)
+                st.success(f"Score Fatigue: {st.session_state.eva_results_df['Fatigue'].iloc[0]}")
+                st.success(f"Score Tristesse: {st.session_state.eva_results_df['Sadness'].iloc[0]}")
+                st.success(f"Score Anxiété: {st.session_state.eva_results_df['Anxiety'].iloc[0]}")
 
             if st.button("Suivant"):
                 st.session_state.page = "Téléchargement"  # your next page key
-                st.rerun()
+                st.session_state._rerun_triggered = True
+                st.stop()
 
 # --- Page 5: Download data ---
 elif page == "Téléchargement":
