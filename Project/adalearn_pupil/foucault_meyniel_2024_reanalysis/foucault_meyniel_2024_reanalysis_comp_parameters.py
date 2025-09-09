@@ -12,13 +12,13 @@ from pathlib import Path
 parent_dir = Path(__file__).resolve().parent.parent.parent
 sys.path.append(str(parent_dir))
 
-from adalearn_pupil.adalearn_pupil_participant_info_and_parameters import base_dir, project_dir, exclude_zero, ESTIMATE_PRIOR, P_C, P1_MIN, P1_MAX, RESOL
+from adalearn_pupil.adalearn_pupil_participant_info_and_parameters import BASE_DIR, PROJECT_DIR, EXCLUDE_ZERO, ESTIMATE_PRIOR, P_C, P1_MIN, P1_MAX, RESOL
 
 import adalearn_analysis_participant_level_functions_behav as behav
 import adalearn_analysis_participant_level_functions_comp as comp
 import adalearn_analysis_group_level_functions_data_utilities as group_data_utils
 
-model_function_dir = Path(f'{project_dir}/external_reference_functions').resolve()
+model_function_dir = Path(f'{PROJECT_DIR}/external_reference_functions').resolve()
 sys.path.append(model_function_dir)
 from model_learner import ideal_learner_prob_estimates_from_outcomes
 
@@ -42,7 +42,7 @@ else:
     print(f"Repository '{repo_name}' already exists at {repo_path}")
 
 # Defining directory to save results
-directory_path = os.path.join(base_dir, 'foucault_meyniel_2024_reanalysis')
+directory_path = os.path.join(BASE_DIR, 'foucault_meyniel_2024_reanalysis')
 
 # Check if it exists; if not, create it
 if not os.path.exists(directory_path):
@@ -176,14 +176,14 @@ for participant, behavioural_df in participant_dfs.items():
     learning_rate_analysis_dict = comp.uncertainty_on_learning_rate_participant_level(
         participant_str=participant, condition_str="01", directory_path=directory_path,
         computational_var_df=computational_var_df, n_bins=6, parameter_estimate='estimate',
-        exclude_zero=exclude_zero, include_interaction=True, plot_corr_subplots=False
+        exclude_zero=EXCLUDE_ZERO, include_interaction=True, plot_corr_subplots=False
     )
     coef_df = learning_rate_analysis_dict['uncertainty_v_lr_df']
     coef_df['participant'] = participant
     uncert_outcome_sub_list.append(coef_df)
 
     # Participant estimate v model correlation
-    behav_v_model_estimate_df = comp.behav_v_model_linear_analysis(computational_var_df=computational_var_df, participant_str=participant, condition_str="01", directory_path=directory_path, outcome_var='estimate', pred_var='ideal_observer', exclude_zero=exclude_zero, plot_behav_v_model_scatter=False, add_regression=True)
+    behav_v_model_estimate_df = comp.behav_v_model_linear_analysis(computational_var_df=computational_var_df, participant_str=participant, condition_str="01", directory_path=directory_path, outcome_var='estimate', pred_var='ideal_observer', exclude_zero=EXCLUDE_ZERO, plot_behav_v_model_scatter=False, add_regression=True)
 
     behav_v_model_estimate_df['participant'] = participant
 

@@ -14,19 +14,19 @@ sys.path.append(str(parent_dir))
 import adalearn_analysis_group_level_functions_data_utilities as group_data_utils
 import adalearn_analysis_participant_level_functions_pupil as pupil
 
-from adalearn_pupil.adalearn_pupil_participant_info_and_parameters import base_dir, condition_str, from_session, to_session, task_sessions
+from adalearn_pupil.adalearn_pupil_participant_info_and_parameters import BASE_DIR, CONDITION_STR, FROM_SESSION, TO_SESSION, TASK_SESSIONS
 
 
 
 dataframes = group_data_utils.load_sample_csvs(
-    directory_path=base_dir, 
+    directory_path=BASE_DIR, 
     substrings=[
         'exclude_participants_behav_cor_df',
         'change_point_indices_df'
         ],
     prefix='sample_level_analysis-ses_01-task_Adalearn_Pupil-')
 
-participant_list = group_data_utils.get_participant_numbers(directory=Path(f'{base_dir}/data'))
+participant_list = group_data_utils.get_participant_numbers(directory=Path(f'{BASE_DIR}/data'))
 
 excluded_participants = list(dataframes['exclude_participants_behav_cor_df']['participant'])
 
@@ -49,20 +49,20 @@ for participant in participant_list:
     if participant not in excluded_participants:
         participant_str = str(participant).zfill(2)
         print(f"\n\n\nProcessing participant {participant_str}...")
-        directory_path = Path(f'{base_dir}/data/sub-{participant_str}')
+        directory_path = Path(f'{BASE_DIR}/data/sub-{participant_str}')
     else:
         continue
 
     # Checking whether pupil data files are correct and can be processed
     print(f"\nIntial check on file quality before analysing pupil epochs...")
-    sessions_to_process = [str(session).zfill(2) for session in range(from_session, to_session + 1)]
+    sessions_to_process = [str(session).zfill(2) for session in range(FROM_SESSION, TO_SESSION + 1)]
     
     problem_files = 0
     total_files = 0
 
     for session in sessions_to_process:
-        file_dir = f"{directory_path}/ses-{condition_str}/eye"
-        file_name = f"sub-{participant_str}_ses-{condition_str}_task-AdalearnPupil_run-{session}_eyetracker.txt"
+        file_dir = f"{directory_path}/ses-{CONDITION_STR}/eye"
+        file_name = f"sub-{participant_str}_ses-{CONDITION_STR}_task-AdalearnPupil_run-{session}_eyetracker.txt"
         file_path = f"{file_dir}/{file_name}"
 
         if os.path.exists(file_path):
@@ -84,7 +84,7 @@ for participant in participant_list:
 
     # Loading pupil files
     print(f"\nLoading pupil data...")
-    preprocessed_pupil_df, pupil_trig_df, pupil_ses_df, blink_df, epoched_pupil_df, blink_ratio_epoch_df, epochs_to_remove = pupil.load_and_process_pupil_data(directory_path=directory_path, participant_str=participant_str, list_subject_selected=[participant], condition_str=condition_str, condition_task_sessions=task_sessions, from_session=from_session, to_session=to_session, dict_onsets=None, dict_num=None, session_list=None, outlier_limit_std=10, outlier_correct_average_amount=15, window_start_before=0.25, window_end_after=1.4, baseline_cor=[-0.25, 0], lpf=[5], select_eye=True, remove_epochs=False, z_score=True, plot_interpolation_process=False) 
+    preprocessed_pupil_df, pupil_trig_df, pupil_ses_df, blink_df, epoched_pupil_df, blink_ratio_epoch_df, epochs_to_remove = pupil.load_and_process_pupil_data(directory_path=directory_path, participant_str=participant_str, list_subject_selected=[participant], condition_str=CONDITION_STR, condition_task_sessions=TASK_SESSIONS, from_session=FROM_SESSION, to_session=TO_SESSION, dict_onsets=None, dict_num=None, session_list=None, outlier_limit_std=10, outlier_correct_average_amount=15, window_start_before=0.25, window_end_after=1.4, baseline_cor=[-0.25, 0], lpf=[5], select_eye=True, remove_epochs=False, z_score=True, plot_interpolation_process=False) 
 
     preprocessed_pupil_df['participant'] = participant_str
     pupil_trig_df['participant'] = participant_str
@@ -94,9 +94,9 @@ for participant in participant_list:
 
     # Extracting epochs around outcome presentations
     print(f"\nExtracting epochs around outcome presentation...") 
-    outcome_onsets, outcome_nums, outcome_epoched_pupil_df, outcome_blink_ratio_df, outcome_epochs_to_remove, outcome_epochs_to_remove_df = pupil.all_outcome_pupil_epochs(directory_path=directory_path, participant_str=participant_str, list_subject_selected=[participant], condition_str=condition_str, condition_task_sessions=task_sessions, from_session=from_session, to_session=to_session, pupil_trig_df=pupil_trig_df, baseline_cor=[-0.25, 0], variable_df=None, variable_column=None, select_eye=True, remove_epochs=True, plot_averaged_pupil_response=False, plot_raster_pupil_response=False)
+    outcome_onsets, outcome_nums, outcome_epoched_pupil_df, outcome_blink_ratio_df, outcome_epochs_to_remove, outcome_epochs_to_remove_df = pupil.all_outcome_pupil_epochs(directory_path=directory_path, participant_str=participant_str, list_subject_selected=[participant], condition_str=CONDITION_STR, condition_task_sessions=TASK_SESSIONS, from_session=FROM_SESSION, to_session=TO_SESSION, pupil_trig_df=pupil_trig_df, baseline_cor=[-0.25, 0], variable_df=None, variable_column=None, select_eye=True, remove_epochs=True, plot_averaged_pupil_response=False, plot_raster_pupil_response=False)
 
-    outcome_onsets_nobc, outcome_nums_nobc, outcome_epoched_pupil_nobc_df, outcome_blink_ratio_nobc_df, outcome_epochs_to_remove_nobc, outcome_epochs_to_remove_nobc_df = pupil.all_outcome_pupil_epochs(directory_path=directory_path, participant_str=participant_str, list_subject_selected=[participant], condition_str=condition_str, condition_task_sessions=task_sessions, from_session=from_session, to_session=to_session, pupil_trig_df=pupil_trig_df, baseline_cor=[], variable_df=None, variable_column=None, select_eye=True, remove_epochs=True, plot_averaged_pupil_response=False, plot_raster_pupil_response=False)
+    outcome_onsets_nobc, outcome_nums_nobc, outcome_epoched_pupil_nobc_df, outcome_blink_ratio_nobc_df, outcome_epochs_to_remove_nobc, outcome_epochs_to_remove_nobc_df = pupil.all_outcome_pupil_epochs(directory_path=directory_path, participant_str=participant_str, list_subject_selected=[participant], condition_str=CONDITION_STR, condition_task_sessions=TASK_SESSIONS, from_session=FROM_SESSION, to_session=TO_SESSION, pupil_trig_df=pupil_trig_df, baseline_cor=[], variable_df=None, variable_column=None, select_eye=True, remove_epochs=True, plot_averaged_pupil_response=False, plot_raster_pupil_response=False)
 
     # Excluding participant if number of epochs removed due to excessive interpolation exceeds 55% (Was initially defined as 50% [which is used in the supplement dataset], but 2 participants were very close to this threshold. Prioritised maximizing participant data retention, so increased threshold to 55%).
     percent_epochs_removed = outcome_blink_ratio_df['above_threshold'].sum() / len(outcome_blink_ratio_df) * 100
@@ -173,6 +173,6 @@ group_data_utils.save_sample_dataframes_to_csv(dataframes={
     'outcome_blink_ratio_nobc_df': group_level_outcome_blink_ratio_nobc_df,
     'outcome_epochs_to_remove_nobc_df': group_level_outcome_epochs_to_remove_nobc_df
     },
-    directory_path=base_dir,
-    condition_str=condition_str,
+    directory_path=BASE_DIR,
+    condition_str=CONDITION_STR,
     task='Pupil')

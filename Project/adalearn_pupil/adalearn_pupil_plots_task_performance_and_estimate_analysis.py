@@ -20,12 +20,12 @@ sys.path.append(str(parent_dir))
 import adalearn_analysis_participant_level_functions_data_utilities as data_utils 
 import adalearn_analysis_group_level_functions_data_utilities as group_data_utils
 
-from adalearn_pupil.adalearn_pupil_participant_info_and_parameters import directory_path, base_dir, condition_str
+from adalearn_pupil.adalearn_pupil_participant_info_and_parameters import BASE_DIR, CONDITION_STR
 
 
 
 dataframes = group_data_utils.load_sample_csvs(
-    directory_path=base_dir, 
+    directory_path=BASE_DIR, 
     substrings=[
         'behavioural_df', 
         'computational_var_df', 
@@ -44,7 +44,7 @@ data_behav = dataframes['behavioural_df'][dataframes['behavioural_df']['particip
 data_comp = dataframes['computational_var_df'][dataframes['computational_var_df']['participant']==participant]
 data_change_points = dataframes['change_point_indices_df'][dataframes['change_point_indices_df']['participant']==participant]
 
-data_utils.plot_session_behav_comp(participant_str=str(participant), condition_str=condition_str, directory_path=directory_path, base_dir =base_dir, behavioural_df=data_behav, computational_df=data_comp, change_point_indices=data_change_points, task_session=20, turn_on_plotting=True, plot_group_level=True)
+data_utils.plot_session_behav_comp(participant_str=str(participant), condition_str=CONDITION_STR, directory_path=f'{BASE_DIR}/data/sub-{participant}', base_dir=BASE_DIR, behavioural_df=data_behav, computational_df=data_comp, change_point_indices=data_change_points, task_session=20, turn_on_plotting=True, plot_group_level=True)
 
 
 ############################################Plotting perforamnce metrics (absolute error and coefficient of variation)
@@ -131,7 +131,7 @@ fig.update_layout(
 )
 
 # Save the figure to the group-level folder
-plot_dir = os.path.join(base_dir, "plots")
+plot_dir = os.path.join(BASE_DIR, "plots")
 os.makedirs(plot_dir, exist_ok=True)
 
 # Base filename (without extension)
@@ -289,7 +289,7 @@ fig.update_layout(
 )
 
 # Save the figure to the group-level folder
-plot_dir = os.path.join(base_dir, "plots")
+plot_dir = os.path.join(BASE_DIR, "plots")
 os.makedirs(plot_dir, exist_ok=True)
 
 # Base filename (without extension)

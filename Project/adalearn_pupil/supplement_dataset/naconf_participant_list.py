@@ -1,11 +1,11 @@
 from pathlib import Path
 import pickle
 
-from adalearn_pupil.supplement_dataset.naconf_participant_info_and_parameters import NACONF_base_dir
+from adalearn_pupil.supplement_dataset.naconf_participant_info_and_parameters import NACONF_BASE_DIR
 
 
 filename = 'phasic_tonic_pupil_all_sub.pickle'
-directory = Path(f'{NACONF_base_dir}/data/{filename}')
+directory = Path(f'{NACONF_BASE_DIR}/data/{filename}')
 
 # Open the file in read-binary ('rb') mode
 with open(directory, 'rb') as f:

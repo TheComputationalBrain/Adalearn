@@ -18,12 +18,12 @@ sys.path.append(str(parent_dir))
 
 import adalearn_analysis_group_level_functions_data_utilities as group_data_utils 
 
-from adalearn_pupil.adalearn_pupil_participant_info_and_parameters import base_dir
+from adalearn_pupil.adalearn_pupil_participant_info_and_parameters import BASE_DIR
 
 
 
 dataframes = group_data_utils.load_sample_csvs(
-    directory_path=base_dir, 
+    directory_path=BASE_DIR, 
     substrings=[
         "present_study_corr_var_df",
         "foucault_meyniel_2024_corr_var_df",
@@ -33,7 +33,7 @@ dataframes = group_data_utils.load_sample_csvs(
     prefix='sample_level_analysis-ses_01-task_Adalearn_Pupil-')
 
 foucault_meyniel_dataframes = group_data_utils.load_sample_csvs(
-    directory_path=Path(base_dir, 'foucault_meyniel_2024_reanalysis'),
+    directory_path=Path(BASE_DIR, 'foucault_meyniel_2024_reanalysis'),
     substrings=[
         'foucault_meyniel_2024_uncert_lr_regress_coefs_df'
     ],
@@ -121,7 +121,7 @@ fig.update_layout(
 )
 
 # Save the figure to the group-level folder
-plot_dir = os.path.join(base_dir, "plots")
+plot_dir = os.path.join(BASE_DIR, "plots")
 os.makedirs(plot_dir, exist_ok=True)
 
 # Base filename (without extension)
@@ -239,7 +239,7 @@ fig.update_layout(
 )
 
 # Save the figure to the group-level folder
-plot_dir = os.path.join(base_dir, "plots")
+plot_dir = os.path.join(BASE_DIR, "plots")
 os.makedirs(plot_dir, exist_ok=True)
 
 # Base filename (without extension)

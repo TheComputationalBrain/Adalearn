@@ -16,11 +16,11 @@ sys.path.append(str(root_dir))
 
 import adalearn_analysis_group_level_functions_data_utilities as group_data_utils
 
-from adalearn_pupil.supplement_dataset.naconf_participant_info_and_parameters import NACONF_base_dir
+from adalearn_pupil.supplement_dataset.naconf_participant_info_and_parameters import NACONF_BASE_DIR
 
 
 dataframes = group_data_utils.load_sample_csvs(
-    directory_path=NACONF_base_dir, 
+    directory_path=NACONF_BASE_DIR, 
     substrings=[ 
         'coefs_df', 
         'coefs_nobc_df', 
@@ -132,7 +132,7 @@ fig.update_layout(
 )
 
 # Save
-plot_dir = os.path.join(NACONF_base_dir, "plots")
+plot_dir = os.path.join(NACONF_BASE_DIR, "plots")
 os.makedirs(plot_dir, exist_ok=True)
 
 base_filename = "adalearn_pupil-NACONF_baseline_corrected_peristimulus_regression"
@@ -249,7 +249,7 @@ fig.update_layout(
 )
 
 # Save
-plot_dir = os.path.join(NACONF_base_dir, "plots")
+plot_dir = os.path.join(NACONF_BASE_DIR, "plots")
 os.makedirs(plot_dir, exist_ok=True)
 
 base_filename = "adalearn_pupil-NACONF_nonbaseline_corrected_peristimulus_regression"

@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 import sys
 import statsmodels.api as sm
+from pathlib import Path
 from sklearn.metrics import mean_squared_error
 from scipy.stats import zscore
 from scipy.stats import pearsonr
@@ -14,7 +15,25 @@ from plotly.subplots import make_subplots
 pio.renderers.default='browser'
 
 
-sys.path.append('/home/aarongreenhouse-tucknott/Documents/Python/Ada_Learn/Analysis/Project/external_reference_functions')
+
+try:
+    here = Path(__file__).resolve()
+    # walk up until we find "Project"
+    for parent in here.parents:
+        if parent.name == "Project":
+            project_dir = parent
+            break
+    else:
+        project_dir = Path.cwd() 
+except NameError:
+    project_dir = Path.cwd()
+
+ext_ref_dir = project_dir / "external_reference_functions"
+sys.path.append(str(ext_ref_dir))
+
+print("Resolved ext_ref_dir:", ext_ref_dir)
+
+
 from IdealObserver import run_inference
 from Inference_ChangePoint import compute_inference, likelihood_table, get_clipped_grid_indices
 from model_learner import ideal_learner_prob_estimates_from_outcomes, ideal_learner_prob_inference_from_outcomes, ideal_learner_prob_confidence_from_outcomes, ideal_learner_prob_cpp

@@ -23,12 +23,12 @@ sys.path.append(str(parent_dir))
 import adalearn_analysis_group_level_functions_data_utilities as group_data_utils
 import adalearn_analysis_group_level_functions_pupil_analysis as pupil_analysis
 
-from adalearn_pupil.adalearn_pupil_participant_info_and_parameters import base_dir
+from adalearn_pupil.adalearn_pupil_participant_info_and_parameters import BASE_DIR
 
 
 
 dataframes = group_data_utils.load_sample_csvs(
-    directory_path=base_dir, 
+    directory_path=BASE_DIR, 
     substrings=[
         'computational_var_df',
         'change_point_indices_df',
@@ -139,7 +139,7 @@ fig.update_yaxes(showline=True, linewidth=1, linecolor='black',
 fig.update_layout(height=1200, width=1800, plot_bgcolor='rgba(255, 255, 255, 1)', font=dict(size=42, family="Times New Roman"), showlegend=False)
 
 # Save the figure to the group-level folder
-plot_dir = os.path.join(base_dir, "plots")
+plot_dir = os.path.join(BASE_DIR, "plots")
 os.makedirs(plot_dir, exist_ok=True)
 
 # Base filename (without extension)
@@ -205,7 +205,7 @@ fig.update_yaxes(showline=True, linewidth=1, linecolor='black',
 fig.update_layout(height=1200, width=1800, plot_bgcolor='rgba(255, 255, 255, 1)', font=dict(size=42, family="Times New Roman"), showlegend=False)
 
 # Save the figure to the group-level folder
-plot_dir = os.path.join(base_dir, "plots")
+plot_dir = os.path.join(BASE_DIR, "plots")
 os.makedirs(plot_dir, exist_ok=True)
 
 # Base filename (without extension)
@@ -602,7 +602,7 @@ for i in range(3, len(fig.data)):
 
 
 # Save the figure to the group-level folder
-plot_dir = os.path.join(base_dir, "plots")
+plot_dir = os.path.join(BASE_DIR, "plots")
 os.makedirs(plot_dir, exist_ok=True)
 
 # Base filename (without extension)
@@ -834,7 +834,7 @@ fig.update_layout(
 ) 
 
 # Save the figure to the group-level folder
-plot_dir = os.path.join(base_dir, "plots")
+plot_dir = os.path.join(BASE_DIR, "plots")
 os.makedirs(plot_dir, exist_ok=True)
 
 # Base filename (without extension)

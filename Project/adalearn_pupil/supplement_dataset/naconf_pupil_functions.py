@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 import os
 import sys
+from pathlib import Path
 from itertools import zip_longest
 import plotly.io as pio
 import plotly.graph_objects as go
@@ -9,7 +10,23 @@ import plotly.express as px
 from plotly.subplots import make_subplots
 pio.renderers.default='browser'
 
-sys.path.append('/home/aarongreenhouse-tucknott/Documents/Python/Ada_Learn/Analysis/Project/external_reference_functions')
+try:
+    here = Path(__file__).resolve()
+    # walk up until we find "Project"
+    for parent in here.parents:
+        if parent.name == "Project":
+            project_dir = parent
+            break
+    else:
+        project_dir = Path.cwd() 
+except NameError:
+    project_dir = Path.cwd()
+
+ext_ref_dir = project_dir / "external_reference_functions"
+sys.path.append(str(ext_ref_dir))
+
+print("Resolved ext_ref_dir:", ext_ref_dir)
+
 from preprocess_eyedata import pupil
 
 

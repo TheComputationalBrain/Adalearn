@@ -23,12 +23,12 @@ sys.path.append(str(parent_dir))
 import adalearn_analysis_group_level_functions_data_utilities as group_data_utils
 import adalearn_analysis_group_level_functions_pupil_analysis as group_pupil
 
-from adalearn_pupil.adalearn_pupil_participant_info_and_parameters import base_dir, condition_str, exclude_zero
+from adalearn_pupil.adalearn_pupil_participant_info_and_parameters import BASE_DIR, CONDITION_STR, EXCLUDE_ZERO
 
 
 
 dataframes = group_data_utils.load_sample_csvs(
-    directory_path=base_dir, 
+    directory_path=BASE_DIR, 
     substrings=[
         'exclude_participants_behav_cor_df',
         'exclude_participants_pupil_analysis_df', 
@@ -45,7 +45,7 @@ dataframes = group_data_utils.load_sample_csvs(
         'uncertainty_params_ttest_df'],
     prefix='sample_level_analysis-ses_01-task_Adalearn_Pupil-')
 
-participant_list = group_data_utils.get_participant_numbers(directory=Path(f'{base_dir}/data'))
+participant_list = group_data_utils.get_participant_numbers(directory=Path(f'{BASE_DIR}/data'))
 
 excluded_participants = list(set(
     list(dataframes['exclude_participants_behav_cor_df']['participant']) +
@@ -79,7 +79,7 @@ for participant in participant_list:
     if participant not in excluded_participants:
         participant_str = str(participant).zfill(2)
         print(f"\n\n\nProcessing participant {participant_str}...")
-        directory_path = Path(f'{base_dir}/data/sub-{participant_str}')
+        directory_path = Path(f'{BASE_DIR}/data/sub-{participant_str}')
     else:
         continue
 
@@ -190,7 +190,7 @@ for participant in participant_list:
     regression_df_filtered = regression_df.dropna(subset=['lr_zscore'])
 
     # Excluding zero update trials (optional)
-    if exclude_zero:
+    if EXCLUDE_ZERO:
         before_zero_filter = len(regression_df_filtered)
         regression_df_filtered = regression_df_filtered[regression_df_filtered['lr'] != 0]
         removed_zero = before_zero_filter - len(regression_df_filtered)
@@ -204,11 +204,11 @@ for participant in participant_list:
 
     # Examining pupil response around change points
     print(f'\nExamining pupil responses around change points...')
-    pupil_bc_effect_around_cp_df = group_pupil.pupil_response_around_change_point(directory_path=directory_path, participant_str=participant_str, condition_str=condition_str, outcome_epoched_pupil_df=epoch_data, change_point_indices=change_point_indices, baseline_correct_window=[baseline_cor_start_time, baseline_cor_end_time], nobc_window=[nobc_start_time, nobc_end_time], before=5, after=5, estimate_type='baseline_corrected_effect', plot_pupil_around_change_point=False)
+    pupil_bc_effect_around_cp_df = group_pupil.pupil_response_around_change_point(directory_path=directory_path, participant_str=participant_str, condition_str=CONDITION_STR, outcome_epoched_pupil_df=epoch_data, change_point_indices=change_point_indices, baseline_correct_window=[baseline_cor_start_time, baseline_cor_end_time], nobc_window=[nobc_start_time, nobc_end_time], before=5, after=5, estimate_type='baseline_corrected_effect', plot_pupil_around_change_point=False)
 
     pupil_bc_effect_around_cp_df['participant'] = participant_str
 
-    pupil_nobc_effect_around_cp_df = group_pupil.pupil_response_around_change_point(directory_path=directory_path, participant_str=participant_str, condition_str=condition_str, outcome_epoched_pupil_df=epoch_nobc_data, change_point_indices=change_point_indices, baseline_correct_window=[baseline_cor_start_time, baseline_cor_end_time], nobc_window=[nobc_start_time, nobc_end_time], before=5, after=5, estimate_type='nonbaseline_corrected_effect', plot_pupil_around_change_point=False)
+    pupil_nobc_effect_around_cp_df = group_pupil.pupil_response_around_change_point(directory_path=directory_path, participant_str=participant_str, condition_str=CONDITION_STR, outcome_epoched_pupil_df=epoch_nobc_data, change_point_indices=change_point_indices, baseline_correct_window=[baseline_cor_start_time, baseline_cor_end_time], nobc_window=[nobc_start_time, nobc_end_time], before=5, after=5, estimate_type='nonbaseline_corrected_effect', plot_pupil_around_change_point=False)
 
     pupil_nobc_effect_around_cp_df['participant'] = participant_str
 
@@ -381,6 +381,6 @@ group_data_utils.save_sample_dataframes_to_csv(dataframes={
     'pupil_lr_uncert_nobc_mediation': group_nobc_mediation_analysis_df,
     'pupil_lr_uncert_bc_mediation': group_bc_mediation_analysis_df,
 },
-directory_path=base_dir,
-condition_str=condition_str,
+directory_path=BASE_DIR,
+condition_str=CONDITION_STR,
 task='Pupil')

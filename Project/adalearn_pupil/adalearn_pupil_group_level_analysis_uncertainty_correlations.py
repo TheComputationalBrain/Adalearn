@@ -28,12 +28,12 @@ import adalearn_analysis_group_level_functions_data_utilities as group_data_util
 import adalearn_analysis_group_level_functions_statistical_analysis as group_stats
 import adalearn_analysis_group_level_functions_pupil_analysis as group_pupil 
 
-from adalearn_pupil.adalearn_pupil_participant_info_and_parameters import base_dir, condition_str
+from adalearn_pupil.adalearn_pupil_participant_info_and_parameters import BASE_DIR, CONDITION_STR
 
 
 
 dataframes = group_data_utils.load_sample_csvs(
-    directory_path=base_dir, 
+    directory_path=BASE_DIR, 
     substrings=[
         'exclude_participants_pupil_analysis_df',
         'demographics_df',
@@ -45,7 +45,7 @@ dataframes = group_data_utils.load_sample_csvs(
     prefix='sample_level_analysis-ses_01-task_Adalearn_Pupil-')
 
 foucault_meyniel_dataframes = group_data_utils.load_sample_csvs(
-    directory_path=Path(base_dir, 'foucault_meyniel_2024_reanalysis'),
+    directory_path=Path(BASE_DIR, 'foucault_meyniel_2024_reanalysis'),
     substrings=[
         'foucault_meyniel_2024_comp_params_df',
         'foucault_meyniel_2024_estimate_v_model_corr_df',
@@ -113,6 +113,7 @@ study_dataframe_dict = {
 }
 
 # Comparison of average variables between studies
+print("Comparing latent uncertainty parameters between present study and Foucault & Meyniel 2024 study...")
 exclude_cols = ['participant', 'study']
 
 cols_to_test = [col for col in present_study_var_df.select_dtypes(include='number').columns 
@@ -154,6 +155,7 @@ var_ttest_df['p_value_adj'] = pvals_corrected
 var_ttest_df['reject_null'] = reject
 
 # Correlations within each study dataframe
+print("Running correlations on latent uncertainty parameters...")
 correlation_results = []
 
 target_vars = ['conf_lr_coef', 'cpp_lr_coef']
@@ -204,6 +206,6 @@ group_data_utils.save_sample_dataframes_to_csv(dataframes={
     "present_v_foucault_meyniel_var_ttest_df": var_ttest_df,
     "uncertainty_determinants_corr_df": correlation_df,
     }, 
-directory_path=base_dir,
-condition_str=condition_str,
+directory_path=BASE_DIR,
+condition_str=CONDITION_STR,
 task='Pupil')

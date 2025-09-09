@@ -48,7 +48,7 @@ if __name__ == "__main__":
     "adalearn_pupil_group_level_analysis_individual_volatility.py",
     "foucault_meyniel_2024_reanalysis/foucault_meyniel_2024_reanalysis_comp_parameters.py",
     "adalearn_pupil_group_level_analysis_uncertainty_correlations.py",
-    "supplementary_dataset/naconf_group_level_analysis_pupil_regression.py",
+    "supplement_dataset/naconf_group_level_analysis_pupil_regression.py",
 
 ]
     scripts_in_order = [base_dir / script for script in script_names]

@@ -22,12 +22,12 @@ sys.path.append(str(parent_dir))
 
 import adalearn_analysis_group_level_functions_data_utilities as group_data_utils
 
-from adalearn_pupil.adalearn_pupil_participant_info_and_parameters import selected_participant,base_dir
+from adalearn_pupil.adalearn_pupil_participant_info_and_parameters import SELECTED_PARTICIPANT, BASE_DIR
 
 
 # Loading individual volatility data 
 dataframes = group_data_utils.load_sample_csvs(
-    directory_path=base_dir, 
+    directory_path=BASE_DIR, 
     substrings=[
         'individual_p_c_df',
         'ind_vol_comp_df',
@@ -49,13 +49,13 @@ computational_var_df = dataframes['computational_var_df']
 
 task_session = 15
 
-original_comp_data = computational_var_df[computational_var_df['participant'] == selected_participant]
+original_comp_data = computational_var_df[computational_var_df['participant'] == SELECTED_PARTICIPANT]
 original_task_session = original_comp_data[original_comp_data['task_session']==task_session]
-ind_vol_comp_data = ind_vol_comp[ind_vol_comp['participant'] == selected_participant]
+ind_vol_comp_data = ind_vol_comp[ind_vol_comp['participant'] == SELECTED_PARTICIPANT]
 ind_vol_task_session = ind_vol_comp_data[ind_vol_comp_data['task_session'] == task_session]
 
 vol_comparison = pd.DataFrame({
-    'participant': selected_participant,
+    'participant': SELECTED_PARTICIPANT,
     'outcome_num': original_task_session['outcome_num'].values,
     'cpp': original_task_session['cpp'].values,
     'ind_vol_cpp': ind_vol_task_session['cpp'].values,
@@ -113,7 +113,7 @@ fig.update_layout(
         bgcolor='rgba(255, 255, 255, 0.7)'))
 
 # Save the figure to the group-level folder
-plot_dir = os.path.join(base_dir, "plots")
+plot_dir = os.path.join(BASE_DIR, "plots")
 os.makedirs(plot_dir, exist_ok=True)
 
 # Base filename (without extension)
@@ -324,7 +324,7 @@ fig.update_layout(
 )
 
 # Save the figure to the group-level folder
-plot_dir = os.path.join(base_dir, "plots")
+plot_dir = os.path.join(BASE_DIR, "plots")
 os.makedirs(plot_dir, exist_ok=True)
 
 # Base filename (without extension)
@@ -433,7 +433,7 @@ fig.update_layout(
         bgcolor='rgba(255, 255, 255, 0.7)'))
 
 # Save the figure to the group-level folder
-plot_dir = os.path.join(base_dir, "plots")
+plot_dir = os.path.join(BASE_DIR, "plots")
 os.makedirs(plot_dir, exist_ok=True)
 
 # Base filename (without extension)
@@ -543,7 +543,7 @@ fig.update_layout(
         bgcolor='rgba(255, 255, 255, 0.7)'))
 
 # Save the figure to the group-level folder
-plot_dir = os.path.join(base_dir, "plots")
+plot_dir = os.path.join(BASE_DIR, "plots")
 os.makedirs(plot_dir, exist_ok=True)
 
 # Base filename (without extension)

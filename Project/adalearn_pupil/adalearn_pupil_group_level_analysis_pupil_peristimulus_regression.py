@@ -17,12 +17,12 @@ import adalearn_analysis_group_level_functions_statistical_analysis as group_sta
 import adalearn_analysis_group_level_functions_pupil_analysis as group_pupil
 import adalearn_analysis_participant_level_functions_regression_pupil as pupil_regress
 
-from adalearn_pupil.adalearn_pupil_participant_info_and_parameters import base_dir, condition_str
+from adalearn_pupil.adalearn_pupil_participant_info_and_parameters import BASE_DIR, CONDITION_STR
 
 
 
 dataframes = group_data_utils.load_sample_csvs(
-    directory_path=base_dir, 
+    directory_path=BASE_DIR, 
     substrings=[
         'exclude_participants_behav_cor_df',
         'exclude_participants_pupil_analysis_df', 
@@ -37,7 +37,7 @@ dataframes = group_data_utils.load_sample_csvs(
         ],
     prefix='sample_level_analysis-ses_01-task_Adalearn_Pupil-')
 
-participant_list = group_data_utils.get_participant_numbers(directory=Path(f'{base_dir}/data'))
+participant_list = group_data_utils.get_participant_numbers(directory=Path(f'{BASE_DIR}/data'))
 
 excluded_participants = list(set(
     list(dataframes['exclude_participants_behav_cor_df']['participant']) +
@@ -52,7 +52,7 @@ for participant in participant_list:
     if participant not in excluded_participants:
         participant_str = str(participant).zfill(2)
         print(f"\n\n\nProcessing participant {participant_str}...")
-        directory_path = Path(f'{base_dir}/data/sub-{participant_str}')
+        directory_path = Path(f'{BASE_DIR}/data/sub-{participant_str}')
     else:
         continue
 
@@ -95,7 +95,7 @@ for participant in participant_list:
 
     # Running peristimulus regression analysis
     print(f"\nRunning regression on baseline corrected pupil signal...")   
-    conf_cpp_coef, pupil_regress_df, residuals_df = pupil_regress.pupil_peristimulus_regression_analysis(participant_str=participant, condition_str=condition_str, directory_path=directory_path, computational_var_df=comp_df, outcome_epoched_pupil_df=epoch_data, outcome_epochs_to_remove=epochs_to_remove, variables=['prior_conf', 'cpp'], covariates = ['outcome', 'outcome_num', 'task_session', 'prior'], baseline_corrected=True,  plot_regression_analysis=False)
+    conf_cpp_coef, pupil_regress_df, residuals_df = pupil_regress.pupil_peristimulus_regression_analysis(participant_str=participant, condition_str=CONDITION_STR, directory_path=directory_path, computational_var_df=comp_df, outcome_epoched_pupil_df=epoch_data, outcome_epochs_to_remove=epochs_to_remove, variables=['prior_conf', 'cpp'], covariates = ['outcome', 'outcome_num', 'task_session', 'prior'], baseline_corrected=True,  plot_regression_analysis=False)
 
     conf_cpp_coef['participant'] = participant
     conf_cpp_coef['count'] = range(len(conf_cpp_coef))
@@ -103,7 +103,7 @@ for participant in participant_list:
     pupil_regress_coef_df_list.append(conf_cpp_coef)
    
     print(f"\nRunning regression on non-baseline corrected pupil signal...")
-    conf_cpp_coef_nobc, pupil_regress_nobc_df, residuals_nobc_df = pupil_regress.pupil_peristimulus_regression_analysis(participant_str=participant, condition_str=condition_str, directory_path=directory_path, computational_var_df=comp_df, outcome_epoched_pupil_df=epoch_nobc_data, outcome_epochs_to_remove=epochs_to_remove, variables=['prior_conf', 'cpp'], covariates = ['outcome', 'outcome_num', 'task_session', 'prior'], baseline_corrected=False,  plot_regression_analysis=False)
+    conf_cpp_coef_nobc, pupil_regress_nobc_df, residuals_nobc_df = pupil_regress.pupil_peristimulus_regression_analysis(participant_str=participant, condition_str=CONDITION_STR, directory_path=directory_path, computational_var_df=comp_df, outcome_epoched_pupil_df=epoch_nobc_data, outcome_epochs_to_remove=epochs_to_remove, variables=['prior_conf', 'cpp'], covariates = ['outcome', 'outcome_num', 'task_session', 'prior'], baseline_corrected=False,  plot_regression_analysis=False)
 
     conf_cpp_coef_nobc['participant'] = participant
     conf_cpp_coef_nobc['count'] = range(len(conf_cpp_coef_nobc))
@@ -133,6 +133,6 @@ group_data_utils.save_sample_dataframes_to_csv(dataframes={
     'cluster_permutation_analysis': significant_clusters_df,
     'cluster_permutation_analysis_nobc': significant_clusters_nobc_df
 },
-directory_path=base_dir,
-condition_str=condition_str,
+directory_path=BASE_DIR,
+condition_str=CONDITION_STR,
 task='Pupil') 

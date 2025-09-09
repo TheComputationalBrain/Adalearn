@@ -4,15 +4,16 @@ This script defines the participant analysed. To change participant, the user si
 
 from pathlib import Path
 
+from adalearn_pupil.adalearn_pupil_participant_info_and_parameters import BASE_DIR
 
-NACONF_base_dir = '/home/aarongreenhouse-tucknott/Documents/Python/Ada_Learn/Analysis/Project/adalearn_pupil/supplement_dataset'
+NACONF_BASE_DIR = f'{BASE_DIR}/supplement_dataset'
 
-selected_participant = 4
+SELECTED_PARTICIPANT = 4
 
-list_subject_selected = [selected_participant]
-directory_path = Path(f'{NACONF_base_dir}/data/sub-{selected_participant}')
-condition_str = '01' 
-from_session =  1
-to_session =  4
-task_sessions = [str(session) for session in range(from_session, to_session +1)]
+LIST_SELECTED_PARTICIPANT = [SELECTED_PARTICIPANT]
+PARTICIPANT_DIR = Path(f'{NACONF_BASE_DIR}/data/sub-{SELECTED_PARTICIPANT}')
+CONDITION_STR = '01' 
+FROM_SESSION =  1
+TO_SESSION =  4
+TASK_SESSIONS = [str(session) for session in range(FROM_SESSION, TO_SESSION +1)]
 

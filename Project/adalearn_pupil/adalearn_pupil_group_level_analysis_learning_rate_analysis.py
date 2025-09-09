@@ -17,11 +17,11 @@ import adalearn_analysis_group_level_functions_statistical_analysis as group_sta
 import adalearn_analysis_participant_level_functions_comp as comp
 import adalearn_analysis_participant_level_functions_data_utilities as data_utils
 
-from adalearn_pupil.adalearn_pupil_participant_info_and_parameters import base_dir, condition_str, exclude_zero
+from adalearn_pupil.adalearn_pupil_participant_info_and_parameters import BASE_DIR, CONDITION_STR, EXCLUDE_ZERO
 
 
 dataframes = group_data_utils.load_sample_csvs(
-    directory_path=base_dir, 
+    directory_path=BASE_DIR,
     substrings=[
         'exclude_participants_behav_cor_df',
         'behavioural_df', 
@@ -30,7 +30,7 @@ dataframes = group_data_utils.load_sample_csvs(
         ],
     prefix='sample_level_analysis-ses_01-task_Adalearn_Pupil-')
 
-participant_list = group_data_utils.get_participant_numbers(Path(f'{base_dir}/data'))
+participant_list = group_data_utils.get_participant_numbers(Path(f'{BASE_DIR}/data'))
 
 excluded_participants = list(dataframes['exclude_participants_behav_cor_df']['participant'])
 
@@ -47,7 +47,7 @@ for participant in participant_list:
     if participant not in excluded_participants:
         participant_str = str(participant).zfill(2)
         print(f"\n\n\nProcessing participant {participant_str}...")
-        directory_path = Path(f'{base_dir}/data/sub-{participant_str}')
+        directory_path = Path(f'{BASE_DIR}/data/sub-{participant_str}')
     else:
         continue
 
@@ -58,7 +58,7 @@ for participant in participant_list:
     behavioural_df = dataframes['behavioural_df'][dataframes['behavioural_df']['participant'] == participant].copy()
 
     # Evaluating the learning rate to extract baseline learning rate
-    lr_evaluation_dict = data_utils.evaluation_of_learning_rate(participant_str=participant_str, condition_str=condition_str, directory_path=directory_path, behavioural_df=behavioural_df, computational_var_df=computational_var_df, change_point_indices=change_point_indices, quantile_baseline=0.2, parameter_estimate='estimate', baseline_method='quantile_over_sessions', plot_lr_evaluation=False)
+    lr_evaluation_dict = data_utils.evaluation_of_learning_rate(participant_str=participant_str, condition_str=CONDITION_STR, directory_path=directory_path, behavioural_df=behavioural_df, computational_var_df=computational_var_df, change_point_indices=change_point_indices, quantile_baseline=0.2, parameter_estimate='estimate', baseline_method='quantile_over_sessions', plot_lr_evaluation=False)
 
     lr_evaluation_dict['avg_lr_session_df']['participant'] = participant_str
 
@@ -81,8 +81,8 @@ for participant in participant_list:
 
     print(f"\nAnalysing association between participants' and model learning rate...")
     # Evaluating the association between participants' and model learning rates
-    behav_v_model_lr_df = comp.behav_v_model_linear_analysis(participant_str=participant_str, condition_str=condition_str, directory_path=directory_path, computational_var_df=computational_var_df
-    , outcome_var='cleaned_learning_rate_estimate', pred_var='cleaned_learning_rate_ideal_observer', exclude_zero=exclude_zero, plot_behav_v_model_scatter=False, add_regression=True)
+    behav_v_model_lr_df = comp.behav_v_model_linear_analysis(participant_str=participant_str, condition_str=CONDITION_STR, directory_path=directory_path, computational_var_df=computational_var_df
+    , outcome_var='cleaned_learning_rate_estimate', pred_var='cleaned_learning_rate_ideal_observer', exclude_zero=EXCLUDE_ZERO, plot_behav_v_model_scatter=False, add_regression=True)
 
     behav_v_model_lr_df['participant'] = participant_str
 
@@ -90,10 +90,10 @@ for participant in participant_list:
 
     print(f"\nAnalysing association between participants' and model learning rates around change points...")
     # Computing the learning rate around change point (participants' estimates)
-    filtered_behav_learning_rate_by_cp, averaged_behav_learning_rate_by_cp = comp.learning_rate_by_change_point(participant_str=participant_str, condition_str=condition_str, directory_path=directory_path,computational_var_df=computational_var_df, change_point_indices=change_point_indices, learning_rate_parameter='estimate', pre=2, post=15, exclude_zero=exclude_zero, plot_learning_rate_by_cp=False)
+    filtered_behav_learning_rate_by_cp, averaged_behav_learning_rate_by_cp = comp.learning_rate_by_change_point(participant_str=participant_str, condition_str=CONDITION_STR, directory_path=directory_path,computational_var_df=computational_var_df, change_point_indices=change_point_indices, learning_rate_parameter='estimate', pre=2, post=15, exclude_zero=EXCLUDE_ZERO, plot_learning_rate_by_cp=False)
 
     # Computing the learning rate around change points (model estimates)
-    filtered_model_learning_rate_by_cp, averaged_model_learning_rate_by_cp = comp.learning_rate_by_change_point(participant_str=participant_str, condition_str=condition_str, directory_path=directory_path,computational_var_df=computational_var_df, change_point_indices=change_point_indices, learning_rate_parameter='ideal_observer', pre=2, post=15, exclude_zero = exclude_zero, plot_learning_rate_by_cp=False)
+    filtered_model_learning_rate_by_cp, averaged_model_learning_rate_by_cp = comp.learning_rate_by_change_point(participant_str=participant_str, condition_str=CONDITION_STR, directory_path=directory_path,computational_var_df=computational_var_df, change_point_indices=change_point_indices, learning_rate_parameter='ideal_observer', pre=2, post=15, exclude_zero=EXCLUDE_ZERO, plot_learning_rate_by_cp=False)
 
     averaged_learning_rate_by_cp = pd.merge(left=averaged_behav_learning_rate_by_cp, right=averaged_model_learning_rate_by_cp, on=['relative_position'], how='outer', suffixes=('', '_model'))
 
@@ -104,7 +104,7 @@ for participant in participant_list:
     group_filtered_lr_around_cp_list.append(filtered_behav_learning_rate_by_cp)
 
     # Evaluating the correlation between participants' and model estimates around change points
-    change_point_avg_lrs_df, lr_around_cp_corr_df = comp.correlation_around_change_point(participant_str=participant_str, condition_str=condition_str, directory_path=directory_path,filtered_learning_rate_by_cp=filtered_behav_learning_rate_by_cp, average_over='position', plot_correlation_round_cp=False)
+    change_point_avg_lrs_df, lr_around_cp_corr_df = comp.correlation_around_change_point(participant_str=participant_str, condition_str=CONDITION_STR, directory_path=directory_path,filtered_learning_rate_by_cp=filtered_behav_learning_rate_by_cp, average_over='position', plot_correlation_round_cp=False)
 
     change_point_avg_lrs_df['participant'] = participant_str
 
@@ -112,10 +112,10 @@ for participant in participant_list:
 
     (f"\nComputing the effect of uncertainty parameters on learning rate...")
     # Linear regression for uncertainty parameters on participants' learning rate
-    learning_rate_analysis_dict = comp.uncertainty_on_learning_rate_participant_level(participant_str=participant_str, condition_str=condition_str, directory_path=directory_path, computational_var_df=computational_var_df, n_bins=6, parameter_estimate='estimate', exclude_zero=exclude_zero, include_interaction=True, plot_corr_subplots=False)
+    learning_rate_analysis_dict = comp.uncertainty_on_learning_rate_participant_level(participant_str=participant_str, condition_str=CONDITION_STR, directory_path=directory_path, computational_var_df=computational_var_df, n_bins=6, parameter_estimate='estimate', exclude_zero=EXCLUDE_ZERO, include_interaction=True, plot_corr_subplots=False)
 
     # Linear regression for uncertainty parameters on model learning rate (normative account)
-    learning_rate_model_analysis_dict = comp.uncertainty_on_learning_rate_participant_level(participant_str=participant_str, condition_str=condition_str, directory_path=directory_path, computational_var_df=computational_var_df, n_bins=6, parameter_estimate='ideal_observer', exclude_zero=exclude_zero, include_interaction=True, plot_corr_subplots=False)
+    learning_rate_model_analysis_dict = comp.uncertainty_on_learning_rate_participant_level(participant_str=participant_str, condition_str=CONDITION_STR, directory_path=directory_path, computational_var_df=computational_var_df, n_bins=6, parameter_estimate='ideal_observer', exclude_zero=EXCLUDE_ZERO, include_interaction=True, plot_corr_subplots=False)
 
     group_uncertainty_params_on_lr = pd.merge(left=learning_rate_analysis_dict['uncertainty_v_lr_df'], right=learning_rate_model_analysis_dict['uncertainty_v_lr_df'], on=['variable'], how='outer', suffixes=('', '_model'))
 
@@ -274,7 +274,7 @@ group_data_utils.save_sample_dataframes_to_csv(dataframes={
     'lr_around_cp_sig_clusters': significant_clusters_df,
     'uncertainty_params_ttest_df': uncertainty_params_ttest_df
 },
-directory_path=base_dir,
-condition_str=condition_str,
+directory_path=BASE_DIR,
+condition_str=CONDITION_STR,
 task='Pupil'
 )

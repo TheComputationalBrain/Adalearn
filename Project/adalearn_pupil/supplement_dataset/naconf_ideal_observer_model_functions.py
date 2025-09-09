@@ -10,9 +10,23 @@ import plotly.express as px
 from plotly.subplots import make_subplots
 pio.renderers.default='browser'
 
-from adalearn_pupil.supplement_dataset.naconf_participant_info_and_parameters import NACONF_base_dir, directory_path, selected_participant, task_sessions
+try:
+    here = Path(__file__).resolve()
+    # walk up until we find "Project"
+    for parent in here.parents:
+        if parent.name == "Project":
+            project_dir = parent
+            break
+    else:
+        project_dir = Path.cwd() 
+except NameError:
+    project_dir = Path.cwd()
 
-sys.path.append('/home/aarongreenhouse-tucknott/Documents/Python/Ada_Learn/Analysis/Project/external_reference_functions')
+ext_ref_dir = project_dir / "external_reference_functions"
+sys.path.append(str(ext_ref_dir))
+
+print("Resolved ext_ref_dir:", ext_ref_dir)
+
 from IdealObserver import run_inference
 from model_learner import ideal_learner_prob_estimates_from_outcomes, ideal_learner_prob_confidence_from_outcomes, ideal_learner_prob_cpp
 

@@ -13,18 +13,18 @@ sys.path.append(str(parent_dir))
 import adalearn_analysis_group_level_functions_data_utilities as group_data_utils 
 import adalearn_analysis_participant_level_functions_behav as behav
 
-from adalearn_pupil.adalearn_pupil_participant_info_and_parameters import base_dir, condition_str, task_sessions
+from adalearn_pupil.adalearn_pupil_participant_info_and_parameters import BASE_DIR, CONDITION_STR, TASK_SESSIONS
 
 
 
 dataframes = group_data_utils.load_sample_csvs(
-    directory_path=base_dir, 
+    directory_path=BASE_DIR,
     substrings=[
         'exclude_participants_behav_cor_df'
         ],
     prefix='sample_level_analysis-ses_01-task_Adalearn_Pupil-')
 
-participant_list = group_data_utils.get_participant_numbers(Path(f'{base_dir}/data'))
+participant_list = group_data_utils.get_participant_numbers(Path(f'{BASE_DIR}/data'))
 
 excluded_participants = list(dataframes['exclude_participants_behav_cor_df']['participant'])
 
@@ -37,19 +37,19 @@ for participant in participant_list:
     if participant not in excluded_participants:
         participant_str = str(participant).zfill(2)
         print(f"\n\n\nProcessing participant {participant_str}...")
-        directory_path = Path(f'{base_dir}/data/sub-{participant_str}')
+        directory_path = Path(f'{BASE_DIR}/data/sub-{participant_str}')
     else:
         continue
 
     print(f"\nLoading task data and computing task performance...")
 
-    behavioural_df, _ = behav.load_behavioural_data( participant_str=participant_str, condition_str=condition_str, directory_path=directory_path, condition_task_sessions=task_sessions, plot_behav_data=False)
+    behavioural_df, _ = behav.load_behavioural_data( participant_str=participant_str, condition_str=CONDITION_STR, directory_path=directory_path, condition_task_sessions=TASK_SESSIONS, plot_behav_data=False)
 
     behavioural_df['participant'] = participant_str
 
     group_behavioural_df_list.append(behavioural_df)
 
-    mean_abs_error_df = behav.behavioural_performance_analysis(participant_str=participant_str, condition_str=condition_str, directory_path=directory_path, behavioural_df=behavioural_df, plot_performance=False)
+    mean_abs_error_df = behav.behavioural_performance_analysis(participant_str=participant_str, condition_str=CONDITION_STR, directory_path=directory_path, behavioural_df=behavioural_df, plot_performance=False)
 
     mean_abs_error_df['coef_variation'] = (mean_abs_error_df['std_abs_error']/ mean_abs_error_df['mean_abs_error']) * 100
 
@@ -59,7 +59,7 @@ for participant in participant_list:
 
     print(f"\nExtracting change point indices...")
 
-    num_change_points, change_points_per_session, change_point_indices, behavioural_df = behav.behavioural_change_point_analysis(participant_str=participant_str, condition_str=condition_str, directory_path=directory_path, behavioural_df=behavioural_df, plot_histogram_zscores=False)
+    num_change_points, change_points_per_session, change_point_indices, behavioural_df = behav.behavioural_change_point_analysis(participant_str=participant_str, condition_str=CONDITION_STR, directory_path=directory_path, behavioural_df=behavioural_df, plot_histogram_zscores=False)
 
     change_point_indices['participant'] = participant_str
 
@@ -93,6 +93,6 @@ group_data_utils.save_sample_dataframes_to_csv(dataframes={
     "mean_abs_error_df": group_level_mean_error_df,
     "change_point_indices_df": group_level_change_point_indices_df
     }, 
-directory_path=base_dir,
-condition_str=condition_str,
+directory_path=BASE_DIR,
+condition_str=CONDITION_STR,
 task='Pupil')

@@ -22,13 +22,13 @@ import adalearn_analysis_participant_level_functions_regression_pupil as pupil_r
 import adalearn_analysis_group_level_functions_statistical_analysis as group_stats_analysis
 import adalearn_analysis_group_level_functions_pupil_analysis as group_pupil
 
-from adalearn_pupil.adalearn_pupil_participant_info_and_parameters import base_dir, condition_str, exclude_zero, P1_MAX, P1_MIN, RESOL
+from adalearn_pupil.adalearn_pupil_participant_info_and_parameters import BASE_DIR, CONDITION_STR, EXCLUDE_ZERO, P1_MAX, P1_MIN, RESOL
 
 
 
 # Loading data
 dataframes = group_data_utils.load_sample_csvs(
-    directory_path=base_dir,
+    directory_path=BASE_DIR,
     substrings=[
         'exclude_participants_behav_cor_df',
         'exclude_participants_pupil_analysis_df', 
@@ -47,7 +47,7 @@ dataframes = group_data_utils.load_sample_csvs(
 np.random.seed(42)
 
 # Loading participant list and excluded participants
-participant_list = group_data_utils.get_participant_numbers(directory=Path(f'{base_dir}/data'))
+participant_list = group_data_utils.get_participant_numbers(directory=Path(f'{BASE_DIR}/data'))
 
 excluded_participants_behav = list(dataframes['exclude_participants_behav_cor_df']['participant'])
 
@@ -68,7 +68,7 @@ for participant in participant_list:
     if participant not in excluded_participants_behav:
         participant_str = str(participant).zfill(2)
         print(f"\n\n\nProcessing participant {participant_str}...")
-        directory_path = Path(f'{base_dir}/data/sub-{participant_str}')
+        directory_path = Path(f'{BASE_DIR}/data/sub-{participant_str}')
     else:
         continue
 
@@ -128,18 +128,18 @@ for participant in participant_list:
     # Running updated analysis with individual volatility (i.e. x_min)
     # Running inference
     print(f'Running inference and extracting uncertainty parameters...')
-    comp_df,_ = comp.run_inference_from_observations(participant_str=participant_str, condition_str=condition_str, directory_path=directory_path, computational_var_df=comp_df, change_point_indices_df=change_points, p_c=x_min, p1_min=P1_MIN, p1_max=P1_MAX, resol=RESOL, plot_surprise=False, plot_posterior_conf=False, plot_posterior_dist_means=False)
+    comp_df,_ = comp.run_inference_from_observations(participant_str=participant_str, condition_str=CONDITION_STR, directory_path=directory_path, computational_var_df=comp_df, change_point_indices_df=change_points, p_c=x_min, p1_min=P1_MIN, p1_max=P1_MAX, resol=RESOL, plot_surprise=False, plot_posterior_conf=False, plot_posterior_dist_means=False)
 
     # Computing prior confidence and change point probability of each observation
-    comp_df = comp.compute_prior_conf_and_cpp_from_observations(participant_str=participant_str, condition_str=condition_str,directory_path=directory_path, computational_var_df=comp_df, change_point_indices_df=change_points, resol=RESOL, p_c=x_min, p1_min=P1_MIN, p1_max=P1_MAX, conf_type='prev-conf-pred', unit='confidence', plot_distribution_mean=False, plot_prior_conf=False, plot_cpp=False)
+    comp_df = comp.compute_prior_conf_and_cpp_from_observations(participant_str=participant_str, condition_str=CONDITION_STR,directory_path=directory_path, computational_var_df=comp_df, change_point_indices_df=change_points, resol=RESOL, p_c=x_min, p1_min=P1_MIN, p1_max=P1_MAX, conf_type='prev-conf-pred', unit='confidence', plot_distribution_mean=False, plot_prior_conf=False, plot_cpp=False)
 
     # Running uncertainty-associated analysis on learning rate
     (f"Computing the effect of uncertainty parameters on learning rate...")
     # Linear regression for uncertainty parameters on participants' learning rate
-    learning_rate_analysis_dict = comp.uncertainty_on_learning_rate_participant_level(participant_str=participant_str, condition_str=condition_str, directory_path=directory_path, computational_var_df=comp_df, n_bins=6, parameter_estimate='estimate', exclude_zero=exclude_zero, include_interaction=True, plot_corr_subplots=False)
+    learning_rate_analysis_dict = comp.uncertainty_on_learning_rate_participant_level(participant_str=participant_str, condition_str=CONDITION_STR, directory_path=directory_path, computational_var_df=comp_df, n_bins=6, parameter_estimate='estimate', exclude_zero=EXCLUDE_ZERO, include_interaction=True, plot_corr_subplots=False)
 
     # Linear regression for uncertainty parameters on model learning rate (normative account)
-    learning_rate_model_analysis_dict = comp.uncertainty_on_learning_rate_participant_level(participant_str=participant_str, condition_str=condition_str, directory_path=directory_path, computational_var_df=comp_df, n_bins=6, parameter_estimate='ideal_observer', exclude_zero=exclude_zero, include_interaction=True, plot_corr_subplots=False)
+    learning_rate_model_analysis_dict = comp.uncertainty_on_learning_rate_participant_level(participant_str=participant_str, condition_str=CONDITION_STR, directory_path=directory_path, computational_var_df=comp_df, n_bins=6, parameter_estimate='ideal_observer', exclude_zero=EXCLUDE_ZERO, include_interaction=True, plot_corr_subplots=False)
 
     group_uncertainty_params_on_lr = pd.merge(left=learning_rate_analysis_dict['uncertainty_v_lr_df'], right=learning_rate_model_analysis_dict['uncertainty_v_lr_df'], on=['variable'], how='outer', suffixes=('', '_model'))
 
@@ -168,7 +168,7 @@ for participant in participant_list:
 
         # Running peristimulus regression analysis
         print(f"Running regression on baseline corrected pupil signal...")   
-        conf_cpp_coef, pupil_regress_df, residuals_df = pupil_regress.pupil_peristimulus_regression_analysis(participant_str=participant, condition_str=condition_str, directory_path=directory_path, computational_var_df=comp_df, outcome_epoched_pupil_df=epoch_data, outcome_epochs_to_remove=epochs_to_remove, variables=['prior_conf', 'cpp'], covariates = ['outcome', 'outcome_num', 'task_session', 'prior'], baseline_corrected=True,  plot_regression_analysis=False)
+        conf_cpp_coef, pupil_regress_df, residuals_df = pupil_regress.pupil_peristimulus_regression_analysis(participant_str=participant, condition_str=CONDITION_STR, directory_path=directory_path, computational_var_df=comp_df, outcome_epoched_pupil_df=epoch_data, outcome_epochs_to_remove=epochs_to_remove, variables=['prior_conf', 'cpp'], covariates = ['outcome', 'outcome_num', 'task_session', 'prior'], baseline_corrected=True,  plot_regression_analysis=False)
 
         conf_cpp_coef['participant'] = participant
         conf_cpp_coef['count'] = range(len(conf_cpp_coef))
@@ -176,7 +176,7 @@ for participant in participant_list:
         pupil_regress_coef_df_list.append(conf_cpp_coef)
     
         print(f"\nRunning regression on non-baseline corrected pupil signal...")
-        conf_cpp_coef_nobc, pupil_regress_nobc_df, residuals_nobc_df = pupil_regress.pupil_peristimulus_regression_analysis(participant_str=participant, condition_str=condition_str, directory_path=directory_path, computational_var_df=comp_df, outcome_epoched_pupil_df=epoch_nobc_data, outcome_epochs_to_remove=epochs_to_remove, variables=['prior_conf', 'cpp'], covariates = ['outcome', 'outcome_num', 'task_session', 'prior'], baseline_corrected=False,  plot_regression_analysis=False)
+        conf_cpp_coef_nobc, pupil_regress_nobc_df, residuals_nobc_df = pupil_regress.pupil_peristimulus_regression_analysis(participant_str=participant, condition_str=CONDITION_STR, directory_path=directory_path, computational_var_df=comp_df, outcome_epoched_pupil_df=epoch_nobc_data, outcome_epochs_to_remove=epochs_to_remove, variables=['prior_conf', 'cpp'], covariates = ['outcome', 'outcome_num', 'task_session', 'prior'], baseline_corrected=False,  plot_regression_analysis=False)
 
         conf_cpp_coef_nobc['participant'] = participant
         conf_cpp_coef_nobc['count'] = range(len(conf_cpp_coef_nobc))
@@ -240,7 +240,7 @@ group_data_utils.save_sample_dataframes_to_csv(dataframes={
     'ind_vol_uncertainty_params_on_lr_df': group_uncertainty_params_on_lr_df,
     'ind_vol_uncertainty_params_ttest_df': uncertainty_params_ttest_df
 },
-directory_path=base_dir,
-condition_str=condition_str,
+directory_path=BASE_DIR,
+condition_str=CONDITION_STR,
 task='Pupil'
 )
