@@ -43,6 +43,7 @@ outcome_blink_ratio_nobc_df_list = []
 outcome_epochs_to_remove_nobc_df_list = []
 outcome_epochs_time_nobc_df_list = []
 outcome_epochs_columns_nobc_df_list = []
+missing_epochs_check = []
 
 
 for participant in participant_list:
@@ -99,7 +100,17 @@ for participant in participant_list:
     outcome_onsets_nobc, outcome_nums_nobc, outcome_epoched_pupil_nobc_df, outcome_blink_ratio_nobc_df, outcome_epochs_to_remove_nobc, outcome_epochs_to_remove_nobc_df = pupil.all_outcome_pupil_epochs(directory_path=directory_path, participant_str=participant_str, list_subject_selected=[participant], condition_str=CONDITION_STR, condition_task_sessions=TASK_SESSIONS, from_session=FROM_SESSION, to_session=TO_SESSION, pupil_trig_df=pupil_trig_df, baseline_cor=[], variable_df=None, variable_column=None, select_eye=True, remove_epochs=True, plot_averaged_pupil_response=False, plot_raster_pupil_response=False)
 
     # Excluding participant if number of epochs removed due to excessive interpolation exceeds 55% (Was initially defined as 50% [which is used in the supplement dataset], but 2 participants were very close to this threshold. Prioritised maximizing participant data retention, so increased threshold to 55%).
+    missing_epcochs = pd.DataFrame([{
+        'participant': participant_str,
+        'expected_epochs': len(outcome_blink_ratio_df),
+        'removed_epochs': outcome_blink_ratio_df['above_threshold'].sum(),
+        'percent_epochs_retained': (len(outcome_blink_ratio_df) - outcome_blink_ratio_df['above_threshold'].sum()) / len(outcome_blink_ratio_df) * 100
+    }])
+
+    missing_epochs_check.append(missing_epcochs)
+    
     percent_epochs_removed = outcome_blink_ratio_df['above_threshold'].sum() / len(outcome_blink_ratio_df) * 100
+    
     if percent_epochs_removed >= 55:
         print(f"\nMore than 55% epochs removed due to excessive interpolation for {participant_str} — excluding from further pupil analysis.")
         exclude_participants_df = pd.DataFrame([{
@@ -157,11 +168,13 @@ group_level_outcome_epoched_pupil_nobc_df = pd.concat(outcome_epoched_pupil_nobc
 group_level_outcome_epochs_columns_nobc_df = pd.concat(outcome_epochs_columns_nobc_df_list, ignore_index=True)
 group_level_outcome_blink_ratio_nobc_df = pd.concat(outcome_blink_ratio_nobc_df_list, ignore_index=True)
 group_level_outcome_epochs_to_remove_nobc_df = pd.concat(outcome_epochs_to_remove_nobc_df_list, ignore_index=True)
+group_level_missing_epochs_check_df = pd.concat(missing_epochs_check, ignore_index=True)
 exclude_participants_pupil_analysis_df = pd.concat(exclude_participants, ignore_index=True)
 
 # Saving files to .csv
 group_data_utils.save_sample_dataframes_to_csv(dataframes={
     'exclude_participants_pupil_analysis_df': exclude_participants_pupil_analysis_df,
+    'missing_epochs_check_df': group_level_missing_epochs_check_df,
     'outcome_epochs_time_df': group_level_outcome_epochs_time_df,
     'outcome_epoched_pupil_df': group_level_outcome_epoched_pupil_df,
     'outcome_epochs_columns_df': group_level_outcome_epochs_columns_df,

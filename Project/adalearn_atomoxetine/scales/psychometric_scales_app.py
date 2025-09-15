@@ -1,3 +1,5 @@
+"To execute the code, navigate to correct directory level then in the terminal >>> streamlit run psychometic_scales_ap.py"
+
 import streamlit as st
 import pandas as pd
 
