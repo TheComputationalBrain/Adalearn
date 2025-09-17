@@ -42,8 +42,7 @@ from model_learner import ideal_learner_prob_estimates_from_outcomes, ideal_lear
 
 def compute_learning_rate(computational_var_df, estimate_parameter=None, estimate_prior=None):
     """
-    Function to compute learning rate for each outcome presentation across groups defined 
-    by a specific parameter (e.g., task session). 
+    Function to compute learning rate for each outcome presentation across groups defined by a specific parameter (e.g., task session). 
     Learning rate (αt) is derived from the delta rule:
 
                             αt = (vt - vt-1) / (xt - vt-1)
