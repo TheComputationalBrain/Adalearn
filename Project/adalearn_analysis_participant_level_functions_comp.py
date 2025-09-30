@@ -402,7 +402,6 @@ def learning_rate_by_change_point(participant_str, condition_str, directory_path
 
 
 
-
 def run_inference_from_observations(participant_str, condition_str, directory_path, computational_var_df, change_point_indices_df, p_c, p1_min, p1_max, resol, plot_surprise = False, plot_posterior_conf = False, plot_posterior_dist_means = False):
     """
     Function runs ideal observer model inference from observations. It also computes the level of surprise of each set of task session observations. Achieves this using the "run_inference" function (created by Cedric Foucault and Florent Meyniel: https://github.com/florentmeyniel/Ada-Learn/blob/main/analysis) to generate posterior inferences of generative probabilities of the data sequence (seq). Surprise is calculated as:
