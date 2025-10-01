@@ -123,7 +123,7 @@ elif page == "Téléchargement":
             st.download_button(
                 label=f"Télécharger {label}.csv",
                 data=csv_data,
-                file_name=f"{st.session_state.participant_id}_{st.session_state.session_code}_{label}_.csv",
+                file_name=f"{st.session_state.participant_id}_{st.session_state.session_code}_Adalearn-VNS_{label}_.csv",
                 mime='text/csv'
             )
         else:
