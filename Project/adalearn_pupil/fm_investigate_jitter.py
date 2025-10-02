@@ -251,4 +251,12 @@ plt.ylabel('Shifted correlation - shifted null correlation')
 plt.title('Paired difference: shifted vs. shifted null correlation')
 plt.tight_layout()
 
+# agreement in shifts between cpp and prior uncertainty
+shift_aggrement = []
+for shift_cpp, shift_unc in zip(shifts['cpp'], shifts['prior uncertainty']):
+    shift_aggrement.append(np.mean(shift_cpp == shift_unc))
+print('### Shift agreement between cpp and prior uncertainty ###')
+print(f'Mean: {np.mean(shift_aggrement):0.3f}, SEM: {pd.Series(shift_aggrement).sem():0.3f}')
+print(f'Min: {np.min(shift_aggrement):0.3f}, Max: {np.max(shift_aggrement):0.3f}')
+
 plt.show()
