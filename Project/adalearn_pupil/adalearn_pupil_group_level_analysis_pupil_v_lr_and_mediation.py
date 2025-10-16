@@ -52,7 +52,7 @@ excluded_participants = list(set(
     list(dataframes['exclude_participants_pupil_analysis_df']['exclude_participant'])
 ))
 
-dataframe_list = []
+pupil_lr_regress_raw_list = []
 pupil_bc_effect = []
 pupil_nobc_effect =[]
 pupil_bc_around_cp_list = []
@@ -200,7 +200,7 @@ for participant in participant_list:
         for col in zscore_cols:
             regression_df_filtered[f'{col}_zscore'] = stats.zscore(regression_df_filtered[col], nan_policy='omit')
 
-    dataframe_list.append(regression_df_filtered)
+    pupil_lr_regress_raw_list.append(regression_df_filtered)
 
     # Examining pupil response around change points
     print(f'\nExamining pupil responses around change points...')
@@ -268,7 +268,7 @@ for participant in participant_list:
 
     bc_mediation_results_list.append(bc_mediation_analysis)
 
-group_dfs = pd.concat(dataframe_list, ignore_index=True)
+group_pupil_lr_regress_raw_df = pd.concat(pupil_lr_regress_raw_list, ignore_index=True)
 group_pupil_bc_avg_effect_signal_df = pd.concat(pupil_bc_effect, ignore_index=True)
 group_pupil_nobc_avg_effect_signal_df = pd.concat(pupil_nobc_effect, ignore_index=True)
 group_pupil_bc_around_cp_df = pd.concat(pupil_bc_around_cp_list, ignore_index=True)
@@ -277,7 +277,7 @@ group_pupil_v_lr_dfs = pd.concat(pupil_v_lr_regress_coef_df_list, ignore_index=T
 group_nobc_mediation_df = pd.concat(nobc_mediation_results_list, ignore_index=True)
 group_bc_mediation_df = pd.concat(bc_mediation_results_list, ignore_index=True)
 
-# Running t-tests on pupil on learning rate regression 
+# Running t-tests on pupil v learning rate regression 
 pupil_v_lr_bc_coef = group_pupil_v_lr_dfs[group_pupil_v_lr_dfs['variable'] == 'pupil_bc_zscore'].sort_values('participant').copy()
 
 pupil_v_lr_nobc_coef = group_pupil_v_lr_dfs[group_pupil_v_lr_dfs['variable'] == 'pupil_nobc_zscore'].sort_values('participant').copy()
