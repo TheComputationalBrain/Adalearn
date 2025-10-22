@@ -94,7 +94,7 @@ fig.update_xaxes(
     showline=True, 
     linewidth=1, 
     linecolor='black', 
-    title_text="Prior confidence regression weight", 
+    title_text="Prior uncertainty regression weight", 
     range=[-0.6, 0.6]
 )
 
@@ -145,7 +145,7 @@ y_vars = ['conf_lr_coef', 'cpp_lr_coef']
 x_vars = ['avg_update_percentage', 'individual_pc', 'est_model_corr']
 
 rename_dict = {
-    'conf_lr_coef': 'Prior confidence regression weight',
+    'conf_lr_coef': 'Prior uncertainty regression weight',
     'cpp_lr_coef': 'Change point probability regression weight',
     'avg_update_percentage': 'Update freq (%)',
     'individual_pc': 'Individual volatility',

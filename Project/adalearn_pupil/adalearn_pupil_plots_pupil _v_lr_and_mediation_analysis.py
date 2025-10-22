@@ -1,9 +1,9 @@
 """
-The script plots figure examining the association between pupil responses and learning rate and the mediating influence of pupil responses on the relationship between prior confidence and learning rate for participant perfoming the Pupil task in the Adalearn project. The following plots are generated:
+The script plots figure examining the association between pupil responses and learning rate and the mediating influence of pupil responses on the relationship between prior uncertainty and learning rate for participant perfoming the Pupil task in the Adalearn project. The following plots are generated:
 - Baseline corrected pupil signal dynamics around change points
-- Non-baseline corrected pupil signal dynamics arounf change points
+- Non-baseline corrected pupil signal dynamics around change points
 - Regression analysis on the effect of pupil signals on learning rates
-- Mediating influence of non-baseline corrected pupil signal on the relatinship between prior confidence and learning rate
+- Mediating influence of non-baseline corrected pupil signal on the relationship between prior uncertainty and learning rate
 """
 
 import os
@@ -686,7 +686,7 @@ fig.add_shape(type="circle",
     fillcolor="PaleTurquoise",
     x0=0.0, y0=1.0, x1=2.0, y1=3.0,
     line_color="LightSeaGreen",
-    label=dict(text=f"Prior <br>confidence", textangle=0)
+    label=dict(text=f"Prior <br>uncertainty", textangle=0)
 )
 
 fig.add_shape(type="circle",

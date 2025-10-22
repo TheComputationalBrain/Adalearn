@@ -1,9 +1,9 @@
 """
 This script plots figures for analysis examining the effect of defining individual volatility for participant undertaking the Pupil task in the Adalearn project. The effects of individual volataility are examined on learning rate and pupil responses. The following figures are generated:
 - Change in change point probability for an example participant in one task session
-- Prior confidence and change point probability on learning rate
-- Prior confidence and change point probabilty on baseline corrected peristimulus regression
-- Prior confidence and change point probabilty on non-baseline corrected peristimulus regression
+- Prior uncertainty and change point probability on learning rate
+- Prior uncertainty and change point probabilty on baseline corrected peristimulus regression
+- Prior uncertainty and change point probabilty on non-baseline corrected peristimulus regression
 """
 
 import os
@@ -150,7 +150,7 @@ model_cpp_coef_sem = stats.sem(behav_cpp_coef['coefficient_model'])
 fig = go.Figure()
 
 fig.add_trace(go.Bar(
-    name='Prior confidence (z-score)',
+    name='Prior uncertainty (z-score)',
     x=[0], y=[behav_conf_coef_mean],
     error_y=dict(type='data', array=[behav_conf_coef_sem]),
     showlegend=False
@@ -216,7 +216,7 @@ fig.update_traces(
     marker_line_color='rgba(0, 130, 150, 0.8)', 
     marker_line_width=1.0)
 
-x_positions = {'Prior confidence (z-score)': 0, 'Change point probability (z-score)': 1}
+x_positions = {'Prior uncertainty (z-score)': 0, 'Change point probability (z-score)': 1}
 
 # Jitter width
 jitter_width = 0.08
@@ -225,7 +225,7 @@ jitter_width = 0.08
 np.random.seed(42)
 
 # Generate jittered x values for each group
-x_jittered_conf = np.random.normal(loc=x_positions['Prior confidence (z-score)'], scale=jitter_width, size=len(behav_conf_coef))
+x_jittered_conf = np.random.normal(loc=x_positions['Prior uncertainty (z-score)'], scale=jitter_width, size=len(behav_conf_coef))
 x_jittered_cpp = np.random.normal(loc=x_positions['Change point probability (z-score)'], scale=jitter_width, size=len(behav_cpp_coef))
 
 # Add jittered scatter points — use numeric jittered x, actual y
@@ -247,7 +247,7 @@ fig.add_trace(go.Scatter(
 
 fig.update_xaxes(
     tickvals=[0, 1],
-    ticktext=['Prior confidence (z-score)', 'Change point probability (z-score)'],showline=True, 
+    ticktext=['Prior uncertainty (z-score)', 'Change point probability (z-score)'],showline=True, 
     linewidth=1.5, 
     linecolor='black')
 
@@ -259,8 +259,8 @@ fig.update_yaxes(
 
 # Add inset bars (model) - assigned to secondary x2/y2 axes
 fig.add_trace(go.Bar(
-    name='Model Prior confidence',
-    x=['Prior conf'], y=[model_conf_coef_mean],
+    name='Model Prior uncertainty',
+    x=['Prior uncert'], y=[model_conf_coef_mean],
     error_y=dict(type='data', array=[model_conf_coef_sem]),
     showlegend=False,
     xaxis='x2',
@@ -368,7 +368,7 @@ fig.add_trace(go.Scatter(
     y=baseline_corrected_coefs['prior_conf'], 
     mode= 'lines',
     line=dict(color='rgba(0, 130, 150, 0.8)'), 
-    name='Prior confidence'))
+    name='Prior uncertainty'))
 
 fig.add_trace(go.Scatter(
     x=list(baseline_corrected_coefs['time']) + list(baseline_corrected_coefs['time'][::-1]),

@@ -2,10 +2,10 @@
 This script plots figures for analysis of learning rate for participants undertaking the Pupil task in the Adalearn project.  The following figures are generated:
 - The relationship between participants' and model learning rates
 - The dynamics of learning rate around change points (with normative predictions)
-- Regression coefficients of prior confidence and change point probability on learning rate
-- Scatterplot of individual regression coefficients for prior confidence and change point probability
-- Relationship between (binned) prior confidence and learning rate
-- Dynamics of prior confidence and change point probability around change points
+- Regression coefficients of prior uncertainty and change point probability on learning rate
+- Scatterplot of individual regression coefficients for prior uncertainty and change point probability
+- Relationship between (binned) prior uncertainty and learning rate
+- Dynamics of prior uncertainty and change point probability around change points
 """
 
 import os
@@ -406,34 +406,33 @@ model_conf_coef_sem = stats.sem(behav_conf_coef['coefficient_model'])
 model_cpp_coef_sem = stats.sem(behav_cpp_coef['coefficient_model'])
 
 
-
 fig = go.Figure()
 
 fig.add_trace(go.Bar(
-    name='Prior confidence (z-score)',
-    x=[0], y=[behav_conf_coef_mean],
-    error_y=dict(type='data', array=[behav_conf_coef_sem]),
+    name='Change point probability (z-score)',
+    x=[0], y=[behav_cpp_coef_mean],
+    error_y=dict(type='data', array=[behav_cpp_coef_sem]),
     showlegend=False
 ))
 
 fig.add_trace(go.Bar(
-    name='Change point probability (z-score)',
-    x=[1], y=[behav_cpp_coef_mean],
-    error_y=dict(type='data', array=[behav_cpp_coef_sem]),
+    name='Prior uncertainty (z-score)',
+    x=[1], y=[behav_conf_coef_mean],
+    error_y=dict(type='data', array=[behav_conf_coef_sem]),
     showlegend=False
 ))
 
 fig.add_hline(y=0, line_dash='dot')
 
 # Determine y positions for stars (slightly above error bar max)
-y_offset = 0.25  # adjust as needed
-conf_star_y = behav_conf_coef_mean + behav_conf_coef_sem - y_offset
-cpp_star_y = behav_cpp_coef_mean + behav_cpp_coef_sem - y_offset
-between_star_y = max(conf_star_y, cpp_star_y) - 0.1
+y_offset = 0.35  # adjust as needed
+conf_star_y = behav_conf_coef_mean + behav_conf_coef_sem + y_offset
+cpp_star_y = behav_cpp_coef_mean + behav_cpp_coef_sem + y_offset
+between_star_y = max(cpp_star_y, conf_star_y) + 0.1
 
 # Add asterisks if significant
 if uncertainty_params_ttest_df.loc[
-    uncertainty_params_ttest_df['variable'] == 'conf_zscore', 'p_value'
+    uncertainty_params_ttest_df['variable'] == 'cpp_zscore', 'p_value'
 ].values[0] < 0.05:
     fig.add_annotation(
         text='*',
@@ -443,7 +442,7 @@ if uncertainty_params_ttest_df.loc[
     )
 
 if uncertainty_params_ttest_df.loc[
-    uncertainty_params_ttest_df['variable'] == 'cpp_zscore', 'p_value'
+    uncertainty_params_ttest_df['variable'] == 'conf_zscore', 'p_value'
 ].values[0] < 0.05:
     fig.add_annotation(
         text='*',
@@ -462,7 +461,7 @@ if uncertainty_params_ttest_df.loc[
                   line=dict(color='black', width=1.5))
     fig.add_annotation(
         text='*',
-        x=0.5, y=between_star_y - 0.02,
+        x=0.5, y=between_star_y + 0.02,
         showarrow=False,
         font=dict(size=60)
     )
@@ -473,7 +472,7 @@ fig.update_traces(
     marker_line_width=1.0,
 )
 
-x_positions = {'Prior confidence (z-score)': 0, 'Change point probability (z-score)': 1}
+x_positions = {'Change point probability (z-score)': 0, 'Prior uncertainty (z-score)': 1}
 
 # Jitter width
 jitter_width = 0.08
@@ -482,21 +481,21 @@ jitter_width = 0.08
 np.random.seed(42)
 
 # Generate jittered x values for each group
-x_jittered_conf = np.random.normal(loc=x_positions['Prior confidence (z-score)'], scale=jitter_width, size=len(behav_conf_coef))
 x_jittered_cpp = np.random.normal(loc=x_positions['Change point probability (z-score)'], scale=jitter_width, size=len(behav_cpp_coef))
+x_jittered_conf = np.random.normal(loc=x_positions['Prior uncertainty (z-score)'], scale=jitter_width, size=len(behav_conf_coef))
 
 # Add jittered scatter points — use numeric jittered x, actual y
 fig.add_trace(go.Scatter(
-    x=x_jittered_conf,
-    y=behav_conf_coef['coefficient'],
+    x=x_jittered_cpp,
+    y=behav_cpp_coef['coefficient'],
     mode='markers',
     marker=dict(color='rgba(0, 130, 150, 0.3)', size=16),
     showlegend=False,
 ))
 
 fig.add_trace(go.Scatter(
-    x=x_jittered_cpp,
-    y=behav_cpp_coef['coefficient'],
+    x=x_jittered_conf,
+    y=behav_conf_coef['coefficient'],
     mode='markers',
     marker=dict(color='rgba(0, 130, 150, 0.3)', size=16),
     showlegend=False,
@@ -507,15 +506,15 @@ fig.update_yaxes(showline=True, linewidth=1.5, linecolor='black',  title_text="R
 
 fig.update_xaxes(
     tickvals=[0, 1],
-    ticktext=['Prior confidence (z-score)', 'Change point probability (z-score)'],
+    ticktext=['Change point probability (z-score)', 'Prior uncertainty (z-score)'],
     showline=True, linewidth=1.5, linecolor='black'
 )
 
 # Add inset bars (model) - assigned to secondary x2/y2 axes
 fig.add_trace(go.Bar(
-    name='Model Prior confidence',
-    x=['Prior conf'], y=[model_conf_coef_mean],
-    error_y=dict(type='data', array=[model_conf_coef_sem]),
+    name='Model change point probability',
+    x=['CPP'], y=[model_cpp_coef_mean],
+    error_y=dict(type='data', array=[model_cpp_coef_sem]),
     showlegend=False,
     xaxis='x2',
     yaxis='y2',
@@ -525,9 +524,9 @@ fig.add_trace(go.Bar(
 ))
 
 fig.add_trace(go.Bar(
-    name='Model Change point probability',
-    x=['CPP'], y=[model_cpp_coef_mean],
-    error_y=dict(type='data', array=[model_cpp_coef_sem]),
+    name='Model prior uncertainty',
+    x=['Prior conf'], y=[model_conf_coef_mean],
+    error_y=dict(type='data', array=[model_conf_coef_sem]),
     showlegend=False,
     xaxis='x2',
     yaxis='y2',
@@ -552,25 +551,25 @@ fig.add_shape(
 
 fig.update_layout(
     xaxis2=dict(
-        domain=[0.1, 0.35],  # inset x position (change to relocate)
+        domain=[0.85, 1.0],  # inset x position (change to relocate)
         anchor='y2',
         showticklabels=True,
         showline=True,
         linecolor='black',
         linewidth=1.5,
-        tickfont=dict(size=36),     
-        titlefont=dict(size=32)
+        tickfont=dict(size=30),     
+        titlefont=dict(size=28)
     ),
     yaxis2=dict(
         title_text="Regression weight (model)",
-        domain=[0.75, 1.0],  # inset y position (change to resize/relocate)
+        domain=[0.8, 1.0],  # inset y position (change to resize/relocate)
         anchor='x2',
         showticklabels=True,
         showline=True,
         linecolor='black',
         linewidth=1.5,
-        tickfont=dict(size=36),       
-        titlefont=dict(size=32)
+        tickfont=dict(size=30),       
+        titlefont=dict(size=28)
     ),
     plot_bgcolor='rgba(255, 255, 255, 1)',
     font=dict(size=42, family="Times New Roman"),
@@ -615,7 +614,7 @@ fig.update_xaxes(
     showline=True, 
     linewidth=1.5, 
     linecolor='black', 
-    title_text="Prior confidence (beta)", 
+    title_text="Prior uncertainty (beta)", 
     range=[-0.6, 0.6]
 )
 
@@ -638,7 +637,7 @@ plot_dir = os.path.join(BASE_DIR, "plots")
 os.makedirs(plot_dir, exist_ok=True)
 
 # Base filename (without extension)
-base_filename = f"adalearn_pupil-group_level_prior_conf_v_cpp_regression_weights"
+base_filename = f"adalearn_pupil-group_level_prior_uncertainty_v_cpp_regression_weights"
 base_filepath = os.path.join(plot_dir, base_filename)
 
 # Save as PNG
@@ -654,10 +653,10 @@ fig.show()
 
 behav_uncertainty_df = dataframes['computational_var_df'].copy()
 
-# Splitting by prior confidence (defining the number of bins)
+# Splitting by prior uncertainty (defining the number of bins)
 nbins_uncert_lr = 6 
 
-# Evaluating the relationship between learning rate and prior confidence based on behavioural responses
+# Evaluating the relationship between learning rate and prior uncertainty based on behavioural responses
 _, bin_edges_conf_lr = pd.qcut(behav_uncertainty_df["prior_conf"], nbins_uncert_lr, retbins=True)
 
 behav_uncertainty_df["prior_conf_bin"] = pd.cut(behav_uncertainty_df["prior_conf"], bins=bin_edges_conf_lr, labels=False, include_lowest=True)
@@ -721,7 +720,7 @@ fig.update_xaxes(
     showline=True, 
     linewidth=1.5, 
     linecolor='black', 
-    title_text="Prior confidence (-log(sd))"
+    title_text="Prior uncertainty (SD)"
 )
 
 fig.update_yaxes(
@@ -742,7 +741,7 @@ plot_dir = os.path.join(BASE_DIR, "plots")
 os.makedirs(plot_dir, exist_ok=True)
 
 # Base filename (without extension)
-base_filename = f"adalearn_pupil-group_level_prior_conf_v_lr_relationship"
+base_filename = f"adalearn_pupil-group_level_prior_uncertainty_v_lr_relationship"
 base_filepath = os.path.join(plot_dir, base_filename)
 
 # Save as PNG
@@ -754,7 +753,7 @@ fig.write_image(f"{base_filepath}.svg")
 fig.show()
 
 
-####################################################### Realtionship between CPP and prior confidence around change points
+####################################################### Realtionship between CPP and prior uncertainty around change points
 
 computational_var_df = dataframes['computational_var_df'].copy()
 change_point_indices_df = dataframes['change_point_indices_df'].copy()
@@ -863,7 +862,7 @@ for i in rel_pos_df['rel_pos'].unique():
 
 grouped_rel_pos_df = pd.DataFrame(grouped_rel_pos_dict)
 
-# Prior Confidence around change points
+# Prior uncertainty around change points
 fig = go.Figure()
 
 fig.add_trace(go.Scatter(
@@ -884,7 +883,7 @@ fig.add_trace(go.Scatter(
     y=grouped_rel_pos_df['conf_mean'],
     mode='lines',
     line=dict(color='rgba(0, 130, 150, 0.8)', width=3),
-    name='Prior confidence',
+    name='Prior uncertainty',
     showlegend=False
 ))
 
@@ -907,7 +906,7 @@ fig.update_xaxes(
 )
 
 fig.update_yaxes(showline=True, linewidth=1, linecolor='black', 
-                 title_text='Prior confidence')
+                 title_text='Prior uncertainty (SD)')
 
 # Update layout
 fig.update_layout(height=1200, width=1800, plot_bgcolor='rgba(255, 255, 255, 1)', font=dict(size=42, family="Times New Roman"), showlegend=False)
@@ -917,7 +916,7 @@ plot_dir = os.path.join(BASE_DIR, "plots")
 os.makedirs(plot_dir, exist_ok=True)
 
 # Base filename (without extension)
-base_filename = f"adalearn_pupil-group_level_prior_conf_around_change_points"
+base_filename = f"adalearn_pupil-group_level_prior_uncertainty_around_change_points"
 base_filepath = os.path.join(plot_dir, base_filename)
 
 # Save as PNG

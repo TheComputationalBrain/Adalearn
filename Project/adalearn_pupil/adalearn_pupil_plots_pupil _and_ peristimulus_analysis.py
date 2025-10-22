@@ -2,8 +2,8 @@
 This script plots figures for the analysis of the pupil signal for participants undertaking the Pupil task of the Adalearn project. The following figures are generated:
 - The average baseline corrected epoched pupil signal
 - The average non-baseline corrected epoched pupil signal
-- Perstimulus regression coeficients for prior confidence and change point probability on the baseline correct pupil signal
-- Perstimulus regression coeficients for prior confidence and change point probability on the non-baseline correct pupil signal
+- Perstimulus regression coeficients for prior uncertainty and change point probability on the baseline correct pupil signal
+- Perstimulus regression coeficients for prior uncertainty and change point probability on the non-baseline correct pupil signal
 """
 
 import os
@@ -418,7 +418,7 @@ fig.add_trace(go.Scatter(
     y=baseline_corrected_coefs['prior_conf'], 
     mode= 'lines',
     line=dict(color='rgba(0, 130, 150, 0.8)'), 
-    name='Prior confidence'))
+    name='Prior uncertainty'))
 
 fig.add_trace(go.Scatter(
     x=list(baseline_corrected_coefs['time']) + list(baseline_corrected_coefs['time'][::-1]),
@@ -476,7 +476,7 @@ fig.update_layout(
     width=1800,
     font=dict(size=42, family="Times New Roman"),
     legend=dict(
-        x=0.45,
+        x=0.5,
         y=1.0,
         xanchor='right',
         yanchor='top',
@@ -529,7 +529,7 @@ fig.add_trace(go.Scatter(
     y=nonbaseline_corrected_coefs['prior_conf'], 
     mode= 'lines',
     line=dict(color='rgba(0, 130, 150, 0.8)'), 
-    name='Prior confidence'))
+    name='Prior uncertainty'))
 
 fig.add_trace(go.Scatter(
     x=list(nonbaseline_corrected_coefs['time']) + list(nonbaseline_corrected_coefs['time'][::-1]),
@@ -547,15 +547,15 @@ fig.add_hline(y=0, line_dash = 'dot', line=dict(color='black', width=1.5))
 
 
 var_style_map = {
-    'cpp': {'color': 'rgba(220, 120, 0, 0.8)', 'yval': -0.26},
-    'prior_conf': {'color': 'rgba(0, 130, 150, 0.8)', 'yval': -0.28}
+    'cpp': {'color': 'rgba(220, 120, 0, 0.8)', 'yval': -0.03},
+    'prior_conf': {'color': 'rgba(0, 130, 150, 0.8)', 'yval': -0.05}
 }
 
 # Add significant clusters with separation by variable
 for _, row in nonbaseline_corrected_clusters.iterrows():
     if row['p_value'] < 0.05:
         var = row['variable']
-        style = var_style_map.get(var, {'color': 'black', 'yval': -0.05})  # fallback
+        style = var_style_map.get(var, {'color': 'black', 'yval': -0.05}) 
 
         cluster_range = nonbaseline_corrected_coefs['time'].iloc[row['cluster_start']:row['cluster_end']+1]
         fig.add_trace(go.Scatter(
@@ -588,8 +588,8 @@ fig.update_layout(
     width=1800,
     font=dict(size=42, family="Times New Roman"),
     legend=dict(
-        x=0.50,
-        y=1.0,
+        x=0.95,
+        y=0.20,
         xanchor='right',
         yanchor='top',
         bgcolor='rgba(255, 255, 255, 0.7)'))
