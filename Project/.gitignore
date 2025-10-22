@@ -1,5 +1,6 @@
 # Ignore folders
 misc
+adalearn_pupil/foucault_meyniel_2024_renanalysis
 
 # Ignore files
 adalearn_pupil/adalearn_pupil_participant_level_analysis_regression_pupil.py
@@ -12,4 +13,4 @@ adalearn_pupil/adalearn_pupil_group_level_analysis_individual_volatility.py
 adalearn_pupil/adalearn_pupil_group_level_uncertainty_correlations.py
 adalearn_pupil/adalearn_pupil_plots_individual_volatility_analysis.py
 adalearn_pupil/adalearn_pupil_plots_uncertainty_correlations.py
-adalearn_pupil/foucault_meyniel_2024_renanalysis
+adalearn_pupil/fm_investiagte_jitter.py
