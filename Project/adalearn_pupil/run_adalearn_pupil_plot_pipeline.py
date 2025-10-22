@@ -41,8 +41,7 @@ if __name__ == "__main__":
     "adalearn_pupil_plots_learning_rate_analysis.py",
     "adalearn_pupil_plots_pupil _and_ peristimulus_analysis.py",
     "adalearn_pupil_plots_pupil _v_lr_and_mediation_analysis.py",
-    "adalearn_pupil_plots_individual_volatility_analysis.py",
-    "adalearn_pupil_plots_uncertainty_correlations.py",
+    "adalearn_pupil_plots_lag_assessment.py",
     "supplement_dataset/naconf_plot_pupil_regression.py",
     ]
     plots_in_order = [base_dir / plot for plot in plot_script_names]

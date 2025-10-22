@@ -45,9 +45,7 @@ if __name__ == "__main__":
     "adalearn_pupil_group_level_analysis_pupil_assessment.py",
     "adalearn_pupil_group_level_analysis_pupil_peristimulus_regression.py",
     "adalearn_pupil_group_level_analysis_pupil_v_lr_and_mediation.py",
-    "adalearn_pupil_group_level_analysis_individual_volatility.py",
-    "foucault_meyniel_2024_reanalysis/foucault_meyniel_2024_reanalysis_comp_parameters.py",
-    "adalearn_pupil_group_level_analysis_uncertainty_correlations.py",
+    "adalearn_pupil_group_level_analysis_update_lag_assessment.py",
     "supplement_dataset/naconf_group_level_analysis_pupil_regression.py",
 
 ]
