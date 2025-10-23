@@ -465,24 +465,24 @@ fig.update_layout(
         showline=True,
         linecolor='black',
         linewidth=1.5,
-        tickfont=dict(size=36),     
-        titlefont=dict(size=32)
+        tickfont=dict(size=30),     
+        titlefont=dict(size=30)
     ),
     yaxis2=dict(
-        title_text="Regression weight (model)",
+        title_text="Regress. weight (model)",
         domain=[0.05, 0.25],  # inset y position (change to resize/relocate)
         anchor='x2',
         showticklabels=True,
         showline=True,
         linecolor='black',
         linewidth=1.5,
-        tickfont=dict(size=36),       
-        titlefont=dict(size=32)
+        tickfont=dict(size=32),       
+        titlefont=dict(size=28)
     ),
     font=dict(size=42, family="Times New Roman"),
     plot_bgcolor='rgba(255, 255, 255, 1)',
-    height=1800,
-    width=2400
+    height=1200,
+    width=1800
 )
 
 # Save the figure to the group-level folder

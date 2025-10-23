@@ -239,14 +239,14 @@ def plot_session_behav_comp(participant_str, condition_str, directory_path, base
                 xref='x4', yref='y4'
             )
 
-        # Subplot 5: Prior confidence
+        # Subplot 5: Prior uncertainty
         fig.add_trace(
             go.Scatter(
                 x=task_session_comp_df['outcome_num']+1, 
                 y=task_session_comp_df['prior_conf'], 
                 mode='lines+markers',
                 marker=dict(color='rgba(0, 130, 150, 0.8)'), 
-                name='Prior confidence',
+                name='Prior uncertainty',
                 showlegend=False
             ), row=3, col=2
         )
@@ -300,7 +300,7 @@ def plot_session_behav_comp(participant_str, condition_str, directory_path, base
         fig.update_yaxes(title_text="Learning rate (participant)", row=2, col=1)
         fig.update_yaxes(title_text="Learning rate (model)", row=2, col=2)
         fig.update_yaxes(title_text="Change point probability", row=3, col=1)
-        fig.update_yaxes(title_text="Prior confidence", row=3, col=2)
+        fig.update_yaxes(title_text="Prior uncertainty", row=3, col=2)
 
         # Save the figure to the partcipant folder
         plot_dir = os.path.join(directory_path, f"ses-{condition_str}", "plots")

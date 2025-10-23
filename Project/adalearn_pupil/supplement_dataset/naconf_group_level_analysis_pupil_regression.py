@@ -42,7 +42,7 @@ for participant in usable_participants:
 
     task_session_df = model.run_inference_from_observations(participant_str=participant, directory_path=directory_path, task_session_df=task_session_df, change_point_indices_df=change_point_indices, p_c=P_C, p_min=P_MIN, p_max=P_MAX, plot_surprise = False)
 
-    task_session_df = model.compute_prior_conf_and_cpp_from_observations(participant_str=participant, directory_path=directory_path, task_session_df=task_session_df, change_point_indices_df=change_point_indices, p_c=P_C, p_min=P_MIN, p_max=P_MAX, estimate_type = 'mean', conf_type = 'prev-conf-pred', unit = 'confidence', plot_prior_conf = False, plot_cpp = False)
+    task_session_df = model.compute_prior_conf_and_cpp_from_observations(participant_str=participant, directory_path=directory_path, task_session_df=task_session_df, change_point_indices_df=change_point_indices, p_c=P_C, p_min=P_MIN, p_max=P_MAX, estimate_type = 'mean', conf_type = 'prev-conf-pred', unit = 'uncertainty_sd', plot_prior_conf = False, plot_cpp = False)
 
     task_session_df_list.append(task_session_df)
 

@@ -1,7 +1,7 @@
 """
 This script plots figures for the peristimulus analysis of the supplemental dataset (NACONF) to the Pupil task of the Adalearn project. The following figures are generated:
-- Perstimulus regression coeficients for prior confidence and change point probability on the baseline correct pupil signal
-- Perstimulus regression coeficients for prior confidence and change point probability on the non-baseline correct pupil signal
+- Perstimulus regression coeficients for prior uncertainty and change point probability on the baseline correct pupil signal
+- Perstimulus regression coeficients for prior uncertainty and change point probability on the non-baseline correct pupil signal
 """
 
 import os
@@ -66,7 +66,7 @@ fig.add_trace(go.Scatter(
     y=conf, 
     mode='lines',
     line=dict(color='rgba(0, 130, 150, 0.8)'), 
-    name='Prior confidence'))
+    name='Prior uncertainty'))
 
 # Confidence error fill
 fig.add_trace(go.Scatter(
@@ -124,7 +124,7 @@ fig.update_layout(
     width=1800,
     font=dict(size=42, family="Times New Roman"),
     legend=dict(
-        x=0.45,
+        x=0.48,
         y=1.0,
         xanchor='right',
         yanchor='top',
@@ -182,7 +182,7 @@ fig.add_trace(go.Scatter(
     y=conf, 
     mode='lines',
     line=dict(color='rgba(0, 130, 150, 0.8)'), 
-    name='Prior confidence'))
+    name='Prior uncertainty'))
 
 # Confidence error fill
 fig.add_trace(go.Scatter(
@@ -232,7 +232,7 @@ fig.update_yaxes(
     linewidth=1.5, 
     linecolor='black', 
     title_text="Regression weights",
-    range=[-0.15, 0.06]
+    range=[-0.15, 0.08]
 ) 
 
 fig.update_layout(
@@ -241,8 +241,8 @@ fig.update_layout(
     width=1800,
     font=dict(size=42, family="Times New Roman"),
     legend=dict(
-        x=0.50,
-        y=1.0,
+        x=0.95,
+        y=0.35,
         xanchor='right',
         yanchor='top',
         bgcolor='rgba(255, 255, 255, 0.7)')
