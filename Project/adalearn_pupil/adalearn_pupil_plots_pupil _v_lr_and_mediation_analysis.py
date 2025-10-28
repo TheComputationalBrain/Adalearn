@@ -22,6 +22,7 @@ sys.path.append(str(parent_dir))
 
 import adalearn_analysis_group_level_functions_data_utilities as group_data_utils
 import adalearn_analysis_group_level_functions_pupil_analysis as pupil_analysis
+from adalearn_analysis_participant_level_functions_comp import variables_by_change_point
 
 from adalearn_pupil.adalearn_pupil_participant_info_and_parameters import BASE_DIR
 
@@ -37,6 +38,7 @@ dataframes = group_data_utils.load_sample_csvs(
         'pupil_bc_around_cp',
         'pupil_nobc_around_cp',
         'pupil_lr_uncert_nobc_mediation',
+        'pupil_lr_uncert_bc_mediation',
         'exclude_participants_pupil_analysis_df', 
         'outcome_epochs_time_df', 
         'outcome_epoched_pupil_df',
@@ -89,7 +91,80 @@ for i in pupil_nobc_around_cp['stimulus_rel_cp'].unique():
 
 grouped_pupil_nobc_cp_rel_pos_df = pd.DataFrame(grouped_pupil_nobc_cp_pos_dict)
 
-# Baseline corrected pupil effect window
+# getting computational variables for inserts
+averaged_cp_df = []
+averaged_conf_df = []
+
+for participant in dataframes['computational_var_df']['participant'].unique():
+    print('Processing participant:', participant)
+
+    variable_data = dataframes['computational_var_df'][dataframes['computational_var_df']['participant'] == participant]
+    change_points = dataframes['change_point_indices_df'][dataframes['change_point_indices_df']['participant'] == participant]
+
+    _, averaged_values_cpp = variables_by_change_point(participant_str=participant,
+                                                                        condition_str='01',
+                                                                        directory_path=BASE_DIR,
+                                                                        variable_data=variable_data,
+                                                                        change_point_indices=change_points,
+                                                                        parameter='cpp',
+                                                                        pre=5,
+                                                                        post=5,
+                                                                        exclude_zero=False)
+    _, averaged_values_conf = variables_by_change_point(participant_str=participant,
+                                                                        condition_str='01',
+                                                                        directory_path=BASE_DIR,
+                                                                        variable_data=variable_data,
+                                                                        change_point_indices=change_points,
+                                                                        parameter='prior_conf',
+                                                                        pre=5,
+                                                                        post=5,
+                                                                        exclude_zero=False)
+    
+    averaged_values_cpp['participant'] = participant
+    averaged_cp_df.append(averaged_values_cpp)
+
+    averaged_values_conf['participant'] = participant
+    averaged_conf_df.append(averaged_values_conf)   
+
+round_cp_averaged_cpp_df = pd.concat(averaged_cp_df, ignore_index=True)
+round_cp_averaged_conf_df = pd.concat(averaged_conf_df, ignore_index=True)
+
+round_cp_data = {
+    'cpp': round_cp_averaged_cpp_df,
+    'prior_conf': round_cp_averaged_conf_df
+}
+
+cpp_data_dict = {}
+conf_data_dict = {}
+
+for variable, df in round_cp_data.items():
+    for pos in df['relative_position'].unique():
+        pos_data = df[df['relative_position'] == pos]
+
+        pos_data_mean = pos_data['mean'].mean()
+        pos_data_sem = stats.sem(pos_data['mean'])
+
+        if variable == 'cpp':
+            cpp_data_dict[pos] = {
+                'mean': pos_data_mean,
+                'sem': pos_data_sem
+            }
+        elif variable == 'prior_conf':
+            conf_data_dict[pos] = {
+                'mean': pos_data_mean,
+                'sem': pos_data_sem
+            }
+
+cpp_round_cp_df = pd.DataFrame.from_dict(cpp_data_dict, orient='index').reset_index()
+cpp_round_cp_df.columns = ['position', 'mean', 'sem']
+cpp_round_cp_df = cpp_round_cp_df.sort_values('position').reset_index(drop=True)
+
+conf_round_cp_df = pd.DataFrame.from_dict(conf_data_dict, orient='index').reset_index()
+conf_round_cp_df.columns = ['position', 'mean', 'sem']
+conf_round_cp_df = conf_round_cp_df.sort_values('position').reset_index(drop=True)
+
+
+# Phasic-associated pupil effect window
 fig = go.Figure()
 
 fig.add_trace(go.Scatter(
@@ -102,7 +177,7 @@ fig.add_trace(go.Scatter(
         (grouped_pupil_bc_cp_rel_pos_df['pupil_bc_mean'] + grouped_pupil_bc_cp_rel_pos_df['pupil_bc_sem'])[::-1]
     ]),
     fill='toself',
-    fillcolor='rgba(0, 130, 150, 0.2)',
+    fillcolor='rgba(128, 0, 128, 0.2)',
     line=dict(color='rgba(255,255,255,0)'),
     hoverinfo="skip",
     showlegend=False
@@ -112,7 +187,7 @@ fig.add_trace(go.Scatter(
     x=grouped_pupil_bc_cp_rel_pos_df['rel_pos'],
     y=grouped_pupil_bc_cp_rel_pos_df['pupil_bc_mean'],
     mode='lines',
-    line=dict(color='rgba(0, 130, 150, 0.8)', width=3),
+    line=dict(color='rgba(128, 0, 128, 0.8)', width=3),
     name='Pupil (Baseline corrected effect window)',
     showlegend=True
 ))
@@ -133,10 +208,79 @@ fig.update_xaxes(
     range=[-5.5, 6.5]
 )
 
-fig.update_yaxes(showline=True, linewidth=1, linecolor='black', 
-                 title_text='Baseline corrected pupil effect window (z-score)')
+fig.update_yaxes(
+    showline=True, 
+    linewidth=1, 
+    linecolor='black', 
+    range=[-0.05, 0.18], 
+    title_text='Phasic-associated pupil effect signal (z-score)')
 
-fig.update_layout(height=1200, width=1800, plot_bgcolor='rgba(255, 255, 255, 1)', font=dict(size=42, family="Times New Roman"), showlegend=False)
+# Add the inset (e.g., CPP variable)
+fig.add_trace(go.Scatter(
+    x=cpp_round_cp_df['position'],
+    y=cpp_round_cp_df['mean'],
+    mode='lines',
+    line=dict(color='rgba(200, 0, 0, 0.8)', width=3),
+    name='CPP',
+    xaxis='x2',
+    yaxis='y2'
+))
+
+# Add SEM shading in the inset
+fig.add_trace(go.Scatter(
+    x=pd.concat([cpp_round_cp_df['position'], cpp_round_cp_df['position'][::-1]]),
+    y=pd.concat([cpp_round_cp_df['mean'] - cpp_round_cp_df['sem'], (cpp_round_cp_df['mean'] + cpp_round_cp_df['sem'])[::-1]]),
+    fill='toself',
+    fillcolor='rgba(200, 0, 0, 0.2)',
+    line=dict(color='rgba(255,255,255, 0)'),
+    hoverinfo="skip",
+    showlegend=False,
+    xaxis='x2',
+    yaxis='y2'
+))
+
+# Vertical line at change point (0) in model subplot
+fig.add_shape(
+    type="line",
+    x0=0, x1=0,
+    y0=cpp_round_cp_df['mean'].min() - 0.01,
+    y1=cpp_round_cp_df['mean'].max() + 0.01,
+    line=dict(color="black", width=2, dash="dot"),
+    xref="x2", yref="y2"
+)
+
+fig.update_layout(
+    xaxis2=dict(
+        domain=[0.1, 0.35], 
+        anchor='y2',
+        range=[-5.5, 6.5],
+        showticklabels=True,
+        showline=True,
+        linecolor='black',
+        linewidth=1.5,
+        tickvals=list(range(-5, 6)),
+        title=dict(text="Outcomes relative to change point", font=dict(size=30)),
+        ticktext=["-5", "-4", "-3", "-2", "-1", "1", "2", "3", "4", "5", "6"],
+        tickfont=dict(size=28),
+    ),
+    yaxis2=dict(
+        domain=[0.75, 1.0],  
+        anchor='x2',
+        showticklabels=True,
+        showline=True,
+        linecolor='black',
+        linewidth=1.5,
+        dtick=0.02,
+        title=dict(text="CPP", font=dict(size=30)),
+        tickfont=dict(size=28),
+    ),
+    height=1200, 
+    width=1800, 
+    plot_bgcolor='rgba(255, 255, 255, 1)', 
+    font=dict(size=42, family="Times New Roman"), 
+    showlegend=False
+)
+
 
 # Save the figure to the group-level folder
 plot_dir = os.path.join(BASE_DIR, "plots")
@@ -168,7 +312,7 @@ fig.add_trace(go.Scatter(
         (grouped_pupil_nobc_cp_rel_pos_df['pupil_nobc_mean'] + grouped_pupil_nobc_cp_rel_pos_df['pupil_nobc_sem'])[::-1]
     ]),
     fill='toself',
-    fillcolor='rgba(0, 130, 150, 0.2)',
+    fillcolor='rgba(255, 165, 0, 0.2)',
     line=dict(color='rgba(255,255,255,0)'),
     hoverinfo="skip",
     showlegend=False
@@ -178,7 +322,7 @@ fig.add_trace(go.Scatter(
     x=grouped_pupil_nobc_cp_rel_pos_df['rel_pos'],
     y=grouped_pupil_nobc_cp_rel_pos_df['pupil_nobc_mean'],
     mode='lines',
-    line=dict(color='rgba(0, 130, 150, 0.8)', width=3),
+    line=dict(color='rgba(255, 165, 0, 0.8)', width=3),
     name='Pupil (Non-baseline corrected effect window)',
     showlegend=True
 ))
@@ -199,10 +343,78 @@ fig.update_xaxes(
     range=[-5.5, 6.5]
 )
 
-fig.update_yaxes(showline=True, linewidth=1, linecolor='black', 
-                 title_text='Non-baseline corrected pupil effect window (z-score)')
+fig.update_yaxes(
+    showline=True, 
+    linewidth=1, 
+    linecolor='black',
+    range=[-0.18, 0.15], 
+    title_text='Tonic-associated pupil effect signal (z-score)')
 
-fig.update_layout(height=1200, width=1800, plot_bgcolor='rgba(255, 255, 255, 1)', font=dict(size=42, family="Times New Roman"), showlegend=False)
+# Add the inset (e.g., prior uncertainty variable)
+fig.add_trace(go.Scatter(
+    x=conf_round_cp_df['position'],
+    y=conf_round_cp_df['mean'],
+    mode='lines',
+    line=dict(color='rgba(200, 0, 0, 0.8)', width=3),
+    name='Prior uncert',
+    xaxis='x2',
+    yaxis='y2'
+))
+
+# Add SEM shading in the inset
+fig.add_trace(go.Scatter(
+    x=pd.concat([conf_round_cp_df['position'], conf_round_cp_df['position'][::-1]]),
+    y=pd.concat([conf_round_cp_df['mean'] - conf_round_cp_df['sem'], (conf_round_cp_df['mean'] + conf_round_cp_df['sem'])[::-1]]),
+    fill='toself',
+    fillcolor='rgba(200, 0, 0, 0.2)',
+    line=dict(color='rgba(255,255,255, 0)'),
+    hoverinfo="skip",
+    showlegend=False,
+    xaxis='x2',
+    yaxis='y2'
+))
+
+# Vertical line at change point (0) in model subplot
+fig.add_shape(
+    type="line",
+    x0=0, x1=0,
+    y0=conf_round_cp_df['mean'].min() - 0.01,
+    y1=conf_round_cp_df['mean'].max() + 0.01,
+    line=dict(color="black", width=2, dash="dot"),
+    xref="x2", yref="y2"
+)
+
+fig.update_layout(
+    xaxis2=dict(
+        domain=[0.1, 0.35], 
+        anchor='y2',
+        range=[-5.5, 6.5],
+        showticklabels=True,
+        showline=True,
+        linecolor='black',
+        linewidth=1.5,
+        tickvals=list(range(-5, 6)),
+        title=dict(text="Outcomes relative to change point", font=dict(size=30)),
+        ticktext=["-5", "-4", "-3", "-2", "-1", "1", "2", "3", "4", "5", "6"],
+        tickfont=dict(size=28),
+    ),
+    yaxis2=dict(
+        domain=[0.75, 1.0],  
+        anchor='x2',
+        showticklabels=True,
+        showline=True,
+        linecolor='black',
+        linewidth=1.5,
+        dtick=0.02,
+        title=dict(text="Prior uncert", font=dict(size=30)),
+        tickfont=dict(size=28),
+    ),
+    height=1200, 
+    width=1800, 
+    plot_bgcolor='rgba(255, 255, 255, 1)', 
+    font=dict(size=42, family="Times New Roman"), 
+    showlegend=False
+)
 
 # Save the figure to the group-level folder
 plot_dir = os.path.join(BASE_DIR, "plots")
@@ -617,7 +829,7 @@ fig.write_image(f"{base_filepath}.svg")
 
 fig.show()
 
-############################################################################################### Mediation analysis
+############################################################################################### Mediation analysis (nonbaseline-corrected)
 mediation_group = dataframes['pupil_lr_uncert_nobc_mediation']
 
 
@@ -838,7 +1050,239 @@ plot_dir = os.path.join(BASE_DIR, "plots")
 os.makedirs(plot_dir, exist_ok=True)
 
 # Base filename (without extension)
-base_filename = f"adalearn_pupil-group_level_mediation_analysis"
+base_filename = f"adalearn_pupil-group_level_mediation_analysis_nobc"
+base_filepath = os.path.join(plot_dir, base_filename)
+
+# Save as PNG
+fig.write_image(f"{base_filepath}.png")
+
+# Save as SVG
+fig.write_image(f"{base_filepath}.svg") 
+
+fig.show()
+
+#####################################################################Mediation analysis (baseline-corrected)
+mediation_group = dataframes['pupil_lr_uncert_bc_mediation']
+
+
+def format_annotation_text(title, coef, sem, ci_lower, ci_upper):
+    ci_same_sign = (ci_lower > 0 and ci_upper > 0) or (ci_lower < 0 and ci_upper < 0)
+    text = (
+        f"{title}"
+        f"<br>Coef = {coef:.3f}"
+        f"<br>SEM = {sem:.3f}"
+        f"<br>95% CI = {ci_lower:.3f} - {ci_upper:.3f}"
+    )
+    return f"<b>{text}</b>" if ci_same_sign else text
+
+
+fig = go.Figure()
+fig.update_xaxes(range=[-5, 12])
+fig.update_yaxes(range=[-5, 12])
+
+# Adding in the mediation pathways
+
+fig.add_shape(type="line",
+    xref="x", yref="y",
+    x0=1, y0=2, x1=5,
+    y1=6,
+    line=dict(
+        color="Black",
+        width=3,
+        dash='dash'
+    ),
+)
+
+fig.add_shape(type="line",
+    xref="x", yref="y",
+    x0=5, y0=6, x1=9,
+    y1=2,
+    line=dict(
+        color="Black",
+        width=3,
+        dash='dash'
+    ),
+)
+
+fig.add_shape(type="line",
+    xref="x", yref="y",
+    x0=1, y0=2.05, x1=9,
+    y1=2.05,
+    line=dict(
+        color="Black",
+        width=3,
+        dash='dash'
+    ),
+)
+
+fig.add_shape(type="line",
+    xref="x", yref="y",
+    x0=1, y0=1.95, x1=9,
+    y1=1.95,
+    line=dict(
+        color="Black",
+        width=3,
+    ),
+)
+
+fig.add_shape(type="circle",
+    xref="x", yref="y",
+    fillcolor="PaleTurquoise",
+    x0=0.0, y0=1.0, x1=2.0, y1=3.0,
+    line_color="LightSeaGreen",
+    label=dict(text=f"CPP", textangle=0)
+)
+
+fig.add_shape(type="circle",
+    xref="x", yref="y",
+    fillcolor="PaleTurquoise",
+    x0=8.0, y0=1.0, x1=10.0, y1=3.0,
+    line_color="LightSeaGreen",
+    label=dict(text="Learning <br>rate", textangle=0)
+)
+
+fig.add_shape(type="circle",
+    xref="x", yref="y",
+    fillcolor="PaleTurquoise",
+    x0=4.0, y0=5.0, x1=6.0, y1=7.0,
+    line_color="LightSeaGreen",
+    label=dict(text="Pupil:<br>corrected<br>(phasic)", textangle=0)
+)
+
+total_path_text = format_annotation_text(
+    "Total effect (path c)",
+    mediation_group['boot_mean'][2],
+    mediation_group['sem'][2],
+    mediation_group['ci_lower'][2],
+    mediation_group['ci_upper'][2]
+)
+
+fig.add_annotation(
+    x=5,  
+    y=0.75,
+    xref="x",
+    yref="y",
+    text=total_path_text,
+    showarrow=False,
+    bordercolor="white",
+    borderwidth=1,
+    borderpad=4,
+    bgcolor="white",
+    opacity=0.8
+)
+
+direct_path_text = format_annotation_text(
+    "Direct effect (path c')",
+    mediation_group['boot_mean'][3],
+    mediation_group['sem'][3],
+    mediation_group['ci_lower'][3],
+    mediation_group['ci_upper'][3]
+)
+
+fig.add_annotation(
+    x=5,  
+    y=3.3,
+    xref="x",
+    yref="y",
+    text=direct_path_text,
+    showarrow=False,
+    bordercolor="white",
+    borderwidth=1,
+    borderpad=4,
+    bgcolor="white",
+    opacity=0.8
+)
+
+
+pupil_corrected_path_text = format_annotation_text(
+    "Indirect effect <br>(Pupil: corrected)",
+    mediation_group['boot_mean'][4],
+    mediation_group['sem'][4],
+    mediation_group['ci_lower'][4],
+    mediation_group['ci_upper'][4]
+)
+
+
+fig.add_annotation(
+    x=5,  
+    y=8.2,
+    xref="x",
+    yref="y",
+    text=pupil_corrected_path_text,
+    showarrow=False,
+    bordercolor="white",
+    borderwidth=1,
+    borderpad=4,
+    bgcolor="white",
+    opacity=0.8
+)
+
+
+
+pupil_corrected_path_a_text = format_annotation_text(
+    "Path a",
+    mediation_group['boot_mean'][0],
+    mediation_group['sem'][0],
+    mediation_group['ci_lower'][0],
+    mediation_group['ci_upper'][0]
+)
+
+
+fig.add_annotation(
+    x=1.5,  
+    y=5.5,
+    xref="x",
+    yref="y",
+    text=pupil_corrected_path_a_text,
+    font=dict(color="grey"),
+    showarrow=False,
+    bordercolor="white",
+    borderwidth=1,
+    borderpad=4,
+    bgcolor="white",
+    opacity=0.8
+)
+
+pupil_corrected_path_b_text = format_annotation_text(
+    "Path b",
+    mediation_group['boot_mean'][1],
+    mediation_group['sem'][1],
+    mediation_group['ci_lower'][1],
+    mediation_group['ci_upper'][1]
+)
+
+
+fig.add_annotation(
+    x=8.5,  
+    y=5.5,
+    xref="x",
+    yref="y",
+    text=pupil_corrected_path_b_text,
+    font=dict(color="grey"),
+    showarrow=False,
+    bordercolor="white",
+    borderwidth=1,
+    borderpad=4,
+    bgcolor="white",
+    opacity=0.8
+)
+
+
+fig.update_layout(
+    width=2200,
+    height=2200,
+    font=dict(size=42, family="Times New Roman"), 
+    xaxis=dict(showticklabels=False), 
+    yaxis=dict(showticklabels=False),
+    plot_bgcolor='rgba(255, 255, 255, 1)'
+) 
+
+# Save the figure to the group-level folder
+plot_dir = os.path.join(BASE_DIR, "plots")
+os.makedirs(plot_dir, exist_ok=True)
+
+# Base filename (without extension)
+base_filename = f"adalearn_pupil-group_level_mediation_analysis_bc"
 base_filepath = os.path.join(plot_dir, base_filename)
 
 # Save as PNG

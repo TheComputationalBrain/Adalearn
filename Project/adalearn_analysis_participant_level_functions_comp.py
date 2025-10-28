@@ -1840,3 +1840,106 @@ def inference_and_mse(pars, data, p1_min, p1_max, resol):
     mse = sse / len(predicted_response)  
             
     return mse
+
+
+
+def variables_by_change_point(participant_str, condition_str, directory_path, variable_data, change_point_indices, parameter = '', pre=2, post=10, exclude_zero = False):
+    """ 
+    Function to calculate the average values of some variable around change points. Uses identified change point indices to derive computational variable dynamics before and after a change in task structure. Stores responses across all task sessions and then plots the average (plus standard deviation) learning rate. *Note, as a second change point may occur within window specified, the function is created to detect if this happens and limit the window to before the next instance of a change, to prevent this from distoring analysis.  
+
+    Parameters:
+    - participant_str: string, identifier of participant number
+    - condition_str: string, identifier of condition order (set to 2 numbers) ** May need to change to denote actual condition in Adalearn VNS study **
+    - directory_path: Path, directory path to the participant level of the data storage
+    - variable_data: pd.DataFrame, contains data for the variable of interest. The dataframe must be in the following format: It must have data from task sessions in a column named 'task_session', outcome numbers in a column named 'outcome_num' (starting from 0). If not all data is available (for example, pupil data where some trials are missing), then the missing rows should be sepecifed (below). The dataframe must also contain the  variable of interest in a column named according to the parameter input (e.g. 'cleaned_learning_rate_estimate' or 'cleaned_learning_rate_ideal_observer').
+    - change_point_indices: pd.DataFrame, with columns 'cum_outcome_num', 'rel_time', and 'task_session', containing the indices and relative times of the change points for each session. (*Note: Have removed identification of the first outcome of each task session as a new change point).
+    - parameter: string, column to be used to calculate computational variable of interest around change points. Can be 'estimate' or 'ideal_observer'. Default = 'prior'. 
+    - pre: float, number of outcomes before the change point. Predefined to incorporate in plotting the data.
+    - post: float, number of outcomes after the change point. Predefined to incorporate in plotting the data.
+    - exclude_zero: boolean, if true, will remove rows in which no updates made (e.g. learning rate = 0) 
+
+
+    Returns:
+    - filtered_df_by_cp: pd.DataFrame, contains computational variable data within defined bounds (window) around each change point.
+    - averaged_values_by_cp: pd.DataFrame, contains calculated mean, std, count and sem of computational variable of interest at each relative trial position for each identified change point. 
+    """
+    # check parameter has been defined
+    if parameter == '':
+        print("Warning: Need to define parameter column to be used for analysis")
+
+        return None, None
+    
+    # Creating dataframe to store data around defined   
+    expanded_change_points = []
+
+    for idx, row in change_point_indices.iterrows():
+        task_session = row['task_session']
+        outcome_num = row['outcome_num']
+        cum_outcome_num = row['cum_outcome_num']
+
+        # Check for next change point and only average up to this point if within window, to prevent a new change point from distorting the analysis 
+        next_cp = change_point_indices[
+            (change_point_indices['task_session'] == task_session) & 
+            (change_point_indices['outcome_num'] > outcome_num)
+        ]['outcome_num'].min()
+
+        # Define the post limit: either the predefined window or the next CP
+        max_post = post if pd.isna(next_cp) else min(post, next_cp - outcome_num - 1)
+
+        for i in range(-pre, max_post + 1):  # Adjust post range if needed
+            expanded_change_points.append({
+                'task_session': task_session,
+                'cum_outcome_num': cum_outcome_num,
+                'outcome_num': outcome_num,
+                'relative_position': i,
+                'outcome_num_rel_pos': outcome_num + i
+            })
+
+    expanded_change_points_df = pd.DataFrame(expanded_change_points)                 
+
+    # Filter main behavioural dataframe to only contain values in defined range around change point  
+    filtered_df_by_cp = pd.merge(expanded_change_points_df, variable_data, left_on=['task_session', 'outcome_num_rel_pos'], right_on=['task_session', 'outcome_num'], how='left', suffixes=('', '_y'))
+
+    # Drop unnecessary columns
+    filtered_df_by_cp.drop(
+        columns=[col for col in filtered_df_by_cp.columns if col.endswith('_y')],
+        inplace=True
+    )
+
+    # Identify columns with NaN values
+    n_nans = filtered_df_by_cp[parameter].isna().sum()
+
+    if n_nans > 0:
+        print(f"Found {n_nans} NaN values in '{parameter}' column.")
+
+        # Define columns critical for alignment
+        critical_cols = ['task_session', 'outcome_num_rel_pos', parameter]
+
+        # Only keep columns that exist in the dataframe (safe)
+        cols_to_check = [col for col in critical_cols if col in filtered_df_by_cp.columns]
+
+        # Drop rows with NaNs in these columns
+        n_before = len(filtered_df_by_cp)
+        filtered_df_by_cp = filtered_df_by_cp.dropna(subset=cols_to_check)
+        n_after = len(filtered_df_by_cp)
+
+        print(f"Removed {n_before - n_after} rows with missing critical values.\n")
+
+    else:
+        print(f"No missing values detected in '{parameter}' column.\n")
+
+    # Exclude zero update trials (if necessary)
+    if exclude_zero:
+        filtered_df_by_cp = filtered_df_by_cp[filtered_df_by_cp[parameter] != 0]
+
+    # Calculate the average, standard deviation and count of the behavioural learning rate across the different relative positions to the change point
+    averaged_values_by_cp = filtered_df_by_cp.groupby('relative_position')[parameter].agg(['mean', 'std', 'count']).reset_index()
+
+    # Calculate SEM
+    averaged_values_by_cp['sem'] = averaged_values_by_cp['std'] / np.sqrt(averaged_values_by_cp['count'])
+
+    # Convert 'relative_position' to a numeric range
+    averaged_values_by_cp['relative_position'] = averaged_values_by_cp['relative_position'].astype(int)
+    averaged_values_by_cp = averaged_values_by_cp.sort_values('relative_position')
+
+    return filtered_df_by_cp, averaged_values_by_cp

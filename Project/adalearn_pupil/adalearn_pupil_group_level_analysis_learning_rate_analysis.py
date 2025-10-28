@@ -26,7 +26,8 @@ dataframes = group_data_utils.load_sample_csvs(
         'exclude_participants_behav_cor_df',
         'behavioural_df', 
         'change_point_indices_df', 
-        'computational_var_df'
+        'computational_var_df',
+        'behav_v_model_estimate_corr_df'
         ],
     prefix='sample_level_analysis-ses_01-task_Adalearn_Pupil-')
 
@@ -146,6 +147,15 @@ for participant in group_update_task_session_df['participant'].unique():
     average_update_percent_dict['avg_update_percentage'].append(avg_update_percentage)
     
 group_average_update_percent_df = pd.DataFrame(average_update_percent_dict)
+
+# Relationship between update frequency and performance
+performance_evaluation = dataframes['behav_v_model_estimate_corr_df'].query("variable == 'ideal_observer'")
+
+fraction_corr, fraction_p_val = stats.pearsonr(
+    performance_evaluation['correlation'],
+    group_average_update_percent_df['avg_update_percentage']
+)
+print(f'\nCorrelation between performance and average update frequency: r = {fraction_corr:.3f}, p = {fraction_p_val:.3e}')
 
 # Perform group-level correlation and regression parameter assessment on learning rate across all task sessions
 # Collating regression parameters at participant level

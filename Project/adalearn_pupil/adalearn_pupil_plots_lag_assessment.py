@@ -232,19 +232,38 @@ fig.show()
 
 fig = go.Figure()
 
+x = group_fraction_shift_df['cpp_shift_mean']
+y = group_fraction_shift_df['prior_conf_shift_mean']
+
+# Scatter trace (participants)
 fig.add_trace(go.Scatter(
-        x=group_fraction_shift_df['cpp_shift_mean'],
-        y=group_fraction_shift_df['prior_conf_shift_mean'],
-        mode='markers',
-        name='participants',
-        marker=dict(
-            size=25,
-            color='rgba(0, 130, 150, 0.65)',
-            )
-        ),
-    )
+    x=x,
+    y=y,
+    mode='markers',
+    name='participants',
+    marker=dict(
+        size=25,
+        color='rgba(0, 130, 150, 0.5)',
+    ),
+    showlegend=False
+))
 
 between_subj_corr = np.corrcoef(group_fraction_shift_df['cpp_shift_mean'], group_fraction_shift_df['prior_conf_shift_mean'])[0, 1]
+
+# Fit linear regression line
+slope, intercept = np.polyfit(x, y, 1)
+line_x = np.linspace(x.min(), x.max(), 100)
+line_y = slope * line_x + intercept
+
+# Add regression line
+fig.add_trace(go.Scatter(
+    x=line_x,
+    y=line_y,
+    mode='lines',
+    line=dict(color='rgba(0, 130, 150, 0.8)', width=3,),
+    showlegend=False
+))
+
 
 fig.update_layout(
      xaxis=dict(
@@ -257,12 +276,6 @@ fig.update_layout(
         plot_bgcolor='rgba(255, 255, 255, 1)',
         height=1200,
         width=1800,
-        legend=dict(
-            x=0.95,
-            y=1.05,
-            xanchor='left',
-            yanchor='top'
-        )
     )
 
  # Save the figure to the group-level folder

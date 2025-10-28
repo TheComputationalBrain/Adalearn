@@ -13,6 +13,7 @@ import numpy as np
 from pathlib import Path
 from scipy import stats
 import plotly.io as pio
+from plotly.subplots import make_subplots
 import plotly.graph_objects as go
 pio.renderers.default='browser'
 
@@ -72,10 +73,10 @@ for participant in baseline_corrected_epochs['participant'].unique():
 
     average_pupil_df_list.append(average_pupil_df)
 
-group_avg_pupil_df = pd.concat(average_pupil_df_list, ignore_index=True)
+bc_group_avg_pupil_df = pd.concat(average_pupil_df_list, ignore_index=True)
 
 # Plot the average pupil response for a specific participant
-example_participant_data = group_avg_pupil_df[group_avg_pupil_df['participant'] == example_participant]
+example_participant_data = bc_group_avg_pupil_df[bc_group_avg_pupil_df['participant'] == example_participant]
 
 fig = go.Figure()
 
@@ -129,8 +130,8 @@ fig.show()
 # All individual baseline corrected pupil responses on the same plot
 fig = go.Figure()
 
-for participant in group_avg_pupil_df['participant'].unique():
-    participant_data = group_avg_pupil_df[group_avg_pupil_df['participant'] == participant]
+for participant in bc_group_avg_pupil_df['participant'].unique():
+    participant_data = bc_group_avg_pupil_df[bc_group_avg_pupil_df['participant'] == participant]
 
     fig.add_trace(go.Scatter(x=participant_data['time'], y=participant_data['pupil_signal'], mode='lines', line=dict(color='rgba(0, 130, 150, 0.4)'), showlegend=False))
 
@@ -173,8 +174,8 @@ fig.show()
 
 group_pupil_dict = {'mean_pupil': [], 'sem_pupil': [], 'time': []}
 
-for count in group_avg_pupil_df['count'].unique():
-    data = group_avg_pupil_df[group_avg_pupil_df['count'] == count]
+for count in bc_group_avg_pupil_df['count'].unique():
+    data = bc_group_avg_pupil_df[bc_group_avg_pupil_df['count'] == count]
 
     mean_pupil = data['pupil_signal'].mean()
     sem_pupil = stats.sem(data['pupil_signal'])
@@ -184,16 +185,16 @@ for count in group_avg_pupil_df['count'].unique():
     group_pupil_dict['sem_pupil'].append(sem_pupil)
     group_pupil_dict['time'].append(time)
 
-group_pupil_df = pd.DataFrame(group_pupil_dict)
+bc_group_pupil_df = pd.DataFrame(group_pupil_dict)
 
 
 fig = go.Figure()
 
-fig.add_trace(go.Scatter(x=group_pupil_df['time'], y=group_pupil_df['mean_pupil'], mode = 'lines', line=dict(color='rgba(0, 130, 150, 0.8)'), showlegend=False))
+fig.add_trace(go.Scatter(x=bc_group_pupil_df['time'], y=bc_group_pupil_df['mean_pupil'], mode = 'lines', line=dict(color='rgba(0, 130, 150, 0.8)'), showlegend=False))
 
 fig.add_trace(go.Scatter(
-    x=list(group_pupil_df['time']) + list(group_pupil_df['time'][::-1]),
-    y=list(group_pupil_df['mean_pupil'] + group_pupil_df['sem_pupil']) + list((group_pupil_df['mean_pupil'] - group_pupil_df['sem_pupil'])[::-1]),
+    x=list(bc_group_pupil_df['time']) + list(bc_group_pupil_df['time'][::-1]),
+    y=list(bc_group_pupil_df['mean_pupil'] + bc_group_pupil_df['sem_pupil']) + list((bc_group_pupil_df['mean_pupil'] - bc_group_pupil_df['sem_pupil'])[::-1]),
     fill='toself',
     fillcolor='rgba(0, 130, 150, 0.2)',
     line=dict(color='rgba(255,255,255,0)'),
@@ -267,10 +268,10 @@ for participant in nonbaseline_corrected_epochs['participant'].unique():
 
     average_pupil_df_list.append(average_pupil_df)
 
-group_avg_pupil_df = pd.concat(average_pupil_df_list, ignore_index=True)
+nobc_group_avg_pupil_df = pd.concat(average_pupil_df_list, ignore_index=True)
 
 # Plot the average pupil response for a specific participant
-example_participant_data = group_avg_pupil_df[group_avg_pupil_df['participant'] == example_participant]
+example_participant_data = nobc_group_avg_pupil_df[nobc_group_avg_pupil_df['participant'] == example_participant]
 
 fig = go.Figure()
 
@@ -325,8 +326,8 @@ fig.show()
 
 group_pupil_dict = {'mean_pupil': [], 'sem_pupil': [], 'time': []}
 
-for count in group_avg_pupil_df['count'].unique():
-    data = group_avg_pupil_df[group_avg_pupil_df['count'] == count]
+for count in nobc_group_avg_pupil_df['count'].unique():
+    data = nobc_group_avg_pupil_df[nobc_group_avg_pupil_df['count'] == count]
 
     mean_pupil = data['pupil_signal'].mean()
     sem_pupil = stats.sem(data['pupil_signal'])
@@ -336,16 +337,16 @@ for count in group_avg_pupil_df['count'].unique():
     group_pupil_dict['sem_pupil'].append(sem_pupil)
     group_pupil_dict['time'].append(time)
 
-group_pupil_df = pd.DataFrame(group_pupil_dict)
+nobc_group_pupil_df = pd.DataFrame(group_pupil_dict)
 
 
 fig = go.Figure()
 
-fig.add_trace(go.Scatter(x=group_pupil_df['time'], y=group_pupil_df['mean_pupil'], mode = 'lines', line=dict(color='rgba(0, 130, 150, 0.8)'), showlegend=False))
+fig.add_trace(go.Scatter(x=nobc_group_pupil_df['time'], y=nobc_group_pupil_df['mean_pupil'], mode = 'lines', line=dict(color='rgba(0, 130, 150, 0.8)'), showlegend=False))
 
 fig.add_trace(go.Scatter(
-    x=list(group_pupil_df['time']) + list(group_pupil_df['time'][::-1]),
-    y=list(group_pupil_df['mean_pupil'] + group_pupil_df['sem_pupil']) + list((group_pupil_df['mean_pupil'] - group_pupil_df['sem_pupil'])[::-1]),
+    x=list(nobc_group_pupil_df['time']) + list(nobc_group_pupil_df['time'][::-1]),
+    y=list(nobc_group_pupil_df['mean_pupil'] + nobc_group_pupil_df['sem_pupil']) + list((nobc_group_pupil_df['mean_pupil'] - nobc_group_pupil_df['sem_pupil'])[::-1]),
     fill='toself',
     fillcolor='rgba(0, 130, 150, 0.2)',
     line=dict(color='rgba(255,255,255,0)'),
@@ -504,7 +505,6 @@ nonbaseline_corrected_coefs = dataframes['coefs_nobc_df']
 nonbaseline_corrected_clusters = dataframes['cluster_permutation_analysis_nobc']
 
 
-
 fig = go.Figure()
 
 fig.add_trace(go.Scatter(
@@ -610,3 +610,189 @@ fig.write_image(f"{base_filepath}.svg")
 
 
 fig.show()
+
+
+####################################################### Phasic- and tonic-associated effects
+
+fig = make_subplots(
+            rows=1, 
+            cols=2, 
+            shared_xaxes=True, 
+            vertical_spacing=0.1,
+            horizontal_spacing=0.15,  
+            specs=[   
+                [{}, {}]                               
+            ]
+)
+
+fig.add_trace(go.Scatter(x=bc_group_pupil_df['time'], y=bc_group_pupil_df['mean_pupil'], mode = 'lines', line=dict(color='rgba(0, 130, 150, 0.8)'), showlegend=False), row=1, col=1)
+
+fig.add_trace(go.Scatter(
+    x=list(bc_group_pupil_df['time']) + list(bc_group_pupil_df['time'][::-1]),
+    y=list(bc_group_pupil_df['mean_pupil'] + bc_group_pupil_df['sem_pupil']) + list((bc_group_pupil_df['mean_pupil'] - bc_group_pupil_df['sem_pupil'])[::-1]),
+    fill='toself',
+    fillcolor='rgba(0, 130, 150, 0.2)',
+    line=dict(color='rgba(255,255,255,0)'),
+    hoverinfo="skip",
+    showlegend=False
+), row = 1, col = 1)
+
+fig.add_vline(x=0, line_dash='dot', line=dict(color='black', width=1.5), row = 1, col = 1)
+
+fig.add_hline(y=0, line_dash = 'dot', line=dict(color='black', width=1.5), row = 1, col = 1)
+
+for _, row in baseline_corrected_clusters.iterrows():
+    if row['p_value'] < 0.05:
+        var = row['variable']
+        style = var_style_map.get(var, {'color': 'black', 'yval': -0.05})
+
+        # Get cluster time range
+        cluster_range = bc_group_pupil_df['time'].iloc[row['cluster_start']:row['cluster_end']+1]
+        cluster_start = cluster_range.min()
+        cluster_end = cluster_range.max()
+
+        # Add shaded region ("square") under pupil trace
+        fig.add_vrect(
+            x0=cluster_start, 
+            x1=cluster_end,
+            fillcolor='rgba(128, 0, 128, 0.8)', 
+            opacity=0.4,               
+            layer="above",            
+            line_width=0,
+            row=1,
+            col=1
+        )
+
+fig.add_annotation(
+    text="Phasic-associated effect",
+    x=0.01, xref="x domain",  
+    y=0.9, yref="y domain",
+    showarrow=False,
+    font=dict(size=36, color='rgba(128, 0, 128, 0.8)', family="Times New Roman"),
+    row=1,
+    col=1
+)
+
+fig.update_xaxes(
+        showline=True, 
+        linewidth=1.5, 
+        linecolor='black', 
+        row = 1,
+        col = 1
+    )
+
+fig.update_yaxes(
+        showline=True, 
+        linewidth=1.5, 
+        linecolor='black',
+        title_text = 'Baseline-corrected pupil diameter signal (z-score)',
+        row = 1, 
+        col = 1 
+    )
+
+fig.add_trace(go.Scatter(x=nobc_group_pupil_df['time'], y=nobc_group_pupil_df['mean_pupil'], mode = 'lines', line=dict(color='rgba(0, 130, 150, 0.8)'), showlegend=False), row=1, col=2)
+
+fig.add_trace(go.Scatter(
+    x=list(nobc_group_pupil_df['time']) + list(nobc_group_pupil_df['time'][::-1]),
+    y=list(nobc_group_pupil_df['mean_pupil'] + nobc_group_pupil_df['sem_pupil']) + list((nobc_group_pupil_df['mean_pupil'] - nobc_group_pupil_df['sem_pupil'])[::-1]),
+    fill='toself',
+    fillcolor='rgba(0, 130, 150, 0.2)',
+    line=dict(color='rgba(255,255,255,0)'),
+    hoverinfo="skip",
+    showlegend=False
+), row = 1, col = 2)
+
+fig.add_vline(x=0, line_dash='dot', line=dict(color='black', width=1.5), row = 1, col = 2)
+
+fig.add_hline(y=0, line_dash = 'dot', line=dict(color='black', width=1.5), row = 1, col = 2)
+
+
+time_vals = nobc_group_pupil_df['time'].values
+cross_idx = np.where(np.diff(np.sign(time_vals)) > 0)[0]
+
+if len(cross_idx) > 0:
+    idx_cross = cross_idx[0]
+    t1, t2 = time_vals[idx_cross], time_vals[idx_cross + 1]
+    zero_time = t1 + (0 - t1) * (t2 - t1) / (t2 - t1)
+else:
+    zero_time = 0
+
+for _, row in nonbaseline_corrected_clusters.iterrows():
+    if row['p_value'] < 0.05:
+        var = row['variable']
+        style = var_style_map.get(var, {'color': 'black', 'yval': -0.05})
+
+        cluster_start = nobc_group_pupil_df['time'].iloc[row['cluster_start']]
+
+        fig.add_vrect(
+            x0=cluster_start,
+            x1=zero_time,
+            fillcolor='rgba(255, 165, 0, 0.8)',
+            opacity=0.5,
+            layer="above",
+            line_width=0,
+            row=1,
+            col=2
+        )
+
+fig.add_annotation(
+    text="Tonic-associated effect",
+    x=0.15, xref="x domain",
+    y=0.9, yref="y domain",
+    showarrow=False,
+    font=dict(size=36, color='rgba(255, 165, 0, 0.8)', family="Times New Roman"),
+    row=1,
+    col=2
+)
+
+
+fig.update_xaxes(
+        showline=True, 
+        linewidth=1.5, 
+        linecolor='black', 
+        row = 1,
+        col = 2
+    )
+
+fig.update_yaxes(
+        showline=True, 
+        linewidth=1.5, 
+        linecolor='black',
+        title_text = 'Nonbaseline-corrected pupil diameter signal (z-score)',
+        row = 1, 
+        col = 2 
+    )
+
+fig.add_annotation(
+    text="Time relative to outcome presentation (s)",
+    x=0.5,  
+    y=-0.1, 
+    xref="paper",
+    yref="paper",
+    showarrow=False,
+    font=dict(size=32, family="Times New Roman", color="black")
+)
+
+fig.update_layout(
+    height=1000, 
+    width=2000, 
+    plot_bgcolor='rgba(255, 255, 255, 1)', 
+    font=dict(size=32, family="Times New Roman"))
+
+# Save the figure to the group-level folder
+plot_dir = os.path.join(BASE_DIR, "plots")
+os.makedirs(plot_dir, exist_ok=True)
+
+# Base filename (without extension)
+base_filename = f"adalearn_pupil-group_level_regression_pupil_effects_display"
+base_filepath = os.path.join(plot_dir, base_filename)
+
+# Save as PNG
+fig.write_image(f"{base_filepath}.png")
+
+# Save as SVG
+fig.write_image(f"{base_filepath}.svg") 
+
+
+fig.show()
+

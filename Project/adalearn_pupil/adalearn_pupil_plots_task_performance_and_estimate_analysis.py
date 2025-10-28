@@ -47,7 +47,7 @@ data_change_points = dataframes['change_point_indices_df'][dataframes['change_po
 data_utils.plot_session_behav_comp(participant_str=str(participant), condition_str=CONDITION_STR, directory_path=f'{BASE_DIR}/data/sub-{participant}', base_dir=BASE_DIR, behavioural_df=data_behav, computational_df=data_comp, change_point_indices=data_change_points, task_session=20, turn_on_plotting=True, plot_group_level=True)
 
 
-############################################Plotting perforamnce metrics (absolute error and coefficient of variation)
+############################################Plotting performance metrics (absolute error and coefficient of variation)
 
 dataframes['mean_abs_error_df']['participant'] = dataframes['mean_abs_error_df']['participant'].astype(int)
 
@@ -218,6 +218,16 @@ fig.add_trace(go.Scatter(
     showlegend=False, 
     ))
 
+fig.add_trace(go.Scatter(
+    x=[0, 1],  
+    y=[0, 1],  
+    mode='lines',
+    line=dict(color='rgba(50, 50, 50, 0.5)', dash='dot', width=2),
+    name='Identity',
+    showlegend=True
+))
+
+
 fig.update_xaxes(
     showline=True, 
     linewidth=1.5, 
@@ -267,7 +277,6 @@ fig.update_layout(
 
 fig.update_layout(
     xaxis=dict(
-        range=[0.1, 0.9],  
         title=dict(text="Model estimate", font=dict(size=42)),
     ),
     yaxis=dict(

@@ -141,9 +141,23 @@ def pupil_response_around_change_point(directory_path, participant_str, conditio
                 
                 col_idx = outcome_epoched_pupil_df.columns.get_loc(col)
 
+                # Find the index of the *next* change point within the same session
+                col_num = int(col)  # convert to outcome number for numeric comparison
+                next_cp = points[points > col_num].min()  # find next change point (if any)
+
+                # Compute the max post limit (either 'after' or before the next change point)
+                if not pd.isna(next_cp):
+                    # calculate how many trials until next CP
+                    next_cp_distance = int(next_cp - col_num - 1)
+                    max_after = min(after, next_cp_distance)
+                else:
+                    max_after = after  # no later change point → full window allowed
+
+                # Define window bounds with this adjusted range
                 start_idx = max(0, col_idx - before)
-                end_idx = min(len(outcome_epoched_pupil_df.columns), col_idx + after + 1)
-                
+                end_idx = min(len(outcome_epoched_pupil_df.columns), col_idx + max_after + 1)
+
+                # Subset the window
                 window_columns = outcome_epoched_pupil_df.columns[start_idx:end_idx]
 
                 window_data = outcome_epoched_pupil_df[window_columns]

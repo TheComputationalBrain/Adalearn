@@ -23,6 +23,7 @@ parent_dir = Path(__file__).resolve().parent.parent
 sys.path.append(str(parent_dir))
 
 import adalearn_analysis_group_level_functions_data_utilities as group_data_utils
+from adalearn_analysis_participant_level_functions_comp import variables_by_change_point
 
 from adalearn_pupil.adalearn_pupil_participant_info_and_parameters import BASE_DIR
 
@@ -114,7 +115,17 @@ fig.add_trace(go.Scatter(
     showlegend=False, 
     ))
 
+fig.add_trace(go.Scatter(
+    x=[0, 0.25],  
+    y=[0, 0.25],  
+    mode='lines',
+    line=dict(color='rgba(50, 50, 50, 0.5)', dash='dot', width=2),
+    name='Identity',
+    showlegend=True
+))
+
 fig.update_xaxes(
+    range = [0, 0.25, 0.05],
     showline=True, 
     linewidth=1.5, 
     linecolor='black', 
@@ -762,114 +773,86 @@ change_point_indices_df = dataframes['change_point_indices_df'].copy()
 computational_var_df = computational_var_df.sort_values(by=['participant', 'cum_outcome_num']).reset_index(drop=True)
 change_point_indices_df = change_point_indices_df.sort_values(by=['participant', 'cum_outcome_num']).reset_index(drop=True)
 
-before_window = 5
-after_window = 5
-window_len = before_window + after_window + 1
 
-all_window_dfs = []
+averaged_cp_df = []
+averaged_conf_df = []
 
-for participant in computational_var_df['participant'].unique():
-    participant_data = computational_var_df[computational_var_df['participant'] == participant].reset_index(drop=True)
+for participant in dataframes['computational_var_df']['participant'].unique():
+    print('Processing participant:', participant)
 
-    cp_data = change_point_indices_df[change_point_indices_df['participant'] == participant]
+    variable_data = dataframes['computational_var_df'][dataframes['computational_var_df']['participant'] == participant]
+    change_points = dataframes['change_point_indices_df'][dataframes['change_point_indices_df']['participant'] == participant]
 
-    print(f'For participant {participant} there are {len(cp_data)} change points.')
-
-    for _, cp_row in cp_data.iterrows():
-        cp = cp_row['cum_outcome_num']
-        session = cp_row['task_session']
-
-        session_data = participant_data[participant_data['task_session'] == session].reset_index(drop=True)
-
-        try:
-            cp_index = session_data[session_data['cum_outcome_num'] == cp].index[0]
-        except IndexError:
-            print(f"Could not find cp {cp} in participant {participant}, session {session}")
-            continue
-
-        start_idx = max(0, cp_index - before_window)
-        end_idx = min(len(session_data), cp_index + after_window + 1)
-
-        window = session_data.iloc[start_idx:end_idx]
-
-        pad_before = max(0, before_window - cp_index)
-        pad_after = max(0, (cp_index + after_window + 1) - len(session_data))
-
-        # Values to pad
-        conf_vals = window['prior_conf'].values
-        cpp_vals = window['cpp'].values
-
-        conf_padded = np.pad(conf_vals, (pad_before, pad_after), mode='constant', constant_values=np.nan)
-        cpp_padded = np.pad(cpp_vals, (pad_before, pad_after), mode='constant', constant_values=np.nan)
-
-        relative_positions = list(range(-before_window, after_window + 1))
-
-        # Build DataFrame
-        window_df = pd.DataFrame({
-            'participant': participant,
-            'task_session': session,
-            'cp_index': cp,
-            'relative_position': relative_positions,
-            'prior_conf': conf_padded,
-            'cpp': cpp_padded
-        })
-
-        all_window_dfs.append(window_df)
-
-# Combine all windows
-all_windows_df = pd.concat(all_window_dfs, ignore_index=True)
-
-
-rel_pos_dict = {'participant': [], 'rel_pos': [], 'mean_conf': [], 'mean_cpp': []}
-
-for participant in all_windows_df['participant'].unique():
-    data = all_windows_df[all_windows_df['participant'] == participant]
-    for index in data['relative_position'].unique():
-        rel_data = data[data['relative_position'] == index]
-
-        mean_conf = rel_data['prior_conf'].mean()
-        mean_cpp = rel_data['cpp'].mean()
-
-        rel_pos_dict['participant'].append(participant)
-        rel_pos_dict['rel_pos'].append(index)
-        rel_pos_dict['mean_conf'].append(mean_conf)
-        rel_pos_dict['mean_cpp'].append(mean_cpp)
-
-rel_pos_df = pd.DataFrame(rel_pos_dict)
-
-
-grouped_rel_pos_dict = {'rel_pos': [], 'conf_mean': [], 'conf_std': [], 'conf_sem': [],  'cpp_mean': [], 'cpp_std': [], 'cpp_sem': []} 
-
-for i in rel_pos_df['rel_pos'].unique():
-    data = rel_pos_df[rel_pos_df['rel_pos'] == i]
-   
-    conf_mean = data['mean_conf'].mean()
-    conf_std = data['mean_conf'].std()
-    conf_sem = stats.sem(data['mean_conf'])
+    _, averaged_values_cpp = variables_by_change_point(participant_str=participant,
+                                                                        condition_str='01',
+                                                                        directory_path=BASE_DIR,
+                                                                        variable_data=variable_data,
+                                                                        change_point_indices=change_points,
+                                                                        parameter='cpp',
+                                                                        pre=2,
+                                                                        post=15,
+                                                                        exclude_zero=False)
+    _, averaged_values_conf = variables_by_change_point(participant_str=participant,
+                                                                        condition_str='01',
+                                                                        directory_path=BASE_DIR,
+                                                                        variable_data=variable_data,
+                                                                        change_point_indices=change_points,
+                                                                        parameter='prior_conf',
+                                                                        pre=2,
+                                                                        post=15,
+                                                                        exclude_zero=False)
     
-    cpp_mean = data['mean_cpp'].mean()
-    cpp_std = data['mean_cpp'].std()
-    cpp_sem = stats.sem(data['mean_cpp'])
+    averaged_values_cpp['participant'] = participant
+    averaged_cp_df.append(averaged_values_cpp)
 
-    grouped_rel_pos_dict['rel_pos'].append(i)
-    grouped_rel_pos_dict['conf_mean'].append(conf_mean)
-    grouped_rel_pos_dict['conf_std'].append(conf_std)
-    grouped_rel_pos_dict['conf_sem'].append(conf_sem)
-    grouped_rel_pos_dict['cpp_mean'].append(cpp_mean)
-    grouped_rel_pos_dict['cpp_std'].append(cpp_std)
-    grouped_rel_pos_dict['cpp_sem'].append(cpp_sem)
+    averaged_values_conf['participant'] = participant
+    averaged_conf_df.append(averaged_values_conf)   
 
+round_cp_averaged_cpp_df = pd.concat(averaged_cp_df, ignore_index=True)
+round_cp_averaged_conf_df = pd.concat(averaged_conf_df, ignore_index=True)
 
-grouped_rel_pos_df = pd.DataFrame(grouped_rel_pos_dict)
+round_cp_data = {
+    'cpp': round_cp_averaged_cpp_df,
+    'prior_conf': round_cp_averaged_conf_df
+}
+
+cpp_data_dict = {}
+conf_data_dict = {}
+
+for variable, df in round_cp_data.items():
+    for pos in df['relative_position'].unique():
+        pos_data = df[df['relative_position'] == pos]
+
+        pos_data_mean = pos_data['mean'].mean()
+        pos_data_sem = stats.sem(pos_data['mean'])
+
+        if variable == 'cpp':
+            cpp_data_dict[pos] = {
+                'mean': pos_data_mean,
+                'sem': pos_data_sem
+            }
+        elif variable == 'prior_conf':
+            conf_data_dict[pos] = {
+                'mean': pos_data_mean,
+                'sem': pos_data_sem
+            }
+
+cpp_round_cp_df = pd.DataFrame.from_dict(cpp_data_dict, orient='index').reset_index()
+cpp_round_cp_df.columns = ['position', 'mean', 'sem']
+cpp_round_cp_df = cpp_round_cp_df.sort_values('position').reset_index(drop=True)
+
+conf_round_cp_df = pd.DataFrame.from_dict(conf_data_dict, orient='index').reset_index()
+conf_round_cp_df.columns = ['position', 'mean', 'sem']
+conf_round_cp_df = conf_round_cp_df.sort_values('position').reset_index(drop=True)
 
 # Prior uncertainty around change points
 fig = go.Figure()
 
 fig.add_trace(go.Scatter(
-    x=pd.concat([grouped_rel_pos_df['rel_pos'], grouped_rel_pos_df['rel_pos'][::-1]]),
+    x=pd.concat([conf_round_cp_df['position'], conf_round_cp_df['position'][::-1]]),
     y=pd.concat([
-        grouped_rel_pos_df['conf_mean'] - grouped_rel_pos_df['conf_sem'],
-        (grouped_rel_pos_df['conf_mean'] + grouped_rel_pos_df['conf_sem'])[::-1]
+        conf_round_cp_df['mean'] - conf_round_cp_df['sem'],
+        (conf_round_cp_df['mean'] + conf_round_cp_df['sem'])[::-1]
     ]),
     fill='toself',
     fillcolor='rgba(0, 130, 150, 0.2)',
@@ -879,8 +862,8 @@ fig.add_trace(go.Scatter(
 ))
 
 fig.add_trace(go.Scatter(
-    x=grouped_rel_pos_df['rel_pos'],
-    y=grouped_rel_pos_df['conf_mean'],
+    x=conf_round_cp_df['position'],
+    y=conf_round_cp_df['mean'],
     mode='lines',
     line=dict(color='rgba(0, 130, 150, 0.8)', width=3),
     name='Prior uncertainty',
@@ -899,10 +882,9 @@ fig.update_xaxes(
     linewidth=1,
     linecolor='black',
     tickmode='array',
-    tickvals=list(range(-5, 6)),
-    ticktext=["-5", "-4", "-3", "-2", "-1", "1", "2", "3", "4", "5", "6"],
-    tickangle=0,
-    range=[-5.5, 6.5], 
+    range=[-3, 16],
+    tickvals=[i for i in range(0, 16, 2)],  # show only ticks >= 0
+    ticktext=[str(i + 1) for i in range(0, 16, 2)],  # shift each tick label by +1 
 )
 
 fig.update_yaxes(showline=True, linewidth=1, linecolor='black', 
@@ -932,10 +914,10 @@ fig.show()
 fig = go.Figure()
 
 fig.add_trace(go.Scatter(
-    x=pd.concat([grouped_rel_pos_df['rel_pos'], grouped_rel_pos_df['rel_pos'][::-1]]),
+    x=pd.concat([cpp_round_cp_df['position'], cpp_round_cp_df['position'][::-1]]),
     y=pd.concat([
-        grouped_rel_pos_df['cpp_mean'] - grouped_rel_pos_df['cpp_sem'],
-        (grouped_rel_pos_df['cpp_mean'] + grouped_rel_pos_df['cpp_sem'])[::-1]
+        cpp_round_cp_df['mean'] - cpp_round_cp_df['sem'],
+        (cpp_round_cp_df['mean'] + cpp_round_cp_df['sem'])[::-1]
     ]),
     fill='toself',
     fillcolor='rgba(0, 130, 150, 0.2)',
@@ -945,8 +927,8 @@ fig.add_trace(go.Scatter(
 ))
 
 fig.add_trace(go.Scatter(
-    x=grouped_rel_pos_df['rel_pos'],
-    y=grouped_rel_pos_df['cpp_mean'],
+    x=cpp_round_cp_df['position'],
+    y=cpp_round_cp_df['mean'],
     mode='lines',
     line=dict(color='rgba(0, 130, 150, 0.8)', width=3),
     name='Change point probability',
@@ -965,10 +947,9 @@ fig.update_xaxes(
     linewidth=1,
     linecolor='black',
     tickmode='array',
-    tickvals=list(range(-5, 6)),
-    ticktext=["-5", "-4", "-3", "-2", "-1", "1", "2", "3", "4", "5", "6"],
-    tickangle=0,
-    range=[-5.5, 6.5], 
+    range=[-3, 16],
+    tickvals=[i for i in range(0, 16, 2)],  # show only ticks >= 0
+    ticktext=[str(i + 1) for i in range(0, 16, 2)],  # shift each tick label by +1 
 )
 
 fig.update_yaxes(showline=True, linewidth=1, linecolor='black', 
