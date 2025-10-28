@@ -13,6 +13,8 @@ with open(directory, 'rb') as f:
 
 list_of_participants = list(data['phasic_conf'].keys())
 print(f"List of participants with pupil data: {list_of_participants}")
+print(f"Number of participants with pupil data: {len(list_of_participants)}")
 
 usable_participants = [key for key, value in data['correct_data'].items() if value > 50]
 print(f"List of participants with usable epochs > 50%: {usable_participants}")
+print(f"Number of useable participants: {len(usable_participants)}")

@@ -118,7 +118,7 @@ def load_and_process_pupil_data(directory_path, participant_str, list_subject_se
         file_dir = f"{directory_path}"
         file_found = False  # Flag to track if a valid file is found
 
-        file_name = f"Prob{participant_str}_{session}.edf"
+        file_name = f"Prob{participant_str}_{session}.asc"
         file_path = f"{file_dir}/{file_name}"
 
         if os.path.exists(file_path):
@@ -469,7 +469,7 @@ def all_outcome_pupil_epochs(directory_path, participant_str, list_subject_selec
       print(f"In task session {session} there are {len(events)} outcome observations") 
 
     # Analysing pupil data based on identified outcome indices
-    preprocessed_pupil_df, pupil_trig_df, pupil_ses_df, blink_df, outcome_epoched_pupil_df, outcome_blink_ratio_df, outcome_epochs_to_remove = load_and_process_pupil_data(directory_path=directory_path, participant_str=participant_str, list_subject_selected=list_subject_selected, condition_task_sessions=condition_task_sessions, from_session=from_session, to_session=to_session, dict_onsets=outcome_onsets, dict_num=outcome_nums, session_list=None, outlier_limit_std=10, outlier_correct_average_amount=15, window_start_before=0.25, window_end_after=1.4, baseline_cor=baseline_cor, lpf=[5], blink_ratio_threshold=0.2, select_eye=select_eye, remove_epochs=remove_epochs, z_score=True, plot_interpolation_process=False)
+    preprocessed_pupil_df, pupil_trig_df, pupil_ses_df, blink_df, outcome_epoched_pupil_df, outcome_blink_ratio_df, outcome_epochs_to_remove = load_and_process_pupil_data(directory_path=directory_path, participant_str=participant_str, list_subject_selected=list_subject_selected, condition_task_sessions=condition_task_sessions, from_session=from_session, to_session=to_session, dict_onsets=outcome_onsets, dict_num=outcome_nums, session_list=None, outlier_limit_std=10, outlier_correct_average_amount=15, window_start_before=0.25, window_end_after=1.2, baseline_cor=baseline_cor, lpf=[5], blink_ratio_threshold=0.2, select_eye=select_eye, remove_epochs=remove_epochs, z_score=True, plot_interpolation_process=False)
 
     outcome_epochs_to_remove_df = pd.DataFrame({
         'epochs': outcome_epochs_to_remove,
