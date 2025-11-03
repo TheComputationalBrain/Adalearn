@@ -95,4 +95,3 @@ def compute_peristim_mean_sem_by_count(df, value_cols, time_col='time', group_co
         result['time'].append(group[time_col].mean())
 
     return pd.DataFrame(result)
-
