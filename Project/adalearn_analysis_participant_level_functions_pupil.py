@@ -2,12 +2,18 @@ import pandas as pd
 import numpy as np
 import os
 import sys
+import pingouin
+import statsmodels.api as sm
 from pathlib import Path
+from scipy import stats
+from scipy.stats import zscore
+from sklearn.metrics import mean_squared_error
 import plotly.io as pio
 import plotly.graph_objects as go
 import plotly.express as px
 from plotly.subplots import make_subplots
 pio.renderers.default='browser'
+
 
 try:
     here = Path(__file__).resolve()
@@ -1435,3 +1441,493 @@ def comp_var_pupil_quartile_epochs(directory_path, participant_str, list_subject
         fig_epoch_avg.show()
 
     return com_var_pupil_quartile_dict
+
+
+
+def pupil_response_around_change_point(directory_path, participant_str, condition_str, outcome_epoched_pupil_df, change_point_indices, baseline_correct_window = [], nobc_window = [], before = 6, after = 6, estimate_type = 'mean', plot_pupil_around_change_point = True):
+    """
+    Function to plot pupil responses to stimuli around change points. Pupil responses are the mean of the baseline corrected data (the mean is calculated across the entire epoch), the amplitude of the baseline corrected data (the amplitude is calculated as the max - min after stimulus presentation), and the baseline average of the uncorrected data (the average before stimulus presentation). CAUTION: Requires attention that the correct data is matched to the appropriate estimate type. Returns a dataframe with the mean (and variance; std, sem) of the response around the change in the task hidden structure.
+
+    Parameters:
+    - directory_path: Path, path to the participant level directory
+    - participant_str: string, identifier of participant number (set to 2 numbers)
+    - condition_str: string, identifier of condition order (set to 2 numbers) ** May need to change to denote actual condition in Adalearn VNS study **
+    - outcome_epoched_pupil_df: pd.DataFrame, containing transposed epoched data (each column represents one epoch), the calculated mean, standard deviation and sem across all outcome defined epochs. Includes the timestamp.
+    - change_point_indices: pd.DataFrame, with columns 'index', 'relative_time', and 'task_session', containing the indices and relative times of the change points for each session. (*Note: Have removed identification of the first outcome of each task session as a new change point).
+    - baseline_correct_window = list (floats), contains the start and end times of the cluster window for the longest significant cluster identified in the peristimulus regression on the baseline corrected pupil signal.
+    - nobc_window = list (floats), contains the start and end times of the cluster window for the longest significant cluster identified in the peristimulus regression on the nonbaseline corrected pupil signal.  
+    - before: float, defines the number of outcomes examined before the change point
+    - after: float, defines the number of outcomes examined after the change point
+    - estimate_type: string: can be 'baseline', 'mean', 'amplitude', 'baseline_corrected_effect". Defines the function performed on the pupil data. Attention should be paid that the appropriate function is matched to the examined data (i.e. baseline vs. non-baseline corrected)
+    - plot_around_change_point: boolean, if True, will plot the calculated pupil response around change points. 
+
+    Returns:
+    - pupil_around_cp_df: pd.DataFrame, contains calculated mean and estimates of variance for each outcome around the change points for each change point analysed.
+   
+    """
+    # Reduce pupil epochs to the raw data and insert time as the index 
+    outcome_epoched_pupil_df = outcome_epoched_pupil_df.copy()
+
+    # Create a empty dictionary to store averages
+    session_averages = {}
+
+    # For loop, which takes the cumulative change point number and finds the corresponding column (and surrounding window) in the raw pupil data
+    for session in change_point_indices['task_session'].unique():
+        print(f"Task session: {session}")
+        points = change_point_indices.loc[change_point_indices['task_session'] == session, 'cum_outcome_num']
+        print(f'There are {len(points)} change points in session {session}. The change for session {session} are: {points.values}')
+
+        point_ints = set(points.astype(int).values)  
+        matching_cols = [col for col in outcome_epoched_pupil_df.columns if col in point_ints]
+        print(f"Matching columns found: {matching_cols}")
+
+        if matching_cols:
+            for col in matching_cols:
+                print(f"Analysisng column: {col}")
+                
+                col_idx = outcome_epoched_pupil_df.columns.get_loc(col)
+
+                # Find the index of the *next* change point within the same session
+                col_num = int(col)  # convert to outcome number for numeric comparison
+                next_cp = points[points > col_num].min()  # find next change point (if any)
+
+                # Compute the max post limit (either 'after' or before the next change point)
+                if not pd.isna(next_cp):
+                    # calculate how many trials until next CP
+                    next_cp_distance = int(next_cp - col_num - 1)
+                    max_after = min(after, next_cp_distance)
+                else:
+                    max_after = after  # no later change point → full window allowed
+
+                # Define window bounds with this adjusted range
+                start_idx = max(0, col_idx - before)
+                end_idx = min(len(outcome_epoched_pupil_df.columns), col_idx + max_after + 1)
+
+                # Subset the window
+                window_columns = outcome_epoched_pupil_df.columns[start_idx:end_idx]
+
+                window_data = outcome_epoched_pupil_df[window_columns]
+
+                new_column_names = [f"{i - col_idx}" for i in range(start_idx, end_idx)]
+                
+                window_data.columns = new_column_names
+
+                for column in window_data.columns:
+                    if estimate_type == 'nonbaseline_corrected_effect':
+                        filtered_pupil_data = window_data[column].loc[(window_data.index >= nobc_window[0]) & (window_data.index <= 0)]
+
+                        pupil_variable = filtered_pupil_data.mean()
+
+                        title_append = 'nonbaseline_corrected_effect_window'
+
+                        if column not in session_averages:
+                            session_averages[column] = []
+
+                        session_averages[column].append(pupil_variable)
+
+                    elif estimate_type == 'mean':
+                        pupil_variable = window_data[column].mean()
+
+                        title_append = 'mean'
+
+                        if column not in session_averages:
+                            session_averages[column] = []
+
+                        session_averages[column].append(pupil_variable)
+
+                    elif estimate_type == 'amplitude':
+                        filtered_pupil_data = window_data[column].loc[(window_data.index >= 0.0) & (window_data.index <= 1.4)]
+
+                        pupil_variable = filtered_pupil_data.mean()
+
+                        title_append = f"amplitude"
+
+                        if column not in session_averages:
+                            session_averages[column] = []
+
+                        session_averages[column].append(pupil_variable)
+
+                    elif estimate_type == 'baseline_corrected_effect':
+                        filtered_pupil_data = window_data[column].loc[(window_data.index >= baseline_correct_window[0]) & (window_data.index <= baseline_correct_window[1])]
+
+                        pupil_variable = filtered_pupil_data.mean()
+
+                        title_append = f"baseline_corrected_effect_window"
+
+                        if column not in session_averages:
+                            session_averages[column] = []
+
+                        session_averages[column].append(pupil_variable)
+
+                    else:
+                        print(f'ERROR: mean, amplitude, baseline or baseline_corrected_effect must be specified as the estimate type for the analysis') 
+
+                        title_append = ""
+
+    # After processing all sessions, calculates the overall average, standard deviation and standard error of the mean for each column/stimulus around change point
+    overall_averages = {col: np.mean(session_averages[col]) for col in session_averages}
+    overall_stds = {col: np.std(session_averages[col], ddof=1) for col in session_averages}
+    overall_sems = {col: overall_stds[col] / np.sqrt(len(session_averages[col])) for col in session_averages}
+
+    # Store data in a dataframe
+    pupil_around_cp_df = pd.DataFrame({
+        "stimulus_rel_cp": list(overall_averages.keys()),  
+        "mean": list(overall_averages.values()),
+        "std": list(overall_stds.values()),
+        "sem": list(overall_sems.values())
+    })
+
+    pupil_around_cp_df["stimulus_rel_cp"] = pd.to_numeric(pupil_around_cp_df["stimulus_rel_cp"])
+
+    pupil_around_cp_df.sort_values("stimulus_rel_cp", inplace=True)
+
+    # Option to plot the mean and variance for each stimulus around change point 
+    if plot_pupil_around_change_point:
+        fig = go.Figure()
+
+        fig.add_trace(go.Scatter(
+            x=pupil_around_cp_df["stimulus_rel_cp"], 
+            y=pupil_around_cp_df["mean"], 
+            mode='lines+markers',
+            name="Average pupil diameter mean"
+        ))
+
+        fig.add_trace(go.Scatter(x=pupil_around_cp_df["stimulus_rel_cp"],
+            y=pupil_around_cp_df["mean"] + pupil_around_cp_df["sem"],
+            mode='lines',
+            line=dict(color='rgba(0, 0, 250, 0.1)'),
+            showlegend=False
+        ))
+
+        fig.add_trace(go.Scatter(x=pupil_around_cp_df["stimulus_rel_cp"],
+            y=pupil_around_cp_df["mean"] - pupil_around_cp_df["sem"],
+            mode='lines',
+            fill='tonexty',
+            fillcolor='rgba(0, 0, 250, 0.2)',
+            line=dict(color='rgba(0, 0, 250, 0.1)'),
+            showlegend=False
+        ))
+
+        fig.update_layout(
+            title=f"Pupil {title_append} response around change point for participant {participant_str} in condition {condition_str}",
+            xaxis_title="Outcomes relative to change point",
+            yaxis_title="Pupil diameter", 
+            showlegend = False
+        )
+
+        # Save the figure to the partcipant folder
+        plot_dir = os.path.join(directory_path, f"ses-{condition_str}", "plots")
+
+        os.makedirs(plot_dir, exist_ok=True)
+
+        file_name = f"sub-{participant_str}_ses-{condition_str}_pupil-{title_append}-response-around-cp.png"
+
+        file_path = os.path.join(plot_dir, file_name)
+
+        fig.write_image(file_path)
+
+
+
+        fig.show()
+
+    return pupil_around_cp_df
+
+
+
+
+def pupil_peristimulus_regression_analysis(participant_str, condition_str, directory_path, computational_var_df, outcome_epoched_pupil_df, outcome_epochs_to_remove=None, variables=None, covariates=None, baseline_corrected = False, plot_regression_analysis=True):
+    """
+    Function to analyse the relationship between pupil response and a set of computational predictor variables using multiple linear regression at each peri-stimulus timepoint across defined epochs (defined within the pupil analysis). Can include covariates. Returns the output of the regression analysis.
+
+    Parameters:
+    - participant_str: string, identifier of participant number (set to 2 numbers)
+    - condition_str: string, identifier of condition order (set to 2 numbers)
+    - directory_path: Path, directory to participant level data 
+    - computational_var_df: pd.DataFrame, contains the computational variables (e.g. surprise, prior_conf, cpp) to be used as predictors.
+    - outcome_epoched_pupil_df: pd.DataFrame, contains transposed epoched data (each column represents one epoch), the calculated mean, variance metrics, and timestamp across epochs.
+    - outcome_epochs_to_remove: list, indices of the epochs that exceed the threshold for the amount of interpolation within.
+    - variables: list, names of the variables to be used as predictors in the regression analysis.
+    - covariates: list, names of the variables to be used as covariates in the regression analysis.
+    - baseline_corr: boolean, if true, specifies that pupil data used has been baseline corrected (default = true). 
+    - plot_regression_analysis: boolean, if True, plots the regression coefficients at each peri-stimulus timepoint.
+
+    Returns:
+    - coefficients_df: pd.DataFrame, contains the coefficients of the regression analysis for each predictor variable at each peri-stimulus timepoint.
+    - pupil_regress_df: pd.DataFrame, contains model evaluation outputs (e.g. intercept, R^2, mse, rmse) for each peristimulus time point.
+    - residuals_df: pd.DataFrame, contains model residuals for each peristimulus timepoint. 
+    """
+    # Ensuring that the task session data is in the correct format
+    #computational_var_df['task_session'] = computational_var_df['task_session'].apply(lambda x: str(x) if not isinstance(x, str) else x).str.zfill(2)
+
+    # Check that at least one variable has been added as a predictor
+    if variables is None:
+        raise ValueError("You must provide at least one variable as a predictor.")
+        
+    
+    # This ensures that variable titles are always entered as a list of strings
+    if isinstance(variables, str):
+        variables = [variables]
+      
+    # Obtain the columns related to the predictors defined
+    predictors = computational_var_df[variables].copy()
+
+    variables_to_zscore = list(variables)
+    variables_to_zscore.extend(list(covariates))
+        
+    # Handling of other covariates to be included (z-scoring etc) 
+    if covariates is not None:  
+        # Add square and sqrt of outcome_num
+        if 'outcome_num' in covariates:
+            computational_var_df['outcome_num_sq'] = computational_var_df['outcome_num'] ** 2
+            computational_var_df['outcome_num_sqrt'] = computational_var_df['outcome_num'] ** 0.5
+            variables_to_zscore.extend(['outcome_num_sq', 'outcome_num_sqrt'])
+
+        # Compute entropy if 'prior_dist' is in covariates
+        if 'prior' in covariates:
+            p = np.clip(computational_var_df['prior'], 1e-10, 1 - 1e-10)
+            computational_var_df['entropy'] = -(p * np.log2(p) + (1 - p) * np.log2(1 - p))
+            variables_to_zscore.extend(['entropy'])
+
+        # Add the previous confidence value in as a covariate
+        if 'previous_conf' in covariates:
+            variables_to_zscore.remove('previous_conf')
+            computational_var_df['previous_conf'] = computational_var_df['prior_conf'].shift(1).fillna(0)
+            variables_to_zscore.append('previous_conf')
+
+        # Add the previous change point probability value in as a covariate
+        if 'previous_cpp' in covariates:
+            variables_to_zscore.remove('previous_cpp')
+            computational_var_df['previous_cpp'] = computational_var_df['cpp'].shift(1).fillna(0)
+            variables_to_zscore.append('previous_cpp')
+
+        variables_to_zscore = list(set(variables_to_zscore) - set(['prior_dist']))
+
+        print(f"variables to zscore: {variables_to_zscore}")
+
+        for var in variables_to_zscore:
+            if var not in computational_var_df.columns:
+                raise ValueError(f"Covariate '{var}' not found in computational_var_df.")
+
+            if computational_var_df[var].dtype in ['int64', 'float64']:
+                print('processing variables...')
+                print(f'z-scoring {var}')  
+                predictors[var] = zscore(computational_var_df[var])
+            else:
+                print(f'{var} not numeric and not z-scored')
+                predictors[var] = computational_var_df[var]
+
+    # Based on the epochs containing too much interpolated data, remove respective rows                
+    if outcome_epochs_to_remove is not None:
+        outcomes_to_remove = outcome_epochs_to_remove['epochs'].values
+        predictors.drop(index=outcomes_to_remove, inplace=True)
+    
+    # Prepare the pupil data
+    epoched_pupil_data = outcome_epoched_pupil_df.copy()
+    time = epoched_pupil_data['time'].values.astype(float)
+    time_points = epoched_pupil_data.index
+    epoched_pupil_data.drop(columns=['time'], inplace=True)
+
+    # Ensure there are no epochs containing nan values
+    nan_epochs = predictors[predictors.isna().any(axis=1)].index
+    predictors = predictors.dropna()
+    
+    # Transpose the pupil dataframe
+    epoched_pupil_data_long = epoched_pupil_data.melt(var_name='epoch', value_name='pupil', ignore_index=False)
+    epoched_pupil_data_long = epoched_pupil_data_long[~epoched_pupil_data_long['epoch'].isin(nan_epochs)]
+    
+    # Ensure that the index is of the right data type
+    epoched_pupil_data_long['epoch'] = epoched_pupil_data_long['epoch'].astype(int)
+
+    # Map variables to pupil data 
+    for var in predictors.columns:
+        epoched_pupil_data_long[var] = epoched_pupil_data_long['epoch'].map(predictors[var])
+    
+    # Set up capturing of outputs from regression analysis
+    coefficients = {var: [] for var in predictors.columns}
+    residuals_by_time = []
+    model_outputs = {'time': [], 'intercept': [], 'r_squared': [], 'mean_squared_error': [], 'root_mean_squared_error': []}
+    
+    # Run regression analyses across duration of the epoch
+    for t in time_points:
+        data_at_time = epoched_pupil_data_long.loc[t]
+        X = data_at_time[predictors.columns].apply(pd.to_numeric, errors='coerce')
+        y = pd.to_numeric(data_at_time['pupil'], errors='coerce')
+        X = sm.add_constant(X)  # Adds intercept term
+        
+        model = sm.OLS(y, X).fit()
+        
+        for var in predictors.columns:
+            coefficients[var].append(model.params[var])
+        
+        residuals = pd.Series(model.resid, index=data_at_time.index)
+        residuals = residuals.reset_index(drop=True)
+        residuals_by_time.append(residuals)
+        
+        # Store the outputs for each epoch analysis
+        model_outputs['time'].append(time)
+        model_outputs['intercept'].append(model.params['const'])
+        model_outputs['r_squared'].append(model.rsquared)
+        model_outputs['mean_squared_error'].append(mean_squared_error(y, model.fittedvalues))
+        model_outputs['root_mean_squared_error'].append(np.sqrt(mean_squared_error(y, model.fittedvalues)))
+    
+    # Colate epoch rgression outputs 
+    residuals_df = pd.DataFrame(residuals_by_time, index=time_points)
+    coefficients_df = pd.DataFrame(coefficients)
+    coefficients_df['time'] = time
+    pupil_regress_df = pd.DataFrame(model_outputs)
+    
+    avg_r_squared = pupil_regress_df['r_squared'].mean()
+    avg_rmse = pupil_regress_df['root_mean_squared_error'].mean()
+
+    print(f"Average R^2 across time points within the model: {avg_r_squared:.4f}")
+    print(f"Average RMSE across time points within the model: {avg_rmse:.4f}")
+
+    # Additional title information 
+    if baseline_corrected:
+        title_addon = "baseline-corrected"
+    else:
+        title_addon = "non-baseline-corrected"
+
+    # Option to plot regression coefficients at each peri-stimulus timepoint
+    if plot_regression_analysis:
+        fig = go.Figure()
+        for var in predictors.columns:
+            fig.add_trace(go.Scatter(
+                x=coefficients_df['time'], 
+                y=coefficients_df[var],
+                mode='lines',
+                name=f'Coefficient of {var}'
+            ))
+
+        fig.add_vline(x=0, line_width=3, line_dash="dash", line_color="black", opacity=0.5)
+
+        fig.update_layout(
+            title=f"Regression coefficients describing pupil response relationships with computational variables over time for participant {participant_str} in condition {condition_str}",
+            xaxis_title="Time (s)",
+            yaxis_title="Coefficient value",
+            legend_title="Predictors",
+            height=950,
+            width=1800,
+            showlegend=True,
+            margin=dict(l=50, r=50, t=50, b=50)
+        )
+
+       # Save the figure to the participant folder
+        plot_dir = os.path.join(directory_path, f"ses-{condition_str}", "plots")
+
+        os.makedirs(plot_dir, exist_ok=True)
+
+        file_name = f"sub-{participant_str}_ses-{condition_str}_{title_addon}-pupil-by-comp-var-peristimulus-regression.png"
+
+        file_path = os.path.join(plot_dir, file_name)
+
+        fig.write_image(file_path)
+       
+
+        fig.show()
+
+    return coefficients_df, pupil_regress_df, residuals_df
+
+
+
+def pupil_on_learning_rate_regression_analysis(participant_str, computational_var_df, pupil_bc_zscore,  pupil_nobc_zscore, conf_zscore, cpp_zscore, lr_zscore, exclude_zero=False, covariates=None):
+    """
+    Function to conduct regression analysis for baseline corrected and non-corrected pupil metrics on learning rate. Returns analysis outputs and model parameters. 
+
+    Parameters:
+    - participant_str: string, participant identifier (number; set to 2 digits)
+    - computational_var_df: pd.DataFrame, the dataset containing the variables to be analysed.
+    - outcome_epoched_pupil_df: pd.DataFrame, contains transposed epoched data (each column represents one epoch), the calculated mean, variance metrics, and timestamp across epochs for the baseline corrected pupil signal.
+    - pupil_bc_zscore : array, z-scored baseline-corrected pupil signal.
+    - pupil_nobc_zscore : array,z-scored non-baseline-corrected pupil signal.
+    - conf_zscore: array, z-scored confidence values. 
+    - cpp_zscore: array, z-scored change point probability values.
+    - lr_zscore : array, z-scored learning rate values.
+    - exclude_zero: boolean, if true, will remove row in which no updates made (learning rate = 0) (default = False)
+    - covariates: list of str (optional), list of column names in `data_comp_filtered` to include as covariates. 
+
+    Returns:
+    pupil_v_lr_df : pd.DataFrame, regression results (coefficients, p-values, CIs, etc.).
+    regression_df_filtered : pd.DataFrame, cleaned regression DataFrame used in model fitting.
+    """
+    comp_variables = computational_var_df.copy()
+
+    if covariates is None:
+        covariates = []
+
+    if 'outcome_num' in covariates and 'outcome_num' in comp_variables.columns:
+        comp_variables['outcome_num_sq'] = comp_variables['outcome_num'] ** 2
+        comp_variables['outcome_num_sqrt'] = comp_variables['outcome_num'] ** 0.5
+        covariates.extend(['outcome_num_sq', 'outcome_num_sqrt'])
+
+    print("\nCreating regression variable dataframe...")
+
+    # --- Build regression DataFrame ---
+    regression_df = pd.DataFrame({
+        'participant': participant_str,
+        'conf': comp_variables['prior_conf'].values,
+        'conf_zscore': conf_zscore,
+        'cpp': comp_variables['cpp'].values,
+        'cpp_zscore': cpp_zscore,
+        'lr': comp_variables['cleaned_learning_rate_estimate'].values,
+        'lr_zscore': lr_zscore,
+        'pupil_bc_zscore': pupil_bc_zscore,
+        'pupil_nobc_zscore': pupil_nobc_zscore,
+    })
+
+    # --- Add covariates dynamically if present in data_comp_filtered ---
+    for cov in covariates:
+        if cov in comp_variables.columns:
+            regression_df[cov] = comp_variables[cov].values
+
+            if np.issubdtype(comp_variables[cov].dtype, np.number):
+                regression_df[f'{cov}_zscore'] = stats.zscore(comp_variables[cov], nan_policy='omit')
+
+    # --- Remove missing values ---
+    regression_df_filtered = regression_df.dropna(subset=['lr_zscore'])
+
+    # --- Optionally exclude zero learning rate updates ---
+    if exclude_zero:
+        before = len(regression_df_filtered)
+        regression_df_filtered = regression_df_filtered[regression_df_filtered['lr'] != 0]
+        removed = before - len(regression_df_filtered)
+        print(f"Removed {removed} rows where learning rate update = 0")
+
+        # Recompute z-scores after removal
+        for col in ['conf', 'cpp', 'lr', 'pupil_bc', 'pupil_nobc']:
+            regression_df_filtered[f'{col}_zscore'] = stats.zscore(regression_df_filtered[col], nan_policy='omit')
+
+    # --- Run regression ---
+    print(f"\nRunning regression analysis for pupil responses on learning rate...")
+
+    predictors = ['pupil_bc_zscore', 'pupil_nobc_zscore']
+    for cov in covariates:
+        cov_z = f'{cov}_zscore' if f'{cov}_zscore' in regression_df_filtered.columns else cov
+        if cov_z in regression_df_filtered.columns:
+            predictors.append(cov_z)
+
+    X = regression_df_filtered[predictors]
+    y = regression_df_filtered['lr_zscore']
+
+    X = sm.add_constant(X)
+    model = sm.OLS(y, X).fit()
+
+    # --- Extract regression results ---
+    conf_int = model.conf_int().values
+    mse = mean_squared_error(y, model.predict(X))
+    rmse = np.sqrt(mse)
+
+    pupil_v_lr_df = pd.DataFrame({
+        "variable": ["Intercept"] + X.columns[1:].tolist(),
+        "coefficient": model.params.values,
+        "p_value": model.pvalues.values,
+        "std_err": model.bse.values,
+        "ci_lower": conf_int[:, 0],
+        "ci_upper": conf_int[:, 1],
+        "r_squared": model.rsquared,
+        "rmse": rmse,
+        "participant": participant_str,
+        "included_covariates": ', '.join(covariates) if covariates else 'None'
+    })
+
+    return pupil_v_lr_df, regression_df_filtered

@@ -22,6 +22,7 @@ sys.path.append(str(parent_dir))
 
 import adalearn_analysis_group_level_functions_data_utilities as group_data_utils
 import adalearn_analysis_group_level_functions_pupil_analysis as group_pupil
+import adalearn_analysis_participant_level_functions_pupil as pupil
 
 from adalearn_pupil.adalearn_pupil_participant_info_and_parameters import BASE_DIR, CONDITION_STR, EXCLUDE_ZERO
 
@@ -169,92 +170,29 @@ for participant in participant_list:
 
     pupil_nobc_effect.append(avg_pupil_nobc_effect)
 
-    # Collating a regression variable dataframe
-    print('\nCreating regression variable dataframe...')
-
-    regression_df = pd.DataFrame({
-        'conf': data_comp_filtered['prior_conf'].values,
-        'conf_zscore': conf_zscore,
-        'cpp': data_comp_filtered['cpp'].values,
-        'cpp_zscore': cpp_zscore,
-        'lr': data_comp_filtered['cleaned_learning_rate_estimate'].values,
-        'lr_zscore': lr_zscore,
-        'pupil_bc': pupil_variable_bc,
-        'pupil_bc_zscore': pupil_bc_zscore,
-        'pupil_nobc': pupil_variable_nobc,
-        'pupil_nobc_zscore': pupil_nobc_zscore,
-        'participant': participant_str
-    })
-
-    # Removing rows associated with null values in the cleaning of learning rate
-    regression_df_filtered = regression_df.dropna(subset=['lr_zscore'])
-
-    # Excluding zero update trials (optional)
-    if EXCLUDE_ZERO:
-        before_zero_filter = len(regression_df_filtered)
-        regression_df_filtered = regression_df_filtered[regression_df_filtered['lr'] != 0]
-        removed_zero = before_zero_filter - len(regression_df_filtered)
-        print(f"Removed {removed_zero} rows where learning rate update = 0")
-        # Re z-scoring the data after zero updates removed
-        zscore_cols = ['conf', 'cpp', 'lr', 'pupil_bc', 'pupil_nobc']
-        for col in zscore_cols:
-            regression_df_filtered[f'{col}_zscore'] = stats.zscore(regression_df_filtered[col], nan_policy='omit')
-
-    pupil_lr_regress_raw_list.append(regression_df_filtered)
-
     # Examining pupil response around change points
     print(f'\nExamining pupil responses around change points...')
-    pupil_bc_effect_around_cp_df = group_pupil.pupil_response_around_change_point(directory_path=directory_path, participant_str=participant_str, condition_str=CONDITION_STR, outcome_epoched_pupil_df=epoch_data, change_point_indices=change_point_indices, baseline_correct_window=[baseline_cor_start_time, baseline_cor_end_time], nobc_window=[nobc_start_time, nobc_end_time], before=5, after=5, estimate_type='baseline_corrected_effect', plot_pupil_around_change_point=False)
+    pupil_bc_effect_around_cp_df = pupil.pupil_response_around_change_point(directory_path=directory_path, participant_str=participant_str, condition_str=CONDITION_STR, outcome_epoched_pupil_df=epoch_data, change_point_indices=change_point_indices, baseline_correct_window=[baseline_cor_start_time, baseline_cor_end_time], nobc_window=[nobc_start_time, nobc_end_time], before=5, after=5, estimate_type='baseline_corrected_effect', plot_pupil_around_change_point=False)
 
     pupil_bc_effect_around_cp_df['participant'] = participant_str
 
-    pupil_nobc_effect_around_cp_df = group_pupil.pupil_response_around_change_point(directory_path=directory_path, participant_str=participant_str, condition_str=CONDITION_STR, outcome_epoched_pupil_df=epoch_nobc_data, change_point_indices=change_point_indices, baseline_correct_window=[baseline_cor_start_time, baseline_cor_end_time], nobc_window=[nobc_start_time, nobc_end_time], before=5, after=5, estimate_type='nonbaseline_corrected_effect', plot_pupil_around_change_point=False)
+    pupil_nobc_effect_around_cp_df = pupil.pupil_response_around_change_point(directory_path=directory_path, participant_str=participant_str, condition_str=CONDITION_STR, outcome_epoched_pupil_df=epoch_nobc_data, change_point_indices=change_point_indices, baseline_correct_window=[baseline_cor_start_time, baseline_cor_end_time], nobc_window=[nobc_start_time, nobc_end_time], before=5, after=5, estimate_type='nonbaseline_corrected_effect', plot_pupil_around_change_point=False)
 
     pupil_nobc_effect_around_cp_df['participant'] = participant_str
 
     pupil_bc_around_cp_list.append(pupil_bc_effect_around_cp_df)
     pupil_nobc_around_cp_list.append(pupil_nobc_effect_around_cp_df)
 
+    # Running regression analysis for pupil effect on learning rate 
+    pupil_v_lr_df, regression_df_filtered = pupil.pupil_on_learning_rate_regression_analysis(participant_str=participant_str, computational_var_df=data_comp_filtered, pupil_bc_zscore=pupil_bc_zscore,  pupil_nobc_zscore=pupil_nobc_zscore, conf_zscore=conf_zscore, cpp_zscore=cpp_zscore, lr_zscore=lr_zscore, exclude_zero=False, covariates=['outcome', 'outcome_num', 'task_session'])
 
-    # Running regression analysis for pupil responses on learning rates
-    print(f'\nRunning regression analysis for pupil responses on learning rate...')
-    X = regression_df_filtered[['pupil_bc_zscore', 'pupil_nobc_zscore']]
-    y = regression_df_filtered['lr_zscore']
-
-    # Add intercept term
-    X = sm.add_constant(X)
-
-    # Fit the regression model
-    model = sm.OLS(y, X).fit()
-
-    # Extract coefficients and model fit statistics
-    coefficients = model.params.iloc[1:].values  
-    intercept = model.params.iloc[0]  
-    r_squared = model.rsquared
-    p_values = model.pvalues.values
-    std_err_mean = model.bse.values  
-    conf_int = model.conf_int().values  
-
-    # Calculate MSE and RMSE
-    y_pred = model.predict(X)
-    mse = mean_squared_error(y, y_pred)
-    rmse = np.sqrt(mse)
-
-    # Create a DataFrame for regression and correlation results
-    pupil_v_lr_df = pd.DataFrame({
-        "variable": ["Intercept"] + X.columns[1:].tolist(),  # Include predictor names
-        "coefficient": [intercept] + coefficients.tolist(),
-        "p_value": p_values.tolist(),
-        "std_err": std_err_mean.tolist(),
-        "ci_lower": conf_int[:, 0].tolist(),
-        "ci_upper": conf_int[:, 1].tolist(),
-        "participant": participant_str
-    })
+    pupil_lr_regress_raw_list.append(regression_df_filtered)
 
     pupil_v_lr_regress_coef_df_list.append(pupil_v_lr_df)
 
+
     # Running mediation analysis
-    print(f'Running mediation analysis...')
+    print(f'\nRunning mediation analysis...')
     nobc_mediation_analysis = pingouin.mediation_analysis(data=regression_df_filtered, x='conf_zscore', m=['pupil_nobc_zscore'], y='lr_zscore', covar=None, alpha=0.05, n_boot=500, seed=None, return_dist=False, logreg_kwargs=None)
 
     nobc_mediation_analysis['participant'] = participant_str
