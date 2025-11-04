@@ -184,7 +184,7 @@ for participant in participant_list:
     pupil_nobc_around_cp_list.append(pupil_nobc_effect_around_cp_df)
 
     # Running regression analysis for pupil effect on learning rate 
-    pupil_v_lr_df, regression_df_filtered = pupil.pupil_on_learning_rate_regression_analysis(participant_str=participant_str, computational_var_df=data_comp_filtered, pupil_bc_zscore=pupil_bc_zscore,  pupil_nobc_zscore=pupil_nobc_zscore, conf_zscore=conf_zscore, cpp_zscore=cpp_zscore, lr_zscore=lr_zscore, exclude_zero=False, covariates=['outcome', 'outcome_num', 'task_session'])
+    pupil_v_lr_df, regression_df_filtered = pupil.pupil_on_learning_rate_regression_analysis(participant_str=participant_str, computational_var_df=data_comp_filtered, pupil_bc_zscore=pupil_bc_zscore,  pupil_nobc_zscore=pupil_nobc_zscore, conf_zscore=conf_zscore, cpp_zscore=cpp_zscore, lr_zscore=lr_zscore, exclude_zero=False, covariates=[])
 
     pupil_lr_regress_raw_list.append(regression_df_filtered)
 
