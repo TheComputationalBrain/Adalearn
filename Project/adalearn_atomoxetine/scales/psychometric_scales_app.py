@@ -123,7 +123,7 @@ elif page == "STAI-Y (État)":
             # Show all state items
             for i in range(1, 21):
                 key = f"item{i}"
-                resp = st.radio(items[key], list(likert_options.keys()), index=None, key=key, horizontal=True)
+                resp = st.radio(items[key], list(likert_options.keys()),  key=key)
                 responses[key] = likert_options[resp] if resp is not None else None
 
             submit_state = st.form_submit_button("Soumettre")
@@ -218,7 +218,7 @@ elif page == "STAI-Y (Trait)":
 
                 # Show all trait items
                 for key, question in items.items():
-                    resp = st.radio(question, list(likert_options.keys()), index=None, key=key, horizontal=True)
+                    resp = st.radio(question, list(likert_options.keys()), key=key)
                     responses[key] = likert_options[resp] if resp is not None else None
 
                 # Submit button inside the form
@@ -407,7 +407,6 @@ elif page == "BDI-II":
                     selected_label = st.radio(
                         label=question,
                         options=options,
-                        index=None,
                         key=f"bdi_{idx}"
                     )
                     # Save the numeric value
