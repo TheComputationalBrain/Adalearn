@@ -32,7 +32,7 @@ dataframes = group_data_utils.load_sample_csvs(
     substrings=[
         'update_freq_df',
         'uncertainty_params_on_lr_df',
-        'computational_var_df',
+        'shifted_estimate_results',
         'shift_optimization_group_summary',
         'shift_optimization_results',
         'between_variable_shift_optimization',
@@ -139,9 +139,9 @@ for var in dataframes['shift_optimization_results']['latent_var'].unique():
 
 fraction_shift_df_list = []
 
-for participant in dataframes['computational_var_df']['participant'].unique():
+for participant in dataframes['shifted_estimate_results']['participant'].unique():
 
-    participant_df = dataframes['computational_var_df'][dataframes['computational_var_df']['participant'] == participant].copy()
+    participant_df = dataframes['shifted_estimate_results'][dataframes['shifted_estimate_results']['participant'] == participant].copy()
 
     cpp_shift_mean = participant_df['optimal_shift_cpp'].mean()
     prior_conf_shift_mean = participant_df['optimal_shift_prior_conf'].mean()

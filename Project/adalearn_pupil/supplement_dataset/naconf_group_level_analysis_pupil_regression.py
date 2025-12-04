@@ -126,12 +126,19 @@ group_level_regression_coefs_df = pd.concat(regression_coefs_list, ignore_index=
 group_level_regression_nobc_coefs_df = pd.concat(regression_nobc_coefs_list, ignore_index=True)
 
 # Create dataframes for storing data
-coefs_df = group_pupil.compute_peristim_mean_sem_by_count(group_level_regression_coefs_df, value_cols=['cpp_zscore', 'prior_conf_zscore'])
-coefs_nobc_df = group_pupil.compute_peristim_mean_sem_by_count(group_level_regression_nobc_coefs_df, value_cols=['cpp_zscore', 'prior_conf_zscore'])
+group_level_regression_coefs_df['conf_cpp_diff'] = group_level_regression_coefs_df['prior_conf_zscore'] - group_level_regression_nobc_coefs_df['cpp_zscore']
+group_level_regression_nobc_coefs_df['conf_cpp_diff'] = group_level_regression_nobc_coefs_df['prior_conf_zscore'] - group_level_regression_nobc_coefs_df['cpp_zscore']
+
+coefs_df = group_pupil.compute_peristim_mean_sem_by_count(group_level_regression_coefs_df, value_cols=['cpp_zscore', 'prior_conf_zscore', 'conf_cpp_diff'])
+coefs_nobc_df = group_pupil.compute_peristim_mean_sem_by_count(group_level_regression_nobc_coefs_df, value_cols=['cpp_zscore', 'prior_conf_zscore', 'conf_cpp_diff'])
 
 # Permutation cluster analysis
 baseline_corr_cluster_analysis_results, significant_clusters_df = group_stats.compute_group_level_permutation_cluster_test(group_level_regression_coefs_df, vars=['prior_conf_zscore', 'cpp_zscore'], alpha=0.05)
 nonbaseline_corr_cluster_analysis_results, significant_clusters_nobc_df = group_stats.compute_group_level_permutation_cluster_test(group_level_regression_nobc_coefs_df, vars=['prior_conf_zscore', 'cpp_zscore'],  alpha=0.05)
+
+# Between coefficient permutation cluster analysis
+between_coef_permutation_results, between_coef_significant_clusters_df = group_stats.compute_group_level_permutation_cluster_test(group_level_df=group_level_regression_coefs_df, vars = ['conf_cpp_diff'], alpha=0.05)
+between_coef_permutation_results_nobc, between_coef_significant_clusters_nobc_df = group_stats.compute_group_level_permutation_cluster_test(group_level_df=group_level_regression_nobc_coefs_df, vars=['conf_cpp_diff'], alpha=0.05)
 
 # Save data to .csv files
 group_data_utils.save_sample_dataframes_to_csv(dataframes={
@@ -148,7 +155,9 @@ group_data_utils.save_sample_dataframes_to_csv(dataframes={
     'coefs_df': coefs_df,
     'coefs_nobc_df': coefs_nobc_df,
     'cluster_permutation_analysis': significant_clusters_df,
-    'cluster_permutation_analysis_nobc': significant_clusters_nobc_df
+    'cluster_permutation_analysis_nobc': significant_clusters_nobc_df,
+    'between_coef_significant_clusters_df': between_coef_significant_clusters_df,
+    'between_coef_significant_clusters_nobc_df': between_coef_significant_clusters_nobc_df
 },
 directory_path=NACONF_BASE_DIR,
 condition_str='01',

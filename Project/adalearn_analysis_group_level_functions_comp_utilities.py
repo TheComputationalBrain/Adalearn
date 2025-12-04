@@ -5,6 +5,8 @@ import pandas as pd
 N_ITER = 10
 N_NULL_ITER = 30
 
+
+
 def compute_movable_position(array_len, sequence_len):
     """
     Get indices of position that can be moved
@@ -14,6 +16,7 @@ def compute_movable_position(array_len, sequence_len):
     """
     return np.concatenate([np.arange(0, sequence_len - 1) + k*sequence_len
                            for k in np.arange(0, array_len/sequence_len)]).astype(int)
+
 
 
 def shift_values(values, shift):
@@ -34,6 +37,7 @@ def shift_values(values, shift):
     return values
 
 
+
 def compute_correlation_with_shifted_update(indep_var, error, update, shift, remove):
     """Compute correlated of learning rate and indep_var with shifted update"""
 
@@ -42,9 +46,10 @@ def compute_correlation_with_shifted_update(indep_var, error, update, shift, rem
 
     if remove:
         # set to nan the values of update that have been shifted to a previous trial
-        for shift_val in shift.unique():
-            if shift_val > 0:
-                lr_shifted[np.flatnonzero(shift==shift_val) + shift_val] = np.nan
+       for shift_val in np.unique(shift):
+        shift_val = int(shift_val)
+        if shift_val > 0:
+            lr_shifted[np.flatnonzero(shift==shift_val) + shift_val] = np.nan
 
     # use pandas to handle nans
     return pd.Series(indep_var).corr(pd.Series(lr_shifted))
@@ -99,6 +104,7 @@ def null_optimized_corr_update(data, target_id, indep_var, remove, n=N_ITER, nul
     return null_dist_corr
 
 
+
 def process_participant_shift_update(sub_id, data, indep_var, remove=False):
     """Process correlation analysis for a single participant with optimized shift of the update."""
     sub_data = data.loc[data['participant'] == sub_id].copy(deep=True)
@@ -117,3 +123,19 @@ def process_participant_shift_update(sub_id, data, indep_var, remove=False):
     
     return shift, corr, np.mean(null_dist_corr)
 
+
+
+def apply_shift(update, shift):
+    """Apply the shift to the update variable, setting to nan the shifted values."""
+    update = update.copy().astype(float)
+    donors = []
+
+    for i, s in enumerate(shift):
+        if s > 0:
+            donor = i + s
+            if donor < len(update):
+                update[i] = update[donor]
+                donors.append(donor)
+
+    update[donors] = np.nan
+    return update

@@ -36,9 +36,12 @@ dataframes = group_data_utils.load_sample_csvs(
         'coefs_df', 
         'coefs_nobc_df', 
         'cluster_permutation_analysis', 
-        'cluster_permutation_analysis_nobc'
+        'cluster_permutation_analysis_nobc',
+        'between_coef_permutation_analysis',
+        'between_coef_permutation_analysis_nobc'
         ],
     prefix='sample_level_analysis-ses_01-task_Adalearn_Pupil-')
+
 
 example_participant =  11 # Change this to the participant you want to plot
 
@@ -80,13 +83,13 @@ example_participant_data = bc_group_avg_pupil_df[bc_group_avg_pupil_df['particip
 
 fig = go.Figure()
 
-fig.add_trace(go.Scatter(x=example_participant_data['time'], y=example_participant_data['pupil_signal'], mode = 'lines', line=dict(color='rgba(0, 130, 150, 0.8)'), showlegend=False))
+fig.add_trace(go.Scatter(x=example_participant_data['time'], y=example_participant_data['pupil_signal'], mode = 'lines', line=dict(color='rgba(0, 0, 0, 0.8)'), showlegend=False))
 
 fig.add_trace(go.Scatter(
     x=list(example_participant_data['time']) + list(example_participant_data['time'][::-1]),
     y=list(example_participant_data['pupil_signal'] + example_participant_data['pupil_signal_sem']) + list((example_participant_data['pupil_signal'] - example_participant_data['pupil_signal_sem'])[::-1]),
     fill='toself',
-    fillcolor='rgba(0, 130, 150, 0.2)',
+    fillcolor='rgba(150, 150, 150, 0.2)',
     line=dict(color='rgba(255,255,255,0)'),
     hoverinfo="skip",
     showlegend=False
@@ -133,7 +136,7 @@ fig = go.Figure()
 for participant in bc_group_avg_pupil_df['participant'].unique():
     participant_data = bc_group_avg_pupil_df[bc_group_avg_pupil_df['participant'] == participant]
 
-    fig.add_trace(go.Scatter(x=participant_data['time'], y=participant_data['pupil_signal'], mode='lines', line=dict(color='rgba(0, 130, 150, 0.4)'), showlegend=False))
+    fig.add_trace(go.Scatter(x=participant_data['time'], y=participant_data['pupil_signal'], mode='lines', line=dict(color='rgba(100, 100, 100, 0.4)'), showlegend=False))
 
 fig.add_vline(x=0, line_dash='dot', line=dict(color='black', width=1.5))
 fig.add_hline(y=0, line_dash = 'dot', line=dict(color='black', width=1.5))
@@ -190,13 +193,13 @@ bc_group_pupil_df = pd.DataFrame(group_pupil_dict)
 
 fig = go.Figure()
 
-fig.add_trace(go.Scatter(x=bc_group_pupil_df['time'], y=bc_group_pupil_df['mean_pupil'], mode = 'lines', line=dict(color='rgba(0, 130, 150, 0.8)'), showlegend=False))
+fig.add_trace(go.Scatter(x=bc_group_pupil_df['time'], y=bc_group_pupil_df['mean_pupil'], mode = 'lines', line=dict(color='rgba(0, 0, 0, 0.8)'), showlegend=False))
 
 fig.add_trace(go.Scatter(
     x=list(bc_group_pupil_df['time']) + list(bc_group_pupil_df['time'][::-1]),
     y=list(bc_group_pupil_df['mean_pupil'] + bc_group_pupil_df['sem_pupil']) + list((bc_group_pupil_df['mean_pupil'] - bc_group_pupil_df['sem_pupil'])[::-1]),
     fill='toself',
-    fillcolor='rgba(0, 130, 150, 0.2)',
+    fillcolor='rgba(150, 150, 150, 0.2)',
     line=dict(color='rgba(255,255,255,0)'),
     hoverinfo="skip",
     showlegend=False
@@ -275,13 +278,13 @@ example_participant_data = nobc_group_avg_pupil_df[nobc_group_avg_pupil_df['part
 
 fig = go.Figure()
 
-fig.add_trace(go.Scatter(x=example_participant_data['time'], y=example_participant_data['pupil_signal'], mode = 'lines', line=dict(color='rgba(0, 130, 150, 0.8)'), showlegend=False))
+fig.add_trace(go.Scatter(x=example_participant_data['time'], y=example_participant_data['pupil_signal'], mode = 'lines', line=dict(color='rgba(0, 0, 0, 0.8)'), showlegend=False))
 
 fig.add_trace(go.Scatter(
     x=list(example_participant_data['time']) + list(example_participant_data['time'][::-1]),
     y=list(example_participant_data['pupil_signal'] + example_participant_data['pupil_signal_sem']) + list((example_participant_data['pupil_signal'] - example_participant_data['pupil_signal_sem'])[::-1]),
     fill='toself',
-    fillcolor='rgba(0, 130, 150, 0.2)',
+    fillcolor='rgba(150, 150, 150, 0.2)',
     line=dict(color='rgba(255,255,255,0)'),
     hoverinfo="skip",
     showlegend=False
@@ -342,13 +345,13 @@ nobc_group_pupil_df = pd.DataFrame(group_pupil_dict)
 
 fig = go.Figure()
 
-fig.add_trace(go.Scatter(x=nobc_group_pupil_df['time'], y=nobc_group_pupil_df['mean_pupil'], mode = 'lines', line=dict(color='rgba(0, 130, 150, 0.8)'), showlegend=False))
+fig.add_trace(go.Scatter(x=nobc_group_pupil_df['time'], y=nobc_group_pupil_df['mean_pupil'], mode = 'lines', line=dict(color='rgba(0, 0, 0, 0.8)'), showlegend=False))
 
 fig.add_trace(go.Scatter(
     x=list(nobc_group_pupil_df['time']) + list(nobc_group_pupil_df['time'][::-1]),
     y=list(nobc_group_pupil_df['mean_pupil'] + nobc_group_pupil_df['sem_pupil']) + list((nobc_group_pupil_df['mean_pupil'] - nobc_group_pupil_df['sem_pupil'])[::-1]),
     fill='toself',
-    fillcolor='rgba(0, 130, 150, 0.2)',
+    fillcolor='rgba(150, 150, 150, 0.2)',
     line=dict(color='rgba(255,255,255,0)'),
     hoverinfo="skip",
     showlegend=False
@@ -393,6 +396,7 @@ fig.show()
 ############################################################Peristimulus regression (baseline corrected)
 baseline_corrected_coefs = dataframes['coefs_df']
 baseline_corrected_clusters = dataframes['cluster_permutation_analysis']
+between_coefs_clusters = dataframes['between_coef_permutation_analysis']
 
 
 fig = go.Figure()
@@ -457,6 +461,19 @@ for _, row in baseline_corrected_clusters.iterrows():
             hoverinfo='skip'
         ))
 
+# Add between-variable significant clusters
+for _, row in between_coefs_clusters.iterrows():
+    if row['p_value'] < 0.05:
+        cluster_range = baseline_corrected_coefs['time'].iloc[row['cluster_start']:row['cluster_end']+1]
+        fig.add_trace(go.Scatter(
+            x=cluster_range,
+            y= [style['yval']-0.005] * len(cluster_range), 
+            mode='lines',
+            line=dict(color='black', width=8),
+            showlegend=False,
+            hoverinfo='skip'
+        ))
+
 fig.update_xaxes(
     showline=True, 
     linewidth=1.5, 
@@ -503,7 +520,7 @@ fig.show()
 ####################################################################Peristimulus regression (nonbaseline-corrected)
 nonbaseline_corrected_coefs = dataframes['coefs_nobc_df']
 nonbaseline_corrected_clusters = dataframes['cluster_permutation_analysis_nobc']
-
+nonbaseline_between_coefs_clusters = dataframes['between_coef_permutation_analysis_nobc']
 
 fig = go.Figure()
 
@@ -566,7 +583,19 @@ for _, row in nonbaseline_corrected_clusters.iterrows():
             showlegend=False,
             hoverinfo='skip'
         ))
-        
+
+# Add between-variable significant clusters
+for _, row in nonbaseline_between_coefs_clusters.iterrows():
+    if row['p_value'] < 0.05:
+        cluster_range = nonbaseline_corrected_coefs['time'].iloc[row['cluster_start']:row['cluster_end']+1]
+        fig.add_trace(go.Scatter(
+            x=cluster_range,
+            y= [style['yval']-0.005] * len(cluster_range), 
+            mode='lines',
+            line=dict(color='black', width=8),
+            showlegend=False,
+            hoverinfo='skip'
+        ))        
 
 fig.update_xaxes(
     showline=True, 
@@ -589,7 +618,7 @@ fig.update_layout(
     font=dict(size=42, family="Times New Roman"),
     legend=dict(
         x=0.95,
-        y=0.20,
+        y=0.23,
         xanchor='right',
         yanchor='top',
         bgcolor='rgba(255, 255, 255, 0.7)'))
@@ -625,13 +654,13 @@ fig = make_subplots(
             ]
 )
 
-fig.add_trace(go.Scatter(x=bc_group_pupil_df['time'], y=bc_group_pupil_df['mean_pupil'], mode = 'lines', line=dict(color='rgba(0, 130, 150, 0.8)'), showlegend=False), row=1, col=1)
+fig.add_trace(go.Scatter(x=bc_group_pupil_df['time'], y=bc_group_pupil_df['mean_pupil'], mode = 'lines', line=dict(color='rgba(0, 0, 0, 0.8)'), showlegend=False), row=1, col=1)
 
 fig.add_trace(go.Scatter(
     x=list(bc_group_pupil_df['time']) + list(bc_group_pupil_df['time'][::-1]),
     y=list(bc_group_pupil_df['mean_pupil'] + bc_group_pupil_df['sem_pupil']) + list((bc_group_pupil_df['mean_pupil'] - bc_group_pupil_df['sem_pupil'])[::-1]),
     fill='toself',
-    fillcolor='rgba(0, 130, 150, 0.2)',
+    fillcolor='rgba(150, 150, 150, 0.2)',
     line=dict(color='rgba(255,255,255,0)'),
     hoverinfo="skip",
     showlegend=False
@@ -690,13 +719,13 @@ fig.update_yaxes(
         col = 1 
     )
 
-fig.add_trace(go.Scatter(x=nobc_group_pupil_df['time'], y=nobc_group_pupil_df['mean_pupil'], mode = 'lines', line=dict(color='rgba(0, 130, 150, 0.8)'), showlegend=False), row=1, col=2)
+fig.add_trace(go.Scatter(x=nobc_group_pupil_df['time'], y=nobc_group_pupil_df['mean_pupil'], mode = 'lines', line=dict(color='rgba(0, 0, 0, 0.8)'), showlegend=False), row=1, col=2)
 
 fig.add_trace(go.Scatter(
     x=list(nobc_group_pupil_df['time']) + list(nobc_group_pupil_df['time'][::-1]),
     y=list(nobc_group_pupil_df['mean_pupil'] + nobc_group_pupil_df['sem_pupil']) + list((nobc_group_pupil_df['mean_pupil'] - nobc_group_pupil_df['sem_pupil'])[::-1]),
     fill='toself',
-    fillcolor='rgba(0, 130, 150, 0.2)',
+    fillcolor='rgba(150, 150, 150, 0.2)',
     line=dict(color='rgba(255,255,255,0)'),
     hoverinfo="skip",
     showlegend=False

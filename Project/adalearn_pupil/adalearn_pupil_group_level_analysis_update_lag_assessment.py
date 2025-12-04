@@ -39,10 +39,7 @@ dataframes = group_data_utils.load_sample_csvs(
         ],
     prefix='sample_level_analysis-ses_01-task_Adalearn_Pupil-')
 
-shift_data = dataframes['computational_var_df']
-
-# turn confidence into uncertainty (not needed anymore as using prior uncertainty)
-#shift_data['prior_conf'] = -shift_data['prior_conf']
+shift_data = dataframes['computational_var_df'][['participant', 'task_session', 'outcome_num', 'outcome', 'estimate', 'estimate_updates', 'estimate_errors', 'was_updated_estimate', 'learning_rate_estimate', 'cleaned_learning_rate_estimate', 'ideal_observer', 'cpp', 'prior_conf']].copy(deep=True)
 
 # measure original correlations
 rhos_pearson, rhos_sper = {}, {}
@@ -70,7 +67,7 @@ for indep_var in INDEP_VARS:
     for sub_id in participants:
         print(f'Processing participant {sub_id}...')
         # Run your participant function
-        res = group_comp_utils.process_participant_shift_update(sub_id, shift_data, indep_var)
+        res = group_comp_utils.process_participant_shift_update(sub_id, shift_data, indep_var, remove=True)
         results.append(res)
 
     # Unpack results (each res should be a tuple: (shift, corr, null_mean))
@@ -167,26 +164,56 @@ ttest_df = pd.DataFrame({
 print(f'Paired t-test between cpp and prior confidence correlation differences: t = {t_stat:.3f}, p = {p_val:.3f}')
 
 # Create new columns for shifted updates and learning rates for each latent variable
-for indep_var in INDEP_VARS:
-    indep_var_clean = indep_var if indep_var == 'cpp' else 'prior_conf'
+
+#for indep_var in INDEP_VARS:
+#    indep_var_clean = indep_var if indep_var == 'cpp' else 'prior_conf'
 
     # initialize empty columns
+#    shift_data[f'estimate_update_shifted_{indep_var_clean}'] = np.nan
+#    shift_data[f'learning_rate_shifted_{indep_var_clean}'] = np.nan
+
+#    for sub_id in shift_data['participant'].unique():
+#        sub_mask = shift_data['participant'] == sub_id
+#        sub_data = shift_data.loc[sub_mask]
+
+#        updates = sub_data['estimate_updates'].to_numpy()
+#        errors = sub_data['estimate_errors'].to_numpy()
+#        shift = sub_data[f'optimal_shift_{indep_var_clean}'].to_numpy().astype(int)
+
+        # Apply the shift
+#        updates_shifted = group_comp_utils.shift_values(deepcopy(updates), shift)
+#        lr_shifted = updates_shifted / errors
+
+        # Store back into the dataframe
+#        shift_data.loc[sub_mask, f'estimate_update_shifted_{indep_var_clean}'] = updates_shifted
+#        shift_data.loc[sub_mask, f'learning_rate_shifted_{indep_var_clean}'] = lr_shifted
+
+for indep_var in INDEP_VARS:
+
+    indep_var_clean = indep_var if indep_var == 'cpp' else 'prior_conf'
+
+    # initialize empty output columns
     shift_data[f'estimate_update_shifted_{indep_var_clean}'] = np.nan
     shift_data[f'learning_rate_shifted_{indep_var_clean}'] = np.nan
 
+    # process participant-by-participant
     for sub_id in shift_data['participant'].unique():
+
         sub_mask = shift_data['participant'] == sub_id
         sub_data = shift_data.loc[sub_mask]
 
+        # extract individual participant vectors
         updates = sub_data['estimate_updates'].to_numpy()
         errors = sub_data['estimate_errors'].to_numpy()
-        shift = sub_data[f'optimal_shift_{indep_var_clean}'].to_numpy().astype(int)
+        shift_vec = sub_data[f'optimal_shift_{indep_var_clean}'].to_numpy().astype(int)
 
-        # Apply the shift
-        updates_shifted = group_comp_utils.shift_values(deepcopy(updates), shift)
+        # --- Apply the shift (new correct function)
+        updates_shifted = group_comp_utils.apply_shift(updates, shift_vec)
+
+        # compute learning rate
         lr_shifted = updates_shifted / errors
 
-        # Store back into the dataframe
+        # --- Store results back into the DataFrame
         shift_data.loc[sub_mask, f'estimate_update_shifted_{indep_var_clean}'] = updates_shifted
         shift_data.loc[sub_mask, f'learning_rate_shifted_{indep_var_clean}'] = lr_shifted
 
@@ -286,7 +313,7 @@ for var in update_shift_corr_df['latent_var'].unique():
 
 # Saving files to .csv
 group_data_utils.save_sample_dataframes_to_csv(dataframes={
-    'computational_var_df': shift_data,
+    'shifted_estimate_results': shift_data,
     'shift_optimization_results': results_df,
     'shift_optimization_group_summary': group_summary_df, 
     'between_variable_shift_optimization': group_fraction_shift_df,

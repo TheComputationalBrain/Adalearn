@@ -116,13 +116,24 @@ pupil_regress_coef_nobc_df = pd.concat(pupil_regress_coef_nobc_df_list, ignore_i
 
 # Running cluster permutation analysis on signals
 cluster_based_permutation_results, significant_clusters_df = group_stats_analysis.compute_group_level_permutation_cluster_test(group_level_df=pupil_regress_coef_df, vars = ['prior_conf', 'cpp'], alpha=0.05)
+
 cluster_based_permutation_results_nobc, significant_clusters_nobc_df = group_stats_analysis.compute_group_level_permutation_cluster_test(group_level_df=pupil_regress_coef_nobc_df, vars=['prior_conf', 'cpp'], alpha=0.05)
+
+# Running cluster permutation analysis between coefficients for baseline and non-baseline corrected analyses
+pupil_regress_coef_df['conf_cpp_diff'] = pupil_regress_coef_df['prior_conf'] - pupil_regress_coef_nobc_df['cpp']
+
+pupil_regress_coef_nobc_df['conf_cpp_diff'] = pupil_regress_coef_nobc_df['prior_conf'] - pupil_regress_coef_nobc_df['cpp']
+
+between_coef_permutation_results, between_coef_significant_clusters_df = group_stats_analysis.compute_group_level_permutation_cluster_test(group_level_df=pupil_regress_coef_df, vars = ['conf_cpp_diff'], alpha=0.05)
+
+between_coef_permutation_results_nobc, between_coef_significant_clusters_nobc_df = group_stats_analysis.compute_group_level_permutation_cluster_test(group_level_df=pupil_regress_coef_nobc_df, vars=['conf_cpp_diff'], alpha=0.05)
 
 # Creating a dataframe to contain the averaged response across time points within the epoch
 print(f'\n Creating dataframe containing the averaged coefficients for the baseline corrected pupil signal')
 
-coefs_df = group_pupil.compute_peristim_mean_sem_by_count(pupil_regress_coef_df, value_cols=['cpp', 'prior_conf'])
-coefs_nobc_df = group_pupil.compute_peristim_mean_sem_by_count(pupil_regress_coef_nobc_df, value_cols=['cpp', 'prior_conf'])
+coefs_df = group_pupil.compute_peristim_mean_sem_by_count(pupil_regress_coef_df, value_cols=['cpp', 'prior_conf', 'conf_cpp_diff'])
+
+coefs_nobc_df = group_pupil.compute_peristim_mean_sem_by_count(pupil_regress_coef_nobc_df, value_cols=['cpp', 'prior_conf', 'conf_cpp_diff'])
 
 # Saving dataframes
 group_data_utils.save_sample_dataframes_to_csv(dataframes={
@@ -131,7 +142,9 @@ group_data_utils.save_sample_dataframes_to_csv(dataframes={
     'coefs_df': coefs_df,
     'coefs_nobc_df': coefs_nobc_df,
     'cluster_permutation_analysis': significant_clusters_df,
-    'cluster_permutation_analysis_nobc': significant_clusters_nobc_df
+    'cluster_permutation_analysis_nobc': significant_clusters_nobc_df, 
+    'between_coef_permutation_analysis': between_coef_significant_clusters_df,
+    'between_coef_permutation_analysis_nobc': between_coef_significant_clusters_nobc_df
 },
 directory_path=BASE_DIR,
 condition_str=CONDITION_STR,

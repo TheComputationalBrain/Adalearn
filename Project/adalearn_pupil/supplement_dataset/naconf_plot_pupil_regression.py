@@ -25,13 +25,16 @@ dataframes = group_data_utils.load_sample_csvs(
         'coefs_df', 
         'coefs_nobc_df', 
         'cluster_permutation_analysis', 
-        'cluster_permutation_analysis_nobc'
+        'cluster_permutation_analysis_nobc',
+        'between_coef_significant_clusters_df',
+        'between_coef_significant_clusters_nobc_df'
     ],
     prefix='sample_level_analysis-ses_01-task_Adalearn_Pupil_NACONF-')
 
 ###################################################Baseline corrected peristimulus regression 
 coefs_df = dataframes['coefs_df']
 clusters_df = dataframes['cluster_permutation_analysis']
+between_coefs_clusters_df = dataframes['between_coef_significant_clusters_df']
 
 time = coefs_df['time'][:-1]
 conf = coefs_df['prior_conf_zscore'][:-1]
@@ -103,6 +106,21 @@ for _, row in clusters_df.iterrows():
             hoverinfo='skip'
         ))
 
+# Between-coefficient cluster significance markers
+for _, row in between_coefs_clusters_df.iterrows():
+    if row['p_value'] < 0.05:
+        cluster_range = coefs_df['time'].iloc[row['cluster_start']:row['cluster_end']+1]
+        fig.add_trace(go.Scatter(
+            x=cluster_range,
+            y=[style['yval']- 0.005] * len(cluster_range),
+            mode='lines',
+            line=dict(color='black', width=8),
+            showlegend=False,
+            hoverinfo='skip'
+        ))
+    else:
+        continue
+
 # Axes & layout
 fig.update_xaxes(
     showline=True, 
@@ -145,9 +163,9 @@ fig.show()
 
 
 ###################################################Nonbaseline corrected peristimulus regression 
-
 coefs_nobc_df = dataframes['coefs_nobc_df']
 clusters_nobc_df = dataframes['cluster_permutation_analysis_nobc']
+between_coefs_clusters_nobc_df = dataframes['between_coef_significant_clusters_nobc_df']
 
 time = coefs_nobc_df['time'][:-1]
 conf = coefs_nobc_df['prior_conf_zscore'][:-1]
@@ -201,8 +219,8 @@ fig.add_hline(y=0, line_dash='dot', line=dict(color='black', width=1.5))
 
 # Cluster significance markers
 var_style_map = {
-    'cpp_zscore': {'color': 'rgba(220, 120, 0, 0.8)', 'yval': -0.10},
-    'prior_conf_zscore': {'color': 'rgba(0, 130, 150, 0.8)', 'yval': -0.12}
+    'cpp_zscore': {'color': 'rgba(220, 120, 0, 0.8)', 'yval': -0.06},
+    'prior_conf_zscore': {'color': 'rgba(0, 130, 150, 0.8)', 'yval': -0.08}
 }
 
 for _, row in clusters_nobc_df.iterrows():
@@ -219,6 +237,21 @@ for _, row in clusters_nobc_df.iterrows():
             hoverinfo='skip'
         ))
 
+# Between-coefficient cluster significance markers
+for _, row in between_coefs_clusters_nobc_df.iterrows():
+    if row['p_value'] < 0.05:
+        cluster_range = coefs_nobc_df['time'].iloc[row['cluster_start']:row['cluster_end']+1]
+        fig.add_trace(go.Scatter(
+            x=cluster_range,
+            y=[style['yval']- 0.005] * len(cluster_range),
+            mode='lines',
+            line=dict(color='black', width=8),
+            showlegend=False,
+            hoverinfo='skip'
+        ))
+    else:
+        continue
+
 # Axes & layout
 fig.update_xaxes(
     showline=True, 
@@ -232,7 +265,7 @@ fig.update_yaxes(
     linewidth=1.5, 
     linecolor='black', 
     title_text="Regression weights",
-    range=[-0.15, 0.08]
+    range=[-0.10, 0.08]
 ) 
 
 fig.update_layout(
@@ -242,7 +275,7 @@ fig.update_layout(
     font=dict(size=42, family="Times New Roman"),
     legend=dict(
         x=0.95,
-        y=0.35,
+        y=0.40,
         xanchor='right',
         yanchor='top',
         bgcolor='rgba(255, 255, 255, 0.7)')

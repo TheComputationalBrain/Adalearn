@@ -4,6 +4,7 @@ import pandas as pd
 import numpy as np
 from pathlib import Path
 from collections import defaultdict
+from pandas.errors import EmptyDataError
 
 
 import adalearn_analysis_participant_level_functions_behav as behav
@@ -176,28 +177,30 @@ def load_sample_csvs(directory_path, substrings, prefix):
     for file in os.listdir(load_dir):
         if not file.endswith('.csv'):
             continue
-
         if not file.startswith(prefix):
             continue
 
         # Extract substring between prefix and '.csv'
-        substring_part = file[len(prefix):-4]  # remove prefix and '.csv'
+        substring_part = file[len(prefix):-4]
 
         if substring_part in substrings:
             file_path = os.path.join(load_dir, file)
-            df = pd.read_csv(file_path)
 
-            # Handle duplicate substring keys (optional)
+            try:
+                df = pd.read_csv(file_path)
+            except EmptyDataError:
+                print(f"Empty CSV detected, creating blank DataFrame: {file_path}")
+                df = pd.DataFrame()
+
+            # Handle duplicate substring keys
             match_counts[substring_part] += 1
             suffix = f"_{match_counts[substring_part]}" if match_counts[substring_part] > 1 else ""
             key = f"{substring_part}{suffix}"
 
             loaded_dataframes[key] = df
-            print(f"Loaded {key} from {file_path}")
+            print(f"Loaded {key} from {file_path} (rows={len(df)})")
 
     return loaded_dataframes
-
-
 
 
 def save_sample_dataframes_to_csv(dataframes, directory_path, condition_str, task):
