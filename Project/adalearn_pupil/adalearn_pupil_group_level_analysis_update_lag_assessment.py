@@ -30,6 +30,7 @@ from adalearn_pupil.adalearn_pupil_participant_info_and_parameters import BASE_D
 
 # define independent variables to analyze
 INDEP_VARS = ['cpp', 'prior_conf']
+REMOVE = True
 
 dataframes = group_data_utils.load_sample_csvs(
     directory_path=BASE_DIR,
@@ -39,7 +40,10 @@ dataframes = group_data_utils.load_sample_csvs(
         ],
     prefix='sample_level_analysis-ses_01-task_Adalearn_Pupil-')
 
-shift_data = dataframes['computational_var_df'][['participant', 'task_session', 'outcome_num', 'outcome', 'estimate', 'estimate_updates', 'estimate_errors', 'was_updated_estimate', 'learning_rate_estimate', 'cleaned_learning_rate_estimate', 'ideal_observer', 'cpp', 'prior_conf']].copy(deep=True)
+shift_data = dataframes['computational_var_df'][['participant', 'task_session', 'outcome_num', 'outcome',
+                                                 'estimate', 'estimate_updates', 'estimate_errors', 'was_updated_estimate',
+                                                 'learning_rate_estimate', 'cleaned_learning_rate_estimate',
+                                                 'ideal_observer', 'cpp', 'prior_conf']].copy(deep=True)
 
 # measure original correlations
 rhos_pearson, rhos_sper = {}, {}
@@ -67,7 +71,7 @@ for indep_var in INDEP_VARS:
     for sub_id in participants:
         print(f'Processing participant {sub_id}...')
         # Run your participant function
-        res = group_comp_utils.process_participant_shift_update(sub_id, shift_data, indep_var, remove=True)
+        res = group_comp_utils.process_participant_shift_update(sub_id, shift_data, indep_var, remove=REMOVE)
         results.append(res)
 
     # Unpack results (each res should be a tuple: (shift, corr, null_mean))
@@ -208,7 +212,7 @@ for indep_var in INDEP_VARS:
         shift_vec = sub_data[f'optimal_shift_{indep_var_clean}'].to_numpy().astype(int)
 
         # --- Apply the shift (new correct function)
-        updates_shifted = group_comp_utils.apply_shift(updates, shift_vec)
+        updates_shifted = group_comp_utils.apply_shift(updates, shift_vec, remove=REMOVE)
 
         # compute learning rate
         lr_shifted = updates_shifted / errors

@@ -6,6 +6,20 @@ N_ITER = 10
 N_NULL_ITER = 30
 
 
+def remove_values_after_shift(values, shift):
+    """ Remove values that are following the shift.
+    
+    It sets to NaN the values that are shifted to the previous trials, and not 
+    replaced by the value of the subsequent trial"""
+
+    idx_replaced = np.flatnonzero(shift==1)
+    idx_shifted = np.flatnonzero(shift==1)+1
+    
+    # only remove the indices for which the values has been shifted and not replaced
+    idx_to_remove = np.array(list(set(idx_shifted) - set(idx_replaced)))
+    values[idx_to_remove] = np.nan
+    return values
+
 
 def compute_movable_position(array_len, sequence_len):
     """
@@ -45,11 +59,10 @@ def compute_correlation_with_shifted_update(indep_var, error, update, shift, rem
     lr_shifted = update_shifted / error
 
     if remove:
-        # set to nan the values of update that have been shifted to a previous trial
-       for shift_val in np.unique(shift):
-        shift_val = int(shift_val)
-        if shift_val > 0:
-            lr_shifted[np.flatnonzero(shift==shift_val) + shift_val] = np.nan
+        if np.max(shift)>0:
+            # set to nan the values that have been shifted to a previous trial
+            # and not replaced by the next trial
+            lr_shifted = remove_values_after_shift(lr_shifted, shift)
 
     # use pandas to handle nans
     return pd.Series(indep_var).corr(pd.Series(lr_shifted))
@@ -125,17 +138,12 @@ def process_participant_shift_update(sub_id, data, indep_var, remove=False):
 
 
 
-def apply_shift(update, shift):
+def apply_shift(update, shift, remove=False):
     """Apply the shift to the update variable, setting to nan the shifted values."""
-    update = update.copy().astype(float)
-    donors = []
-
-    for i, s in enumerate(shift):
-        if s > 0:
-            donor = i + s
-            if donor < len(update):
-                update[i] = update[donor]
-                donors.append(donor)
-
-    update[donors] = np.nan
-    return update
+    update_shifted = shift_values(update, shift)
+    if remove:
+        if np.max(shift)>0:
+            # set to nan the values that have been shifted to a previous trial
+            # and not replaced by the next trial
+            update_shifted = remove_values_after_shift(update_shifted, shift)
+    return update_shifted
