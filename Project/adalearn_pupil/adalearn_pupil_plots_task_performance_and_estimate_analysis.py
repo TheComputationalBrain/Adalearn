@@ -232,7 +232,7 @@ fig.update_xaxes(
     showline=True, 
     linewidth=1.5, 
     linecolor='black', 
-    title_text="Normative estimate", 
+    title_text="MModel estimate", 
 )
 
 fig.update_yaxes(

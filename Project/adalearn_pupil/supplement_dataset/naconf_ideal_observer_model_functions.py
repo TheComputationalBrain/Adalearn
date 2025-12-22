@@ -28,7 +28,8 @@ sys.path.append(str(ext_ref_dir))
 print("Resolved ext_ref_dir:", ext_ref_dir)
 
 from IdealObserver import run_inference
-from model_learner import ideal_learner_prob_estimates_from_outcomes, ideal_learner_prob_confidence_from_outcomes, ideal_learner_prob_cpp
+from Inference_ChangePoint import compute_inference, likelihood_table, get_clipped_grid_indices
+from model_learner import ideal_learner_prob_estimates_from_outcomes, ideal_learner_prob_inference_from_outcomes, ideal_learner_prob_confidence_from_outcomes, ideal_learner_prob_cpp
 
 
 
@@ -63,7 +64,7 @@ def load_task_behavioural_data(directory_path, selected_participant, task_sessio
 
 def load_constants(directory_path, task_sessions):
     """
-    Function to load the constants used in the task across each session. These are read from a pickle file and stored in a dataframe.
+    Function to load the constants used in the task across each session. These are read from a pickle file and stored in a dataframe. # Note, except for RESOL, which is hardcoded.
 
     Parameters:
     - directory_path: str, path to the directory containing the data files
@@ -71,6 +72,10 @@ def load_constants(directory_path, task_sessions):
 
     Returns:
     - constants: dict, dictionary containing the constants
+    - P_C: float, the constant value of pJump across sessions (if constant), else None
+    - P_MIN: float, the constant value of pMin across sessions (if constant),
+    - P_MAX: float, the constant value of pMax across sessions (if constant),
+    - RESOL: int, number of bins used for discretization (for hmm)
     """
     constants_list = []
     # Load the constants
@@ -107,8 +112,10 @@ def load_constants(directory_path, task_sessions):
     else:
          print('pMax is not constant across sessions')
          P_MAX = None
+
+    RESOL = 20  # Number of bins used for discretization (for hmm)  
         
-    return constants, P_C, P_MIN, P_MAX
+    return constants, P_C, P_MIN, P_MAX, RESOL
 
 
 
@@ -316,7 +323,63 @@ def run_inference_from_observations(participant_str, directory_path, task_sessio
 
 
 
-def compute_prior_conf_and_cpp_from_observations(participant_str, directory_path, task_session_df, change_point_indices_df, p_c, p_min, p_max, estimate_type, conf_type, unit = 'confidence', plot_prior_conf = False, plot_cpp = False):
+def extract_prior_means(seq, resol, p_c, p1_min, p1_max):
+    """
+    Function to extract the prior means from the ideal observer model given a sequence of observations. Uses the "compute_inference" function (created by Cedric Foucault and Florent Meyniel):
+
+    Parameters:
+    - seq: list or np.array, describes the outcome within a sequence (binary value either 0 for yellow or 1 for blue)
+    - resol: int, the resolution of the decretized grid
+    - p_c: float, true change point probability (should be 0.05)
+    - p1_min: float, the minimum value of the Bernoulli parameter (used to clip the Dirichlet prior distribution) (should be 0.1)
+    - p1_max: float, the maximum value of the Bernoulli parameter (used to clip the Dirichlet prior distribution) (should be 0.9)
+
+    Returns:
+    - prior_means: list, contains the mean of the prior distribution for outcome.
+    """
+    # Extract marginal alpha, forward updated alpha and initial alpha (alpha = prior)
+    marg_Alpha, Alpha, Alpha0 = compute_inference(seq=seq, resol=resol, Nitem=2, p_c=p_c, p1_min=p1_min, p1_max=p1_max, do_inference_on_current_trial=True, return_alpha=True)
+
+    # Creating distribution grid to extract means
+    lik, grid = likelihood_table(Nitem=2, resol=20)
+    grid = np.array(grid)
+    grid_p1 = grid[:, 0]
+    clipped_grid_indices = get_clipped_grid_indices(grid, p1_min=0.1, p1_max=0.9)
+    all_indices = set(range(len(grid)))          # All indices in the grid
+    clipped_indices = set(clipped_grid_indices)  # Indices to exclude (clipped)
+    included_indices = sorted(list(all_indices - clipped_indices))
+
+    grid_p1 = np.array([p1 for (p0, p1) in grid])  # shape: (20,)
+
+    # Compute set of included indices
+    clipped_indices = set(get_clipped_grid_indices(grid, p1_min=p1_min, p1_max=p1_max))
+    all_indices = set(range(len(grid_p1)))
+    included_indices = sorted(all_indices - clipped_indices)
+
+    prior_means = []
+
+    for t in range(Alpha.shape[1]):  # 75 trials
+        if t == 0:
+            prior_alpha = Alpha0
+        else:
+            prior_alpha = Alpha[:, t - 1]
+
+        # Use only included indices (within [p1_min, p1_max])
+        prior_alpha_included = prior_alpha[included_indices]
+        grid_p1_included = grid_p1[included_indices]
+
+        # Normalize
+        prior_alpha_included /= prior_alpha_included.sum()
+
+        # Compute expected prior mean for outcome = 1
+        prior_mean_t = np.sum(grid_p1_included * prior_alpha_included)
+        prior_means.append(prior_mean_t)
+    
+    return prior_means
+
+
+
+def compute_prior_conf_and_cpp_from_observations(participant_str, directory_path, task_session_df, change_point_indices_df, resol, p_c, p_min, p_max, estimate_type, conf_type, unit = 'confidence', plot_prior_conf = False, plot_cpp = False):
     """
     Function computes the "confidence" in the prior and change point probability from each set of task session observations. Computes "confidence" and change point probability using functions within "model_learner" (created by Cedric Foucault and Florent Meyniel: https://github.com/florentmeyniel/Ada-Learn/blob/main/analysis). "Confidence" is the -log(sd) of the prior distribution, while change point probability is calculated from the conditional probability of an observation (at time t) given a change point has occurred multiplied by the true probability of a change point occurring, divided by the conditional probability of an observation (at time t) given a change point has occurred multiplied by the true probability of a change point occurring plus the conditional probability of an observation (at time t) given no change point has occurred multiplied by the true probability that a change point did not occur:
 
@@ -329,6 +392,7 @@ def compute_prior_conf_and_cpp_from_observations(participant_str, directory_path
     - directory_path: Path, directory path to the participant level of the data storage
     - task_session_df: pd.DataFrame, contains behavioural variables plus computed variables from the ideal observer model.
     - change_point_indices_df: pd.DataFrame, contains outputs related to the presence of change points in the hidden task structure. The outcome number within each task session will be used in plot visualisation.
+    - resol: float, number of bins used for discretization (for hmm). Defines ideal_learner_prob_inference_from_outcomes function. Set to 20
     - 'p_c': float, true change point probability 
     - 'p_min': float, the minimum value of the Bernoulli parameter (used to clip the Dirichlet prior distribution) 
     - 'p_max': float, the maximum value of the Bernoulli parameter (used to clip the Dirichlet prior distribution) 
@@ -356,7 +420,9 @@ def compute_prior_conf_and_cpp_from_observations(participant_str, directory_path
         seq = np.array(session_data['stim'])
         binary_seq = np.where(seq == 'G', 1, 0)
 
-        # Run functions to compute confidence and change point probability. Add data to existing data frame computational_var_df
+        # Run functions to compute prior and confidence and change point probability. Add data to existing data frame computational_var_df
+        prior = extract_prior_means(seq=binary_seq, resol=resol, p_c=p_c, p1_min=p_min, p1_max=p_max)
+
         prior_dist = ideal_learner_prob_estimates_from_outcomes(
             binary_seq, p_c, estimate_type=estimate_type, p1_min=p_min, p1_max=p_max)  
         
@@ -379,6 +445,7 @@ def compute_prior_conf_and_cpp_from_observations(participant_str, directory_path
 
         # Add new columns to task_session_df
         session_indices = session_data.index
+        task_session_df.loc[session_indices, 'prior'] = prior
         task_session_df.loc[session_indices, 'prior_conf'] = prior_conf
         task_session_df.loc[session_indices, 'cpp'] = cpp
 

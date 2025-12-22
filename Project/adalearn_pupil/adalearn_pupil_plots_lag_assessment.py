@@ -105,7 +105,7 @@ for var in dataframes['shift_optimization_results']['latent_var'].unique():
             showline=True, linewidth=1.5, linecolor='black', title_text="Participant"
         ),
         yaxis=dict(
-            showline=True, linewidth=1.5, linecolor='black', title_text=f"{var_label} vs. apparent learning rate correlation (r)"
+            showline=True, linewidth=1.5, linecolor='black', title_text=f"{var_label} vs. apparent learning rate (correlation)"
         ),
         font=dict(size=40, family="Times New Roman"),
         plot_bgcolor='rgba(255, 255, 255, 1)',
@@ -443,19 +443,6 @@ fig.add_trace(go.Bar(
     marker_line_width=1.0
 ))
 
-fig.add_shape(
-    type="line",
-    x0=-0.5,  # left edge of first bar
-    x1=1.5,   # right edge of second bar
-    y0=0, y1=0,
-    xref="x2", yref="y2",
-    line=dict(
-        color="black",
-        width=1.5,
-        dash="dot"
-    ),
-    layer="above"
-)
 
 # layout
 fig.update_layout(
@@ -468,6 +455,7 @@ fig.update_layout(
         linecolor='black',
     ),
     yaxis=dict(
+        range=[-0.1, 0.65], 
         showline=True, linewidth=1.5, linecolor='black',
         title_text="Shifted correlation difference to null"
     ),
@@ -483,7 +471,7 @@ fig.update_layout(
     ),
     yaxis2=dict(
         title_text="Regress. weight (model)",
-        domain=[0.05, 0.25],  # inset y position (change to resize/relocate)
+        domain=[0.80, 1.0],  # inset y position (change to resize/relocate)
         anchor='x2',
         showticklabels=True,
         showline=True,

@@ -129,6 +129,10 @@ for indep_var in INDEP_VARS:
 results_df = pd.concat(all_results, ignore_index=True)
 group_summary_df = pd.concat(group_summary_list, ignore_index=True)
 
+# Average estimates shifted for each variable
+print(f"\n\nOptimal estimate shift for CPP: {shift_data['optimal_shift_cpp'].mean():.2f}")
+print(f"Optimal estimate shift for prior uncertainty: {shift_data['optimal_shift_prior_conf'].mean():.2f}")
+
 # Agreement in shifts between cpp and prior uncertainty
 agreement_list = []
 
@@ -167,30 +171,6 @@ ttest_df = pd.DataFrame({
 
 print(f'Paired t-test between cpp and prior confidence correlation differences: t = {t_stat:.3f}, p = {p_val:.3f}')
 
-# Create new columns for shifted updates and learning rates for each latent variable
-
-#for indep_var in INDEP_VARS:
-#    indep_var_clean = indep_var if indep_var == 'cpp' else 'prior_conf'
-
-    # initialize empty columns
-#    shift_data[f'estimate_update_shifted_{indep_var_clean}'] = np.nan
-#    shift_data[f'learning_rate_shifted_{indep_var_clean}'] = np.nan
-
-#    for sub_id in shift_data['participant'].unique():
-#        sub_mask = shift_data['participant'] == sub_id
-#        sub_data = shift_data.loc[sub_mask]
-
-#        updates = sub_data['estimate_updates'].to_numpy()
-#        errors = sub_data['estimate_errors'].to_numpy()
-#        shift = sub_data[f'optimal_shift_{indep_var_clean}'].to_numpy().astype(int)
-
-        # Apply the shift
-#        updates_shifted = group_comp_utils.shift_values(deepcopy(updates), shift)
-#        lr_shifted = updates_shifted / errors
-
-        # Store back into the dataframe
-#        shift_data.loc[sub_mask, f'estimate_update_shifted_{indep_var_clean}'] = updates_shifted
-#        shift_data.loc[sub_mask, f'learning_rate_shifted_{indep_var_clean}'] = lr_shifted
 
 for indep_var in INDEP_VARS:
 

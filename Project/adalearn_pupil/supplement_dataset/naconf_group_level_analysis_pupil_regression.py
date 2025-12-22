@@ -4,6 +4,7 @@ This scripts runs peristimulus pupil regression analysis for a supplementary dat
 import os
 import sys
 import pandas as pd
+import numpy as np
 from scipy import stats
 from pathlib import Path
 import plotly.io as pio
@@ -15,6 +16,7 @@ sys.path.append(str(parent_dir))
 
 import adalearn_analysis_group_level_functions_data_utilities as group_data_utils
 import adalearn_analysis_group_level_functions_pupil_analysis as group_pupil
+import adalearn_analysis_group_level_functions_pupil_analysis as pupil_analysis
 import adalearn_analysis_group_level_functions_statistical_analysis as group_stats
 import adalearn_pupil.supplement_dataset.naconf_ideal_observer_model_functions as model
 import adalearn_pupil.supplement_dataset.naconf_pupil_functions as pupil
@@ -27,16 +29,11 @@ from adalearn_pupil.supplement_dataset.naconf_participant_info_and_parameters im
 task_session_df_list = []
 regression_coefs_list = []
 regression_nobc_coefs_list = []
-outcome_epochs_time_df_list =[]
-outcome_epoched_pupil_df_list = []
-outcome_epochs_columns_df_list = []
-outcome_blink_ratio_df_list = []
-outcome_epochs_to_remove_df_list = []
-outcome_epochs_time_nobc_df_list = []
-outcome_epoched_pupil_nobc_df_list = []
-outcome_epochs_columns_nobc_df_list = []
-outcome_blink_ratio_nobc_df_list = []
-outcome_epochs_to_remove_nobc_df_list = []
+participant_euclid_dist_df_list = []
+outcome_epochs_time_df_list, outcome_epoched_pupil_df_list, outcome_epochs_columns_df_list, outcome_blink_ratio_df_list, outcome_epochs_to_remove_df_list =[], [], [], [], []
+outcome_epochs_time_nobc_df_list, outcome_epoched_pupil_nobc_df_list, outcome_epochs_columns_nobc_df_list, outcome_blink_ratio_nobc_df_list, outcome_epochs_to_remove_nobc_df_list = [], [], [], [], []
+outcome_epoched_x_pupil_df_list, outcome_epoched_y_pupil_df_list = [], []
+outcome_pos_epochs_columns_df_list, outcome_pos_blink_ratio_df_list, outcome_pos_epochs_to_remove_df_list, outcome_pos_epochs_time_df_list = [], [], [], []
 
 
 for participant in usable_participants:
@@ -49,64 +46,115 @@ for participant in usable_participants:
 
     num_change_points, change_points_per_session, change_point_indices, task_session_df = model.change_point_analysis(participant_str=participant, directory_path=directory_path, task_session_df=task_session_df)
 
-    constants, P_C, P_MIN, P_MAX = model.load_constants(directory_path=directory_path, task_sessions=TASK_SESSIONS)
+    constants, P_C, P_MIN, P_MAX, RESOL = model.load_constants(directory_path=directory_path, task_sessions=TASK_SESSIONS)
 
     task_session_df = model.run_inference_from_observations(participant_str=participant, directory_path=directory_path, task_session_df=task_session_df, change_point_indices_df=change_point_indices, p_c=P_C, p_min=P_MIN, p_max=P_MAX, plot_surprise = False)
 
-    task_session_df = model.compute_prior_conf_and_cpp_from_observations(participant_str=participant, directory_path=directory_path, task_session_df=task_session_df, change_point_indices_df=change_point_indices, p_c=P_C, p_min=P_MIN, p_max=P_MAX, estimate_type = 'mean', conf_type = 'prev-conf-pred', unit = 'uncertainty_sd', plot_prior_conf = False, plot_cpp = False)
+    task_session_df = model.compute_prior_conf_and_cpp_from_observations(participant_str=participant, directory_path=directory_path, task_session_df=task_session_df, change_point_indices_df=change_point_indices, resol=RESOL, p_c=P_C, p_min=P_MIN, p_max=P_MAX, estimate_type = 'mean', conf_type = 'prev-conf-pred', unit = 'uncertainty_sd', plot_prior_conf = False, plot_cpp = False)
 
     task_session_df_list.append(task_session_df)
 
     print(f"\nLoading, preprocessing and epoching pupil data...")
-    preprocessed_pupil_df, pupil_trig_df, pupil_ses_df, blink_df, epoched_pupil_df, blink_ratio_epoch_df, epochs_to_remove = pupil.load_and_process_pupil_data(directory_path=directory_path, participant_str=participant, list_subject_selected=LIST_SELECTED_PARTICIPANT, condition_task_sessions=TASK_SESSIONS, from_session=FROM_SESSION, to_session=TO_SESSION, dict_onsets=None, dict_num=None, session_list=None, outlier_limit_std=10, outlier_correct_average_amount=15, window_start_before=0.25, window_end_after=1.2, baseline_cor=[-0.25, 0], lpf=[5], select_eye=True, remove_epochs=False, z_score=True, plot_interpolation_process=False) 
+    preprocessed_pupil_df, pupil_trig_df, pupil_ses_df, blink_df, epoched_pupil_df, blink_ratio_epoch_df, epochs_to_remove = pupil.load_and_process_pupil_data(directory_path=directory_path, participant_str=participant, list_subject_selected=LIST_SELECTED_PARTICIPANT, condition_task_sessions=TASK_SESSIONS, from_session=FROM_SESSION, to_session=TO_SESSION, dict_onsets=None, dict_num=None, session_list=None, outlier_limit_std=10, outlier_correct_average_amount=15, window_start_before=0.25, window_end_after=1.2, baseline_cor=[-0.25, 0], lpf=[5], select_eye=True, remove_epochs=False, z_score=True, plot_interpolation_process=False)
+
+    preprocessed_pupil_df['participant'] = participant
+    pupil_trig_df['participant'] = participant
+
+    preprocessed_pupil_pos_df, pupil_trig_pos_df, pupil_pos_ses_df, blink_pos_df, epoched_x_pupil_pos_df, epoched_y_pupil_pos_df, blink_pos_ratio_epoch_df, epochs_pos_to_remove = pupil.load_and_process_pupil_position_data(directory_path=directory_path, participant_str=participant, list_subject_selected=LIST_SELECTED_PARTICIPANT, condition_task_sessions=TASK_SESSIONS, from_session=FROM_SESSION, to_session=TO_SESSION, dict_onsets=None, dict_num=None, session_list=None, outlier_limit_std=10, outlier_correct_average_amount=15, window_start_before=0.25, window_end_after=1.4, baseline_cor=[], lpf=[5], select_eye=True, remove_epochs=False, z_score=False)
+
+    preprocessed_pupil_pos_df['participant'] = participant
 
     outcome_onsets, outcome_nums, outcome_epoched_pupil_df, outcome_blink_ratio_df, outcome_epochs_to_remove, outcome_epochs_to_remove_df = pupil.all_outcome_pupil_epochs(directory_path=directory_path, participant_str=participant, list_subject_selected=LIST_SELECTED_PARTICIPANT, condition_task_sessions=TASK_SESSIONS, from_session=FROM_SESSION, to_session=TO_SESSION, pupil_trig_df=pupil_trig_df, baseline_cor=[-0.25, 0], variable_df=None, variable_column=None, select_eye=True, remove_epochs=True, plot_averaged_pupil_response=False, plot_raster_pupil_response=False)
 
     outcome_onsets_nobc, outcome_nums_nobc, outcome_epoched_pupil_nobc_df, outcome_blink_ratio_df_nobc, outcome_epochs_to_remove_nobc, outcome_epochs_to_remove_df_nobc = pupil.all_outcome_pupil_epochs(directory_path=directory_path, participant_str=participant, list_subject_selected=LIST_SELECTED_PARTICIPANT, condition_task_sessions=TASK_SESSIONS, from_session=FROM_SESSION, to_session=TO_SESSION, pupil_trig_df=pupil_trig_df, baseline_cor=[], variable_df=None, variable_column=None, select_eye=True, remove_epochs=True, plot_averaged_pupil_response=False, plot_raster_pupil_response=False)
+
+    pos_outcome_onsets, pos_outcome_nums, outcome_epoched_x_pupil_df, outcome_epoched_y_pupil_df, pos_outcome_blink_ratio_df, pos_outcome_epochs_to_remove, pos_outcome_epochs_to_remove_df = pupil.all_outcome_pupil_position_epochs(directory_path=directory_path, participant_str=participant, list_subject_selected=LIST_SELECTED_PARTICIPANT, condition_task_sessions=TASK_SESSIONS, from_session=FROM_SESSION, to_session=TO_SESSION, pupil_trig_df=pupil_trig_df, baseline_cor=[], select_eye=True, remove_epochs=True)
 
     # Processing epoch dataframes to make them aligned across participants (transposing them so time x epoch, after removing statistical)
     epoch_time_df, csv_pupil_epoch_df, columns_df = group_data_utils.process_epoched_df(epoched_df=outcome_epoched_pupil_df, participant_str=participant)
 
     epoch_time_nobc_df, csv_pupil_epoch_nobc_df, columns_nobc_df = group_data_utils.process_epoched_df(epoched_df=outcome_epoched_pupil_nobc_df, participant_str=participant)
 
+    epoch_x_time_df, csv_pupil_x_epoch_df, columns_x_df = group_data_utils.process_epoched_df(epoched_df=outcome_epoched_x_pupil_df, participant_str=participant)
 
-    dfs = [
-    epoch_time_df,
-    csv_pupil_epoch_df,
-    columns_df,
-    outcome_blink_ratio_df,
-    outcome_epochs_to_remove_df,
-    epoch_time_nobc_df,
-    csv_pupil_epoch_nobc_df,
-    columns_nobc_df,
-    outcome_blink_ratio_df_nobc,
-    outcome_epochs_to_remove_df_nobc
-    ]
+    epoch_y_time_df, csv_pupil_y_epoch_df, columns_y_df = group_data_utils.process_epoched_df(epoched_df=outcome_epoched_y_pupil_df, participant_str=participant)
 
-    df_lists = [
-        outcome_epochs_time_df_list,
-        outcome_epoched_pupil_df_list,
-        outcome_epochs_columns_df_list,
-        outcome_blink_ratio_df_list,
-        outcome_epochs_to_remove_df_list,
-        outcome_epochs_time_nobc_df_list,
-        outcome_epoched_pupil_nobc_df_list,
-        outcome_epochs_columns_nobc_df_list,
-        outcome_blink_ratio_nobc_df_list,
-        outcome_epochs_to_remove_nobc_df_list,
-    ]
 
-    for df, df_list in zip(dfs, df_lists):
-        df['participant'] = participant
-        df_list.append(df)
+   # Appending participant column to each dataframe and adding to lists
+    outcome_epochs_time_df_list.append(epoch_time_df)
+    outcome_epoched_pupil_df_list.append(csv_pupil_epoch_df)
+    outcome_epochs_columns_df_list.append(columns_df)
+    outcome_blink_ratio_df_list.append(outcome_blink_ratio_df)
+    outcome_epochs_to_remove_df_list.append(outcome_epochs_to_remove_df)
+    outcome_epochs_time_nobc_df_list.append(epoch_time_nobc_df)
+    outcome_epoched_pupil_nobc_df_list.append(csv_pupil_epoch_nobc_df)
+    outcome_epochs_columns_nobc_df_list.append(columns_nobc_df)
+    outcome_blink_ratio_nobc_df_list.append(outcome_blink_ratio_df_nobc)
+    outcome_epochs_to_remove_nobc_df_list.append(outcome_epochs_to_remove_df_nobc)
+    outcome_epoched_x_pupil_df_list.append(csv_pupil_x_epoch_df)
+    outcome_epoched_y_pupil_df_list.append(csv_pupil_y_epoch_df)
+    outcome_pos_epochs_columns_df_list.append(columns_x_df)
+    outcome_pos_blink_ratio_df_list.append(pos_outcome_blink_ratio_df)
+    outcome_pos_epochs_to_remove_df_list.append(pos_outcome_epochs_to_remove_df)
+    outcome_pos_epochs_time_df_list.append(epoch_x_time_df)
 
+    # Check correspondence between diameter and position pupil dataframes
+    print(f"\nChecking correspondence between diameter and position pupil dataframes...")
+
+    print("Diameter v x position data")
+    pupil_analysis.check_pupil_dfs_compatible(df_1=csv_pupil_epoch_df, df_2=csv_pupil_x_epoch_df, participant_id=participant, check_index=True, check_columns=True)
+    print("Diameter v y position data")
+    pupil_analysis.check_pupil_dfs_compatible(df_1=csv_pupil_epoch_df, df_2=csv_pupil_y_epoch_df, participant_id=participant, check_index=True, check_columns=True)
+    print("X position v y position data")
+    pupil_analysis.check_pupil_dfs_compatible(df_1=csv_pupil_x_epoch_df, df_2=csv_pupil_y_epoch_df, participant_id=participant, check_index=True, check_columns=True)
+    print("Extracted epoch times")
+    pupil_analysis.check_pupil_dfs_compatible(df_1=epoch_time_df, df_2=epoch_x_time_df, participant_id=participant, check_index=True, check_columns=True)
+    print("Columns info")
+    pupil_analysis.check_pupil_dfs_compatible(df_1=columns_df, df_2=columns_x_df, participant_id=participant, check_index=True, check_columns=True)
+    print("Blink ratio info")
+    pupil_analysis.check_pupil_dfs_compatible(df_1=outcome_blink_ratio_df, df_2=pos_outcome_blink_ratio_df, participant_id=participant, check_index=True, check_columns=True)
+    print("Epochs to remove info")
+    pupil_analysis.check_pupil_dfs_compatible(df_1=outcome_epochs_to_remove_df, df_2=pos_outcome_epochs_to_remove_df, participant_id=participant, check_index=True, check_columns=True)
+
+    # Creating euclidean distance pupil position dataframe (for future analyses)
+    print(f"\nCreating euclidean distance pupil position dataframe...")
+
+    # Using means across whole data as individual origins
+    mean_x = preprocessed_pupil_df['x_pos_int'].mean()
+    mean_y = preprocessed_pupil_df['y_pos_int'].mean()
+
+    epoch_x = csv_pupil_x_epoch_df[csv_pupil_x_epoch_df['participant'] == participant].copy()
+    epoch_y = csv_pupil_y_epoch_df[csv_pupil_y_epoch_df['participant'] == participant].copy()
+
+    epoch_x['mean_x'] = mean_x
+    epoch_y['mean_y'] = mean_y
+
+    time_x_cols = [c for c in epoch_x.columns if c not in ['participant', 'mean_x']]
+    time_y_cols = [c for c in epoch_y.columns if c not in ['participant', 'mean_y']]
+
+    x_dev = epoch_x[time_x_cols].to_numpy() - epoch_x['mean_x'].to_numpy()[:, None]
+    y_dev = epoch_y[time_y_cols].to_numpy() - epoch_y['mean_y'].to_numpy()[:, None]
+
+    dist = np.sqrt(x_dev**2 + y_dev**2)
+
+    part_euclidean_dist_df = pd.DataFrame(dist, columns=time_x_cols,index=epoch_x.index).T  # preserve original epoch indexes
+    part_euclidean_dist_df['time'] = epoch_x_time_df['time'].values
+    
+    participant_euclid_dist_df_list.append(part_euclidean_dist_df)
+    
+    # Checking correspondence between diameter and euclidean distance pupil dataframes
+    print(f"\nChecking correspondence between diameter and euclidean distance pupil dataframes...")
+    print("Diameter v euclidean distance data")
+    pupil_analysis.check_pupil_dfs_compatible(df_1=outcome_epoched_pupil_df, df_2=part_euclidean_dist_df, participant_id=participant, check_index=True, check_columns=True)
+
+    # Running peristimulus pupil regression analysis
     print(f"\nRunning peristimulus regression analysis on baseline corrected pupil signal...")
-    coefficients_df, pupil_regress_df, residuals_df = pupil_regress.pupil_peristimulus_regression_analysis(participant_str = participant, directory_path = directory_path, task_session_df = task_session_df, outcome_epoched_pupil_df = outcome_epoched_pupil_df, outcome_epochs_to_remove=outcome_epochs_to_remove_df, variables=['prior_conf', 'cpp'], covariates=None, baseline_corrected = True, plot_regression_analysis=False)
+    coefficients_df, pupil_regress_df, residuals_df = pupil_regress.pupil_peristimulus_regression_analysis(participant_str = participant, directory_path = directory_path, task_session_df = task_session_df, outcome_epoched_pupil_df = outcome_epoched_pupil_df, outcome_epochs_to_remove=outcome_epochs_to_remove_df, variables=['prior_conf', 'cpp'], covariates=[], position_df=None, baseline_corrected = True, plot_regression_analysis=False)
 
     regression_coefs_list.append(coefficients_df)
 
     print(f"\nRunning peristimulus regression analysis on non-baseline corrected pupil signal...")
-    coefficients_df_nobc, pupil_regress_df_nobc, residuals_df_nobc = pupil_regress.pupil_peristimulus_regression_analysis(participant_str = participant, directory_path = directory_path, task_session_df = task_session_df, outcome_epoched_pupil_df = outcome_epoched_pupil_nobc_df, outcome_epochs_to_remove=outcome_epochs_to_remove_df_nobc, variables=['prior_conf', 'cpp'], covariates=None, baseline_corrected = False, plot_regression_analysis=False)
+    coefficients_df_nobc, pupil_regress_df_nobc, residuals_df_nobc = pupil_regress.pupil_peristimulus_regression_analysis(participant_str = participant, directory_path = directory_path, task_session_df = task_session_df, outcome_epoched_pupil_df = outcome_epoched_pupil_nobc_df, outcome_epochs_to_remove=outcome_epochs_to_remove_df_nobc, variables=['prior_conf', 'cpp'], covariates=[], position_df=None, baseline_corrected = False, plot_regression_analysis=False)
 
     regression_nobc_coefs_list.append(coefficients_df_nobc)
 

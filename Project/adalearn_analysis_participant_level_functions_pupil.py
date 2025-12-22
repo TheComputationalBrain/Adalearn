@@ -1635,7 +1635,7 @@ def pupil_response_around_change_point(directory_path, participant_str, conditio
 
 
 
-def pupil_peristimulus_regression_analysis(participant_str, condition_str, directory_path, computational_var_df, outcome_epoched_pupil_df, outcome_epochs_to_remove=None, variables=None, covariates=None, baseline_corrected = False, plot_regression_analysis=True):
+def pupil_peristimulus_regression_analysis(participant_str, condition_str, directory_path, computational_var_df, outcome_epoched_pupil_df, outcome_epochs_to_remove=None, variables=None, covariates=None, position_df = None, baseline_corrected = False, plot_regression_analysis=True):
     """
     Function to analyse the relationship between pupil response and a set of computational predictor variables using multiple linear regression at each peri-stimulus timepoint across defined epochs (defined within the pupil analysis). Can include covariates. Returns the output of the regression analysis.
 
@@ -1648,6 +1648,7 @@ def pupil_peristimulus_regression_analysis(participant_str, condition_str, direc
     - outcome_epochs_to_remove: list, indices of the epochs that exceed the threshold for the amount of interpolation within.
     - variables: list, names of the variables to be used as predictors in the regression analysis.
     - covariates: list, names of the variables to be used as covariates in the regression analysis.
+    - position_df: pd.DataFrame, contains the combined x and y position data for each epoch (if including as covariate).
     - baseline_corr: boolean, if true, specifies that pupil data used has been baseline corrected (default = true). 
     - plot_regression_analysis: boolean, if True, plots the regression coefficients at each peri-stimulus timepoint.
 
@@ -1667,15 +1668,19 @@ def pupil_peristimulus_regression_analysis(participant_str, condition_str, direc
     # This ensures that variable titles are always entered as a list of strings
     if isinstance(variables, str):
         variables = [variables]
+
+    if covariates is None:
+        covariates = []
       
     # Obtain the columns related to the predictors defined
     predictors = computational_var_df[variables].copy()
 
     variables_to_zscore = list(variables)
     variables_to_zscore.extend(list(covariates))
-        
+
+
     # Handling of other covariates to be included (z-scoring etc) 
-    if covariates is not None:  
+    if len(covariates) > 0:  
         # Add square and sqrt of outcome_num
         if 'outcome_num' in covariates:
             computational_var_df['outcome_num_sq'] = computational_var_df['outcome_num'] ** 2
@@ -1690,17 +1695,13 @@ def pupil_peristimulus_regression_analysis(participant_str, condition_str, direc
 
         # Add the previous confidence value in as a covariate
         if 'previous_conf' in covariates:
-            variables_to_zscore.remove('previous_conf')
             computational_var_df['previous_conf'] = computational_var_df['prior_conf'].shift(1).fillna(0)
             variables_to_zscore.append('previous_conf')
 
         # Add the previous change point probability value in as a covariate
         if 'previous_cpp' in covariates:
-            variables_to_zscore.remove('previous_cpp')
             computational_var_df['previous_cpp'] = computational_var_df['cpp'].shift(1).fillna(0)
             variables_to_zscore.append('previous_cpp')
-
-        variables_to_zscore = list(set(variables_to_zscore) - set(['prior_dist']))
 
         print(f"variables to zscore: {variables_to_zscore}")
 
@@ -1716,6 +1717,20 @@ def pupil_peristimulus_regression_analysis(participant_str, condition_str, direc
                 print(f'{var} not numeric and not z-scored')
                 predictors[var] = computational_var_df[var]
 
+    # Include position data if specified
+    if position_df is not None:
+        print('Including pupil position data as a covariate in the regression analysis')
+        # Z-score the position data
+        time_pos_col = position_df['time'] if 'time' in position_df.columns else None
+
+        # Z-score all other columns (trials/epochs) column-wise
+        pupil_euclid_z = position_df.drop(columns=['time'], errors='ignore')
+        pupil_euclid_z = pupil_euclid_z.apply(lambda col: (col - col.mean()) / col.std(), axis=1)
+
+        # Add time back
+        if time_pos_col is not None:
+            pupil_euclid_z['time'] = time_pos_col
+
     # Based on the epochs containing too much interpolated data, remove respective rows                
     if outcome_epochs_to_remove is not None:
         outcomes_to_remove = outcome_epochs_to_remove['epochs'].values
@@ -1727,44 +1742,100 @@ def pupil_peristimulus_regression_analysis(participant_str, condition_str, direc
     time_points = epoched_pupil_data.index
     epoched_pupil_data.drop(columns=['time'], inplace=True)
 
+    # Prepare the pupil position data if included
+    if position_df is not None:
+        epoched_pupil_position_data = pupil_euclid_z.copy()
+        time = epoched_pupil_position_data['time'].values.astype(float)
+        time_points = epoched_pupil_position_data.index
+        epoched_pupil_position_data.drop(columns=['time'], inplace=True)
+
     # Ensure there are no epochs containing nan values
     nan_epochs = predictors[predictors.isna().any(axis=1)].index
     predictors = predictors.dropna()
     
     # Transpose the pupil dataframe
-    epoched_pupil_data_long = epoched_pupil_data.melt(var_name='epoch', value_name='pupil', ignore_index=False)
-    epoched_pupil_data_long = epoched_pupil_data_long[~epoched_pupil_data_long['epoch'].isin(nan_epochs)]
+    epoched_pupil_diameter_long = epoched_pupil_data.melt(
+        var_name='epoch',
+        value_name='pupil',
+        ignore_index=False  # keeps the row index as the time point
+    ).rename_axis('time_points').reset_index() 
+
+    epoched_pupil_diameter_long = epoched_pupil_diameter_long[~epoched_pupil_diameter_long['epoch'].isin(nan_epochs)]
+
+    # Transpose the pupil position dataframe if included
+    if position_df is not None:
+        epoched_pupil_position_long = epoched_pupil_position_data.melt(
+            var_name='epoch',
+            value_name='pupil_position',
+            ignore_index=False
+        ).rename_axis('time_points').reset_index()
+
+        epoched_pupil_position_long = epoched_pupil_position_long[~epoched_pupil_position_long['epoch'].isin(nan_epochs)]
     
     # Ensure that the index is of the right data type
-    epoched_pupil_data_long['epoch'] = epoched_pupil_data_long['epoch'].astype(int)
+    epoched_pupil_diameter_long['epoch'] = epoched_pupil_diameter_long['epoch'].astype(int)
+
+    if position_df is not None:
+        epoched_pupil_position_long['epoch'] = epoched_pupil_position_long['epoch'].astype(int)
+
+    # Set up the regression design dataframe
+    regression_design_df = epoched_pupil_diameter_long.copy()
+
+    # Merge diameter and position data if position is included
+    if position_df is not None:
+        regression_design_df = epoched_pupil_diameter_long.merge(
+            epoched_pupil_position_long,
+            how='left',
+            on=['time_points','epoch']
+        )
 
     # Map variables to pupil data 
     for var in predictors.columns:
-        epoched_pupil_data_long[var] = epoched_pupil_data_long['epoch'].map(predictors[var])
-    
+        regression_design_df[var] = regression_design_df['epoch'].map(predictors[var])
+
     # Set up capturing of outputs from regression analysis
     coefficients = {var: [] for var in predictors.columns}
+    if position_df is not None:
+        coefficients['pupil_position'] = []
     residuals_by_time = []
     model_outputs = {'time': [], 'intercept': [], 'r_squared': [], 'mean_squared_error': [], 'root_mean_squared_error': []}
     
     # Run regression analyses across duration of the epoch
-    for t in time_points:
-        data_at_time = epoched_pupil_data_long.loc[t]
+    for t in regression_design_df['time_points'].unique():
+        data_at_time = regression_design_df[regression_design_df['time_points'] == t]
+
         X = data_at_time[predictors.columns].apply(pd.to_numeric, errors='coerce')
+
+        if position_df is not None:
+            X['pupil_position'] = data_at_time['pupil_position'].values
+
         y = pd.to_numeric(data_at_time['pupil'], errors='coerce')
+
         X = sm.add_constant(X)  # Adds intercept term
+
+        # Drop rows with any NaN or Inf in X or y
+        valid = np.isfinite(X).all(axis=1) & np.isfinite(y)
+
+        X = X.loc[valid]
+        y = y.loc[valid]
+
+        # Skip time point if nothing left to fit
+        if len(y) < X.shape[1]:
+            continue
         
         model = sm.OLS(y, X).fit()
         
         for var in predictors.columns:
             coefficients[var].append(model.params[var])
         
-        residuals = pd.Series(model.resid, index=data_at_time.index)
-        residuals = residuals.reset_index(drop=True)
+        if position_df is not None:
+            coefficients['pupil_position'].append(model.params['pupil_position'])
+        
+        residuals = pd.Series(model.resid).reset_index(drop=True)
         residuals_by_time.append(residuals)
         
         # Store the outputs for each epoch analysis
-        model_outputs['time'].append(time)
+        model_outputs['time'].append(time[time_points.get_loc(t)])
         model_outputs['intercept'].append(model.params['const'])
         model_outputs['r_squared'].append(model.rsquared)
         model_outputs['mean_squared_error'].append(mean_squared_error(y, model.fittedvalues))
@@ -1830,7 +1901,7 @@ def pupil_peristimulus_regression_analysis(participant_str, condition_str, direc
 
 
 
-def pupil_on_learning_rate_regression_analysis(participant_str, computational_var_df, pupil_bc_zscore,  pupil_nobc_zscore, conf_zscore, cpp_zscore, lr_zscore, exclude_zero=False, covariates=None):
+def pupil_on_learning_rate_regression_analysis(participant_str, computational_var_df, pupil_bc_zscore,  pupil_nobc_zscore, conf_zscore, cpp_zscore, lr_zscore, position_data = None, exclude_zero=False, covariates=None):
     """
     Function to conduct regression analysis for baseline corrected and non-corrected pupil metrics on learning rate. Returns analysis outputs and model parameters. 
 
@@ -1843,6 +1914,7 @@ def pupil_on_learning_rate_regression_analysis(participant_str, computational_va
     - conf_zscore: array, z-scored confidence values. 
     - cpp_zscore: array, z-scored change point probability values.
     - lr_zscore : array, z-scored learning rate values.
+    - position_data: pd.DataFrame (optional), contains the combined x and y position data for each epoch (if including as covariate).
     - exclude_zero: boolean, if true, will remove row in which no updates made (learning rate = 0) (default = False)
     - covariates: list of str (optional), list of column names in `data_comp_filtered` to include as covariates. 
 
@@ -1860,6 +1932,7 @@ def pupil_on_learning_rate_regression_analysis(participant_str, computational_va
         comp_variables['outcome_num_sqrt'] = comp_variables['outcome_num'] ** 0.5
         covariates.extend(['outcome_num_sq', 'outcome_num_sqrt'])
 
+
     print("\nCreating regression variable dataframe...")
 
     # --- Build regression DataFrame ---
@@ -1875,6 +1948,14 @@ def pupil_on_learning_rate_regression_analysis(participant_str, computational_va
         'pupil_nobc_zscore': pupil_nobc_zscore,
     })
 
+    if position_data is not None:
+        bc_position_z = position_data['pupil_position_bc_zscore']
+        nobc_position_z = position_data['pupil_position_nobc_zscore']
+
+        regression_df['pupil_bc_pos_interaction'] = regression_df['pupil_bc_zscore'] * bc_position_z
+        regression_df['pupil_nobc_pos_interaction'] = regression_df['pupil_nobc_zscore'] * nobc_position_z
+
+
     # --- Add covariates dynamically if present in data_comp_filtered ---
     for cov in covariates:
         if cov in comp_variables.columns:
@@ -1882,6 +1963,7 @@ def pupil_on_learning_rate_regression_analysis(participant_str, computational_va
 
             if np.issubdtype(comp_variables[cov].dtype, np.number):
                 regression_df[f'{cov}_zscore'] = stats.zscore(comp_variables[cov], nan_policy='omit')
+
 
     # --- Remove missing values ---
     regression_df_filtered = regression_df.dropna(subset=['lr_zscore'])
@@ -1897,10 +1979,16 @@ def pupil_on_learning_rate_regression_analysis(participant_str, computational_va
         for col in ['conf', 'cpp', 'lr', 'pupil_bc', 'pupil_nobc']:
             regression_df_filtered[f'{col}_zscore'] = stats.zscore(regression_df_filtered[col], nan_policy='omit')
 
+        if exclude_zero and position_data is not None:
+            regression_df_filtered['pupil_bc_pos_interaction'] = stats.zscore(regression_df_filtered['pupil_bc_pos_interaction'], nan_policy='omit')
+            regression_df_filtered['pupil_nobc_pos_interaction'] = stats.zscore(regression_df_filtered['pupil_nobc_pos_interaction'], nan_policy='omit')
+
     # --- Run regression ---
     print(f"\nRunning regression analysis for pupil responses on learning rate...")
 
     predictors = ['pupil_bc_zscore', 'pupil_nobc_zscore']
+    if position_data is not None:
+        predictors += ['pupil_bc_pos_interaction', 'pupil_nobc_pos_interaction']
     for cov in covariates:
         cov_z = f'{cov}_zscore' if f'{cov}_zscore' in regression_df_filtered.columns else cov
         if cov_z in regression_df_filtered.columns:
@@ -1910,6 +1998,7 @@ def pupil_on_learning_rate_regression_analysis(participant_str, computational_va
     y = regression_df_filtered['lr_zscore']
 
     X = sm.add_constant(X)
+
     model = sm.OLS(y, X).fit()
 
     # --- Extract regression results ---
@@ -1931,3 +2020,363 @@ def pupil_on_learning_rate_regression_analysis(participant_str, computational_va
     })
 
     return pupil_v_lr_df, regression_df_filtered
+
+
+
+def load_and_process_pupil_position_data(directory_path, participant_str, list_subject_selected, condition_str, condition_task_sessions, from_session, to_session, dict_onsets, dict_num, session_list = None, outlier_limit_std = 10, outlier_correct_average_amount = 15,  window_start_before = 0.25, window_end_after = 1.4, baseline_cor = [], lpf = [5], blink_ratio_threshold = 0.20, select_eye = True, remove_epochs = True, z_score = False):
+    """
+    Function to load and preprocess pupil x and y position data. Preprocessing involves defining blinks, outliers and the interpolation of pupil data. Preprocessing taken from preprocess_eyedata script, created by Florent, Maëva, Aziza and Yannaël. Option to plot the raw and interpolated data. If dictionaries passed defining events of interest, will compute epochs around defined outcomes of interest (e.g. change points, high and low surprise, etc). If epochs computed, will calculate the mean, std, sem across each identified epoch for all task sessions.
+
+    Parameters:
+    - directory_path: Path, path to the participant level directory
+    - participant_str: string, identifier of participant number (set to 2 numbers)
+    - list_subject_selected: list, identifier generated from participant number
+    - condition_str: string, identifier of condition order (set to 2 numbers) ** May need to change to denote actual condition in Adalearn VNS study **
+    - condition_task_sessions: list, contains string variables (set to 2 numbers) denoting the individual task sessions completed by the participant in that condition
+    - from_session: int, defining the number of the first task session within the condition
+    - to_session: int, defining the number of the last task session within the condition
+    - dict_onsets: dict, contains timestamps of outcomes of interest (e.g. change points, high and low surprise, etc). Keys are task session and values are time stamps within that task session. (Default = None)
+    - dict_nums: dict, contains a cumulative count of the number of outcomes of interest identified within each task session. Keys are task sessions and values are the cumulative count of the number of change points within that task session. (Default = None)
+    - session_list: list, optional, specific list of sessions to process. If not provided, the function will use the range defined by from_session and to_session. (Default = None)
+    - outlier_limit_std: int, defines the threshold of the standard deviation of the derivative when preprocessing the pupil data. (Default = 10)
+    - outlier_correct_average_amount: int, the number of data points to the left and at the right of the artifact which will replace the value of the artifact by the value of the mean of the data around it. (Default = 15).
+    - window_start_before: int, value defining the start of the epoch window in time (seconds). (Default = 0.25)
+    - window_end_after: int, value defining the end of the epoch window in time (seconds). (Default = 1.4)
+    - baseline_cor: list, contains the start and end time of the baseline correction window. If left empty (e.g. []), no baseline correction will be applied. (Default = [-0.25, 0])
+    - lpf: list, cutoff (Hz) to low pass filter the data with. If [], do nothing. (Default = 5 Hz)
+    - blink_ratio_threshold:, float, value determining the threshold criteria for the removal of an epoch due to excessive blink ratio. (Default = 0.2)
+    - select_eye: boolean, if true, will use a predfined eye (Default = right). If false will run a function to identify the best eye (one with the least nan values) and collect data using that eye (Default = True)
+    - remove_epochs: boolean, parameter determining whether epochs with an excessive blink ratio should be removed. (Default = True)
+    - z_score: boolean, option to z_score data before computing epochs. Default = True.
+    - plo_interpolation_process: boolean, option to plot the mean and standard deviation across epochs using Plotly. (Default = True) 
+
+    Returns:
+    - preprocessed_pupil_df: pd.DataFrame, contains the pupil data, preprocessed to interpolate across identified blinks, recorded from each task session
+    - pupil_trig_df: pd.DataFrame, contains the trigger information (i.e. time, outcome) for each task session
+    - pupil_ses_df: pd.DataFrame, contains each task session start time, end time nan_ratio and duration.
+    - blink_df: pd.DataFrame, contains the start and end times of each identified blink within a task session. Also contains the duration of each blink, plus the relative and absolute number of blinks, within and across task sessions.   
+
+    If dict_onsets present:
+    - epoched_pupil_df: pd.DataFrame, contains transposed epoched data (each column represents one epoch), the calculated mean, variance metrics and timestamp across epochs.
+    - blink_ratio_epoch_df: pd.DataFrame, contains the blink ratio inofrmation for each generated epoch.
+
+    If remove_epochs = True:
+    - epochs_to_remove: list, indices of the epochs that exceed the threshold for the amount of interpolation within. 
+    """
+    # Running data through methods within class pupil taken from preprocess_eyedata. 
+    # Initialise class
+    data_tob = pupil()
+
+    # Create lists to store data for each task session
+    pupil_data_ses_list, pupil_trig_ses_list, pupil_ses_list, blink_ses_list, used_eye_list = [], [], [], [], []
+    pre_process_data_list, epoched_x_data_list, epoched_y_data_list, blink_ratio_epoch_list = [], [], [], []
+
+    if session_list is not None:
+        sessions_to_process = [str(session).zfill(2) for session in session_list]
+    else:
+        sessions_to_process = [str(session).zfill(2) for session in range(from_session, to_session + 1)]
+
+    # Loop over sessions to extract and process pupil data
+    task_names = ["AdalearnVNS", "AdalearnPupil"]
+
+    # Loop over sessions to extract and process pupil data
+    for session in sessions_to_process:
+        file_dir = f"{directory_path}/ses-{condition_str}/eye"
+        file_found = False  # Flag to track if a valid file is found
+
+        for task in task_names:
+            file_name = f"sub-{participant_str}_ses-{condition_str}_task-{task}_run-{session}_eyetracker.txt"
+            file_path = f"{file_dir}/{file_name}"
+
+            if os.path.exists(file_path):
+                file_found = True  # Mark the file as found
+                # Defining the eye to be used in the pupil analysis - if selec_eye right is selected as default
+                if select_eye:
+                    print(f"Eye pre-selected for Session {session}. The chosen eye is: right")
+                    used_eye_list.append(select_eye)
+
+                    data_tob.import_data(
+                        file_name,
+                        events_warner='MSG',
+                        directory=file_dir,
+                        eye='right',
+                        col=[0, 1, 2],
+                        col_name=['x_pos', 'y_pos', 'diameter'],
+                        eyetracker='tobii'
+                    )
+                else: # If identifying the best eye, files will be run to find the eye with the least missing data
+                    best_eye = identifying_best_eye(
+                        data_tob=data_tob,
+                        file_name=file_name,
+                        file_dir=file_dir,
+                        session=session
+                    )
+
+                    used_eye_list.append(best_eye)
+
+                    data_tob.import_data(
+                        file_name,
+                        events_warner='MSG',
+                        directory=file_dir,
+                        eye=best_eye,
+                        col=[0, 1, 2],
+                        col_name=['x_pos', 'y_pos', 'diameter'],
+                        eyetracker='tobii'
+                    )
+                break  # Exit the task loop once a valid file is processed
+
+        if not file_found:
+            print(f"No valid file found for session {session}")
+
+        # Extract relevant data from class
+        trigger_data = data_tob.events
+        nan_ratio = data_tob.nan_ratio
+        blink_start = data_tob.blink_start
+        blink_end = data_tob.blink_end
+
+        # Create lists to extract data from class objects such that the data can be stored in a dataframe. For example, trigger_data contains a list of dictionaries, which contain keys: 'time' and 'msg', within which values and lists of strings containing the information within that line of the .txt file. 
+        outcome_data, session_start, session_end, pupil_end = [], [], [], []
+
+        # Extracts data based on contents of the strings ('msg_str') within the value list of strings.
+        for item in trigger_data:
+            # Join the list of strings in 'msg' into a single string
+            msg_str = ' '.join(item['msg'])
+    
+            if 'stim_1' in msg_str:
+                outcome_data.append({'time_stamp': item['time'], 'outcome': 1})
+            elif 'stim_0' in msg_str:
+                outcome_data.append({'time_stamp':item['time'], 'outcome': 0})
+            elif 'starts' in msg_str:
+                session_start.append(item['time'])
+            elif 'ends' in msg_str:
+                session_end.append(item['time'])
+            elif 'End' in msg_str:
+                pupil_end.append(item['time'])
+
+        # Creates a dataframe to store the extracted trigger information for each task session 
+        pupil_trig_ses = pd.DataFrame(outcome_data)
+        pupil_trig_ses['time_stamp'] = pd.to_numeric(pupil_trig_ses['time_stamp'], errors='coerce').astype('Int64')
+        pupil_trig_ses['task_session'] = session
+
+        # Deal with or raise error due to missing triggers
+        if not outcome_data:
+            print(f"ERROR: Outcome triggers missing. May need to remove this task session.")
+        if not session_start:
+            print(f"ERROR: Missing trigger and list is empty: session_start = {session_start}")
+            if len(outcome_data) == 75:
+                print(f"Adding timestamp of first outcome trigger in this task session")
+                session_start.append(outcome_data[0]['time_stamp'])
+            else:
+                print("Missing outcome triggers also found. Consider removing this task session")
+        if not session_end:
+            print(f"ERROR: Missing trigger and list is empty: session_end = {session_end}")
+            if len(outcome_data) == 75:
+                print(f"Adding timestamp of last outcome trigger in this task session")
+                session_end.append(outcome_data[-1]['time_stamp'])
+            else:
+                print("Missing outcome triggers also found. Consider removing this task session")
+        if not pupil_end:
+            print(f"ERROR: Missing trigger and list is empty: pupil_end = {pupil_end}")
+            if len(outcome_data) == 75:
+                print(f"Adding timestamp of last outcome trigger in this task session")
+                pupil_end.append(outcome_data[-1]['time_stamp'])
+            else:
+                print("Missing outcome triggers also found. Consider removing this task session")
+
+
+        # Creates a dataframe to store the extracted session characteristics information for each task session 
+        pupil_ses = pd.DataFrame({
+            'task_session': session, 
+            'start': session_start,
+            'end': session_end, 
+            'nan_ratio': nan_ratio
+        })
+
+        # Creates a dataframe to store the extracted blink information for each task session 
+        blink_ses = pd.DataFrame({
+            'task_session': session,
+            'blink_start': blink_start,
+            'blink_end': blink_end
+        })
+        blink_ses['blink_dur'] = (blink_ses['blink_end'] - blink_ses['blink_start']) / 1000000
+
+        # Check that data files are not clearly erroneous 
+        data_tob, pupil_data, blink_ses = pupil_data_file_check(data_tob, pupil_trig_ses=pupil_trig_ses, blink_ses=blink_ses, pupil_ses=pupil_ses, pupil_end=pupil_end, file_path=file_path, file_size_threshold=2, session=session, plot_original_data=False, plot_reduced_data=False)
+
+        # Append the data to the empty list to store the data for that task session
+        pupil_data_ses_list.append(pupil_data)
+        pupil_trig_ses_list.append(pupil_trig_ses)
+        pupil_ses_list.append(pupil_ses)
+        blink_ses_list.append(blink_ses)
+
+        # Preprocess the data. If needed, can plot the preprocessed pupil time series. To see the blink ratio use data_tob.epoch_blink_ratio. For more complete summary can insert data_tob.epochs_info (provides a data frame with the epoch number, the blink ratio, NaN ratio per epoch and conditions [rejected etc])
+        time, diameter, diameter_int, x_pos, x_pos_int, y_pos, y_pos_int = data_tob.preprocess(lpf=lpf, plot=False, remove_outlier=True, outlier_limit_std=outlier_limit_std, outlier_correct_average_amount=outlier_correct_average_amount)   
+
+        processed_data = data_tob.data.copy()
+        processed_data['task_session'] = session  
+        pre_process_data_list.append(processed_data)
+
+        if dict_onsets is not None:
+            data_tob.epoch_tobii(dict_onsets[session], variable='x_pos_int', decimate=1, reject=False, blink_ratio_thd=blink_ratio_threshold, before=window_start_before, after=window_end_after, baseline=baseline_cor, conditions={'event_num': dict_num[session]}, z_score_data=z_score)
+
+            # Check to ensure the correct number of epochs
+            print("For participant ", participant_str, " in session", session, "there are:", len(data_tob.epochs), "epochs")
+            print(data_tob.epochs_info)
+
+            # Appending dataframes containing epoched data to list for each task session
+            epoched_x_data = pd.DataFrame([epoch for epoch in data_tob.epochs])
+            epoched_x_data_list.append(epoched_x_data)
+
+            # Append list to blink_ratio list 
+            blink_ratio_epoch_list.append(data_tob.epoch_blink_ratio)
+
+            data_tob.epoch_tobii(dict_onsets[session], variable='y_pos_int', decimate=1, reject=False, blink_ratio_thd=blink_ratio_threshold, before=window_start_before, after=window_end_after, baseline=baseline_cor, conditions={'event_num': dict_num[session]}, z_score_data=z_score)
+
+            # Appending dataframes containing epoched data to list for each task session
+            epoched_y_data = pd.DataFrame([epoch for epoch in data_tob.epochs])
+            epoched_y_data_list.append(epoched_y_data)
+
+    # Concatenate pre processed pupil dataframes (trigger information, blink information, task session timings, epoched data, etc) across task sessions
+    preprocessed_pupil_df = pd.concat(pre_process_data_list, ignore_index=True)
+
+    pupil_trig_df = pd.concat(pupil_trig_ses_list, ignore_index=True)
+    pupil_trig_df['outcome_num'] = pupil_trig_df.groupby('task_session').cumcount() 
+    pupil_trig_df['cum_outcome_num'] = range(len(pupil_trig_df))
+    pupil_trig_df['time_stamp'] = pupil_trig_df['time_stamp'].astype('int64')
+ 
+    pupil_ses_df = pd.concat(pupil_ses_list, ignore_index=True)
+    pupil_ses_df['duration'] = (pupil_ses_df['end'].astype(int) - pupil_ses_df['start'].astype(int)) / 1000000
+    if select_eye:
+        pupil_ses_df['used_eye'] = 'right'
+    else:
+        pupil_ses_df['used_eye'] = used_eye_list
+
+    blink_df = pd.concat(blink_ses_list, ignore_index=True)
+    blink_df['blink_count'] = blink_df.groupby('task_session').cumcount() 
+    blink_df['cum_blink_count'] = range(len(blink_df))
+
+    if hasattr(data_tob, 'epochs_info'):
+        # Generate dataframe with blink_ratio for each epoch vertically stacked
+        flattened_array = np.concatenate(blink_ratio_epoch_list)
+
+        blink_ratio_epoch_df = pd.DataFrame(flattened_array, columns=['blink_ratio'])
+        blink_ratio_epoch_df['above_threshold'] = blink_ratio_epoch_df['blink_ratio'] >= blink_ratio_threshold
+
+        # Checking that  all epoch df have the same shape - possibly not due to sampling issues related to trigger insertion.
+        expected_num_columns = round(((window_start_before + window_end_after) * 60) + 1) # 60Hz is the sampling frequency of the tobii eyetracker. Add 1, because the epoching window includes the last time point exactly.
+
+        mismatched_shape_info = [(i, df.shape[1]) for i, df in enumerate(epoched_x_data_list) if df.shape[1] != expected_num_columns]
+
+        if mismatched_shape_info:
+            print("The following task session(s) have a different number of columns than expected (expected: {}):".format(expected_num_columns))
+            for idx, shape in mismatched_shape_info:
+                print(f"  - Task session index {idx} has {shape} columns")
+        else:
+            print("All task sessions have the expected number of columns.") 
+
+        # Collating the timelocked epoched pupil data to calculate descriptive statistics for plotting
+        epoched_x_pupil_df = pd.concat(epoched_x_data_list, ignore_index=True).T
+        epoched_y_pupil_df = pd.concat(epoched_y_data_list, ignore_index=True).T
+
+        # Removing epochs in which interpolation exceeds defined threshold (and in which the shape of the epoch is off due to sampling issues)
+        if remove_epochs:
+            # Get indices of epochs (columns) to remove due to excessive blinking
+            epochs_to_remove = list(blink_ratio_epoch_df.index[blink_ratio_epoch_df['above_threshold']])
+
+            num_excess_blink_columns = len(epochs_to_remove)
+
+            # Removing columns that have null values due to sampling issues
+            nan_columns = epoched_x_pupil_df.columns[epoched_x_pupil_df.isna().any()].tolist()
+            print(f'Number of columns containing NaN values: {len(nan_columns)}')
+
+            # For each column with NaN values, check if the NaN is in the last row. If it is then pad the null value with the data in the previous rpow for that column 
+            # For each column with NaN values, check if NaNs are in the last 3 rows max
+            for col in nan_columns:
+                series = epoched_x_pupil_df[col]
+                # Reverse the series and count how many NaNs are at the end
+                reversed_series = series[::-1]
+                trailing_nans = reversed_series.isna().cumprod().sum()
+
+                if trailing_nans > 0:
+                    if trailing_nans <= 3:
+                        # Get the last non-NaN value to use for padding
+                        last_valid_value = series.iloc[:-trailing_nans].dropna().iloc[-1]
+                        # Fill all trailing NaNs with the last valid value
+                        epoched_x_pupil_df.loc[epoched_x_pupil_df.index[-trailing_nans:], col] = last_valid_value
+                    else:
+                        raise ValueError(f"Column '{col}' has {trailing_nans} trailing NaNs — exceeds limit of 3.")
+
+            # Final check for any remaining NaNs
+            remaining_nans = epoched_x_pupil_df.columns[epoched_x_pupil_df.isna().any()].tolist()
+            print(f'Number of columns containing NaN values after rectifying sampling issue: {len(remaining_nans)}')
+
+            # Remove only columns that had excessive blinking
+            epochs_to_remove = sorted(set(epochs_to_remove)) 
+            epoched_x_pupil_df.drop(columns=epochs_to_remove, inplace=True)
+            epoched_y_pupil_df.drop(columns=epochs_to_remove, inplace=True)
+
+            print(f"Removed {len(epochs_to_remove)} epochs due to excessive blinking ({num_excess_blink_columns}).")
+            print(f"Columns removed: {epochs_to_remove}")
+        else:
+            epochs_to_remove = None
+
+        numeric_data = epoched_x_pupil_df.iloc[:, :]
+
+        epoched_x_pupil_df['time'] = data_tob.epochs_times
+        epoched_y_pupil_df['time'] = data_tob.epochs_times
+
+    else:
+        epoched_x_pupil_df = None
+        epoched_y_pupil_df = None
+        blink_ratio_epoch_df = None
+        epochs_to_remove = None 
+
+
+    return preprocessed_pupil_df, pupil_trig_df, pupil_ses_df, blink_df, epoched_x_pupil_df, epoched_y_pupil_df, blink_ratio_epoch_df, epochs_to_remove
+
+
+
+def all_outcome_pupil_position_epochs(directory_path, participant_str, list_subject_selected, condition_str, condition_task_sessions, from_session, to_session, pupil_trig_df, baseline_cor = [], select_eye = True, remove_epochs = True):
+    """
+    Function to preprocess and analysis pupil data for each outcome across all task sessions. Uses load_and_process_pupil_data method to load and run the preporocessing analysis. There is an option to plot the mean response from all outcomes across all task sessions, as well as a raster plot from each outcome. Parameters defining the preprocessing of the pupil data should be modified in the process_pupil_data function directly. 
+
+    Parameters:
+    - directory_path: Path, path to the participant level directory
+    - participant_str: string, identifier of participant number (set to 2 numbers)
+    - list_subject_selected: list, identifier generated from participant number
+    - condition_str: string, identifier of condition order (set to 2 numbers) ** May need to change to denote actual condition in Adalearn VNS study **
+    - condition_task_sessions: list, contains string variables (set to 2 numbers) denoting the individual task sessions completed by the participant in that condition
+    - from_session: int, defining the number of the first task session within the condition
+    - to_session: int, defining the number of the last task session within the condition
+    - pupil_trig_df: pd.DataFrame, contains the trigger information (i.e. time, outcome) for each task session, extracted from the pupil data.
+    - select_eye: boolean, if true, will use a predfined eye (default = right). If false will run a function to identify the best eye (one with the least nan values) and collect data using that eye.
+    - remove_epochs: boolean, parameter determining whether epochs with an excessive blink ratio should be removed. (Default = True)
+    - plot_average_pupil_response: boolean, option to plot the mean and sem across each output using Plotly. (Default = False).
+    - plot_raster_pupil_response: boolean, option to plot raster plot for each output using Plotly. (Default = False).
+
+    Returns:
+    - outcome_onsets: dict, contains timestamps of all outcomes from all task sessions. Keys are task session and values are time stamps within that task session. 
+    - outcome_nums: dict, contains a cumulative count of the number of change points identified within each task session. Keys are task sessions and values are the cumulative count of the number of change points within that task session.
+    - outcome_epoched_pupil_df: pd.DataFrame, containing transposed epoched data (each column represents one epoch), the calculated mean, standard deviation and sem across all outcome defined epochs. Includes the timestamp.
+    - outcome_blink_ratio_cp_df: pd.DataFrame, contains the blink ratio information for each generated epoch around outcome observations
+    - outcome_epochs_to_remove: list, indices of the epochs that exceed the threshold for the amount of interpolation within. 
+
+    """
+    # Creating dictionaries for storage of each outcome time and number 
+    outcome_onsets, outcome_nums = create_pupil_epoch_dicts(pupil_trig_df)
+
+    # Checking the number of outcomes
+    print(f"Condition {condition_str}:")
+    for session, events in outcome_nums.items():
+      print(f"In task session {session} there are {len(events)} outcome observations") 
+
+    # Analysing pupil data based on identified outcome indices
+    preprocessed_pupil_df, pupil_trig_df, pupil_ses_df, blink_df, outcome_epoched_x_pupil_df, outcome_epoched_y_pupil_df,outcome_blink_ratio_df, outcome_epochs_to_remove = load_and_process_pupil_position_data(directory_path=directory_path, participant_str=participant_str, list_subject_selected=list_subject_selected, condition_str=condition_str, condition_task_sessions=condition_task_sessions, from_session=from_session, to_session=to_session, dict_onsets=outcome_onsets, dict_num=outcome_nums, session_list=None, outlier_limit_std=10, outlier_correct_average_amount=15, window_start_before=0.25, window_end_after=1.4, baseline_cor=baseline_cor, lpf=[5], blink_ratio_threshold=0.2, select_eye=select_eye, remove_epochs=remove_epochs, z_score=False)
+
+    outcome_epochs_to_remove_df = pd.DataFrame({
+        'epochs': outcome_epochs_to_remove,
+        'participant': participant_str
+    })
+
+
+    return outcome_onsets, outcome_nums, outcome_epoched_x_pupil_df, outcome_epoched_y_pupil_df, outcome_blink_ratio_df, outcome_epochs_to_remove, outcome_epochs_to_remove_df

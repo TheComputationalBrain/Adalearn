@@ -33,7 +33,8 @@ dataframes = group_data_utils.load_sample_csvs(
         'outcome_epochs_columns_df',
         'outcome_epochs_to_remove_df',
         'outcome_epochs_time_nobc_df', 
-        'outcome_epoched_pupil_nobc_df'
+        'outcome_epoched_pupil_nobc_df',
+        'outcome_epochs_euclidean_distance_df'
         ],
     prefix='sample_level_analysis-ses_01-task_Adalearn_Pupil-')
 
@@ -73,6 +74,8 @@ for participant in participant_list:
     analysed_epochs = dataframes['outcome_epochs_columns_df'][dataframes['outcome_epochs_columns_df']['participant']==participant]
 
     epochs_to_remove = dataframes['outcome_epochs_to_remove_df'][dataframes['outcome_epochs_to_remove_df']['participant']==participant]
+
+    epoch_positions = dataframes['outcome_epochs_euclidean_distance_df'][dataframes['outcome_epochs_euclidean_distance_df']['participant']==participant]
     
     # Processing epoched dataframes
     column_titles = list(analysed_epochs['columns'].values.astype(int))
@@ -93,9 +96,14 @@ for participant in participant_list:
     epoch_nobc_data.columns = column_titles
     epoch_nobc_data['time'] = epoch_nobc_times['time'].values.astype(float)
 
+    epoch_positions = epoch_positions.drop(columns=['participant'])
+    epoch_positions = epoch_positions.T
+    epoch_positions.columns = column_titles
+    epoch_positions['time'] = epoch_times['time'].values.astype(float)
+
     # Running peristimulus regression analysis
     print(f"\nRunning regression on baseline corrected pupil signal...")   
-    conf_cpp_coef, pupil_regress_df, residuals_df = pupil.pupil_peristimulus_regression_analysis(participant_str=participant, condition_str=CONDITION_STR, directory_path=directory_path, computational_var_df=comp_df, outcome_epoched_pupil_df=epoch_data, outcome_epochs_to_remove=epochs_to_remove, variables=['prior_conf', 'cpp'], covariates = ['outcome', 'outcome_num', 'task_session', 'prior'], baseline_corrected=True,  plot_regression_analysis=False)
+    conf_cpp_coef, pupil_regress_df, residuals_df = pupil.pupil_peristimulus_regression_analysis(participant_str=participant, condition_str=CONDITION_STR, directory_path=directory_path, computational_var_df=comp_df, outcome_epoched_pupil_df=epoch_data, outcome_epochs_to_remove=epochs_to_remove, variables=['prior_conf', 'cpp'], covariates = ['outcome', 'outcome_num', 'task_session', 'prior'], position_df=epoch_positions, baseline_corrected=True,  plot_regression_analysis=False)
 
     conf_cpp_coef['participant'] = participant
     conf_cpp_coef['count'] = range(len(conf_cpp_coef))
@@ -103,7 +111,7 @@ for participant in participant_list:
     pupil_regress_coef_df_list.append(conf_cpp_coef)
    
     print(f"\nRunning regression on non-baseline corrected pupil signal...")
-    conf_cpp_coef_nobc, pupil_regress_nobc_df, residuals_nobc_df = pupil.pupil_peristimulus_regression_analysis(participant_str=participant, condition_str=CONDITION_STR, directory_path=directory_path, computational_var_df=comp_df, outcome_epoched_pupil_df=epoch_nobc_data, outcome_epochs_to_remove=epochs_to_remove, variables=['prior_conf', 'cpp'], covariates = ['outcome', 'outcome_num', 'task_session', 'prior'], baseline_corrected=False,  plot_regression_analysis=False)
+    conf_cpp_coef_nobc, pupil_regress_nobc_df, residuals_nobc_df = pupil.pupil_peristimulus_regression_analysis(participant_str=participant, condition_str=CONDITION_STR, directory_path=directory_path, computational_var_df=comp_df, outcome_epoched_pupil_df=epoch_nobc_data, outcome_epochs_to_remove=epochs_to_remove, variables=['prior_conf', 'cpp'], covariates = ['outcome', 'outcome_num', 'task_session', 'prior'], position_df=epoch_positions, baseline_corrected=False,  plot_regression_analysis=False)
 
     conf_cpp_coef_nobc['participant'] = participant
     conf_cpp_coef_nobc['count'] = range(len(conf_cpp_coef_nobc))

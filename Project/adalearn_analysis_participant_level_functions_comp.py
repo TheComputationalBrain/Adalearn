@@ -614,12 +614,17 @@ def run_inference_from_observations(participant_str, condition_str, directory_pa
 
 def extract_prior_means(seq, resol, p_c, p1_min, p1_max):
     """
+    Function to extract the prior means from the ideal observer model given a sequence of observations. Uses the "compute_inference" function (created by Cedric Foucault and Florent Meyniel):
+
     Parameters:
     - seq: list or np.array, describes the outcome within a sequence (binary value either 0 for yellow or 1 for blue)
     - resol: int, the resolution of the decretized grid
     - p_c: float, true change point probability (should be 0.05)
     - p1_min: float, the minimum value of the Bernoulli parameter (used to clip the Dirichlet prior distribution) (should be 0.1)
     - p1_max: float, the maximum value of the Bernoulli parameter (used to clip the Dirichlet prior distribution) (should be 0.9)
+
+    Returns:
+    - prior_means: list, contains the mean of the prior distribution for outcome.
     """
     # Extract marginal alpha, forward updated alpha and initial alpha (alpha = prior)
     marg_Alpha, Alpha, Alpha0 = compute_inference(seq=seq, resol=resol, Nitem=2, p_c=p_c, p1_min=p1_min, p1_max=p1_max, do_inference_on_current_trial=True, return_alpha=True)

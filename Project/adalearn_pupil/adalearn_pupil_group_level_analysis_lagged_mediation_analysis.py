@@ -34,7 +34,7 @@ dataframes = group_data_utils.load_sample_csvs(
     substrings=[
         'exclude_participants_behav_cor_df',
         'exclude_participants_pupil_analysis_df', 
-        'computational_var_df', 
+        'shifted_estimate_results', 
         'change_point_indices_df', 
         'outcome_epochs_time_df', 
         'outcome_epoched_pupil_df',
@@ -75,7 +75,7 @@ for participant in participant_list:
         continue
 
     # Getting individual participant data
-    comp_df = dataframes['computational_var_df'][dataframes['computational_var_df']['participant']==participant].copy()
+    comp_df = dataframes['shifted_estimate_results'][dataframes['shifted_estimate_results']['participant']==participant].copy()
     comp_df = comp_df.reset_index()
 
     change_point_indices = dataframes['change_point_indices_df'][dataframes['change_point_indices_df']['participant']==participant].copy()
@@ -180,6 +180,27 @@ for participant in participant_list:
 
     removed_n = before_n - after_n
     print(f"Participant {participant_str}: Removed {removed_n} rows due to learning rate being outside the range {valid_range}.")
+
+    # Explicitly drop trials with missing data in mediation variables
+    before_dropna = len(mediation_analysis_df)
+
+    mediation_analysis_df = mediation_analysis_df.dropna(
+        subset=[
+            'conf_zscore',
+            'cpp_zscore',
+            'pupil_bc_zscore',
+            'pupil_nobc_zscore',
+            'conf_shifted_lr_zscore',
+            'cpp_shifted_lr_zscore'
+        ]
+    )
+
+    after_dropna = len(mediation_analysis_df)
+    print(
+        f"Participant {participant_str}: "
+        f"Dropped {before_dropna - after_dropna} rows due to NaNs in mediation variables."
+        f" Remaining rows: {after_dropna}."
+    )
 
     # Running mediation analysis
     print(f'\nRunning mediation analysis...')

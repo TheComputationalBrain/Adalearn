@@ -186,7 +186,7 @@ def plot_session_behav_comp(participant_str, condition_str, directory_path, base
                 y=task_session_comp_df['cleaned_learning_rate_estimate'], 
                 mode='lines+markers',
                 marker=dict(color='rgba(91, 55, 103, 0.8)'), 
-                name="Participant's learning rate",
+                name="Apparent learning rate <br></b> (participant)",
                 showlegend=False
             ), row=2, col=1
         )
@@ -206,7 +206,7 @@ def plot_session_behav_comp(participant_str, condition_str, directory_path, base
                 y=task_session_comp_df['cleaned_learning_rate_ideal_observer'], 
                 mode='lines+markers',
                 marker=dict(color='rgba(91, 55, 103, 0.8)'), 
-                name='Normative model learning rate',
+                name='Apparent learning rate <br></b> (model)',
                 showlegend=False
             ), row=2, col=2
         )
@@ -266,7 +266,7 @@ def plot_session_behav_comp(participant_str, condition_str, directory_path, base
             plot_bgcolor='rgba(255, 255, 255, 1)',
             showlegend=True,
             margin=dict(l=50, r=50, t=50, b=50),
-            font=dict(size=42, family="times new roman"),
+            font=dict(size=30, family="times new roman"),
             hovermode="closest"
         )
 
@@ -297,8 +297,8 @@ def plot_session_behav_comp(participant_str, condition_str, directory_path, base
 
 
         fig.update_yaxes(title_text="Proportion(Blue)", row=1, col=1)
-        fig.update_yaxes(title_text="Learning rate (participant)", row=2, col=1)
-        fig.update_yaxes(title_text="Learning rate (model)", row=2, col=2)
+        fig.update_yaxes(title_text="Apparent learning rate <br> (participant)", row=2, col=1)
+        fig.update_yaxes(title_text="Apparent learning rate <br> (model)", row=2, col=2)
         fig.update_yaxes(title_text="Change point probability", row=3, col=1)
         fig.update_yaxes(title_text="Prior uncertainty", row=3, col=2)
 

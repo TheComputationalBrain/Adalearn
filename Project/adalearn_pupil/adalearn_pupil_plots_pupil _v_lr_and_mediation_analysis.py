@@ -164,7 +164,7 @@ conf_round_cp_df.columns = ['position', 'mean', 'sem']
 conf_round_cp_df = conf_round_cp_df.sort_values('position').reset_index(drop=True)
 
 
-# Phasic-associated pupil effect window
+############################################################ Phasic-associated pupil effect window
 fig = go.Figure()
 
 fig.add_trace(go.Scatter(
@@ -213,7 +213,7 @@ fig.update_yaxes(
     linewidth=1, 
     linecolor='black', 
     range=[-0.05, 0.18], 
-    title_text='Phasic-associated pupil effect signal (z-score)')
+    title_text='Phasic pupil effect signal (z-score)')
 
 # Add the inset (e.g., CPP variable)
 fig.add_trace(go.Scatter(
@@ -299,7 +299,7 @@ fig.write_image(f"{base_filepath}.svg")
 
 fig.show()
 
-# Non-baseline corrected pupil effect window
+######################################################## Non-baseline corrected pupil effect window
 fig = go.Figure()
 
 fig.add_trace(go.Scatter(
@@ -348,7 +348,7 @@ fig.update_yaxes(
     linewidth=1, 
     linecolor='black',
     range=[-0.18, 0.15], 
-    title_text='Tonic-associated pupil effect signal (z-score)')
+    title_text='Tonic pupil effect signal (z-score)')
 
 # Add the inset (e.g., prior uncertainty variable)
 fig.add_trace(go.Scatter(
@@ -605,7 +605,7 @@ fig.add_trace(go.Scatter(
     x=behav_group_pupil_bc_lr_df['pupil_bc_bin_label'],
     y=behav_group_pupil_bc_lr_df['group_avg_lr'], 
     mode='markers', 
-    name='Phasic-associated', 
+    name='Phasic', 
     marker=dict(color='rgba(128, 0, 128, 0.8)', size=19),
     error_y=dict(
         type='data',
@@ -618,7 +618,7 @@ fig.add_trace(go.Scatter(
     x=behav_group_pupil_nobc_lr_df['pupil_nobc_bin_label'],
     y=behav_group_pupil_nobc_lr_df['group_avg_lr'], 
     mode='markers', 
-    name='Tonic-associated', 
+    name='Tonic', 
     marker=dict(color='rgba(255, 165, 0, 0.8)', size=19),
     error_y=dict(
         type='data',
@@ -639,7 +639,7 @@ x_jittered_bc = np.random.normal(loc=0, scale=jitter_width, size=len(pupil_bc_co
 x_jittered_nobc = np.random.normal(loc=1, scale=jitter_width, size=len(pupil_nobc_coef))
 
 fig.add_trace(go.Bar(
-    name='Phasic-associated pupil signal',
+    name='Phasic pupil signal',
     x=[0], y=[pupil_v_lr_bc_mean],
     error_y=dict(type='data', array=[pupil_v_lr_bc_sem]),
     marker=dict(color='rgba(128, 0, 128, 0.5)'),
@@ -650,7 +650,7 @@ fig.add_trace(go.Bar(
 
 # Bar 2
 fig.add_trace(go.Bar(
-    name='Tonic-associated pupil signal',
+    name='Tonic pupil signal',
     x=[1], y=[pupil_v_lr_nobc_mean],
     error_y=dict(type='data', array=[pupil_v_lr_nobc_sem]),
     marker=dict(color='rgba(255, 165, 0, 0.5)'),
@@ -770,18 +770,18 @@ fig.update_layout(
         showline=True, linewidth=1.5, linecolor='black', title_text="Pupil signal (z-score)"
     ),
     yaxis=dict(
-        showline=True, linewidth=1.5, linecolor='black', title_text="Learning rate (participant)"
+        showline=True, linewidth=1.5, linecolor='black', title_text="Apparent learning rate (participant)"
     ),
     xaxis2=dict(
         domain=[0.1, 0.4],  # Position inset on the right side
         anchor='y2',
         tickmode='array',
         tickvals=[0, 1],
-        ticktext=['Phasic-associated', 'Tonic-associated'],
+        ticktext=['Phasic', 'Tonic'],
         showline=True,        
         linewidth=1.5,          
         linecolor='black',    
-        tickfont=dict(size=24),  
+        tickfont=dict(size=32),  
         titlefont=dict(size=32),
         tickangle=0
     ),
@@ -802,7 +802,7 @@ fig.update_layout(
     width=1800,
     legend=dict(
         x=0.70,
-        y=0.15,
+        y=0.20,
         xanchor='left',
         yanchor='top'
     )
@@ -906,7 +906,7 @@ fig.add_shape(type="circle",
     fillcolor="PaleTurquoise",
     x0=8.0, y0=1.0, x1=10.0, y1=3.0,
     line_color="LightSeaGreen",
-    label=dict(text="Learning <br>rate", textangle=0)
+    label=dict(text="Apparent <br>learning <br>rate", textangle=0)
 )
 
 fig.add_shape(type="circle",
@@ -1138,7 +1138,7 @@ fig.add_shape(type="circle",
     fillcolor="PaleTurquoise",
     x0=8.0, y0=1.0, x1=10.0, y1=3.0,
     line_color="LightSeaGreen",
-    label=dict(text="Learning <br>rate", textangle=0)
+    label=dict(text="Apparent <br>learning <br>rate", textangle=0)
 )
 
 fig.add_shape(type="circle",

@@ -172,10 +172,10 @@ fig.update_layout(
 
 fig.update_layout(
     xaxis=dict(
-        title=dict(text="Model learning rate", font=dict(size=42)),
+        title=dict(text="Apparent learning rate (model)", font=dict(size=42)),
     ),
     yaxis=dict(
-        title=dict(text="Participant learning rate", font=dict(size=42))
+        title=dict(text="Apparent learning rate (participant)", font=dict(size=42))
     ),
     xaxis2=dict(
         title=dict(text='Correlation coefficient', font=dict(size=36)),
@@ -277,7 +277,7 @@ fig.add_vline(
 # Plot significant clusters on behavioral subplot
 for _, row in dataframes['lr_around_cp_sig_clusters'].iterrows():
     if row['p_value'] < 0.05:
-        style = {'color': 'rgba(0, 130, 150, 0.8)', 'yval': 0.045}
+        style = {'color': 'rgba(0, 0, 0, 0.8)', 'yval': 0.045}
         cluster_range = range(row['cluster_start'], row['cluster_end'] + 1)
         fig.add_trace(go.Scatter(
             x=list(cluster_range),
@@ -346,7 +346,7 @@ fig.update_layout(
         showline=True, 
         linewidth=1.5, 
         linecolor='black',
-        title=dict(text="Learning rate (participant)", font=dict(size=42)),
+        title=dict(text="Apparent learning rate <br> (participant)", font=dict(size=42)),
         range=[0.041, max(0.01, lr_by_cp_avg_df_behav['mean'].max() + lr_by_cp_avg_df_behav['sem'].max())]
     ),
     xaxis2=dict(
@@ -370,7 +370,7 @@ fig.update_layout(
         linecolor='black',
         linewidth=1.5,
         dtick=0.02,
-        title=dict(text="Learning rate (model)", font=dict(size=36)),
+        title=dict(text="Apparent learning rate <br> (model)", font=dict(size=36)),
         tickfont=dict(size=32),
     ),
     font=dict(size=42, family="times new roman"),
@@ -546,30 +546,23 @@ fig.add_trace(go.Bar(
     marker_line_width=1.0
 ))
 
-fig.add_shape(
-    type="line",
-    x0=-0.5,  # left edge of first bar
-    x1=1.5,   # right edge of second bar
-    y0=0, y1=0,
-    xref="x2", yref="y2",
-    line=dict(
-        color="black",
-        width=1.5,
-        dash="dot"
-    ),
-    layer="above"
-)
+
 
 fig.update_layout(
     xaxis2=dict(
+        tickvals=[0, 1],
+        ticktext=[
+            'CPP',
+            'Prior uncert'
+        ],
         domain=[0.85, 1.0],  # inset x position (change to relocate)
         anchor='y2',
         showticklabels=True,
         showline=True,
         linecolor='black',
         linewidth=1.5,
-        tickfont=dict(size=30),     
-        titlefont=dict(size=28)
+        tickfont=dict(size=24),     
+        titlefont=dict(size=24)
     ),
     yaxis2=dict(
         title_text="Regression weight (model)",
@@ -738,7 +731,7 @@ fig.update_yaxes(
     showline=True, 
     linewidth=1.5, 
     linecolor='black', 
-    title_text="Learning rate (participant)"
+    title_text="Apparent learning rate (participant)"
 )
 
 fig.update_layout(
@@ -910,7 +903,7 @@ fig.write_image(f"{base_filepath}.svg")
 fig.show()
 
 
-# Change point probability around change points
+#################################################### Change point probability around change points
 fig = go.Figure()
 
 fig.add_trace(go.Scatter(

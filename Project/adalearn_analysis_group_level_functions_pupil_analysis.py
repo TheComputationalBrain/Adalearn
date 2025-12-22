@@ -95,3 +95,37 @@ def compute_peristim_mean_sem_by_count(df, value_cols, time_col='time', group_co
         result['time'].append(group[time_col].mean())
 
     return pd.DataFrame(result)
+
+
+def check_pupil_dfs_compatible(df_1, df_2, participant_id=None, check_index=True, check_columns=True):
+    """
+    Function to check if two pupil data DataFrames (diameter and position) are compatible in shape, index, and columns.
+
+    Parameters:
+
+    - df_1: pd.DataFrame, DataFrame containing pupil data (e.g. diameter).
+    - df_2: pd.DataFrame, DataFrame containing pupil data (e.g. position).
+    - participant_id: str or int, optional identifier for the participant (used in error messages).
+    - check_index: bool, whether to check if the indices of the DataFrames match (default is True).
+    - check_columns: bool, whether to check if the columns of the DataFrames match (default is True).
+
+    Returns:
+    - bool: True if the DataFrames are compatible; raises ValueError otherwise.
+    """
+    pid = f"Participant {participant_id}: " if participant_id else ""
+
+    # 1. Shape
+    if df_1.shape != df_2.shape:
+        raise ValueError(
+            f"{pid}Shape mismatch: "
+            f"df_1 {df_1.shape} vs df_2 {df_2.shape}"
+        )
+
+    # 2. Index (time alignment)
+    if check_index and not df_1.index.equals(df_2.index):
+        raise ValueError(f"{pid}Index mismatch between df_1 and df_2 data")                                     
+    # 3. Columns (epochs / trials)
+    if check_columns and not df_1.columns.equals(df_2.columns):
+        raise ValueError(f"{pid}Column mismatch between df_1 and df_2 data")
+
+    return True

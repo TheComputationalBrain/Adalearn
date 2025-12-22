@@ -43,7 +43,9 @@ dataframes = group_data_utils.load_sample_csvs(
         'outcome_epoched_pupil_nobc_df', 
         'cluster_permutation_analysis', 
         'cluster_permutation_analysis_nobc', 
-        'uncertainty_params_ttest_df'],
+        'uncertainty_params_ttest_df',
+        'outcome_epochs_euclidean_distance_df'
+    ],
     prefix='sample_level_analysis-ses_01-task_Adalearn_Pupil-')
 
 participant_list = group_data_utils.get_participant_numbers(directory=Path(f'{BASE_DIR}/data'))
@@ -56,6 +58,7 @@ excluded_participants = list(set(
 pupil_lr_regress_raw_list = []
 pupil_bc_effect = []
 pupil_nobc_effect =[]
+pupil_position_effect_list = []
 pupil_bc_around_cp_list = []
 pupil_nobc_around_cp_list = []
 pupil_v_lr_regress_coef_df_list = []
@@ -101,6 +104,8 @@ for participant in participant_list:
     analysed_epochs = dataframes['outcome_epochs_columns_df'][dataframes['outcome_epochs_columns_df']['participant']==participant]
 
     epochs_to_remove = dataframes['outcome_epochs_to_remove_df'][dataframes['outcome_epochs_to_remove_df']['participant']==participant]
+
+    epoch_positions = dataframes['outcome_epochs_euclidean_distance_df'][dataframes['outcome_epochs_euclidean_distance_df']['participant']==participant]
     
     # Processing epoched dataframes
     column_titles = list(analysed_epochs['columns'].values.astype(int))
@@ -119,6 +124,11 @@ for participant in participant_list:
     epoch_nobc_data = epoch_nobc_data.T
     epoch_nobc_data.columns = column_titles
     epoch_nobc_data['time'] = epoch_nobc_time['time'].values.astype(float)
+
+    epoch_positions = epoch_positions.drop(columns=['participant'])
+    epoch_positions = epoch_positions.T
+    epoch_positions.columns = column_titles
+    epoch_positions['time'] = epoch_time['time'].values.astype(float)
 
     # Extracting cluster times to set window for regression and mediation analyses
     baseline_cor_start_time, baseline_cor_end_time = group_pupil.extract_cluster_times(
@@ -170,6 +180,28 @@ for participant in participant_list:
 
     pupil_nobc_effect.append(avg_pupil_nobc_effect)
 
+    # Position data
+    epoch_positions = epoch_positions.set_index('time')
+
+    filtered_position_data_bc = epoch_positions.loc[(epoch_positions.index >=  baseline_cor_start_time) & (epoch_positions.index <=  baseline_cor_end_time)]
+    filtered_position_data_nobc = epoch_positions.loc[(epoch_positions.index >= nobc_start_time) & (epoch_positions.index <= 0)]
+    pupil_position_bc_effect = np.array(filtered_position_data_bc.mean())
+    pupil_position_nobc_effect = np.array(filtered_position_data_nobc.mean())
+    pupil_position_bc_zscore = stats.zscore(pupil_position_bc_effect, nan_policy='omit')
+    pupil_position_nobc_zscore = stats.zscore(pupil_position_nobc_effect, nan_policy='omit')
+    pupil_position_df = pd.DataFrame({
+        'pupil_position_bc_zscore': pupil_position_bc_zscore,
+        'pupil_position_nobc_zscore': pupil_position_nobc_zscore
+    })
+
+    avg_pupil_pos_across_effects = pd.DataFrame({
+        'participant': [participant_str],
+        'avg_position_bc_effect': [pupil_position_bc_effect.mean()],
+        'avg_position_nobc_effect': [pupil_position_nobc_effect.mean()]
+    })
+
+    pupil_position_effect_list.append(avg_pupil_pos_across_effects)
+
     # Examining pupil response around change points
     print(f'\nExamining pupil responses around change points...')
     pupil_bc_effect_around_cp_df = pupil.pupil_response_around_change_point(directory_path=directory_path, participant_str=participant_str, condition_str=CONDITION_STR, outcome_epoched_pupil_df=epoch_data, change_point_indices=change_point_indices, baseline_correct_window=[baseline_cor_start_time, baseline_cor_end_time], nobc_window=[nobc_start_time, nobc_end_time], before=5, after=5, estimate_type='baseline_corrected_effect', plot_pupil_around_change_point=False)
@@ -183,8 +215,9 @@ for participant in participant_list:
     pupil_bc_around_cp_list.append(pupil_bc_effect_around_cp_df)
     pupil_nobc_around_cp_list.append(pupil_nobc_effect_around_cp_df)
 
+
     # Running regression analysis for pupil effect on learning rate 
-    pupil_v_lr_df, regression_df_filtered = pupil.pupil_on_learning_rate_regression_analysis(participant_str=participant_str, computational_var_df=data_comp_filtered, pupil_bc_zscore=pupil_bc_zscore,  pupil_nobc_zscore=pupil_nobc_zscore, conf_zscore=conf_zscore, cpp_zscore=cpp_zscore, lr_zscore=lr_zscore, exclude_zero=False, covariates=['outcome', 'outcome_num', 'task_session'])
+    pupil_v_lr_df, regression_df_filtered = pupil.pupil_on_learning_rate_regression_analysis(participant_str=participant_str, computational_var_df=data_comp_filtered, pupil_bc_zscore=pupil_bc_zscore, pupil_nobc_zscore=pupil_nobc_zscore, conf_zscore=conf_zscore, cpp_zscore=cpp_zscore, lr_zscore=lr_zscore, position_data =pupil_position_df, exclude_zero=False, covariates=['outcome', 'outcome_num', 'task_session'])
 
     pupil_lr_regress_raw_list.append(regression_df_filtered)
 
@@ -199,7 +232,7 @@ for participant in participant_list:
 
     nobc_mediation_results_list.append(nobc_mediation_analysis)
 
-    #Supplement mediation analysis (cpp and bc pupil effect)
+    # Supplement mediation analysis (cpp and bc pupil effect)
     bc_mediation_analysis = pingouin.mediation_analysis(data=regression_df_filtered, x='cpp_zscore', m=['pupil_bc_zscore'], y='lr_zscore', covar=None, alpha=0.05, n_boot=500, seed=None, return_dist=False, logreg_kwargs=None)
 
     bc_mediation_analysis['participant'] = participant_str
@@ -209,6 +242,7 @@ for participant in participant_list:
 group_pupil_lr_regress_raw_df = pd.concat(pupil_lr_regress_raw_list, ignore_index=True)
 group_pupil_bc_avg_effect_signal_df = pd.concat(pupil_bc_effect, ignore_index=True)
 group_pupil_nobc_avg_effect_signal_df = pd.concat(pupil_nobc_effect, ignore_index=True)
+group_pupil_position_effect_df = pd.concat(pupil_position_effect_list, ignore_index=True)
 group_pupil_bc_around_cp_df = pd.concat(pupil_bc_around_cp_list, ignore_index=True)
 group_pupil_nobc_around_cp_df = pd.concat(pupil_nobc_around_cp_list, ignore_index=True)
 group_pupil_v_lr_dfs = pd.concat(pupil_v_lr_regress_coef_df_list, ignore_index=True)

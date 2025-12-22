@@ -729,7 +729,6 @@ class pupil:
         # get peri onset times
         epoch_times = (self.data['time_stamp'].loc[indices].values[0::decimate] - onset)/1000
 
-        
 
         # baseline correct
         print(f"epochs shape: {epochs.shape}")  # Check the number of columns (Aaron addition)
