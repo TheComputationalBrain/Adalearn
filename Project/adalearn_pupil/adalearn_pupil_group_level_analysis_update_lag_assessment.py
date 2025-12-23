@@ -154,22 +154,31 @@ print(f"Mean: {np.mean(agreement_list):.2f}, SEM: {pd.Series(agreement_list).sem
 print(f"Min: {np.min(agreement_list):.2f}, Max: {np.max(agreement_list):.2f}")
 
 # Comparion of shifted correlation compared to null across variables
-print('\nComparison of shifted correlation vs null across variables:') 
+print('\nComparison of shifted correlation relative to null across variables:') 
 cpp_diff_data = results_df[results_df['latent_var'] == 'cpp']['corr_diff']
 prior_conf_diff_data = results_df[results_df['latent_var'] == 'prior_conf']['corr_diff']
 
 # Paired t-test
-t_stat, p_val = stats.ttest_rel(np.array(cpp_diff_data), np.array(prior_conf_diff_data))
+t_stat_diff, p_val_diff = stats.ttest_rel(np.array(cpp_diff_data), np.array(prior_conf_diff_data))
+
+print(f'Paired t-test between cpp and prior confidence correlation differences: t = {t_stat_diff:.3f}, p = {p_val_diff:.3f}')
+
+print('\nComparison of absolute shifted correlation across variables:')
+cpp_shift_corr_data = results_df[results_df['latent_var'] == 'cpp']['corr_after_shift']
+prior_conf_shift_corr_data = results_df[results_df['latent_var'] == 'prior_conf']['corr_after_shift']
+
+# Paired t-test
+t_stat_shift, p_val_shift = stats.ttest_rel(np.array(cpp_shift_corr_data), np.array(prior_conf_shift_corr_data))
+
+print(f'Paired t-test between cpp and prior confidence shifted correlations: t = {t_stat_shift:.3f}, p = {p_val_shift:.3f}')
 
 # Store in DataFrame
 ttest_df = pd.DataFrame({
-    'test': ['paired_ttest_cpp_vs_prior_conf'],
-    't_stat': [t_stat],
-    'p_value': [p_val],
-    'n_participants': [len(cpp_diff_data)]
+    'test': ['paired_ttest_cpp_vs_prior_conf_diff', 'paired_ttest_cpp_vs_prior_conf_shifted_corr'],
+    't_stat': [t_stat_diff, t_stat_shift],
+    'p_value': [p_val_diff, p_val_shift],
+    'n_participants': [len(cpp_diff_data), len(cpp_shift_corr_data)]
 })
-
-print(f'Paired t-test between cpp and prior confidence correlation differences: t = {t_stat:.3f}, p = {p_val:.3f}')
 
 
 for indep_var in INDEP_VARS:

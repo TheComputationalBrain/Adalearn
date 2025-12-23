@@ -102,10 +102,17 @@ for var in dataframes['shift_optimization_results']['latent_var'].unique():
 
     fig.update_layout(
         xaxis=dict(
-            showline=True, linewidth=1.5, linecolor='black', title_text="Participant"
+            showline=True, 
+            linewidth=1.5, 
+            linecolor='black', 
+            title_text="Participant", 
+            tickvals=list(range(1, len(latent_var_df['participant'])+1, 2)),
         ),
         yaxis=dict(
-            showline=True, linewidth=1.5, linecolor='black', title_text=f"{var_label} vs. apparent learning rate (correlation)"
+            showline=True, 
+            linewidth=1.5, 
+            linecolor='black', 
+            title_text=f"{var_label} vs. apparent learning rate (correlation)"
         ),
         font=dict(size=40, family="Times New Roman"),
         plot_bgcolor='rgba(255, 255, 255, 1)',
@@ -302,11 +309,6 @@ shift_corr_diff_ttest = dataframes['lag_corr_difference_paired_ttest']
 conf_coef = model_uncertainty_params[model_uncertainty_params['variable'] == 'conf_zscore'].sort_values('participant')
 cpp_coef = model_uncertainty_params[model_uncertainty_params['variable'] == 'cpp_zscore'].sort_values('participant')
 
-model_conf_coef_mean = conf_coef['coefficient_model'].mean()
-model_cpp_coef_mean = cpp_coef['coefficient_model'].mean()
-model_conf_coef_sem = stats.sem(conf_coef['coefficient_model'])
-model_cpp_coef_sem = stats.sem(cpp_coef['coefficient_model'])
-
 
 fig = go.Figure()
 
@@ -419,30 +421,60 @@ fig.add_annotation(
 )
 
 # Adding model predictions insert
-fig.add_trace(go.Bar(
-    name='Model change point probability',
-    x=['CPP'], y=[model_cpp_coef_mean],
-    error_y=dict(type='data', array=[model_cpp_coef_sem]),
-    showlegend=False,
-    xaxis='x2',
-    yaxis='y2',
-    marker_color='rgba(255, 0, 0, 0.6)',
-    marker_line_color='rgba(255, 0, 0, 0.8)',
-    marker_line_width=1.0
-))
+# loop and plot
+for var in latent_vars:
+    var_df = dataframes['shift_optimization_results'][
+        dataframes['shift_optimization_results']['latent_var'] == var
+    ].copy()
 
-fig.add_trace(go.Bar(
-    name='Model prior uncertainty',
-    x=['Prior uncert'], y=[model_conf_coef_mean],
-    error_y=dict(type='data', array=[model_conf_coef_sem]),
-    showlegend=False,
-    xaxis='x2',
-    yaxis='y2',
-    marker_color='rgba(255, 0, 0, 0.6)',
-    marker_line_color='rgba(255, 0, 0, 0.8)',
-    marker_line_width=1.0
-))
+    mean_var_corr = np.mean(var_df['corr_after_shift'])
+    sem_var_corr = stats.sem(var_df['corr_after_shift'])
 
+    # numeric x for the bar
+    x_bar = x_positions[var]
+
+    fig.add_trace(go.Bar(
+        x=[x_bar],
+        y=[mean_var_corr],
+        width=0.6,
+        name=str(var),
+        error_y=dict(
+            type='data',
+            array=[sem_var_corr],
+            visible=True,
+            thickness=3,
+            width=10
+        ),
+        marker=dict(
+            color='rgba(0, 130, 150, 0.4)',
+            line_color='rgba(0, 130, 150, 0.8)',
+            line_width=1.0
+        ),
+        xaxis='x2',
+        yaxis='y2',
+        showlegend=False
+    ))
+
+    # jitter around the numeric x position
+    jitter = np.random.normal(loc=0.0, scale=jitter_width, size=len(var_df))
+    x_numeric = x_bar + jitter
+
+    fig.add_trace(go.Scatter(
+        x=x_numeric,
+        y=var_df['corr_after_shift'],
+        mode='markers',
+        name='individuals',
+        marker=dict(
+            size=25,
+            color='rgba(0, 130, 150, 0.3)',
+        ),
+        xaxis='x2',
+        yaxis='y2',
+        showlegend=False
+    ))
+
+# Add a horizontal line at y=0
+fig.add_hline(y=0, line_dash="dash", line_color="black")
 
 # layout
 fig.update_layout(
@@ -455,23 +487,26 @@ fig.update_layout(
         linecolor='black',
     ),
     yaxis=dict(
-        range=[-0.1, 0.65], 
+        range=[-0.1, 0.80], 
         showline=True, linewidth=1.5, linecolor='black',
         title_text="Shifted correlation difference to null"
     ),
     xaxis2=dict(
-        domain=[0.8, 1.0],  # inset x position (change to relocate)
+        domain=[0.7, 1.0],
         anchor='y2',
         showticklabels=True,
         showline=True,
         linecolor='black',
         linewidth=1.5,
-        tickfont=dict(size=30),     
+        tickmode='array',
+        tickvals=list(x_positions.values()),
+        ticktext=labels,
+        tickfont=dict(size=26),
         titlefont=dict(size=30)
     ),
     yaxis2=dict(
-        title_text="Regress. weight (model)",
-        domain=[0.80, 1.0],  # inset y position (change to resize/relocate)
+        title_text="Shifted correlation",
+        domain=[0.7, 1.0],  # inset y position (change to resize/relocate)
         anchor='x2',
         showticklabels=True,
         showline=True,
