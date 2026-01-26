@@ -1901,7 +1901,7 @@ def pupil_peristimulus_regression_analysis(participant_str, condition_str, direc
 
 
 
-def pupil_on_learning_rate_regression_analysis(participant_str, computational_var_df, pupil_bc_zscore,  pupil_nobc_zscore, conf_zscore, cpp_zscore, lr_zscore, position_data = None, exclude_zero=False, covariates=None):
+def pupil_on_learning_rate_regression_analysis(participant_str, computational_var_df, pupil_bc,  pupil_nobc, position_data = None, exclude_zero=False, covariates=None):
     """
     Function to conduct regression analysis for baseline corrected and non-corrected pupil metrics on learning rate. Returns analysis outputs and model parameters. 
 
@@ -1909,11 +1909,8 @@ def pupil_on_learning_rate_regression_analysis(participant_str, computational_va
     - participant_str: string, participant identifier (number; set to 2 digits)
     - computational_var_df: pd.DataFrame, the dataset containing the variables to be analysed.
     - outcome_epoched_pupil_df: pd.DataFrame, contains transposed epoched data (each column represents one epoch), the calculated mean, variance metrics, and timestamp across epochs for the baseline corrected pupil signal.
-    - pupil_bc_zscore : array, z-scored baseline-corrected pupil signal.
-    - pupil_nobc_zscore : array,z-scored non-baseline-corrected pupil signal.
-    - conf_zscore: array, z-scored confidence values. 
-    - cpp_zscore: array, z-scored change point probability values.
-    - lr_zscore : array, z-scored learning rate values.
+    - pupil_bc: array, baseline-corrected pupil signal.
+    - pupil_nobc: array, non-baseline-corrected pupil signal.
     - position_data: pd.DataFrame (optional), contains the combined x and y position data for each epoch (if including as covariate).
     - exclude_zero: boolean, if true, will remove row in which no updates made (learning rate = 0) (default = False)
     - covariates: list of str (optional), list of column names in `data_comp_filtered` to include as covariates. 
@@ -1931,29 +1928,28 @@ def pupil_on_learning_rate_regression_analysis(participant_str, computational_va
         comp_variables['outcome_num_sq'] = comp_variables['outcome_num'] ** 2
         comp_variables['outcome_num_sqrt'] = comp_variables['outcome_num'] ** 0.5
         covariates.extend(['outcome_num_sq', 'outcome_num_sqrt'])
-
-
+    
     print("\nCreating regression variable dataframe...")
 
     # --- Build regression DataFrame ---
     regression_df = pd.DataFrame({
         'participant': participant_str,
         'conf': comp_variables['prior_conf'].values,
-        'conf_zscore': conf_zscore,
         'cpp': comp_variables['cpp'].values,
-        'cpp_zscore': cpp_zscore,
         'lr': comp_variables['cleaned_learning_rate_estimate'].values,
-        'lr_zscore': lr_zscore,
-        'pupil_bc_zscore': pupil_bc_zscore,
-        'pupil_nobc_zscore': pupil_nobc_zscore,
+        'pupil_bc': pupil_bc,
+        'pupil_nobc': pupil_nobc,
     })
 
-    if position_data is not None:
-        bc_position_z = position_data['pupil_position_bc_zscore']
-        nobc_position_z = position_data['pupil_position_nobc_zscore']
+    if 'interaction' in covariates:
+        regression_df['pupil_signal_interact'] = regression_df['pupil_bc'] * regression_df['pupil_nobc']
 
-        regression_df['pupil_bc_pos_interaction'] = regression_df['pupil_bc_zscore'] * bc_position_z
-        regression_df['pupil_nobc_pos_interaction'] = regression_df['pupil_nobc_zscore'] * nobc_position_z
+    if position_data is not None:
+        bc_position = position_data['pupil_position_bc']
+        nobc_position = position_data['pupil_position_nobc']
+
+        regression_df['pupil_bc_pos_interact'] = regression_df['pupil_bc'] * bc_position
+        regression_df['pupil_nobc_pos_interact'] = regression_df['pupil_nobc'] * nobc_position
 
 
     # --- Add covariates dynamically if present in data_comp_filtered ---
@@ -1961,12 +1957,13 @@ def pupil_on_learning_rate_regression_analysis(participant_str, computational_va
         if cov in comp_variables.columns:
             regression_df[cov] = comp_variables[cov].values
 
-            if np.issubdtype(comp_variables[cov].dtype, np.number):
-                regression_df[f'{cov}_zscore'] = stats.zscore(comp_variables[cov], nan_policy='omit')
 
+    # --- Remove missing values due to learning rate trimming ---
+    regression_df_filtered = regression_df.dropna(subset=['lr']).copy()
 
-    # --- Remove missing values ---
-    regression_df_filtered = regression_df.dropna(subset=['lr_zscore'])
+    for col in regression_df_filtered.columns:
+        if col != 'participant' and np.issubdtype(regression_df_filtered[col].dtype, np.number):
+            regression_df_filtered[f'{col}_zscore'] = stats.zscore(regression_df_filtered[col], nan_policy='omit')
 
     # --- Optionally exclude zero learning rate updates ---
     if exclude_zero:
@@ -1976,25 +1973,25 @@ def pupil_on_learning_rate_regression_analysis(participant_str, computational_va
         print(f"Removed {removed} rows where learning rate update = 0")
 
         # Recompute z-scores after removal
-        for col in ['conf', 'cpp', 'lr', 'pupil_bc', 'pupil_nobc']:
-            regression_df_filtered[f'{col}_zscore'] = stats.zscore(regression_df_filtered[col], nan_policy='omit')
-
-        if exclude_zero and position_data is not None:
-            regression_df_filtered['pupil_bc_pos_interaction'] = stats.zscore(regression_df_filtered['pupil_bc_pos_interaction'], nan_policy='omit')
-            regression_df_filtered['pupil_nobc_pos_interaction'] = stats.zscore(regression_df_filtered['pupil_nobc_pos_interaction'], nan_policy='omit')
+        for col in regression_df_filtered.columns:
+            if col != 'participant' and np.issubdtype(regression_df_filtered[col].dtype, np.number):
+                regression_df_filtered[f'{col}_zscore'] = stats.zscore(regression_df_filtered[col], nan_policy='omit')
 
     # --- Run regression ---
     print(f"\nRunning regression analysis for pupil responses on learning rate...")
 
     predictors = ['pupil_bc_zscore', 'pupil_nobc_zscore']
     if position_data is not None:
-        predictors += ['pupil_bc_pos_interaction', 'pupil_nobc_pos_interaction']
+        predictors += ['pupil_bc_pos_interact_zscore', 'pupil_nobc_pos_interact_zscore']
+    if 'interaction' in covariates:
+        predictors += ['pupil_signal_interact_zscore']
     for cov in covariates:
         cov_z = f'{cov}_zscore' if f'{cov}_zscore' in regression_df_filtered.columns else cov
         if cov_z in regression_df_filtered.columns:
             predictors.append(cov_z)
 
     X = regression_df_filtered[predictors]
+
     y = regression_df_filtered['lr_zscore']
 
     X = sm.add_constant(X)

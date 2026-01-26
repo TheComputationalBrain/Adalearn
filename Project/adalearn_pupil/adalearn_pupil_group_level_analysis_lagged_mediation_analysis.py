@@ -127,18 +127,12 @@ for participant in participant_list:
     # Remove rows from the computational variable dataframe where the row has been taken out of the pupil data due to excessive interpolation
     data_comp_filtered = comp_df[~comp_df.index.isin(epochs_to_remove_list)].copy()
 
-    data_comp_filtered['conf_zscore'] = stats.zscore(data_comp_filtered['prior_conf'], nan_policy='omit')
-    data_comp_filtered['cpp_zscore'] = stats.zscore(data_comp_filtered['cpp'], nan_policy='omit')
-    data_comp_filtered['conf_shifted_lr_zscore'] = stats.zscore(data_comp_filtered['learning_rate_shifted_prior_conf'], nan_policy='omit')
-    data_comp_filtered['cpp_shifted_lr_zscore'] = stats.zscore(data_comp_filtered['learning_rate_shifted_cpp'], nan_policy='omit')
-
     # Preparing the pupil data
     epoch_data = epoch_data.set_index('time')
 
     # Baseline corrected response refers to the average of the pupil signal over the window of a significant effect from the peristimulus regression
     filtered_pupil_data_bc = epoch_data.loc[(epoch_data.index >=  baseline_cor_start_time) & (epoch_data.index <=  baseline_cor_end_time)]
     pupil_variable_bc = np.array(filtered_pupil_data_bc.mean())
-    pupil_bc_zscore = stats.zscore(pupil_variable_bc, nan_policy='omit')
 
     avg_pupil_bc_effect = pd.DataFrame({
         'participant': [participant_str],
@@ -152,7 +146,6 @@ for participant in participant_list:
     # The non-baseline corrected response refers to the average of the pupil signal from the beginning of the observed peristimulus effect to outcome presentation
     filtered_pupil_data_nobc = epoch_nobc_data.loc[(epoch_nobc_data.index >= nobc_start_time) & (epoch_nobc_data.index <= 0)]
     pupil_variable_nobc = np.array(filtered_pupil_data_nobc.mean())
-    pupil_nobc_zscore = stats.zscore(pupil_variable_nobc, nan_policy='omit')
 
     avg_pupil_nobc_effect = pd.DataFrame({
         'participant': [participant_str],
@@ -162,60 +155,77 @@ for participant in participant_list:
     pupil_nobc_effect.append(avg_pupil_nobc_effect)
 
     # Mediation analysis data frame
-    mediation_analysis_df = data_comp_filtered[['task_session', 'outcome_num', 'conf_zscore', 'cpp_zscore', 'learning_rate_shifted_prior_conf','conf_shifted_lr_zscore', 'learning_rate_shifted_cpp', 'cpp_shifted_lr_zscore']].copy()
-    mediation_analysis_df['pupil_bc_zscore'] = pupil_bc_zscore
-    mediation_analysis_df['pupil_nobc_zscore'] = pupil_nobc_zscore
+    mediation_analysis_df = data_comp_filtered[['task_session', 'outcome_num', 'prior_conf', 'cpp', 'learning_rate_shifted_prior_conf', 'learning_rate_shifted_cpp']].copy()
+    mediation_analysis_df['pupil_bc'] = pupil_variable_bc
+    mediation_analysis_df['pupil_nobc'] = pupil_variable_nobc
 
     # Checking that learning rate doesn't exceed the bound -0.6 and +1.3
     valid_range = (-0.6, 1.3)
 
-    before_n = len(mediation_analysis_df)
+    # Shifted columns
+    shifted_var = ['learning_rate_shifted_prior_conf', 'learning_rate_shifted_cpp']
 
-    mediation_analysis_df = mediation_analysis_df[
-        mediation_analysis_df['learning_rate_shifted_prior_conf'].between(*valid_range) &
-        mediation_analysis_df['learning_rate_shifted_cpp'].between(*valid_range)
-    ]
+    # Trimming learning rates for each shift 
+    for var in shifted_var:
 
-    after_n = len(mediation_analysis_df)
+        cleaned_mediation_analysis_df = mediation_analysis_df.copy()
 
-    removed_n = before_n - after_n
-    print(f"Participant {participant_str}: Removed {removed_n} rows due to learning rate being outside the range {valid_range}.")
+        before_n = len(cleaned_mediation_analysis_df)
 
-    # Explicitly drop trials with missing data in mediation variables
-    before_dropna = len(mediation_analysis_df)
-
-    mediation_analysis_df = mediation_analysis_df.dropna(
-        subset=[
-            'conf_zscore',
-            'cpp_zscore',
-            'pupil_bc_zscore',
-            'pupil_nobc_zscore',
-            'conf_shifted_lr_zscore',
-            'cpp_shifted_lr_zscore'
+        cleaned_mediation_analysis_df = cleaned_mediation_analysis_df[
+            cleaned_mediation_analysis_df[var].between(*valid_range)
         ]
-    )
 
-    after_dropna = len(mediation_analysis_df)
-    print(
-        f"Participant {participant_str}: "
-        f"Dropped {before_dropna - after_dropna} rows due to NaNs in mediation variables."
-        f" Remaining rows: {after_dropna}."
-    )
+        after_n = len(cleaned_mediation_analysis_df)
 
-    # Running mediation analysis
-    print(f'\nRunning mediation analysis...')
-    nobc_mediation_analysis = pingouin.mediation_analysis(data=mediation_analysis_df, x='conf_zscore', m=['pupil_nobc_zscore'], y='conf_shifted_lr_zscore', covar=None, alpha=0.05, n_boot=500, seed=None, return_dist=False, logreg_kwargs=None)
+        removed_n = before_n - after_n
 
-    nobc_mediation_analysis['participant'] = participant_str
+        print(f"Participant {participant_str}: Removed {removed_n} rows due to learning rate being outside the range {valid_range} for {var}.")
 
-    nobc_mediation_results_list.append(nobc_mediation_analysis)
 
-    #Supplement mediation analysis (cpp and bc pupil effect)
-    bc_mediation_analysis = pingouin.mediation_analysis(data=mediation_analysis_df, x='cpp_zscore', m=['pupil_bc_zscore'], y='cpp_shifted_lr_zscore', covar=None, alpha=0.05, n_boot=500, seed=None, return_dist=False, logreg_kwargs=None)
+        # Explicitly drop trials with missing data in mediation variables
+        before_dropna = len(cleaned_mediation_analysis_df)
 
-    bc_mediation_analysis['participant'] = participant_str
+        cleaned_mediation_analysis_df = cleaned_mediation_analysis_df.dropna(
+            subset=[
+                'prior_conf',
+                'cpp',
+                'pupil_bc',
+                'pupil_nobc',
+                'learning_rate_shifted_prior_conf',
+                'learning_rate_shifted_cpp'
+            ]
+        )
 
-    bc_mediation_results_list.append(bc_mediation_analysis)
+        after_dropna = len(cleaned_mediation_analysis_df)
+
+        print(
+            f"Participant {participant_str}: "
+            f"Dropped {before_dropna - after_dropna} rows due to NaNs in mediation variables."
+            f" Remaining rows: {after_dropna}."
+        )
+
+        for col in cleaned_mediation_analysis_df.columns:
+                cleaned_mediation_analysis_df[f'{col}_zscore'] = stats.zscore(cleaned_mediation_analysis_df[col], nan_policy='omit')
+
+        # Running mediation analysis
+        print(f'\nRunning mediation analysis...')
+
+        if var == 'learning_rate_shifted_prior_conf':
+
+            nobc_mediation_analysis = pingouin.mediation_analysis(data=cleaned_mediation_analysis_df, x='prior_conf_zscore', m=['pupil_nobc_zscore'], y='learning_rate_shifted_prior_conf_zscore', covar=None, alpha=0.05, n_boot=500, seed=None, return_dist=False, logreg_kwargs=None)
+
+            nobc_mediation_analysis['participant'] = participant_str
+
+            nobc_mediation_results_list.append(nobc_mediation_analysis)
+
+        elif var == 'learning_rate_shifted_cpp':
+
+            bc_mediation_analysis = pingouin.mediation_analysis(data=cleaned_mediation_analysis_df, x='cpp_zscore', m=['pupil_bc_zscore'], y='learning_rate_shifted_cpp_zscore', covar=None, alpha=0.05, n_boot=500, seed=None, return_dist=False, logreg_kwargs=None)
+
+            bc_mediation_analysis['participant'] = participant_str
+
+            bc_mediation_results_list.append(bc_mediation_analysis)
 
 
 group_nobc_mediation_df = pd.concat(nobc_mediation_results_list, ignore_index=True)

@@ -1418,16 +1418,17 @@ def uncertainty_on_learning_rate_participant_level(participant_str, condition_st
     Returns:
     - learning_rate_analysis_dict: dict, contains the a cleaned dataframe used for the analysis (with z-scores calculated for variables of interest), binned output and output coefficients of correlation and regression analysis.
     """
+    regression_df = computational_var_df[[f'cleaned_learning_rate_{parameter_estimate}', 'prior_conf', 'cpp']].copy()
+
+    # Cleaning data: removing rows with NaN values in relevant columns
+    df_clean = regression_df.dropna(subset=[f'cleaned_learning_rate_{parameter_estimate}']).copy()
+
     # Calculating zscore for computational parameters used in analysis
-    computational_var_df[f'lr_zscore_{parameter_estimate}'] = zscore(computational_var_df[f'cleaned_learning_rate_{parameter_estimate}'], nan_policy='omit')
-    
-    computational_var_df['conf_zscore'] = zscore(computational_var_df['prior_conf'], nan_policy='omit')
+    df_clean[f'lr_zscore_{parameter_estimate}'] = zscore(df_clean[f'cleaned_learning_rate_{parameter_estimate}'], nan_policy='omit')
 
-    computational_var_df['cpp_zscore'] = zscore(computational_var_df['cpp'], nan_policy='omit')
+    df_clean['conf_zscore'] = zscore(df_clean['prior_conf'], nan_policy='omit')
 
-    # Removing empty rows due to cleaning of learning rate
-    df_clean = computational_var_df.copy() 
-    df_clean = df_clean.dropna(subset=[f'lr_zscore_{parameter_estimate}'])
+    df_clean['cpp_zscore'] = zscore(df_clean['cpp'], nan_policy='omit')
 
     # Remove rows where no update was present
     if exclude_zero:
@@ -1437,10 +1438,38 @@ def uncertainty_on_learning_rate_participant_level(participant_str, condition_st
         print(f"Removed {removed_zero} rows where 'cleaned_learning_rate_{parameter_estimate}' was 0.")
         # Re z-scoring data
         df_clean[f'lr_zscore_{parameter_estimate}'] = zscore(df_clean[f'cleaned_learning_rate_{parameter_estimate}'], nan_policy='omit')
-
+        df_clean['conf_zscore'] = zscore(df_clean['prior_conf'], nan_policy='omit')
+        df_clean['cpp_zscore'] = zscore(df_clean['cpp'], nan_policy='omit')
+    
         zero_title = "-(no-update-trials-removed)"
+
     else:
         zero_title = "-(all-outcomes)"
+
+
+    # Calculating zscore for computational parameters used in analysis
+    #computational_var_df[f'lr_zscore_{parameter_estimate}'] = zscore(computational_var_df[f'cleaned_learning_rate_{parameter_estimate}'], nan_policy='omit')
+    
+    #computational_var_df['conf_zscore'] = zscore(computational_var_df['prior_conf'], nan_policy='omit')
+
+    #computational_var_df['cpp_zscore'] = zscore(computational_var_df['cpp'], nan_policy='omit')
+
+    # Removing empty rows due to cleaning of learning rate
+    #df_clean = computational_var_df.copy() 
+    #df_clean = df_clean.dropna(subset=[f'lr_zscore_{parameter_estimate}'])
+
+    # Remove rows where no update was present
+    #if exclude_zero:
+    #    before_zero_filter = len(df_clean)
+    #    df_clean = df_clean[df_clean[f'cleaned_learning_rate_{parameter_estimate}'] != 0]
+    #    removed_zero = before_zero_filter - len(df_clean)
+    #    print(f"Removed {removed_zero} rows where 'cleaned_learning_rate_{parameter_estimate}' was 0.")
+        # Re z-scoring data
+    #    df_clean[f'lr_zscore_{parameter_estimate}'] = zscore(df_clean[f'cleaned_learning_rate_{parameter_estimate}'], nan_policy='omit')
+
+    #    zero_title = "-(no-update-trials-removed)"
+    #else:
+    #    zero_title = "-(all-outcomes)"
 
     # Additional title information
     if parameter_estimate == 'ideal_observer':

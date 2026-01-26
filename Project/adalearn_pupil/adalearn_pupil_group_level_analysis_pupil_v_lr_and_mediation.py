@@ -147,17 +147,12 @@ for participant in participant_list:
     # Remove rows from the computational variable dataframe where the row has been taken out of the pupil data due to excessive interpolation
     data_comp_filtered = comp_df[~comp_df.index.isin(epochs_to_remove_list)]
 
-    conf_zscore = stats.zscore(data_comp_filtered['prior_conf'], nan_policy='omit')
-    cpp_zscore = stats.zscore(data_comp_filtered['cpp'], nan_policy='omit')
-    lr_zscore = stats.zscore(data_comp_filtered['cleaned_learning_rate_estimate'], nan_policy='omit')
-
     # Preparing the pupil data
     epoch_data = epoch_data.set_index('time')
 
     # Baseline corrected response refers to the average of the pupil signal over the window of a significant effect from the peristimulus regression
     filtered_pupil_data_bc = epoch_data.loc[(epoch_data.index >=  baseline_cor_start_time) & (epoch_data.index <=  baseline_cor_end_time)]
     pupil_variable_bc = np.array(filtered_pupil_data_bc.mean())
-    pupil_bc_zscore = stats.zscore(pupil_variable_bc, nan_policy='omit')
 
     avg_pupil_bc_effect = pd.DataFrame({
         'participant': [participant_str],
@@ -171,7 +166,6 @@ for participant in participant_list:
     # The non-baseline corrected response refers to the average of the pupil signal from the beginning of the observed peristimulus effect to outcome presentation
     filtered_pupil_data_nobc = epoch_nobc_data.loc[(epoch_nobc_data.index >= nobc_start_time) & (epoch_nobc_data.index <= 0)]
     pupil_variable_nobc = np.array(filtered_pupil_data_nobc.mean())
-    pupil_nobc_zscore = stats.zscore(pupil_variable_nobc, nan_policy='omit')
 
     avg_pupil_nobc_effect = pd.DataFrame({
         'participant': [participant_str],
@@ -187,11 +181,9 @@ for participant in participant_list:
     filtered_position_data_nobc = epoch_positions.loc[(epoch_positions.index >= nobc_start_time) & (epoch_positions.index <= 0)]
     pupil_position_bc_effect = np.array(filtered_position_data_bc.mean())
     pupil_position_nobc_effect = np.array(filtered_position_data_nobc.mean())
-    pupil_position_bc_zscore = stats.zscore(pupil_position_bc_effect, nan_policy='omit')
-    pupil_position_nobc_zscore = stats.zscore(pupil_position_nobc_effect, nan_policy='omit')
     pupil_position_df = pd.DataFrame({
-        'pupil_position_bc_zscore': pupil_position_bc_zscore,
-        'pupil_position_nobc_zscore': pupil_position_nobc_zscore
+        'pupil_position_bc': pupil_position_bc_effect,
+        'pupil_position_nobc': pupil_position_nobc_effect
     })
 
     avg_pupil_pos_across_effects = pd.DataFrame({
@@ -217,14 +209,13 @@ for participant in participant_list:
 
 
     # Running regression analysis for pupil effect on learning rate 
-    pupil_v_lr_df, regression_df_filtered = pupil.pupil_on_learning_rate_regression_analysis(participant_str=participant_str, computational_var_df=data_comp_filtered, pupil_bc_zscore=pupil_bc_zscore, pupil_nobc_zscore=pupil_nobc_zscore, conf_zscore=conf_zscore, cpp_zscore=cpp_zscore, lr_zscore=lr_zscore, position_data =pupil_position_df, exclude_zero=False, covariates=['outcome', 'outcome_num', 'task_session'])
+    pupil_v_lr_df, regression_df_filtered = pupil.pupil_on_learning_rate_regression_analysis(participant_str=participant_str, computational_var_df=data_comp_filtered, pupil_bc=pupil_variable_bc, pupil_nobc=pupil_variable_nobc, position_data =pupil_position_df, exclude_zero=False, covariates=['interaction','outcome', 'outcome_num', 'task_session'])
 
     pupil_lr_regress_raw_list.append(regression_df_filtered)
 
     pupil_v_lr_regress_coef_df_list.append(pupil_v_lr_df)
 
-
-    # Running mediation analysis
+    # Running mediation analysis (prior uncertainty and nobc pupil effect)
     print(f'\nRunning mediation analysis...')
     nobc_mediation_analysis = pingouin.mediation_analysis(data=regression_df_filtered, x='conf_zscore', m=['pupil_nobc_zscore'], y='lr_zscore', covar=None, alpha=0.05, n_boot=500, seed=None, return_dist=False, logreg_kwargs=None)
 
@@ -232,7 +223,7 @@ for participant in participant_list:
 
     nobc_mediation_results_list.append(nobc_mediation_analysis)
 
-    # Supplement mediation analysis (cpp and bc pupil effect)
+    # mediation analysis (cpp and bc pupil effect)
     bc_mediation_analysis = pingouin.mediation_analysis(data=regression_df_filtered, x='cpp_zscore', m=['pupil_bc_zscore'], y='lr_zscore', covar=None, alpha=0.05, n_boot=500, seed=None, return_dist=False, logreg_kwargs=None)
 
     bc_mediation_analysis['participant'] = participant_str

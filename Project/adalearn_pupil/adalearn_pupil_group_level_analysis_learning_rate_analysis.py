@@ -282,7 +282,6 @@ group_data_utils.save_sample_dataframes_to_csv(dataframes={
     'averaged_lr_session_df': group_averaged_lr_session_df,
     'behav_model_lr_coef_df': behav_model_lr_coef_df,
     'lr_around_cp_sig_clusters': significant_clusters_df,
-    'uncertainty_params_ttest_df': uncertainty_params_ttest_df
 },
 directory_path=BASE_DIR,
 condition_str=CONDITION_STR,
