@@ -138,11 +138,11 @@ fig.update_yaxes(
 
 fig.update_layout(
     plot_bgcolor='rgba(255, 255, 255, 1)',
-    height=1200,
-    width=1800,
-    font=dict(size=42, family="Times New Roman"),
+    height=720,
+    width=840,
+    font=dict(size=24, family="Times New Roman"),
     legend=dict(
-        x=0.48,
+        x=0.65,
         y=1.0,
         xanchor='right',
         yanchor='top',
@@ -156,8 +156,8 @@ os.makedirs(plot_dir, exist_ok=True)
 base_filename = "adalearn_pupil-NACONF_baseline_corrected_peristimulus_regression"
 base_filepath = os.path.join(plot_dir, base_filename)
 
-fig.write_image(f"{base_filepath}.png")
-fig.write_image(f"{base_filepath}.svg")
+fig.write_image(f"{base_filepath}.png", scale=3.125)
+fig.write_image(f"{base_filepath}.svg", scale=3.125)
 
 fig.show()
 
@@ -270,12 +270,12 @@ fig.update_yaxes(
 
 fig.update_layout(
     plot_bgcolor='rgba(255, 255, 255, 1)',
-    height=1200,
-    width=1800,
-    font=dict(size=42, family="Times New Roman"),
+    height=720,
+    width=840,
+    font=dict(size=24, family="Times New Roman"),
     legend=dict(
         x=0.95,
-        y=0.40,
+        y=0.3,
         xanchor='right',
         yanchor='top',
         bgcolor='rgba(255, 255, 255, 0.7)')
@@ -288,8 +288,8 @@ os.makedirs(plot_dir, exist_ok=True)
 base_filename = "adalearn_pupil-NACONF_nonbaseline_corrected_peristimulus_regression"
 base_filepath = os.path.join(plot_dir, base_filename)
 
-fig.write_image(f"{base_filepath}.png")
-fig.write_image(f"{base_filepath}.svg")
+fig.write_image(f"{base_filepath}.png", scale=3.125)
+fig.write_image(f"{base_filepath}.svg", scale=3.125)
 
 fig.show()
 

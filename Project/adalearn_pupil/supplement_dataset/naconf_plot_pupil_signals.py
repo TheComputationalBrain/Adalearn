@@ -123,10 +123,15 @@ fig.update_yaxes(
         showline=True, 
         linewidth=1.5, 
         linecolor='black',
-        title_text = 'Pupil diameter signal (z-score)' 
+        title_text = 'Baseline corrected pupil diameter signal (z-score)' 
     )
 
-fig.update_layout(height=1200, width=1800, plot_bgcolor='rgba(255, 255, 255, 1)', font=dict(size=42, family="Times New Roman"))
+fig.update_layout(
+    height=720, 
+    width=840, 
+    plot_bgcolor='rgba(255, 255, 255, 1)', 
+    font=dict(size=24, family="Times New Roman")
+)
 
 # Save the figure to the group-level folder
 plot_dir = os.path.join(NACONF_BASE_DIR, "plots")
@@ -137,16 +142,15 @@ base_filename = f"adalearn_pupil-NACONF_baseline_corrected_pupil_signal_all_part
 base_filepath = os.path.join(plot_dir, base_filename)
 
 # Save as PNG
-fig.write_image(f"{base_filepath}.png")
+fig.write_image(f"{base_filepath}.png", scale=3.125)
 
 # Save as SVG
-fig.write_image(f"{base_filepath}.svg") 
+fig.write_image(f"{base_filepath}.svg", scale=3.125) 
 
 fig.show() 
 
 
-
-
+##############################################################################################
 fig = go.Figure()
 
 fig.add_trace(go.Scatter(x=bc_group_pupil_df['time'], y=bc_group_pupil_df['mean_pupil'], mode = 'lines', line=dict(color='rgba(0, 0, 0, 0.8)'), showlegend=False))
@@ -175,10 +179,15 @@ fig.update_yaxes(
         showline=True, 
         linewidth=1.5, 
         linecolor='black',
-        title_text = 'Pupil diameter signal (z-score)' 
+        title_text = 'Baseline corrected pupil diameter signal (z-score)' 
     )
 
-fig.update_layout(height=1200, width=1800, plot_bgcolor='rgba(255, 255, 255, 1)', font=dict(size=42, family="Times New Roman"))
+fig.update_layout(
+    height=720, 
+    width=840, 
+    plot_bgcolor='rgba(255, 255, 255, 1)', 
+    font=dict(size=24, family="Times New Roman")
+)
 
 # Save the figure to the group-level folder
 plot_dir = os.path.join(NACONF_BASE_DIR, "plots")
@@ -189,7 +198,7 @@ base_filename = f"adalearn_pupil-NACONF_average_baseline_corrected_pupil_signal"
 base_filepath = os.path.join(plot_dir, base_filename)
 
 # Save as PNG
-fig.write_image(f"{base_filepath}.png")
+fig.write_image(f"{base_filepath}.png", scale=3.125)
 
 # Save as SVG
 fig.write_image(f"{base_filepath}.svg") 
@@ -288,10 +297,15 @@ fig.update_yaxes(
         showline=True, 
         linewidth=1.5, 
         linecolor='black',
-        title_text = 'Pupil diameter signal (z-score)' 
+        title_text = 'None-baseline corrected pupil diameter signal (z-score)' 
     )
 
-fig.update_layout(height=1200, width=1800, plot_bgcolor='rgba(255, 255, 255, 1)', font=dict(size=42, family="Times New Roman"))
+fig.update_layout(
+    height=720, 
+    width=840, 
+    plot_bgcolor='rgba(255, 255, 255, 1)', 
+    font=dict(size=24, family="Times New Roman")
+)
 
 # Save the figure to the group-level folder
 plot_dir = os.path.join(NACONF_BASE_DIR, "plots")
@@ -302,10 +316,10 @@ base_filename = f"adalearn_pupil-NACONF_nonbaseline_corrected_pupil_signal_all_p
 base_filepath = os.path.join(plot_dir, base_filename)
 
 # Save as PNG
-fig.write_image(f"{base_filepath}.png")
+fig.write_image(f"{base_filepath}.png", scale=3.125)
 
 # Save as SVG
-fig.write_image(f"{base_filepath}.svg") 
+fig.write_image(f"{base_filepath}.svg", scale=3.125) 
 
 fig.show() 
 
@@ -340,10 +354,15 @@ fig.update_yaxes(
         showline=True, 
         linewidth=1.5, 
         linecolor='black',
-        title_text = 'Pupil diameter signal (z-score)' 
+        title_text = 'Non-baseline corrected pupil diameter signal (z-score)' 
     )
 
-fig.update_layout(height=1200, width=1800, plot_bgcolor='rgba(255, 255, 255, 1)', font=dict(size=42, family="Times New Roman"))
+fig.update_layout(
+    height=720, 
+    width=840, 
+    plot_bgcolor='rgba(255, 255, 255, 1)', 
+    font=dict(size=24, family="Times New Roman")
+)
 
 # Save the figure to the group-level folder
 plot_dir = os.path.join(NACONF_BASE_DIR, "plots")
@@ -354,7 +373,7 @@ base_filename = f"adalearn_pupil-NACONF_average_nonbaseline_corrected_pupil_sign
 base_filepath = os.path.join(plot_dir, base_filename)
 
 # Save as PNG
-fig.write_image(f"{base_filepath}.png")
+fig.write_image(f"{base_filepath}.png", scale=3.125)
 
 # Save as SVG
 fig.write_image(f"{base_filepath}.svg") 

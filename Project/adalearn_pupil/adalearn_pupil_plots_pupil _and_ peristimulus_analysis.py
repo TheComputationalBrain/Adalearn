@@ -124,7 +124,7 @@ plot_dir = os.path.join(BASE_DIR, "plots")
 os.makedirs(plot_dir, exist_ok=True)
 
 # Base filename (without extension)
-base_filename = f"adalearn_pupil-average_baseline_corrected_pupil_signal_example_participant_{example_participant}"
+base_filename = f"adalearn_pupil-average_baseline_corrected_pupil_signal_example_participant"
 base_filepath = os.path.join(plot_dir, base_filename)
 
 # Save as PNG
@@ -287,7 +287,7 @@ plot_dir = os.path.join(BASE_DIR, "plots")
 os.makedirs(plot_dir, exist_ok=True)
 
 # Base filename (without extension)
-base_filename = f"adalearn_pupil-average_nonbaseline_corrected_pupil_signal_example_participant_{example_participant}"
+base_filename = f"adalearn_pupil-average_nonbaseline_corrected_pupil_signal_example_participant"
 base_filepath = os.path.join(plot_dir, base_filename)
 
 # Save as PNG
