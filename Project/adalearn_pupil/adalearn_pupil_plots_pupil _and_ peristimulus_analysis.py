@@ -112,7 +112,12 @@ fig.update_yaxes(
         title_text = 'Pupil diameter signal (z-score)' 
     )
 
-fig.update_layout(height=1200, width=1800, plot_bgcolor='rgba(255, 255, 255, 1)', font=dict(size=42, family="Times New Roman"))
+fig.update_layout(
+    height=720, 
+    width=840, 
+    plot_bgcolor='rgba(255, 255, 255, 1)', 
+    font=dict(size=24, family="Times New Roman")
+)
 
 # Save the figure to the group-level folder
 plot_dir = os.path.join(BASE_DIR, "plots")
@@ -123,10 +128,10 @@ base_filename = f"adalearn_pupil-average_baseline_corrected_pupil_signal_example
 base_filepath = os.path.join(plot_dir, base_filename)
 
 # Save as PNG
-fig.write_image(f"{base_filepath}.png")
+fig.write_image(f"{base_filepath}.png", scale=3.125)
 
 # Save as SVG
-fig.write_image(f"{base_filepath}.svg") 
+fig.write_image(f"{base_filepath}.svg", scale=3.125) 
 
 fig.show()
 
@@ -180,7 +185,12 @@ fig.update_yaxes(
         title_text = 'Pupil diameter signal (z-score)' 
     )
 
-fig.update_layout(height=1200, width=1800, plot_bgcolor='rgba(255, 255, 255, 1)', font=dict(size=42, family="Times New Roman"))
+fig.update_layout(
+    height=720, 
+    width=840, 
+    plot_bgcolor='rgba(255, 255, 255, 1)', 
+    font=dict(size=24, family="Times New Roman")
+)
 
 # Save the figure to the group-level folder
 plot_dir = os.path.join(BASE_DIR, "plots")
@@ -191,10 +201,10 @@ base_filename = f"adalearn_pupil-group_level_average_baseline_corrected_pupil_si
 base_filepath = os.path.join(plot_dir, base_filename)
 
 # Save as PNG
-fig.write_image(f"{base_filepath}.png")
+fig.write_image(f"{base_filepath}.png", scale=3.125)
 
 # Save as SVG
-fig.write_image(f"{base_filepath}.svg") 
+fig.write_image(f"{base_filepath}.svg", scale=3.125) 
 
 fig.show()
 
@@ -265,7 +275,12 @@ fig.update_yaxes(
         title_text = 'Pupil diameter signal (z-score)' 
     )
 
-fig.update_layout(height=1200, width=1800, plot_bgcolor='rgba(255, 255, 255, 1)', font=dict(size=42, family="Times New Roman"))
+fig.update_layout(
+    height=720, 
+    width=840, 
+    plot_bgcolor='rgba(255, 255, 255, 1)', 
+    font=dict(size=24, family="Times New Roman")
+)
 
 # Save the figure to the group-level folder
 plot_dir = os.path.join(BASE_DIR, "plots")
@@ -276,10 +291,10 @@ base_filename = f"adalearn_pupil-average_nonbaseline_corrected_pupil_signal_exam
 base_filepath = os.path.join(plot_dir, base_filename)
 
 # Save as PNG
-fig.write_image(f"{base_filepath}.png")
+fig.write_image(f"{base_filepath}.png", scale=3.125)
 
 # Save as SVG
-fig.write_image(f"{base_filepath}.svg") 
+fig.write_image(f"{base_filepath}.svg", scale=3.125) 
 
 fig.show()
 
@@ -332,7 +347,12 @@ fig.update_yaxes(
         title_text = 'Pupil diameter signal (z-score)' 
     )
 
-fig.update_layout(height=1200, width=1800, plot_bgcolor='rgba(255, 255, 255, 1)', font=dict(size=42, family="Times New Roman"))
+fig.update_layout(
+    height=720, 
+    width=840, 
+    plot_bgcolor='rgba(255, 255, 255, 1)', 
+    font=dict(size=24, family="Times New Roman")
+)
 
 # Save the figure to the group-level folder
 plot_dir = os.path.join(BASE_DIR, "plots")
@@ -343,10 +363,10 @@ base_filename = f"adalearn_pupil-group_level_average_non_baseline_corrected_pupi
 base_filepath = os.path.join(plot_dir, base_filename)
 
 # Save as PNG
-fig.write_image(f"{base_filepath}.png")
+fig.write_image(f"{base_filepath}.png", scale=3.125)
 
 # Save as SVG
-fig.write_image(f"{base_filepath}.svg") 
+fig.write_image(f"{base_filepath}.svg", scale=3.125) 
  
 
 fig.show()
@@ -448,11 +468,11 @@ fig.update_yaxes(
 
 fig.update_layout(
     plot_bgcolor='rgba(255, 255, 255, 1)',
-    height=1200,
-    width=1800,
-    font=dict(size=42, family="Times New Roman"),
+    height=720,
+    width=840,
+    font=dict(size=24, family="Times New Roman"),
     legend=dict(
-        x=0.5,
+        x=0.6,
         y=1.0,
         xanchor='right',
         yanchor='top',
@@ -467,11 +487,10 @@ base_filename = f"adalearn_pupil-group_level_baseline_corrected_peristimulus_reg
 base_filepath = os.path.join(plot_dir, base_filename)
 
 # Save as PNG
-fig.write_image(f"{base_filepath}.png")
+fig.write_image(f"{base_filepath}.png", scale=3.125)
 
 # Save as SVG
-fig.write_image(f"{base_filepath}.svg") 
-
+fig.write_image(f"{base_filepath}.svg", scale=3.125) 
 
 fig.show()
 
@@ -571,11 +590,11 @@ fig.update_yaxes(
 
 fig.update_layout(
     plot_bgcolor='rgba(255, 255, 255, 1)',
-    height=1200,
-    width=1800,
-    font=dict(size=42, family="Times New Roman"),
+    height=720,
+    width=840,
+    font=dict(size=24, family="Times New Roman"),
     legend=dict(
-        x=0.95,
+        x=1.0,
         y=0.23,
         xanchor='right',
         yanchor='top',
@@ -590,11 +609,10 @@ base_filename = f"adalearn_pupil-group_level_non_baseline_corrected_peristimulus
 base_filepath = os.path.join(plot_dir, base_filename)
 
 # Save as PNG
-fig.write_image(f"{base_filepath}.png")
+fig.write_image(f"{base_filepath}.png", scale=3.125)
 
 # Save as SVG
-fig.write_image(f"{base_filepath}.svg") 
-
+fig.write_image(f"{base_filepath}.svg", scale=3.125) 
 
 fig.show()
 
@@ -652,10 +670,10 @@ for _, row in baseline_corrected_clusters.iterrows():
 
 fig.add_annotation(
     text="Phasic effect",
-    x=0.27, xref="x domain",  
+    x=0.16, xref="x domain",  
     y=0.9, yref="y domain",
     showarrow=False,
-    font=dict(size=36, color='rgba(128, 0, 128, 0.8)', family="Times New Roman"),
+    font=dict(size=20, color='rgba(128, 0, 128, 0.8)', family="Times New Roman"),
     row=1,
     col=1
 )
@@ -672,7 +690,7 @@ fig.update_yaxes(
         showline=True, 
         linewidth=1.5, 
         linecolor='black',
-        title_text = 'Baseline-corrected pupil diameter signal (z-score)',
+        title_text = 'Baseline-corrected pupil signal (z-score)',
         row = 1, 
         col = 1 
     )
@@ -727,7 +745,7 @@ fig.add_annotation(
     x=0.18, xref="x domain",
     y=0.9, yref="y domain",
     showarrow=False,
-    font=dict(size=36, color='rgba(255, 165, 0, 0.8)', family="Times New Roman"),
+    font=dict(size=20, color='rgba(255, 165, 0, 0.8)', family="Times New Roman"),
     row=1,
     col=2
 )
@@ -745,7 +763,7 @@ fig.update_yaxes(
         showline=True, 
         linewidth=1.5, 
         linecolor='black',
-        title_text = 'Nonbaseline-corrected pupil diameter signal (z-score)',
+        title_text = 'Nonbaseline-corrected pupil signal (z-score)',
         row = 1, 
         col = 2 
     )
@@ -757,14 +775,14 @@ fig.add_annotation(
     xref="paper",
     yref="paper",
     showarrow=False,
-    font=dict(size=32, family="Times New Roman", color="black")
+    font=dict(size=20, family="Times New Roman", color="black")
 )
 
 fig.update_layout(
-    height=1000, 
-    width=2000, 
+    height=720, 
+    width=840, 
     plot_bgcolor='rgba(255, 255, 255, 1)', 
-    font=dict(size=32, family="Times New Roman"))
+    font=dict(size=21, family="Times New Roman"))
 
 # Save the figure to the group-level folder
 plot_dir = os.path.join(BASE_DIR, "plots")
@@ -775,10 +793,10 @@ base_filename = f"adalearn_pupil-group_level_regression_pupil_effects_display"
 base_filepath = os.path.join(plot_dir, base_filename)
 
 # Save as PNG
-fig.write_image(f"{base_filepath}.png")
+fig.write_image(f"{base_filepath}.png", scale=3.125)
 
 # Save as SVG
-fig.write_image(f"{base_filepath}.svg") 
+fig.write_image(f"{base_filepath}.svg", scale=3.125) 
 
 
 fig.show()

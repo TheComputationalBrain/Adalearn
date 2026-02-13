@@ -251,33 +251,33 @@ fig.add_shape(
 
 fig.update_layout(
     xaxis2=dict(
-        domain=[0.1, 0.35], 
+        domain=[0.12, 0.42], 
         anchor='y2',
         range=[-5.5, 6.5],
-        showticklabels=True,
+        showticklabels=False,
         showline=True,
         linecolor='black',
         linewidth=1.5,
         tickvals=list(range(-5, 6)),
-        title=dict(text="Outcomes relative to change point", font=dict(size=30)),
-        ticktext=["-5", "-4", "-3", "-2", "-1", "1", "2", "3", "4", "5", "6"],
-        tickfont=dict(size=28),
+        #title=dict(text="Outcomes relative to change point", font=dict(size=20)),
+        #ticktext=["-5", "-4", "-3", "-2", "-1", "1", "2", "3", "4", "5", "6"],
+        tickfont=dict(size=18),
     ),
     yaxis2=dict(
-        domain=[0.75, 1.0],  
+        domain=[0.7, 1.0],  
         anchor='x2',
-        showticklabels=True,
+        showticklabels=False,
         showline=True,
         linecolor='black',
         linewidth=1.5,
         dtick=0.02,
-        title=dict(text="CPP", font=dict(size=30)),
-        tickfont=dict(size=28),
+        title=dict(text="CPP", font=dict(size=20)),
+        tickfont=dict(size=20),
     ),
-    height=1200, 
-    width=1800, 
+    height=720, 
+    width=840, 
     plot_bgcolor='rgba(255, 255, 255, 1)', 
-    font=dict(size=42, family="Times New Roman"), 
+    font=dict(size=24, family="Times New Roman"), 
     showlegend=False
 )
 
@@ -291,10 +291,10 @@ base_filename = f"adalearn_pupil-group_level_bc_pupil_responses_around_change_po
 base_filepath = os.path.join(plot_dir, base_filename)
 
 # Save as PNG
-fig.write_image(f"{base_filepath}.png")
+fig.write_image(f"{base_filepath}.png", scale=3.125)
 
 # Save as SVG
-fig.write_image(f"{base_filepath}.svg") 
+fig.write_image(f"{base_filepath}.svg", scale=3.125) 
 
 
 fig.show()
@@ -386,33 +386,33 @@ fig.add_shape(
 
 fig.update_layout(
     xaxis2=dict(
-        domain=[0.1, 0.35], 
+        domain=[0.12, 0.42], 
         anchor='y2',
         range=[-5.5, 6.5],
-        showticklabels=True,
+        showticklabels=False,
         showline=True,
         linecolor='black',
         linewidth=1.5,
         tickvals=list(range(-5, 6)),
-        title=dict(text="Outcomes relative to change point", font=dict(size=30)),
-        ticktext=["-5", "-4", "-3", "-2", "-1", "1", "2", "3", "4", "5", "6"],
-        tickfont=dict(size=28),
+        #title=dict(text="Outcomes relative to change point", font=dict(size=30)),
+        #ticktext=["-5", "-4", "-3", "-2", "-1", "1", "2", "3", "4", "5", "6"],
+        tickfont=dict(size=20),
     ),
     yaxis2=dict(
-        domain=[0.75, 1.0],  
+        domain=[0.70, 1.0],  
         anchor='x2',
-        showticklabels=True,
+        showticklabels=False,
         showline=True,
         linecolor='black',
         linewidth=1.5,
         dtick=0.02,
-        title=dict(text="Prior uncert", font=dict(size=30)),
-        tickfont=dict(size=28),
+        title=dict(text="Prior uncert", font=dict(size=20)),
+        tickfont=dict(size=20),
     ),
-    height=1200, 
-    width=1800, 
+    height=720, 
+    width=840, 
     plot_bgcolor='rgba(255, 255, 255, 1)', 
-    font=dict(size=42, family="Times New Roman"), 
+    font=dict(size=24, family="Times New Roman"), 
     showlegend=False
 )
 
@@ -425,10 +425,10 @@ base_filename = f"adalearn_pupil-group_level_nobc_pupil_responses_around_change_
 base_filepath = os.path.join(plot_dir, base_filename)
 
 # Save as PNG
-fig.write_image(f"{base_filepath}.png")
+fig.write_image(f"{base_filepath}.png", scale=3.125)
 
 # Save as SVG
-fig.write_image(f"{base_filepath}.svg") 
+fig.write_image(f"{base_filepath}.svg", scale=3.125) 
 
 
 fig.show()
@@ -725,7 +725,7 @@ if pval_bc < 0.05:
         text='*',
         x=x_bc, y=pupil_bc_star_y,
         showarrow=False,
-        font=dict(size=60),
+        font=dict(size=30),
         xref='x2',  # Target inset x-axis
         yref='y2'   # Target inset y-axis
     )
@@ -736,7 +736,7 @@ if pval_nobc < 0.05:
         text='*',
         x=x_nobc, y=pupil_nobc_star_y,
         showarrow=False,
-        font=dict(size=60),
+        font=dict(size=30),
         xref='x2',
         yref='y2'
     )
@@ -754,7 +754,7 @@ if pval_between < 0.05:
         text='*',
         x=0.5, y=between_star_y + 0.02,
         showarrow=False,
-        font=dict(size=60),
+        font=dict(size=30),
         xref='x2',
         yref='y2'
     )
@@ -773,7 +773,7 @@ fig.update_layout(
         showline=True, linewidth=1.5, linecolor='black', title_text="Apparent learning rate (participant)"
     ),
     xaxis2=dict(
-        domain=[0.1, 0.4],  # Position inset on the right side
+        domain=[0.12, 0.42],  # Position inset on the right side
         anchor='y2',
         tickmode='array',
         tickvals=[0, 1],
@@ -781,8 +781,8 @@ fig.update_layout(
         showline=True,        
         linewidth=1.5,          
         linecolor='black',    
-        tickfont=dict(size=32),  
-        titlefont=dict(size=32),
+        tickfont=dict(size=20),  
+        titlefont=dict(size=20),
         tickangle=0
     ),
     yaxis2=dict(
@@ -792,14 +792,14 @@ fig.update_layout(
     showline=True,        
     linewidth=1.5,          
     linecolor='black',    
-    tickfont=dict(size=28),  
-    titlefont=dict(size=32),
+    tickfont=dict(size=20),  
+    titlefont=dict(size=20),
     range=[ymin, ymax]  # Force the y-axis range
     ),
-    font=dict(size=42, family="Times New Roman"),
+    font=dict(size=24, family="Times New Roman"),
     plot_bgcolor='rgba(255, 255, 255, 1)',
-    height=1200,
-    width=1800,
+    height=720,
+    width=840,
     legend=dict(
         x=0.70,
         y=0.20,
@@ -822,10 +822,10 @@ base_filename = f"adalearn_pupil-group_level_pupil_signal_bins_learning_rate"
 base_filepath = os.path.join(plot_dir, base_filename)
 
 # Save as PNG
-fig.write_image(f"{base_filepath}.png")
+fig.write_image(f"{base_filepath}.png", scale=3.125)
 
 # Save as SVG
-fig.write_image(f"{base_filepath}.svg") 
+fig.write_image(f"{base_filepath}.svg", scale=3.125) 
 
 fig.show()
 
@@ -835,18 +835,35 @@ mediation_group = dataframes['pupil_lr_uncert_nobc_mediation']
 
 def format_annotation_text(title, coef, sem, ci_lower, ci_upper):
     ci_same_sign = (ci_lower > 0 and ci_upper > 0) or (ci_lower < 0 and ci_upper < 0)
-    text = (
-        f"{title}"
-        f"<br>Coef = {coef:.3f}"
-        f"<br>SEM = {sem:.3f}"
-        f"<br>95% CI = {ci_lower:.3f} - {ci_upper:.3f}"
+
+    text = f"{title}"
+
+    if ci_same_sign:
+        return f"<b>{text}</b>"
+    else:
+        return text
+
+def add_circle(center_x, center_y, radius, label):
+    fig.add_shape(
+        type="circle",
+        x0=center_x - radius,
+        y0=center_y - radius,
+        x1=center_x + radius,
+        y1=center_y + radius,
+        fillcolor="PaleTurquoise",
+        line_color="LightSeaGreen",
     )
-    return f"<b>{text}</b>" if ci_same_sign else text
+    fig.add_annotation(
+        x=center_x,
+        y=center_y,
+        text=label,
+        showarrow=False
+    )
 
 
 fig = go.Figure()
-fig.update_xaxes(range=[-5, 12])
-fig.update_yaxes(range=[-5, 12])
+fig.update_xaxes(range=[-0.5, 10.5], showticklabels=False)
+fig.update_yaxes(range=[0, 8.5], showticklabels=False, scaleanchor="x", scaleratio=1)
 
 # Adding in the mediation pathways
 
@@ -874,8 +891,8 @@ fig.add_shape(type="line",
 
 fig.add_shape(type="line",
     xref="x", yref="y",
-    x0=1, y0=2.05, x1=9,
-    y1=2.05,
+    x0=1, y0=2.10, x1=9,
+    y1=2.10,
     line=dict(
         color="Black",
         width=3,
@@ -885,37 +902,17 @@ fig.add_shape(type="line",
 
 fig.add_shape(type="line",
     xref="x", yref="y",
-    x0=1, y0=1.95, x1=9,
-    y1=1.95,
+    x0=1, y0=1.9, x1=9,
+    y1=1.9,
     line=dict(
         color="Black",
         width=3,
     ),
 )
 
-fig.add_shape(type="circle",
-    xref="x", yref="y",
-    fillcolor="PaleTurquoise",
-    x0=0.0, y0=1.0, x1=2.0, y1=3.0,
-    line_color="LightSeaGreen",
-    label=dict(text=f"Prior <br>uncertainty", textangle=0)
-)
-
-fig.add_shape(type="circle",
-    xref="x", yref="y",
-    fillcolor="PaleTurquoise",
-    x0=8.0, y0=1.0, x1=10.0, y1=3.0,
-    line_color="LightSeaGreen",
-    label=dict(text="Apparent <br>learning <br>rate", textangle=0)
-)
-
-fig.add_shape(type="circle",
-    xref="x", yref="y",
-    fillcolor="PaleTurquoise",
-    x0=4.0, y0=5.0, x1=6.0, y1=7.0,
-    line_color="LightSeaGreen",
-    label=dict(text="Pupil:<br>non-corrected<br>(tonic)", textangle=0)
-)
+add_circle(1, 2, 1.4, "Prior<br>uncertainty")
+add_circle(9, 2, 1.4, "Apparent<br>learning<br>rate")
+add_circle(5, 6, 1.4, "Pupil:<br>non-corrected<br>(tonic)")
 
 total_path_text = format_annotation_text(
     "Total effect (path c)",
@@ -927,7 +924,7 @@ total_path_text = format_annotation_text(
 
 fig.add_annotation(
     x=5,  
-    y=0.75,
+    y=0.80,
     xref="x",
     yref="y",
     text=total_path_text,
@@ -949,7 +946,7 @@ direct_path_text = format_annotation_text(
 
 fig.add_annotation(
     x=5,  
-    y=3.3,
+    y=3.1,
     xref="x",
     yref="y",
     text=direct_path_text,
@@ -963,7 +960,7 @@ fig.add_annotation(
 
 
 pupil_corrected_path_text = format_annotation_text(
-    "Indirect effect <br>(Pupil: non-corrected)",
+    "Indirect effect (path a*b)",
     mediation_group['boot_mean'][4],
     mediation_group['sem'][4],
     mediation_group['ci_lower'][4],
@@ -997,8 +994,8 @@ pupil_corrected_path_a_text = format_annotation_text(
 
 
 fig.add_annotation(
-    x=1.5,  
-    y=5.5,
+    x=1.2,  
+    y=5.1,
     xref="x",
     yref="y",
     text=pupil_corrected_path_a_text,
@@ -1021,8 +1018,8 @@ pupil_corrected_path_b_text = format_annotation_text(
 
 
 fig.add_annotation(
-    x=8.5,  
-    y=5.5,
+    x=8.2,  
+    y=5.1,
     xref="x",
     yref="y",
     text=pupil_corrected_path_b_text,
@@ -1037,9 +1034,9 @@ fig.add_annotation(
 
 
 fig.update_layout(
-    width=2200,
-    height=2200,
-    font=dict(size=42, family="Times New Roman"), 
+    width=720,
+    height=840,
+    font=dict(size=24, family="Times New Roman"), 
     xaxis=dict(showticklabels=False), 
     yaxis=dict(showticklabels=False),
     plot_bgcolor='rgba(255, 255, 255, 1)'
@@ -1054,31 +1051,19 @@ base_filename = f"adalearn_pupil-group_level_mediation_analysis_nobc"
 base_filepath = os.path.join(plot_dir, base_filename)
 
 # Save as PNG
-fig.write_image(f"{base_filepath}.png")
+fig.write_image(f"{base_filepath}.png", scale=3.125)
 
 # Save as SVG
-fig.write_image(f"{base_filepath}.svg") 
+fig.write_image(f"{base_filepath}.svg", scale=3.125) 
 
 fig.show()
 
 #####################################################################Mediation analysis (baseline-corrected)
 mediation_group = dataframes['pupil_lr_uncert_bc_mediation']
 
-
-def format_annotation_text(title, coef, sem, ci_lower, ci_upper):
-    ci_same_sign = (ci_lower > 0 and ci_upper > 0) or (ci_lower < 0 and ci_upper < 0)
-    text = (
-        f"{title}"
-        f"<br>Coef = {coef:.3f}"
-        f"<br>SEM = {sem:.3f}"
-        f"<br>95% CI = {ci_lower:.3f} - {ci_upper:.3f}"
-    )
-    return f"<b>{text}</b>" if ci_same_sign else text
-
-
 fig = go.Figure()
-fig.update_xaxes(range=[-5, 12])
-fig.update_yaxes(range=[-5, 12])
+fig.update_xaxes(range=[-0.5, 10.5], showticklabels=False)
+fig.update_yaxes(range=[0, 8.5], showticklabels=False, scaleanchor="x", scaleratio=1)
 
 # Adding in the mediation pathways
 
@@ -1125,28 +1110,9 @@ fig.add_shape(type="line",
     ),
 )
 
-fig.add_shape(type="circle",
-    xref="x", yref="y",
-    fillcolor="PaleTurquoise",
-    x0=0.0, y0=1.0, x1=2.0, y1=3.0,
-    line_color="LightSeaGreen",
-    label=dict(text=f"CPP", textangle=0)
-)
-
-fig.add_shape(type="circle",
-    xref="x", yref="y",
-    fillcolor="PaleTurquoise",
-    x0=8.0, y0=1.0, x1=10.0, y1=3.0,
-    line_color="LightSeaGreen",
-    label=dict(text="Apparent <br>learning <br>rate", textangle=0)
-)
-
-fig.add_shape(type="circle",
-    xref="x", yref="y",
-    fillcolor="PaleTurquoise",
-    x0=4.0, y0=5.0, x1=6.0, y1=7.0,
-    line_color="LightSeaGreen",
-    label=dict(text="Pupil:<br>corrected<br>(phasic)", textangle=0)
+add_circle(1, 2, 1.4, "CPP")
+add_circle(9, 2, 1.4, "Apparent<br>learning<br>rate")
+add_circle(5, 6, 1.4, "Pupil:<br>non-corrected<br>(phasic)")
 )
 
 total_path_text = format_annotation_text(
@@ -1269,9 +1235,9 @@ fig.add_annotation(
 
 
 fig.update_layout(
-    width=2200,
-    height=2200,
-    font=dict(size=42, family="Times New Roman"), 
+    width=720,
+    height=840,
+    font=dict(size=24, family="Times New Roman"), 
     xaxis=dict(showticklabels=False), 
     yaxis=dict(showticklabels=False),
     plot_bgcolor='rgba(255, 255, 255, 1)'
@@ -1286,9 +1252,9 @@ base_filename = f"adalearn_pupil-group_level_mediation_analysis_bc"
 base_filepath = os.path.join(plot_dir, base_filename)
 
 # Save as PNG
-fig.write_image(f"{base_filepath}.png")
+fig.write_image(f"{base_filepath}.png", scale=3.125)
 
 # Save as SVG
-fig.write_image(f"{base_filepath}.svg") 
+fig.write_image(f"{base_filepath}.svg", scale=3.125) 
 
 fig.show()

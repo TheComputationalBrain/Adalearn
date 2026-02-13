@@ -66,7 +66,7 @@ for var in dataframes['shift_optimization_results']['latent_var'].unique():
         x=latent_var_df['participant'],
         y=latent_var_df['corr_original'],
         mode='lines+markers',
-        name='original',
+        name='Original',
         line=dict(
             color='rgba(0, 130, 150, 0.8)',
             width=3
@@ -78,7 +78,7 @@ for var in dataframes['shift_optimization_results']['latent_var'].unique():
         x=latent_var_df['participant'],
         y=latent_var_df['corr_after_shift'],
         mode='lines+markers',
-        name='shifted',
+        name='Shifted',
                 line=dict(
             color='rgba(128, 0, 128, 0.8)',
             width=3
@@ -91,7 +91,7 @@ for var in dataframes['shift_optimization_results']['latent_var'].unique():
         x=latent_var_df['participant'],
         y=latent_var_df['null_mean'],
         mode='lines+markers',
-        name='null',
+        name='Null',
                 line=dict(
             color='rgba(220, 120, 0, 0.8)',
             width=3
@@ -114,10 +114,10 @@ for var in dataframes['shift_optimization_results']['latent_var'].unique():
             linecolor='black', 
             title_text=f"{var_label} vs. apparent learning rate (correlation)"
         ),
-        font=dict(size=40, family="Times New Roman"),
+        font=dict(size=24, family="Times New Roman"),
         plot_bgcolor='rgba(255, 255, 255, 1)',
-        height=1200,
-        width=1800,
+        height=720,
+        width=840,
         legend=dict(
             x=0.95,
             y=1.05,
@@ -135,7 +135,7 @@ for var in dataframes['shift_optimization_results']['latent_var'].unique():
     base_filepath = os.path.join(plot_dir, base_filename)
 
     # Save as PNG
-    fig.write_image(f"{base_filepath}.png")
+    fig.write_image(f"{base_filepath}.png", scale=3.125)
 
     # Save as SVG
     fig.write_image(f"{base_filepath}.svg") 
@@ -203,14 +203,14 @@ fig.update_layout(
         showline=True,
         linewidth=1.5,
         linecolor='black',
-        title_text="Fraction shifted observations"
+        title_text="Fraction of shifted observations"
     ),
-    font=dict(size=40, family="Times New Roman"),
+    font=dict(size=24, family="Times New Roman"),
     plot_bgcolor='rgba(255, 255, 255, 1)',
-    height=1200,
-    width=1800,
+    height=720,
+    width=840,
     legend=dict(
-        x=0.75,
+        x=0.5,
         y=1.05,
         xanchor='left',
         yanchor='top'
@@ -227,10 +227,10 @@ base_filename = f"adalearn_pupil-group_level_lag_analysis_fraction_of_shift_tria
 base_filepath = os.path.join(plot_dir, base_filename)
 
 # Save as PNG
-fig.write_image(f"{base_filepath}.png")
+fig.write_image(f"{base_filepath}.png", scale=3.125)
 
 # Save as SVG
-fig.write_image(f"{base_filepath}.svg") 
+fig.write_image(f"{base_filepath}.svg", scale=3.125) 
 
 fig.show()
 
@@ -274,15 +274,15 @@ fig.add_trace(go.Scatter(
 
 fig.update_layout(
      xaxis=dict(
-            showline=True, linewidth=1.5, linecolor='black', title_text="Fraction shifted observations - CPP"
+            showline=True, linewidth=1.5, linecolor='black', title_text="Fraction of shifted observations - CPP"
         ),
         yaxis=dict(
-            showline=True, linewidth=1.5, linecolor='black', title_text=f"Fraction shifted observations - Prior uncertainty "
+            showline=True, linewidth=1.5, linecolor='black', title_text=f"Fraction of shifted observations - Prior uncertainty "
         ),
-        font=dict(size=40, family="Times New Roman"),
+        font=dict(size=24, family="Times New Roman"),
         plot_bgcolor='rgba(255, 255, 255, 1)',
-        height=1200,
-        width=1800,
+        height=720,
+        width=840,
     )
 
  # Save the figure to the group-level folder
@@ -294,7 +294,7 @@ base_filename = f"adalearn_pupil-group_level_lag_analysis_correlation_between_pa
 base_filepath = os.path.join(plot_dir, base_filename)
 
 # Save as PNG
-fig.write_image(f"{base_filepath}.png")
+fig.write_image(f"{base_filepath}.png", scale=3.125)
 
 # Save as SVG
 fig.write_image(f"{base_filepath}.svg") 
@@ -339,6 +339,22 @@ for var in latent_vars:
     mean_var_corr_diff = np.mean(var_df['corr_diff'])
     sem_var_corr_diff = stats.sem(var_df['corr_diff'])
 
+    # jitter around the numeric x position
+    jitter = np.random.normal(loc=0.0, scale=jitter_width, size=len(var_df))
+    x_numeric = x_bar + jitter
+
+    fig.add_trace(go.Scatter(
+        x=x_numeric,
+        y=var_df['corr_diff'],
+        mode='markers',
+        name='individuals',
+        marker=dict(
+            size=16,
+            color='rgba(0, 130, 150, 0.3)',
+        ),
+        showlegend=False
+    ))
+
     # numeric x for the bar
     x_bar = x_positions[var]
 
@@ -358,22 +374,6 @@ for var in latent_vars:
             color='rgba(0, 130, 150, 0.4)',
             line_color='rgba(0, 130, 150, 0.8)',
             line_width=1.0
-        ),
-        showlegend=False
-    ))
-
-    # jitter around the numeric x position
-    jitter = np.random.normal(loc=0.0, scale=jitter_width, size=len(var_df))
-    x_numeric = x_bar + jitter
-
-    fig.add_trace(go.Scatter(
-        x=x_numeric,
-        y=var_df['corr_diff'],
-        mode='markers',
-        name='individuals',
-        marker=dict(
-            size=25,
-            color='rgba(0, 130, 150, 0.3)',
         ),
         showlegend=False
     ))
@@ -401,7 +401,7 @@ x1 = x_positions[var1]
 x2 = x_positions[var2]
 
 # height for comparison line (slightly above both bars)
-y_line = max(conf_mean + conf_sem, cpp_mean + cpp_sem) + 0.15
+y_line = max(conf_mean + conf_sem, cpp_mean + cpp_sem) + 0.17
 
 # add the connecting line
 fig.add_shape(
@@ -430,6 +430,24 @@ for var in latent_vars:
     mean_var_corr = np.mean(var_df['corr_after_shift'])
     sem_var_corr = stats.sem(var_df['corr_after_shift'])
 
+    # jitter around the numeric x position
+    jitter = np.random.normal(loc=0.0, scale=jitter_width, size=len(var_df))
+    x_numeric = x_bar + jitter
+
+    fig.add_trace(go.Scatter(
+        x=x_numeric,
+        y=var_df['corr_after_shift'],
+        mode='markers',
+        name='individuals',
+        marker=dict(
+            size=16,
+            color='rgba(0, 130, 150, 0.3)',
+        ),
+        xaxis='x2',
+        yaxis='y2',
+        showlegend=False
+    ))
+
     # numeric x for the bar
     x_bar = x_positions[var]
 
@@ -449,24 +467,6 @@ for var in latent_vars:
             color='rgba(0, 130, 150, 0.4)',
             line_color='rgba(0, 130, 150, 0.8)',
             line_width=1.0
-        ),
-        xaxis='x2',
-        yaxis='y2',
-        showlegend=False
-    ))
-
-    # jitter around the numeric x position
-    jitter = np.random.normal(loc=0.0, scale=jitter_width, size=len(var_df))
-    x_numeric = x_bar + jitter
-
-    fig.add_trace(go.Scatter(
-        x=x_numeric,
-        y=var_df['corr_after_shift'],
-        mode='markers',
-        name='individuals',
-        marker=dict(
-            size=25,
-            color='rgba(0, 130, 150, 0.3)',
         ),
         xaxis='x2',
         yaxis='y2',
@@ -501,8 +501,8 @@ fig.update_layout(
         tickmode='array',
         tickvals=list(x_positions.values()),
         ticktext=labels,
-        tickfont=dict(size=26),
-        titlefont=dict(size=30)
+        tickfont=dict(size=18),
+        titlefont=dict(size=20)
     ),
     yaxis2=dict(
         title_text="Shifted correlation",
@@ -512,13 +512,13 @@ fig.update_layout(
         showline=True,
         linecolor='black',
         linewidth=1.5,
-        tickfont=dict(size=32),       
-        titlefont=dict(size=28)
+        tickfont=dict(size=18),
+        titlefont=dict(size=20)
     ),
-    font=dict(size=42, family="Times New Roman"),
+    font=dict(size=24, family="Times New Roman"),
     plot_bgcolor='rgba(255, 255, 255, 1)',
-    height=1200,
-    width=1800
+    height=720,
+    width=840
 )
 
 # Save the figure to the group-level folder
@@ -530,10 +530,10 @@ base_filename = f"adalearn_pupil-group_level_lag_analysis_paired_differences_bet
 base_filepath = os.path.join(plot_dir, base_filename)
 
 # Save as PNG
-fig.write_image(f"{base_filepath}.png")
+fig.write_image(f"{base_filepath}.png", scale=3.125)
 
 # Save as SVG
-fig.write_image(f"{base_filepath}.svg") 
+fig.write_image(f"{base_filepath}.svg", scale=3.125) 
 
 fig.show()
 
@@ -593,7 +593,7 @@ for var in variable_labels:
         y=merged_df[var],
         mode='markers',
         name=f"{var_label}",
-        marker=dict(size=25, color=point_color),
+        marker=dict(size=16, color=point_color),
         showlegend=True
     ))
 
@@ -624,12 +624,12 @@ fig.update_layout(
         linecolor='black', 
         title_text=f"Average proportion of trials shifted (%)"
     ),
-    font=dict(size=42, family="Times New Roman"),
+    font=dict(size=24, family="Times New Roman"),
     plot_bgcolor='rgba(255, 255, 255, 1)',
-    height=1200,
-    width=1800,
+    height=720,
+    width=840,
     legend=dict(
-            x=0.70,
+            x=0.60,
             y=0.15,
             xanchor='left',
             yanchor='top'
@@ -645,10 +645,10 @@ base_filename = f"adalearn_pupil-group_level_lag_analysis_correlation_between_fr
 base_filepath = os.path.join(plot_dir, base_filename)
 
 # Save as PNG
-fig.write_image(f"{base_filepath}.png")
+fig.write_image(f"{base_filepath}.png", scale=3.125)
 
 # Save as SVG
-fig.write_image(f"{base_filepath}.svg") 
+fig.write_image(f"{base_filepath}.svg", scale=3.125) 
 
 fig.show()
 
@@ -711,7 +711,7 @@ for var in dataframes['shift_optimization_results']['latent_var'].unique():
         y=merged_df['corr_diff'],
         mode='markers',
         name=f"{var_label}",
-        marker=dict(size=25, color=point_color),
+        marker=dict(size=16, color=point_color),
         showlegend=True
     ))
 
@@ -741,12 +741,12 @@ fig.update_layout(
         linecolor='black', 
         title_text=f"Shifted correlation difference to null"
     ),
-    font=dict(size=42, family="Times New Roman"),
+    font=dict(size=24, family="Times New Roman"),
     plot_bgcolor='rgba(255, 255, 255, 1)',
-    height=1200,
-    width=1800,
+    height=720,
+    width=840,
     legend=dict(
-            x=0.70,
+            x=0.60,
             y=0.15,
             xanchor='left',
             yanchor='top'
@@ -762,10 +762,10 @@ base_filename = f"adalearn_pupil-group_level_lag_analysis_correlation_between_co
 base_filepath = os.path.join(plot_dir, base_filename)
 
 # Save as PNG
-fig.write_image(f"{base_filepath}.png")
+fig.write_image(f"{base_filepath}.png", scale=3.125)
 
 # Save as SVG
-fig.write_image(f"{base_filepath}.svg") 
+fig.write_image(f"{base_filepath}.svg", scale=3.125) 
 
 fig.show()
 

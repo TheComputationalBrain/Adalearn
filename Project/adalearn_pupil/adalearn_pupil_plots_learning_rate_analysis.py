@@ -96,6 +96,15 @@ group_behav_v_model_lr_df = pd.DataFrame(group_avg_data)
 # Plotting the relationship between participants' estimates and model estimates
 fig = go.Figure()
 
+fig.add_trace(go.Scatter(
+    x=[0, 1],  
+    y=[0, 1],  
+    mode='lines',
+    line=dict(color='rgba(50, 50, 50, 0.5)', dash='dot', width=3),
+    name='Identity',
+    showlegend=True
+))
+
 for participant in participant_v_model_df['participant'].unique():
     data = participant_v_model_df[participant_v_model_df['participant']==participant]
 
@@ -114,15 +123,6 @@ fig.add_trace(go.Scatter(
     marker=dict(color='rgba(0, 130, 150, 0.8)', size=19), 
     showlegend=False, 
     ))
-
-fig.add_trace(go.Scatter(
-    x=[0, 0.25],  
-    y=[0, 0.25],  
-    mode='lines',
-    line=dict(color='rgba(50, 50, 50, 0.5)', dash='dot', width=2),
-    name='Identity',
-    showlegend=True
-))
 
 fig.update_xaxes(
     range = [0, 0.25, 0.05],
@@ -154,40 +154,45 @@ fig.add_trace(hist_trace)
 
 fig.update_layout(
     xaxis2=dict(
-        domain=[0.075, 0.275],  
+        domain=[0.75, 0.95],  
         anchor='y2',
         range=[0, 1.0],      
         title='Correlation coefficient',
         showline=True,
-        linecolor='black'
+        linecolor='black',
+        linewidth=1.5,
+        ticks=""
+
     ),
     yaxis2=dict(
-        domain=[0.8, 1.0],  
+        domain=[0.2, 0.4],  
         anchor='x2',
         title='Count',
         showline=True,
-        linecolor='black'
+        linecolor='black',
+        linewidth=1.5,
+        ticks=""
     )
 )
 
 fig.update_layout(
     xaxis=dict(
-        title=dict(text="Apparent learning rate (model)", font=dict(size=42)),
+        title=dict(text="Apparent learning rate (model)", font=dict(size=26)),
+        range=[0, 0.39],
     ),
     yaxis=dict(
-        title=dict(text="Apparent learning rate (participant)", font=dict(size=42))
+        title=dict(text="Apparent learning rate (participant)", font=dict(size=26)),
+        range=[0, 0.39]
     ),
     xaxis2=dict(
-        title=dict(text='Correlation coefficient', font=dict(size=36)),
-        tickfont=dict(size=32),
+        title=dict(text='Correlation coefficient', font=dict(size=26)),
     ),
     yaxis2=dict(
-        title=dict(text='Count', font=dict(size=36)),
-        tickfont=dict(size=32),
+        title=dict(text='Count', font=dict(size=26)),
     ),
-    font=dict(size=42, family="Times New Roman"), 
-    height=1200,
-    width=1800,
+    font=dict(size=26, family="Times New Roman"), 
+    height=720,
+    width=840,
     template='simple_white',
     showlegend=False
 )
@@ -201,10 +206,10 @@ base_filename = f"adalearn_pupil-group_level_behav_v_model_lr_relationship"
 base_filepath = os.path.join(plot_dir, base_filename)
 
 # Save as PNG
-fig.write_image(f"{base_filepath}.png")
+fig.write_image(f"{base_filepath}.png", scale=3.125)
 
 # Save as SVG
-fig.write_image(f"{base_filepath}.svg") 
+fig.write_image(f"{base_filepath}.svg", scale=3.125) 
 
 fig.show()
 
@@ -338,7 +343,7 @@ fig.update_layout(
         showline=True, 
         linewidth=1.5, 
         linecolor='black',
-        title=dict(text="Outcome relative to change point", font=dict(size=42)),
+        title=dict(text="Outcome relative to change point", font=dict(size=24)),
         tickvals=[i for i in range(0, 16, 2)],  # show only ticks >= 0
         ticktext=[str(i + 1) for i in range(0, 16, 2)],  # shift each tick label by +1
     ),
@@ -346,11 +351,11 @@ fig.update_layout(
         showline=True, 
         linewidth=1.5, 
         linecolor='black',
-        title=dict(text="Apparent learning rate <br> (participant)", font=dict(size=42)),
+        title=dict(text="Apparent learning rate (participant)", font=dict(size=24)),
         range=[0.041, max(0.01, lr_by_cp_avg_df_behav['mean'].max() + lr_by_cp_avg_df_behav['sem'].max())]
     ),
     xaxis2=dict(
-        domain=[0.7, 1.0],
+        domain=[0.65, 1.0],
         anchor="y2",
         range=[-3, 16],
         showticklabels=True,
@@ -359,23 +364,23 @@ fig.update_layout(
         linewidth=1.5,
         tickvals=[i for i in range(0, 16, 2)],  # show only ticks >= 0
         ticktext=[str(i + 1) for i in range(0, 16, 2)],  # shift each tick label by +1
-        title=dict(text="Outcome relative to change point", font=dict(size=36)),
-        tickfont=dict(size=32),
+        title=dict(text="Outcome relative to change point", font=dict(size=20)),
+        tickfont=dict(size=18),
     ),
     yaxis2=dict(
-        domain=[0.7, 1.0],
+        domain=[0.65, 1.0],
         anchor="x2",
         showticklabels=True,
         showline=True,
         linecolor='black',
         linewidth=1.5,
         dtick=0.02,
-        title=dict(text="Apparent learning rate <br> (model)", font=dict(size=36)),
-        tickfont=dict(size=32),
+        title=dict(text="Apparent learning rate (model)", font=dict(size=20)),
+        tickfont=dict(size=18),
     ),
-    font=dict(size=42, family="times new roman"),
-    height=1200,
-    width=1800,
+    font=dict(size=24, family="times new roman"),
+    height=720,
+    width=840,
     plot_bgcolor='rgba(255, 255, 255, 1)',
     showlegend=False
 )
@@ -389,10 +394,10 @@ base_filename = f"adalearn_pupil-group_level_lr_around_change_points"
 base_filepath = os.path.join(plot_dir, base_filename)
 
 # Save as PNG
-fig.write_image(f"{base_filepath}.png")
+fig.write_image(f"{base_filepath}.png", scale=3.125)
 
 # Save as SVG
-fig.write_image(f"{base_filepath}.svg") 
+fig.write_image(f"{base_filepath}.svg", scale=3.125) 
 
 fig.show()
 
@@ -449,7 +454,7 @@ if uncertainty_params_ttest_df.loc[
         text='*',
         x=0, y=conf_star_y,
         showarrow=False,
-        font=dict(size=60)
+        font=dict(size=30)
     )
 
 if uncertainty_params_ttest_df.loc[
@@ -459,7 +464,7 @@ if uncertainty_params_ttest_df.loc[
         text='*',
         x=1, y=cpp_star_y,
         showarrow=False,
-        font=dict(size=60)
+        font=dict(size=30)
     )
 
 # Optional: Add a bar and star for between-group comparison
@@ -474,7 +479,7 @@ if uncertainty_params_ttest_df.loc[
         text='*',
         x=0.5, y=between_star_y + 0.02,
         showarrow=False,
-        font=dict(size=60)
+        font=dict(size=30)
     )
 
 fig.update_traces(
@@ -546,39 +551,40 @@ fig.add_trace(go.Bar(
     marker_line_width=1.0
 ))
 
-
-
 fig.update_layout(
+    yaxis=dict(
+        range=[-0.6, 0.6],
+    ),
     xaxis2=dict(
         tickvals=[0, 1],
         ticktext=[
             'CPP',
             'Prior uncert'
         ],
-        domain=[0.85, 1.0],  # inset x position (change to relocate)
+        domain=[0.7, 1.0],  # inset x position (change to relocate)
         anchor='y2',
         showticklabels=True,
         showline=True,
         linecolor='black',
         linewidth=1.5,
-        tickfont=dict(size=24),     
-        titlefont=dict(size=24)
+        tickfont=dict(size=20),     
+        titlefont=dict(size=22)
     ),
     yaxis2=dict(
-        title_text="Regression weight (model)",
-        domain=[0.8, 1.0],  # inset y position (change to resize/relocate)
+        title_text="Regression weight <br> (model)",
+        domain=[0.1, 0.3],  # inset y position (change to resize/relocate)
         anchor='x2',
         showticklabels=True,
         showline=True,
         linecolor='black',
         linewidth=1.5,
-        tickfont=dict(size=30),       
-        titlefont=dict(size=28)
+        tickfont=dict(size=20),       
+        titlefont=dict(size=22)
     ),
     plot_bgcolor='rgba(255, 255, 255, 1)',
-    font=dict(size=42, family="Times New Roman"),
-    height=1200,
-    width=1800)
+    font=dict(size=24, family="Times New Roman"),
+    height=720,
+    width=840)
 
 # Save the figure to the group-level folder
 plot_dir = os.path.join(BASE_DIR, "plots")
@@ -589,10 +595,10 @@ base_filename = f"adalearn_pupil-group_level_uncertainty_params_on_lr_regression
 base_filepath = os.path.join(plot_dir, base_filename)
 
 # Save as PNG
-fig.write_image(f"{base_filepath}.png")
+fig.write_image(f"{base_filepath}.png", scale=3.125)
 
 # Save as SVG
-fig.write_image(f"{base_filepath}.svg") 
+fig.write_image(f"{base_filepath}.svg", scale=3.125) 
 
 fig.show()
 
@@ -632,9 +638,9 @@ fig.update_yaxes(
 
 fig.update_layout(
     plot_bgcolor='rgba(255, 255, 255, 1)',
-    font=dict(size=42, family="Times New Roman"),
-    height=1200,
-    width=1800)
+    font=dict(size=24, family="Times New Roman"),
+    height=720,
+    width=840)
 
 # Save the figure to the group-level folder
 plot_dir = os.path.join(BASE_DIR, "plots")
@@ -645,10 +651,10 @@ base_filename = f"adalearn_pupil-group_level_prior_uncertainty_v_cpp_regression_
 base_filepath = os.path.join(plot_dir, base_filename)
 
 # Save as PNG
-fig.write_image(f"{base_filepath}.png")
+fig.write_image(f"{base_filepath}.png", scale=3.125)
 
 # Save as SVG
-fig.write_image(f"{base_filepath}.svg") 
+fig.write_image(f"{base_filepath}.svg", scale=3.125) 
 
 fig.show()
 
@@ -736,9 +742,9 @@ fig.update_yaxes(
 
 fig.update_layout(
     plot_bgcolor='rgba(255, 255, 255, 1)',
-    font=dict(size=42, family="Times New Roman"),
-    height=1200,
-    width=1800)
+    font=dict(size=24, family="Times New Roman"),
+    height=720,
+    width=840)
 
 # Save the figure to the group-level folder
 plot_dir = os.path.join(BASE_DIR, "plots")
@@ -749,10 +755,10 @@ base_filename = f"adalearn_pupil-group_level_prior_uncertainty_v_lr_relationship
 base_filepath = os.path.join(plot_dir, base_filename)
 
 # Save as PNG
-fig.write_image(f"{base_filepath}.png")
+fig.write_image(f"{base_filepath}.png", scale=3.125)
 
 # Save as SVG
-fig.write_image(f"{base_filepath}.svg") 
+fig.write_image(f"{base_filepath}.svg", scale=3.125) 
 
 fig.show()
 
@@ -884,7 +890,13 @@ fig.update_yaxes(showline=True, linewidth=1, linecolor='black',
                  title_text='Prior uncertainty (SD)')
 
 # Update layout
-fig.update_layout(height=1200, width=1800, plot_bgcolor='rgba(255, 255, 255, 1)', font=dict(size=42, family="Times New Roman"), showlegend=False)
+fig.update_layout(
+    height=720, 
+    width=840,
+    plot_bgcolor='rgba(255, 255, 255, 1)', 
+    font=dict(size=24, family="Times New Roman"), 
+    showlegend=False
+)
 
 # Save the figure to the group-level folder
 plot_dir = os.path.join(BASE_DIR, "plots")
@@ -895,10 +907,10 @@ base_filename = f"adalearn_pupil-group_level_prior_uncertainty_around_change_poi
 base_filepath = os.path.join(plot_dir, base_filename)
 
 # Save as PNG
-fig.write_image(f"{base_filepath}.png")
+fig.write_image(f"{base_filepath}.png", scale=3.125)
 
 # Save as SVG
-fig.write_image(f"{base_filepath}.svg") 
+fig.write_image(f"{base_filepath}.svg", scale=3.125) 
 
 fig.show()
 
@@ -949,7 +961,13 @@ fig.update_yaxes(showline=True, linewidth=1, linecolor='black',
                  title_text='Change point probability')
 
 # Update layout
-fig.update_layout(height=1200, width=1800, plot_bgcolor='rgba(255, 255, 255, 1)', font=dict(size=42, family="Times New Roman"), showlegend=False)
+fig.update_layout(
+    height=720, 
+    width=840, 
+    plot_bgcolor='rgba(255, 255, 255, 1)', 
+    font=dict(size=24, family="Times New Roman"), 
+    showlegend=False
+)
 
 # Save the figure to the group-level folder
 plot_dir = os.path.join(BASE_DIR, "plots")
@@ -960,9 +978,9 @@ base_filename = f"adalearn_pupil-group_level_cpp_around_change_points"
 base_filepath = os.path.join(plot_dir, base_filename)
 
 # Save as PNG
-fig.write_image(f"{base_filepath}.png")
+fig.write_image(f"{base_filepath}.png", scale=3.125)
 
 # Save as SVG
-fig.write_image(f"{base_filepath}.svg") 
+fig.write_image(f"{base_filepath}.svg", scale=3.125) 
 
 fig.show()
