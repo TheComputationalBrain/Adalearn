@@ -97,10 +97,10 @@ group_behav_v_model_lr_df = pd.DataFrame(group_avg_data)
 fig = go.Figure()
 
 fig.add_trace(go.Scatter(
-    x=[0, 1],  
-    y=[0, 1],  
+    x=[0, 0.35],  
+    y=[0, 0.35],  
     mode='lines',
-    line=dict(color='rgba(50, 50, 50, 0.5)', dash='dot', width=3),
+    line=dict(color='rgba(50, 50, 50, 0.5)', dash='dot', width=4),
     name='Identity',
     showlegend=True
 ))
@@ -112,32 +112,17 @@ for participant in participant_v_model_df['participant'].unique():
         x=data['model_lr_bin_label'], 
         y=data['avg_lr'], 
         mode='lines+markers',
-        line=dict(color='rgba(0, 130, 150, 0.12)', width=1.5),
-        marker=dict(color='rgba(0, 130, 150, 0.15)', size=12),
+        line=dict(color='rgba(0, 130, 150, 0.12)', width=3),
+        marker=dict(color='rgba(0, 130, 150, 0.15)', size=14),
         showlegend=False))
 
 fig.add_trace(go.Scatter(
     x=group_behav_v_model_lr_df['model_lr_bin_label'],
     y=group_behav_v_model_lr_df['group_avg_lr'], 
     mode='markers',
-    marker=dict(color='rgba(0, 130, 150, 0.8)', size=19), 
+    marker=dict(color='rgba(0, 130, 150, 0.8)', size=28), 
     showlegend=False, 
     ))
-
-fig.update_xaxes(
-    range = [0, 0.25, 0.05],
-    showline=True, 
-    linewidth=1.5, 
-    linecolor='black', 
-    title_text="Normative learning rate", 
-)
-
-fig.update_yaxes(
-    showline=True, 
-    linewidth=1.5, 
-    linecolor='black', 
-    title_text="Participant learning rate",   
-)
 
 # Add histogram to the plot
 hist_trace = go.Histogram(
@@ -153,48 +138,56 @@ hist_trace = go.Histogram(
 fig.add_trace(hist_trace)
 
 fig.update_layout(
-    xaxis2=dict(
-        domain=[0.75, 0.95],  
-        anchor='y2',
-        range=[0, 1.0],      
-        title='Correlation coefficient',
-        showline=True,
-        linecolor='black',
-        linewidth=1.5,
-        ticks=""
-
-    ),
-    yaxis2=dict(
-        domain=[0.2, 0.4],  
-        anchor='x2',
-        title='Count',
-        showline=True,
-        linecolor='black',
-        linewidth=1.5,
-        ticks=""
-    )
-)
-
-fig.update_layout(
     xaxis=dict(
-        title=dict(text="Apparent learning rate (model)", font=dict(size=26)),
-        range=[0, 0.39],
+        title=dict(text="Apparent learning rate (model)"),
+        showline=True, 
+        linewidth=3, 
+        linecolor='black', 
+        ticks="inside",          # <-- turn ticks on
+        tickwidth=1.5,            # thickness of ticks
+        tickcolor='black',         
     ),
     yaxis=dict(
-        title=dict(text="Apparent learning rate (participant)", font=dict(size=26)),
-        range=[0, 0.39]
+        title=dict(text="Apparent learning rate (participant)"),
+        showline=True, 
+        linewidth=3, 
+        linecolor='black', 
+        ticks="inside",          # <-- turn ticks on
+        tickwidth=1.5,            # thickness of ticks
+        tickcolor='black',
+
     ),
     xaxis2=dict(
-        title=dict(text='Correlation coefficient', font=dict(size=26)),
+        domain=[0.75, 1.0],
+        title=dict(text='Correlation coefficient', font=dict(size=26)),  
+        anchor='y2',
+        range=[0, 1.0],      
+        showline=True,
+        linecolor='black',
+        linewidth=3,
+        ticks="inside",          # <-- turn ticks on
+        tickwidth=1.5,            # thickness of ticks
+        tickcolor='black',
+        tickvals=[0.0, 0.5, 1.0],
     ),
     yaxis2=dict(
-        title=dict(text='Count', font=dict(size=26)),
+        domain=[0.2, 0.45],
+        title=dict(text='Count', font=dict(size=26)),  
+        anchor='x2',
+        showline=True,
+        linecolor='black',
+        linewidth=3,
+        ticks="inside",          # <-- turn ticks on
+        tickwidth=1.5,            # thickness of ticks
+        tickcolor='black',
+        tickvals=list(range(0, 5, 2))
     ),
-    font=dict(size=26, family="Times New Roman"), 
     height=720,
     width=840,
-    template='simple_white',
-    showlegend=False
+    showlegend=False,
+    plot_bgcolor='rgba(255, 255, 255, 1)',
+    margin=dict(l=20, r=20, t=50, b=20),
+    font=dict(size=30, family='Times New Roman'),
 )
 
 # Save the figure to the group-level folder
@@ -250,7 +243,7 @@ fig.add_trace(go.Scatter(
     x=lr_by_cp_avg_df_behav.index, 
     y=lr_by_cp_avg_df_behav['mean'], 
     mode='lines', 
-    line=dict(color='rgba(0, 130, 150, 0.8)'),
+    line=dict(color='rgba(0, 130, 150, 0.8)', width=4),
     name="Behavior Mean"
 ))
 
@@ -276,7 +269,7 @@ fig.add_trace(go.Scatter(
 # Vertical line at change point (0)
 fig.add_vline(
     x=0, 
-    line=dict(color='black', width=2, dash='dash'),
+    line=dict(color='black', width=4, dash='dash'),
 )
 
 # Plot significant clusters on behavioral subplot
@@ -288,7 +281,7 @@ for _, row in dataframes['lr_around_cp_sig_clusters'].iterrows():
             x=list(cluster_range),
             y=[style['yval']] * len(cluster_range),
            mode='lines',
-            line=dict(color=style['color'], width=8),
+            line=dict(color=style['color'], width=12),
             showlegend=False,
             hoverinfo='skip'
         ))
@@ -300,7 +293,7 @@ fig.add_trace(go.Scatter(
     xaxis="x2", 
     yaxis="y2",
     mode='lines',
-    line=dict(color='red'),
+    line=dict(color='rgba(255, 0, 0, 0.8)', width=3),
     name="Model Mean"
 ))
 
@@ -332,7 +325,7 @@ fig.add_shape(
     x0=0, x1=0,
     y0=lr_by_cp_avg_df_model['mean'].min() - 0.01,
     y1=lr_by_cp_avg_df_model['mean'].max() + 0.01,
-    line=dict(color="black", width=2, dash="dash"),
+    line=dict(color="black", width=4, dash="dash"),
     xref="x2", yref="y2"
 )
 
@@ -341,18 +334,25 @@ fig.update_layout(
     xaxis=dict(
         range=[-3, 16],
         showline=True, 
-        linewidth=1.5, 
+        linewidth=3, 
         linecolor='black',
-        title=dict(text="Outcome relative to change point", font=dict(size=24)),
-        tickvals=[i for i in range(0, 16, 2)],  # show only ticks >= 0
-        ticktext=[str(i + 1) for i in range(0, 16, 2)],  # shift each tick label by +1
+        title=dict(text="Outcome relative to change point"),
+        tickvals=[i for i in range(0, 16, 3)],  # show only ticks >= 0
+        ticktext=[str(i + 1) for i in range(0, 16, 3)], # shift each tick label by +1
+        ticks="inside",          # <-- turn ticks on
+        tickwidth=1.5,            # thickness of ticks
+        tickcolor='black',
     ),
     yaxis=dict(
         showline=True, 
-        linewidth=1.5, 
+        linewidth=3, 
         linecolor='black',
-        title=dict(text="Apparent learning rate (participant)", font=dict(size=24)),
-        range=[0.041, max(0.01, lr_by_cp_avg_df_behav['mean'].max() + lr_by_cp_avg_df_behav['sem'].max())]
+        title=dict(text="Apparent learning rate (participant)"),
+        range=[0.041, max(0.025, lr_by_cp_avg_df_behav['mean'].max() + lr_by_cp_avg_df_behav['sem'].max())],
+        dtick=0.025,
+        ticks="inside",          # <-- turn ticks on
+        tickwidth=1.5,            # thickness of ticks
+        tickcolor='black',
     ),
     xaxis2=dict(
         domain=[0.65, 1.0],
@@ -361,11 +361,13 @@ fig.update_layout(
         showticklabels=True,
         showline=True,
         linecolor='black',
-        linewidth=1.5,
-        tickvals=[i for i in range(0, 16, 2)],  # show only ticks >= 0
-        ticktext=[str(i + 1) for i in range(0, 16, 2)],  # shift each tick label by +1
-        title=dict(text="Outcome relative to change point", font=dict(size=20)),
-        tickfont=dict(size=18),
+        linewidth=3,
+        tickvals=[i for i in range(0, 16, 3)],  # show only ticks >= 0
+        ticktext=[str(i + 1) for i in range(0, 16, 3)],  # shift each tick label by +1
+        tickfont=dict(size=22),
+        ticks="inside",          # <-- turn ticks on
+        tickwidth=1.5,            # thickness of ticks
+        tickcolor='black',
     ),
     yaxis2=dict(
         domain=[0.65, 1.0],
@@ -373,12 +375,15 @@ fig.update_layout(
         showticklabels=True,
         showline=True,
         linecolor='black',
-        linewidth=1.5,
+        linewidth=3,
         dtick=0.02,
-        title=dict(text="Apparent learning rate (model)", font=dict(size=20)),
-        tickfont=dict(size=18),
+        title=dict(text="Apparent learning rate (model)", font=dict(size=22)),
+        tickfont=dict(size=22),
+        ticks="inside",          # <-- turn ticks on
+        tickwidth=1.5,            # thickness of ticks
+        tickcolor='black',
     ),
-    font=dict(size=24, family="times new roman"),
+    font=dict(size=30, family="times new roman"),
     height=720,
     width=840,
     plot_bgcolor='rgba(255, 255, 255, 1)',
@@ -505,7 +510,7 @@ fig.add_trace(go.Scatter(
     x=x_jittered_cpp,
     y=behav_cpp_coef['coefficient'],
     mode='markers',
-    marker=dict(color='rgba(0, 130, 150, 0.3)', size=16),
+    marker=dict(color='rgba(0, 130, 150, 0.3)', size=20),
     showlegend=False,
 ))
 
@@ -513,17 +518,17 @@ fig.add_trace(go.Scatter(
     x=x_jittered_conf,
     y=behav_conf_coef['coefficient'],
     mode='markers',
-    marker=dict(color='rgba(0, 130, 150, 0.3)', size=16),
+    marker=dict(color='rgba(0, 130, 150, 0.3)', size=20),
     showlegend=False,
 ))
 
-fig.update_xaxes(showline=True, linewidth=1.5, linecolor='black')
-fig.update_yaxes(showline=True, linewidth=1.5, linecolor='black',  title_text="Regression weight (participant)")
+fig.update_xaxes(showline=True, linewidth=3, linecolor='black')
+fig.update_yaxes(showline=True, linewidth=3, linecolor='black',  title_text="Regression weight (participant)")
 
 fig.update_xaxes(
     tickvals=[0, 1],
-    ticktext=['Change point probability (z-score)', 'Prior uncertainty (z-score)'],
-    showline=True, linewidth=1.5, linecolor='black'
+    ticktext=['Change point probability <br>(z-score)', 'Prior uncertainty <br>(z-score)'],
+    showline=True, linewidth=3, linecolor='black'
 )
 
 # Add inset bars (model) - assigned to secondary x2/y2 axes
@@ -552,37 +557,45 @@ fig.add_trace(go.Bar(
 ))
 
 fig.update_layout(
+    xaxis=dict(
+        ticks="inside",          # <-- turn ticks on
+        tickwidth=1.5,            # thickness of ticks
+        tickcolor='black',
+    ),
     yaxis=dict(
+        ticks="inside",          # <-- turn ticks on
+        tickwidth=1.5,            # thickness of ticks
+        tickcolor='black',
         range=[-0.6, 0.6],
     ),
     xaxis2=dict(
-        tickvals=[0, 1],
-        ticktext=[
-            'CPP',
-            'Prior uncert'
-        ],
-        domain=[0.7, 1.0],  # inset x position (change to relocate)
+        domain=[0.69, 0.99],
         anchor='y2',
-        showticklabels=True,
         showline=True,
+        linewidth=2,
         linecolor='black',
-        linewidth=1.5,
-        tickfont=dict(size=20),     
-        titlefont=dict(size=22)
+        ticks="inside",
+        tickwidth=1.5,
+        tickcolor='black',
+        tickvals=[0, 1],
+        ticktext=['CPP', 'Prior uncert'],
+        tickfont=dict(size=20),
     ),
     yaxis2=dict(
-        title_text="Regression weight <br> (model)",
-        domain=[0.1, 0.3],  # inset y position (change to resize/relocate)
+        domain=[0.1, 0.3],
         anchor='x2',
-        showticklabels=True,
         showline=True,
+        linewidth=2,
         linecolor='black',
-        linewidth=1.5,
-        tickfont=dict(size=20),       
-        titlefont=dict(size=22)
+        ticks="inside",
+        tickwidth=1.5,
+        tickcolor='black',
+        tickfont=dict(size=20),
+        title_text="Regression weight <br> (model)",
+        title_font=dict(size=22)
     ),
     plot_bgcolor='rgba(255, 255, 255, 1)',
-    font=dict(size=24, family="Times New Roman"),
+    font=dict(size=30, family="Times New Roman"),
     height=720,
     width=840)
 
@@ -611,34 +624,40 @@ fig.add_trace(go.Scatter(
     x=behav_conf_coef['coefficient'], 
     y=behav_cpp_coef['coefficient'], 
     mode='markers', 
-    marker=dict(color='rgba(0, 130, 150, 0.6)', size=19),
+    marker=dict(color='rgba(0, 130, 150, 0.6)', size=24),
     showlegend=False
 ))
 
 # Add horizontal and vertical lines for scatter plot
-fig.add_hline(y=0, line_dash='dot', line=dict(color='black', width=1.5))
-fig.add_vline(x=0, line_dash='dot', line=dict(color='black', width=1.5))
+fig.add_hline(y=0, line_dash='dot', line=dict(color='black', width=3))
+fig.add_vline(x=0, line_dash='dot', line=dict(color='black', width=3))
 
 # Update x and y axes for the second subplot (right)
 fig.update_xaxes(
     showline=True, 
-    linewidth=1.5, 
+    linewidth=3, 
     linecolor='black', 
     title_text="Prior uncertainty (beta)", 
-    range=[-0.6, 0.6]
+    range=[-0.6, 0.6],
+    ticks="inside",
+    tickwidth=1.5,
+    tickcolor='black',
 )
 
 fig.update_yaxes(
     showline=True, 
-    linewidth=1.5, 
+    linewidth=3, 
     linecolor='black', 
     title_text="Change point probability (beta)",  
-    range=[-0.6, 0.6]
+    range=[-0.6, 0.6],
+    ticks="inside",
+    tickwidth=1.5,
+    tickcolor='black',
 )
 
 fig.update_layout(
     plot_bgcolor='rgba(255, 255, 255, 1)',
-    font=dict(size=24, family="Times New Roman"),
+    font=dict(size=30, family="Times New Roman"),
     height=720,
     width=840)
 
@@ -719,7 +738,7 @@ fig.add_trace(go.Scatter(
             y=behav_group_conf_lr_df['group_avg_lr'], 
             mode='markers', 
             showlegend=False,
-            marker=dict(size=19, color='rgba(0, 130, 150, 0.8)'),
+            marker=dict(size=24, color='rgba(0, 130, 150, 0.8)'),
             error_y=dict(
                 type='data',
                 array=behav_group_conf_lr_df['group_sem_lr'],
@@ -728,21 +747,28 @@ fig.add_trace(go.Scatter(
         
 fig.update_xaxes(
     showline=True, 
-    linewidth=1.5, 
+    linewidth=3, 
     linecolor='black', 
-    title_text="Prior uncertainty (SD)"
+    title_text="Prior uncertainty (SD)",
+    ticks="inside",
+    tickwidth=1.5,
+    tickcolor='black',
 )
 
 fig.update_yaxes(
+    range=[0.041, max(0.02, behav_group_conf_lr_df['group_avg_lr'].max() + behav_group_conf_lr_df['group_sem_lr'].max())],
     showline=True, 
-    linewidth=1.5, 
+    linewidth=3, 
     linecolor='black', 
-    title_text="Apparent learning rate (participant)"
+    title_text="Apparent learning rate (participant)",
+    ticks="inside",
+    tickwidth=1.5,
+    tickcolor='black',
 )
 
 fig.update_layout(
     plot_bgcolor='rgba(255, 255, 255, 1)',
-    font=dict(size=24, family="Times New Roman"),
+    font=dict(size=30, family="Times New Roman"),
     height=720,
     width=840)
 
@@ -864,13 +890,13 @@ fig.add_trace(go.Scatter(
     x=conf_round_cp_df['position'],
     y=conf_round_cp_df['mean'],
     mode='lines',
-    line=dict(color='rgba(0, 130, 150, 0.8)', width=3),
+    line=dict(color='rgba(0, 130, 150, 0.8)', width=4),
     name='Prior uncertainty',
     showlegend=False
 ))
 
 fig.add_shape(type="line", x0=0, x1=0, y0=0, y1=1, 
-                  line=dict(dash="dot", color="black"), 
+                  line=dict(dash="dot", width =3, color="black"), 
                   xref="x", yref="y domain")
 
 
@@ -878,23 +904,33 @@ fig.add_shape(type="line", x0=0, x1=0, y0=0, y1=1,
 fig.update_xaxes(
     title_text="Outcomes relative to change point",
     showline=True,
-    linewidth=1,
+    linewidth=3,
     linecolor='black',
     tickmode='array',
     range=[-3, 16],
     tickvals=[i for i in range(0, 16, 2)],  # show only ticks >= 0
-    ticktext=[str(i + 1) for i in range(0, 16, 2)],  # shift each tick label by +1 
+    ticktext=[str(i + 1) for i in range(0, 16, 2)],  # shift each tick label by +1
+    ticks="inside",
+    tickwidth=1.5,
+    tickcolor='black', 
 )
 
-fig.update_yaxes(showline=True, linewidth=1, linecolor='black', 
-                 title_text='Prior uncertainty (SD)')
+fig.update_yaxes(
+    showline=True, 
+    linewidth=3, 
+    linecolor='black', 
+    title_text='Prior uncertainty (SD)',
+    ticks="inside",
+    tickwidth=1.5,
+    tickcolor='black',
+)
 
 # Update layout
 fig.update_layout(
     height=720, 
     width=840,
     plot_bgcolor='rgba(255, 255, 255, 1)', 
-    font=dict(size=24, family="Times New Roman"), 
+    font=dict(size=30, family="Times New Roman"), 
     showlegend=False
 )
 
@@ -935,13 +971,13 @@ fig.add_trace(go.Scatter(
     x=cpp_round_cp_df['position'],
     y=cpp_round_cp_df['mean'],
     mode='lines',
-    line=dict(color='rgba(0, 130, 150, 0.8)', width=3),
+    line=dict(color='rgba(0, 130, 150, 0.8)', width=4),
     name='Change point probability',
     showlegend=False
 ))
 
 fig.add_shape(type="line", x0=0, x1=0, y0=0, y1=1, 
-                  line=dict(dash="dot", color="black"), 
+                  line=dict(dash="dot", width=3, color="black"), 
                   xref="x", yref="y domain")
 
 
@@ -949,23 +985,33 @@ fig.add_shape(type="line", x0=0, x1=0, y0=0, y1=1,
 fig.update_xaxes(
     title_text="Outcomes relative to change point",
     showline=True,
-    linewidth=1,
+    linewidth=3,
     linecolor='black',
     tickmode='array',
     range=[-3, 16],
     tickvals=[i for i in range(0, 16, 2)],  # show only ticks >= 0
     ticktext=[str(i + 1) for i in range(0, 16, 2)],  # shift each tick label by +1 
+    ticks="inside",
+    tickwidth=1.5,
+    tickcolor='black',
 )
 
-fig.update_yaxes(showline=True, linewidth=1, linecolor='black', 
-                 title_text='Change point probability')
+fig.update_yaxes(
+    showline=True, 
+    linewidth=3, 
+    linecolor='black', 
+    title_text='Change point probability',
+    ticks="inside",
+    tickwidth=1.5,
+    tickcolor='black',
+)
 
 # Update layout
 fig.update_layout(
     height=720, 
     width=840, 
     plot_bgcolor='rgba(255, 255, 255, 1)', 
-    font=dict(size=24, family="Times New Roman"), 
+    font=dict(size=30, family="Times New Roman"), 
     showlegend=False
 )
 

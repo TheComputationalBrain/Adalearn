@@ -101,59 +101,9 @@ for count in bc_group_avg_pupil_df['count'].unique():
 
 bc_group_pupil_df = pd.DataFrame(group_pupil_dict)
 
-# All individual baseline corrected pupil responses on the same plot
 fig = go.Figure()
 
-for participant in bc_group_avg_pupil_df['participant'].unique():
-    participant_data = bc_group_avg_pupil_df[bc_group_avg_pupil_df['participant'] == participant]
-
-    fig.add_trace(go.Scatter(x=participant_data['time'], y=participant_data['pupil_signal'], mode='lines', line=dict(color='rgba(100, 100, 100, 0.4)'), showlegend=False))
-
-fig.add_vline(x=0, line_dash='dot', line=dict(color='black', width=1.5))
-fig.add_hline(y=0, line_dash = 'dot', line=dict(color='black', width=1.5))
-
-fig.update_xaxes(
-        showline=True, 
-        linewidth=1.5, 
-        linecolor='black', 
-        title_text="Time relative to outcome presentation (s)",
-    )
-
-fig.update_yaxes(
-        showline=True, 
-        linewidth=1.5, 
-        linecolor='black',
-        title_text = 'Baseline corrected pupil diameter signal (z-score)' 
-    )
-
-fig.update_layout(
-    height=720, 
-    width=840, 
-    plot_bgcolor='rgba(255, 255, 255, 1)', 
-    font=dict(size=24, family="Times New Roman")
-)
-
-# Save the figure to the group-level folder
-plot_dir = os.path.join(NACONF_BASE_DIR, "plots")
-os.makedirs(plot_dir, exist_ok=True)
-
-# Base filename (without extension)
-base_filename = f"adalearn_pupil-NACONF_baseline_corrected_pupil_signal_all_participant_traces"
-base_filepath = os.path.join(plot_dir, base_filename)
-
-# Save as PNG
-fig.write_image(f"{base_filepath}.png", scale=3.125)
-
-# Save as SVG
-fig.write_image(f"{base_filepath}.svg", scale=3.125) 
-
-fig.show() 
-
-
-##############################################################################################
-fig = go.Figure()
-
-fig.add_trace(go.Scatter(x=bc_group_pupil_df['time'], y=bc_group_pupil_df['mean_pupil'], mode = 'lines', line=dict(color='rgba(0, 0, 0, 0.8)'), showlegend=False))
+fig.add_trace(go.Scatter(x=bc_group_pupil_df['time'], y=bc_group_pupil_df['mean_pupil'], mode = 'lines', line=dict(color='rgba(0, 0, 0, 0.8)', width=4), showlegend=False))
 
 fig.add_trace(go.Scatter(
     x=list(bc_group_pupil_df['time']) + list(bc_group_pupil_df['time'][::-1]),
@@ -165,28 +115,43 @@ fig.add_trace(go.Scatter(
     showlegend=False
 ))
 
-fig.add_vline(x=0, line_dash='dot', line=dict(color='black', width=1.5))
-fig.add_hline(y=0, line_dash = 'dot', line=dict(color='black', width=1.5))
+fig.add_vrect(
+    x0=-0.25, 
+    x1=0,
+    fillcolor='rgba(210, 0, 150, 0.2)', 
+    opacity=0.4,               
+    layer="above",            
+    line_width=0
+)
+
+fig.add_vline(x=0, line_dash='dot', line=dict(color='black', width=3))
+fig.add_hline(y=0, line_dash = 'dot', line=dict(color='black', width=3))
 
 fig.update_xaxes(
         showline=True, 
-        linewidth=1.5, 
+        linewidth=3, 
         linecolor='black', 
         title_text="Time relative to outcome presentation (s)",
+        ticks="inside",
+        tickwidth=1.5,
+        tickcolor='black',
     )
 
 fig.update_yaxes(
         showline=True, 
-        linewidth=1.5, 
+        linewidth=3, 
         linecolor='black',
-        title_text = 'Baseline corrected pupil diameter signal (z-score)' 
+        title_text = 'Baseline corrected pupil signal (z-score)',
+        ticks="inside",
+        tickwidth=1.5,
+        tickcolor='black', 
     )
 
 fig.update_layout(
     height=720, 
     width=840, 
     plot_bgcolor='rgba(255, 255, 255, 1)', 
-    font=dict(size=24, family="Times New Roman")
+    font=dict(size=30, family="Times New Roman")
 )
 
 # Save the figure to the group-level folder
@@ -201,7 +166,7 @@ base_filepath = os.path.join(plot_dir, base_filename)
 fig.write_image(f"{base_filepath}.png", scale=3.125)
 
 # Save as SVG
-fig.write_image(f"{base_filepath}.svg") 
+fig.write_image(f"{base_filepath}.svg", scale=3.125) 
 
 fig.show()
 
@@ -273,62 +238,12 @@ for count in nobc_group_avg_pupil_df['count'].unique():
     nobc_group_pupil_dict['sem_pupil'].append(sem_pupil)
     nobc_group_pupil_dict['time'].append(time)
 
-nobc_group_pupil_df = pd.DataFrame(group_pupil_dict)
-
-# All individual baseline corrected pupil responses on the same plot
-fig = go.Figure()
-
-for participant in nobc_group_avg_pupil_df['participant'].unique():
-    participant_data = nobc_group_avg_pupil_df[nobc_group_avg_pupil_df['participant'] == participant]
-
-    fig.add_trace(go.Scatter(x=participant_data['time'], y=participant_data['pupil_signal'], mode='lines', line=dict(color='rgba(100, 100, 100, 0.4)'), showlegend=False))
-
-fig.add_vline(x=0, line_dash='dot', line=dict(color='black', width=1.5))
-fig.add_hline(y=0, line_dash = 'dot', line=dict(color='black', width=1.5))
-
-fig.update_xaxes(
-        showline=True, 
-        linewidth=1.5, 
-        linecolor='black', 
-        title_text="Time relative to outcome presentation (s)",
-    )
-
-fig.update_yaxes(
-        showline=True, 
-        linewidth=1.5, 
-        linecolor='black',
-        title_text = 'None-baseline corrected pupil diameter signal (z-score)' 
-    )
-
-fig.update_layout(
-    height=720, 
-    width=840, 
-    plot_bgcolor='rgba(255, 255, 255, 1)', 
-    font=dict(size=24, family="Times New Roman")
-)
-
-# Save the figure to the group-level folder
-plot_dir = os.path.join(NACONF_BASE_DIR, "plots")
-os.makedirs(plot_dir, exist_ok=True)
-
-# Base filename (without extension)
-base_filename = f"adalearn_pupil-NACONF_nonbaseline_corrected_pupil_signal_all_participant_traces"
-base_filepath = os.path.join(plot_dir, base_filename)
-
-# Save as PNG
-fig.write_image(f"{base_filepath}.png", scale=3.125)
-
-# Save as SVG
-fig.write_image(f"{base_filepath}.svg", scale=3.125) 
-
-fig.show() 
-
-
+nobc_group_pupil_df = pd.DataFrame(nobc_group_pupil_dict)
 
 
 fig = go.Figure()
 
-fig.add_trace(go.Scatter(x=nobc_group_pupil_df['time'], y=nobc_group_pupil_df['mean_pupil'], mode = 'lines', line=dict(color='rgba(0, 0, 0, 0.8)'), showlegend=False))
+fig.add_trace(go.Scatter(x=nobc_group_pupil_df['time'], y=nobc_group_pupil_df['mean_pupil'], mode = 'lines', line=dict(color='rgba(0, 0, 0, 0.8)', width=4), showlegend=False))
 
 fig.add_trace(go.Scatter(
     x=list(nobc_group_pupil_df['time']) + list(nobc_group_pupil_df['time'][::-1]),
@@ -340,28 +255,34 @@ fig.add_trace(go.Scatter(
     showlegend=False
 ))
 
-fig.add_vline(x=0, line_dash='dot', line=dict(color='black', width=1.5))
-fig.add_hline(y=0, line_dash = 'dot', line=dict(color='black', width=1.5))
+fig.add_vline(x=0, line_dash='dot', line=dict(color='black', width=3))
+fig.add_hline(y=0, line_dash = 'dot', line=dict(color='black', width=3))
 
 fig.update_xaxes(
         showline=True, 
-        linewidth=1.5, 
+        linewidth=3, 
         linecolor='black', 
         title_text="Time relative to outcome presentation (s)",
+        ticks="inside",
+        tickwidth=1.5,
+        tickcolor='black',
     )
 
 fig.update_yaxes(
         showline=True, 
-        linewidth=1.5, 
+        linewidth=3, 
         linecolor='black',
-        title_text = 'Non-baseline corrected pupil diameter signal (z-score)' 
+        title_text = 'Non-baseline corrected pupil signal (z-score)',
+        ticks="inside",
+        tickwidth=1.5,
+        tickcolor='black', 
     )
 
 fig.update_layout(
     height=720, 
     width=840, 
     plot_bgcolor='rgba(255, 255, 255, 1)', 
-    font=dict(size=24, family="Times New Roman")
+    font=dict(size=30, family="Times New Roman")
 )
 
 # Save the figure to the group-level folder
@@ -376,6 +297,6 @@ base_filepath = os.path.join(plot_dir, base_filename)
 fig.write_image(f"{base_filepath}.png", scale=3.125)
 
 # Save as SVG
-fig.write_image(f"{base_filepath}.svg") 
+fig.write_image(f"{base_filepath}.svg", scale=3.125) 
 
 fig.show()

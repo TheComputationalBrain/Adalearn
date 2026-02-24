@@ -71,7 +71,8 @@ fig = make_subplots(
             rows=1, 
             cols=2, 
             shared_xaxes=False, 
-            vertical_spacing=0.1, 
+            vertical_spacing=0.1,
+            horizontal_spacing=0.15, 
             specs=[   
                 [{}, {}]                               
             ]
@@ -84,15 +85,16 @@ for id in dataframes['mean_abs_error_df']['participant'].unique():
         x=participant_data['task_session'], 
         y=participant_data['mean_abs_error'], 
         mode='lines+markers', 
-        line=dict(color='rgba(0, 130, 150, 0.12)', width=1.5),
+        line=dict(color='rgba(0, 130, 150, 0.12)', width=2),
         marker=dict(color='rgba(0, 130, 150, 0.12)', size=8)
     ), row=1, col=1)
 
     fig.add_trace(go.Scatter(
         x=mean_abs_error_avg_df['task_session'], 
         y=mean_abs_error_avg_df['mean'], 
-        mode='lines+markers', 
-        marker=dict(color='rgba(0, 130, 150, 0.8)', size=12)
+        mode='lines+markers',
+        line=dict(width=3),
+        marker=dict(color='rgba(0, 130, 150, 0.8)', size=14)
     ), row=1, col=1)
 
     fig.update_yaxes(autorangeoptions_include=0, row=1, col=1)
@@ -104,7 +106,7 @@ for id in dataframes['mean_abs_error_df']['participant'].unique():
         x=participant_data['task_session'], 
         y=participant_data['coef_variation'], 
         mode='lines+markers', 
-        line=dict(color='rgba(0, 130, 150, 0.12)', width=1.5),
+        line=dict(color='rgba(0, 130, 150, 0.12)', width=2),
         marker=dict(color='rgba(0, 130, 150, 0.12)', size=8)
     ), row=1, col=2)
 
@@ -112,14 +114,53 @@ for id in dataframes['mean_abs_error_df']['participant'].unique():
         x=mean_abs_error_avg_df['task_session'], 
         y=mean_abs_error_avg_df['cv'], 
         mode='lines+markers', 
-        marker=dict(color='rgba(0, 130, 150, 0.8)', size=12)
+        line=dict(width=3),
+        marker=dict(color='rgba(0, 130, 150, 0.8)', size=14)
     ), row=1, col=2)
 
 
-fig.update_yaxes(title_text="Mean absolute error", showline=True, linewidth=1.5, linecolor='black', row=1, col=1)
-fig.update_yaxes(title_text="Coefficient of variation (%)", showline=True, linewidth=1.5, linecolor='black', row=1, col=2)
-fig.update_xaxes(tickvals=list(range(1, 23, 2)), title_text="Task session", showline=True, linewidth=1.5, linecolor='black', row=1, col=1)
-fig.update_xaxes(tickvals=list(range(1, 23, 2)), title_text="Task session", showline=True, linewidth=1.5, linecolor='black', row=1, col=2)
+fig.update_yaxes(
+    title_text="Mean absolute error", 
+    showline=True, 
+    linewidth=3, 
+    linecolor='black',
+    ticks="inside",          # <-- turn ticks on
+    tickwidth=1.5,            # thickness of ticks
+    tickcolor='black', 
+    row=1, col=1
+    )
+fig.update_yaxes(
+    title_text="Coefficient of variation (%)", 
+    showline=True, 
+    linewidth=3, 
+    linecolor='black',
+    ticks="inside",          # <-- turn ticks on
+    tickwidth=1.5,            # thickness of ticks
+    tickcolor='black',  
+    row=1, col=2
+    )
+fig.update_xaxes(
+    tickvals=list(range(1, 22, 5)), 
+    title_text="Task session", 
+    showline=True, 
+    linewidth=3, 
+    linecolor='black', 
+    ticks="inside",          # <-- turn ticks on
+    tickwidth=1.5,            # thickness of ticks
+    tickcolor='black',
+    row=1, col=1
+    )
+fig.update_xaxes(
+    tickvals=list(range(1, 22, 5)), 
+    title_text="Task session", 
+    showline=True, 
+    linewidth=3, 
+    linecolor='black', 
+    ticks="inside",          # <-- turn ticks on
+    tickwidth=1.5,            # thickness of ticks
+    tickcolor='black',
+    row=1, col=2
+)
 
 fig.update_layout(
     height=720,
@@ -127,7 +168,7 @@ fig.update_layout(
     showlegend=False,
     plot_bgcolor='rgba(255, 255, 255, 1)',
     margin=dict(l=20, r=20, t=50, b=20),
-    font=dict(size=22, family='Times New Roman'),
+    font=dict(size=30, family='Times New Roman'),
 )
 
 # Save the figure to the group-level folder
@@ -203,7 +244,7 @@ fig.add_trace(go.Scatter(
     x=[0, 1],  
     y=[0, 1],  
     mode='lines',
-    line=dict(color='rgba(50, 50, 50, 0.5)', dash='dot', width=3),
+    line=dict(color='rgba(50, 50, 50, 0.5)', dash='dot', width=4),
     name='Identity',
     showlegend=True
 ))
@@ -215,32 +256,18 @@ for participant in participant_v_model_df['participant'].unique():
         x=data['model_estimate_bin_label'], 
         y=data['avg_estimate'], 
         mode='lines+markers',
-        line=dict(color='rgba(0, 130, 150, 0.12)', width=1.5),
-        marker=dict(color='rgba(0, 130, 150, 0.12)', size=12),
+        line=dict(color='rgba(0, 130, 150, 0.12)', width=3),
+        marker=dict(color='rgba(0, 130, 150, 0.12)', size=14),
         showlegend=False))
 
 fig.add_trace(go.Scatter(
     x=group_behav_v_model_estimate_df['model_estimate_bin_label'],
     y=group_behav_v_model_estimate_df['group_avg_estimate'], 
     mode='markers',
-    marker=dict(color='rgba(0, 130, 150, 0.8)', size=20), 
+    marker=dict(color='rgba(0, 130, 150, 0.8)', size=28), 
     showlegend=False, 
     ))
 
-
-fig.update_xaxes(
-    showline=True, 
-    linewidth=1.5, 
-    linecolor='black', 
-    title_text="Model estimate", 
-)
-
-fig.update_yaxes(
-    showline=True, 
-    linewidth=1.5, 
-    linecolor='black', 
-    title_text="Participant estimate",   
-)
 
 # Add histogram to the plot
 hist_trace = go.Histogram(
@@ -256,47 +283,56 @@ hist_trace = go.Histogram(
 fig.add_trace(hist_trace)
 
 fig.update_layout(
-    xaxis2=dict(
-        domain=[0.7, 0.95],  
-        anchor='y2',
-        range=[0, 1.0],      
-        title='Correlation coefficient',
-        showline=True,
-        linecolor='black',
-        linewidth=1.5,
-        ticks="" 
-    ),
-    yaxis2=dict(
-        domain=[0.2, 0.45],  
-        anchor='x2',
-        title='Count',
-        showline=True,
-        linecolor='black',
-        linewidth=1.5,
-        ticks="" 
-    )
-)
-
-fig.update_layout(
     xaxis=dict(
-        title=dict(text="Model estimate", font=dict(size=26)),
-        ticks=""
+        title=dict(text="Model estimate"),
+        showline=True, 
+        linewidth=3, 
+        linecolor='black', 
+        ticks="inside",          # <-- turn ticks on
+        tickwidth=1.5,            # thickness of ticks
+        tickcolor='black',         
     ),
     yaxis=dict(
-        title=dict(text="Participant estimate", font=dict(size=26)),
-        ticks=""
+        title=dict(text="Participant estimate"),
+        showline=True, 
+        linewidth=3, 
+        linecolor='black', 
+        ticks="inside",          # <-- turn ticks on
+        tickwidth=1.5,            # thickness of ticks
+        tickcolor='black',
+
     ),
     xaxis2=dict(
-        title=dict(text='Correlation coefficient', font=dict(size=26)),
+        domain=[0.7, 0.95],
+        title=dict(text='Correlation coefficient', font=dict(size=26)),  
+        anchor='y2',
+        range=[0, 1.0],      
+        showline=True,
+        linecolor='black',
+        linewidth=3,
+        ticks="inside",          # <-- turn ticks on
+        tickwidth=1.5,            # thickness of ticks
+        tickcolor='black',
+        tickvals=[0.0, 0.5, 1.0],
     ),
     yaxis2=dict(
-        title=dict(text='Count', font=dict(size=26)),
+        domain=[0.2, 0.45],
+        title=dict(text='Count', font=dict(size=26)),  
+        anchor='x2',
+        showline=True,
+        linecolor='black',
+        linewidth=3,
+        ticks="inside",          # <-- turn ticks on
+        tickwidth=1.5,            # thickness of ticks
+        tickcolor='black',
+        tickvals=list(range(0, 5, 2))
     ),
-    font=dict(size=26, family='Times New Roman'), 
     height=720,
     width=840,
-    template='simple_white',
-    showlegend=False
+    showlegend=False,
+    plot_bgcolor='rgba(255, 255, 255, 1)',
+    margin=dict(l=20, r=20, t=50, b=20),
+    font=dict(size=30, family='Times New Roman'),
 )
 
 # Save the figure to the group-level folder

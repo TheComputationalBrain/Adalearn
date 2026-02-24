@@ -114,221 +114,380 @@ def plot_session_behav_comp(participant_str, condition_str, directory_path, base
     - computational_df: pd.DataFrame, contains the computational-derived parameters of interest for each task session.
     - change_point_indices: pd.DataFrame, with columns 'cum_outcome_num', 'rel_time', and 'task_session', containing the indices and relative times of the change points for each session, and z-score used to categorises the obvious of the change point ('change_point_cat'). (*Note: Have removed identification of the first outcome of each task session as a new change point)
     - task_session: float, the specific task session to analyze (default: 1)
-    - turn_on_plotting: boolean, if True, will plot the subplots. Provides an option to turn off the plotting when collating the data across scripts.
+    - turn_on_plotting: boolean, if True, will plot the plots. Provides an option to turn off the plotting when collating the data across scripts.
     - plot_group_level: boolean, if True, will save plots in group level plot folder
 
     Returns:
     - None
-    - Displays a Plotly figure with behavioural and computational subplots
+    - Displays a Plotly figureS with behavioural and computational variables
     """
     # Select a task session from the dataframes
     task_session_behav_df = behavioural_df[behavioural_df['task_session'] == task_session].copy()
     task_session_comp_df = computational_df[computational_df['task_session'] == task_session].copy()
     task_session_cp = change_point_indices[change_point_indices['task_session'] == task_session].copy()
 
-    if turn_on_plotting:
-        fig = make_subplots(
-            rows=3, 
-            cols=2, 
-            shared_xaxes=False, 
-            vertical_spacing=0.1, 
-            specs=[
-                [{"colspan": 2}, None],    
-                [{}, {}],                   
-                [{}, {}]                                   
-            ]
+    # Plot 1: Behavioural and computational estimates
+    fig_1 = go.Figure()
+
+    fig_1.add_trace(
+        go.Scatter(
+            x=task_session_behav_df['outcome_num']+1,
+            y=task_session_behav_df['P1'],
+            mode='lines',
+            line=dict(color='rgba(0,120,255,0.8)', dash='dot', width=4),
+            name='Generative probability'
+        ),
+    )
+    fig_1.add_trace(
+        go.Scatter(
+            x=task_session_behav_df['outcome_num']+1,
+            y=task_session_behav_df['estimate'],
+            mode='lines',
+            line=dict(color='rgba(0, 0, 0, 0.8)', width=4),
+            name='Participant estimate'
+        ),
+    )
+    fig_1.add_trace(
+        go.Scatter(
+            x=task_session_behav_df['outcome_num']+1,
+            y=task_session_behav_df['ideal_observer'],
+            mode='lines',
+            line=dict(color='rgba(255, 0, 0, 0.8)', width=4),
+            name='Model estimate'
+        ),
+    )
+    outcome_colors = ['blue' if val == 1 else 'yellow' for val in task_session_behav_df['outcome']]
+    fig_1.add_trace(
+        go.Scatter(
+            x=task_session_behav_df['outcome_num']+1,
+            y=[0] * len(task_session_behav_df['outcome']),
+            mode='markers',
+            marker=dict(color=outcome_colors, size=10),
+            name='Outcomes',
+            showlegend=False
+        ),
     )
 
-        # Subplot 1: Behavioural and computational estimates
-        fig.add_trace(
-            go.Scatter(
-                x=task_session_behav_df['outcome_num']+1,
-                y=task_session_behav_df['P1'],
-                mode='lines',
-                line=dict(color='rgba(0,120,255,0.6)', dash='dot', width=4),
-                name='Generative probability'
-            ), row=1, col=1
-        )
-        fig.add_trace(
-            go.Scatter(
-                x=task_session_behav_df['outcome_num']+1,
-                y=task_session_behav_df['estimate'],
-                mode='lines',
-                line=dict(color='rgba(0, 0, 0, 0.8)', width=2),
-                name='Participant estimate'
-            ), row=1, col=1
-        )
-        fig.add_trace(
-            go.Scatter(
-                x=task_session_behav_df['outcome_num']+1,
-                y=task_session_behav_df['ideal_observer'],
-                mode='lines',
-                line=dict(color='rgba(255, 0, 0, 0.8)', width=2),
-                name='Model estimate'
-            ), row=1, col=1
-        )
-        outcome_colors = ['blue' if val == 1 else 'yellow' for val in task_session_behav_df['outcome']]
-        fig.add_trace(
-            go.Scatter(
-                x=task_session_behav_df['outcome_num']+1,
-                y=[0] * len(task_session_behav_df['outcome']),
-                mode='markers',
-                marker=dict(color=outcome_colors, size=10),
-                name='Outcomes',
-                showlegend=False
-            ), row=1, col=1
-        )
+    fig_1.update_xaxes(
+        title_text="Outcome",
+        showline=True,
+        linewidth=3,
+        linecolor='black',
+        ticks="inside",          # <-- turn ticks on
+        tickwidth=1.5,            # thickness of ticks
+        tickcolor='black',
+        dtick=10,            # Tick every 10
+        tick0=5, # Start ticks at 5 to skip 0
+        range=[0.01, 75.99]
+    )
+    fig_1.update_yaxes(
+        showline=True,
+        linewidth=3,
+        linecolor='black',
+        ticks="inside",          # <-- turn ticks on
+        tickwidth=1.5,            # thickness of ticks
+        tickcolor='black'
+    )
 
-        # Subplot 2: Behavioural learning rate
-        fig.add_trace(
-            go.Scatter(
-                x=task_session_comp_df['outcome_num']+1, 
-                y=task_session_comp_df['cleaned_learning_rate_estimate'], 
-                mode='lines+markers',
-                marker=dict(color='rgba(91, 55, 103, 0.8)'), 
-                name="Apparent learning rate <br></b> (participant)",
-                showlegend=False
-            ), row=2, col=1
-        )
-        for cp in task_session_cp['outcome_num']+1:
-            fig.add_shape(
-                type="line", 
-                x0=cp, x1=cp, 
-                y0=task_session_comp_df['cleaned_learning_rate_estimate'].min(), y1=task_session_comp_df['cleaned_learning_rate_estimate'].max(), 
-                line=dict(color="grey", width=2, dash="dash"),
-                xref='x2', yref='y2'
-            )
+    fig_1.update_layout(
+        height=720,
+        width=840,
+        showlegend=True,
+        legend=dict(
+            x=0.04,
+            y=0.18,
+            font=dict(size=26, family='Times New Roman'),
+        ),
+        plot_bgcolor='rgba(255, 255, 255, 1)',
+        margin=dict(l=20, r=20, t=50, b=20),
+        font=dict(size=30, family='Times New Roman'),
+    )
 
-        # Subplot 3: Ideal observer learning rate
-        fig.add_trace(
-            go.Scatter(
-                x=task_session_comp_df['outcome_num']+1, 
-                y=task_session_comp_df['cleaned_learning_rate_ideal_observer'], 
-                mode='lines+markers',
-                marker=dict(color='rgba(91, 55, 103, 0.8)'), 
-                name='Apparent learning rate <br></b> (model)',
-                showlegend=False
-            ), row=2, col=2
-        )
-        for cp in task_session_cp['outcome_num']+1:
-            fig.add_shape(
-                type="line", 
-                x0=cp, x1=cp, 
-                y0=task_session_comp_df['cleaned_learning_rate_ideal_observer'].min(), y1=task_session_comp_df['cleaned_learning_rate_ideal_observer'].max(), 
-                line=dict(color="grey", width=2, dash="dash"),
-                xref='x3', yref='y3'
-            )
+    # Save the figure to the group-level folder
+    plot_dir = os.path.join(base_dir, "plots")
+    os.makedirs(plot_dir, exist_ok=True)
 
-        # Subplot 4: Change point probability
-        fig.add_trace(
-            go.Scatter(
-                x=task_session_comp_df['outcome_num']+1, 
-                y=task_session_comp_df['cpp'], 
-                mode='lines+markers',
-                marker=dict(color='rgba(0, 130, 150, 0.8)'), 
-                name='Change point probability',
-                showlegend=False
-            ), row=3, col=1
-        )
-        for cp in task_session_cp['outcome_num']+1:
-            fig.add_shape(
-                type="line", 
-                x0=cp, x1=cp, 
-                y0=0, y1=task_session_comp_df['cpp'].max(), 
-                line=dict(color="grey", width=2, dash="dash"),
-                xref='x4', yref='y4'
-            )
+    # Base filename (without extension)
+    base_filename = f"adalearn_pupil-example_participant_behav_and _model_vars"
+    base_filepath = os.path.join(plot_dir, base_filename)
 
-        # Subplot 5: Prior uncertainty
-        fig.add_trace(
-            go.Scatter(
-                x=task_session_comp_df['outcome_num']+1, 
-                y=task_session_comp_df['prior_conf'], 
-                mode='lines+markers',
-                marker=dict(color='rgba(0, 130, 150, 0.8)'), 
-                name='Prior uncertainty',
-                showlegend=False
-            ), row=3, col=2
-        )
-        for cp in task_session_cp['outcome_num']+1:
-            fig.add_shape(
-                type="line", 
-                x0=cp, x1=cp, 
-                y0=0, y1=task_session_comp_df['prior_conf'].max(), 
-                line=dict(color="grey", width=2, dash="dash"),
-                xref='x5', yref='y5'
-            )
+    # Save as PNG
+    fig_1.write_image(f"{base_filepath}.png", scale=3.125)
 
-        # Update layout
-        fig.update_layout(
-            height=1900,
-            width=2500,
-            plot_bgcolor='rgba(255, 255, 255, 1)',
-            showlegend=True,
-            margin=dict(l=50, r=50, t=50, b=50),
-            font=dict(size=30, family="times new roman"),
-            hovermode="closest"
+    # Save as SVG
+    fig_1.write_image(f"{base_filepath}.svg", scale=3.125) 
+
+    fig_1.show()
+
+
+    # Plot 2: Behavioural learning rate
+
+    fig_2 = go.Figure()
+
+    fig_2.add_trace(
+        go.Scatter(
+            x=task_session_comp_df['outcome_num']+1, 
+            y=task_session_comp_df['cleaned_learning_rate_estimate'], 
+            mode='lines+markers',
+            line=dict(width=3),
+            marker=dict(color='rgba(91, 55, 103, 0.8)', size=14), 
+            name="Apparent learning rate (participant)",
+            showlegend=False
+        ), 
+    )
+    for cp in task_session_cp['outcome_num']+1:
+        fig_2.add_shape(
+            type="line", 
+            x0=cp, x1=cp, 
+            y0=task_session_comp_df['cleaned_learning_rate_estimate'].min(), y1=task_session_comp_df['cleaned_learning_rate_estimate'].max(), 
+            line=dict(color="grey", width=4, dash="dash"),
         )
 
-        for r in range(1, 5):
-            for c in range(1, 3):
-                fig.update_xaxes(
-                    showline=True,
-                    linewidth=1.5,
-                    linecolor='black',
-                    dtick=10,            # Tick every 10
-                    tick0=5, # Start ticks at 5 to skip 0
-                    range=[0.01, 75.99],
-                    row=r, col=c
-                )
-                fig.update_yaxes(
-                    showline=True,
-                    linewidth=1.5,
-                    linecolor='black',
-                    row=r, col=c
-                )
+    fig_2.update_xaxes(
+        title_text="Outcome",
+        showline=True,
+        linewidth=3,
+        linecolor='black',
+        ticks="inside",          # <-- turn ticks on
+        tickwidth=1.5,            # thickness of ticks
+        tickcolor='black',
+        dtick=10,            # Tick every 10
+        tick0=5, # Start ticks at 5 to skip 0
+        range=[0.01, 75.99]
+    )
+    fig_2.update_yaxes(
+        title_text="Apparent learning rate (participant)",
+        showline=True,
+        linewidth=3,
+        linecolor='black',
+        ticks="inside",          # <-- turn ticks on
+        tickwidth=1.5,            # thickness of ticks
+        tickcolor='black'
+    )
 
-        # Add axis titles
-        fig.update_xaxes(title_text="Outcome", row=1, col=1)
-        fig.update_xaxes(title_text="Outcome", row=2, col=1)
-        fig.update_xaxes(title_text="Outcome", row=2, col=2)
-        fig.update_xaxes(title_text="Outcome", row=3, col=1)
-        fig.update_xaxes(title_text="Outcome", row=3, col=2)
+    fig_2.update_layout(
+        height=720,
+        width=840,
+        showlegend=False,
+        plot_bgcolor='rgba(255, 255, 255, 1)',
+        margin=dict(l=20, r=20, t=50, b=20),
+        font=dict(size=30, family='Times New Roman'),
+    )
 
+    # Base filename (without extension)
+    base_filename = f"adalearn_pupil-example_participant_learning_rate_estimate"
+    base_filepath = os.path.join(plot_dir, base_filename)
 
-        fig.update_yaxes(title_text="Proportion(Blue)", row=1, col=1)
-        fig.update_yaxes(title_text="Apparent learning rate <br> (participant)", row=2, col=1)
-        fig.update_yaxes(title_text="Apparent learning rate <br> (model)", row=2, col=2)
-        fig.update_yaxes(title_text="Change point probability", row=3, col=1)
-        fig.update_yaxes(title_text="Prior uncertainty", row=3, col=2)
+    # Save as PNG
+    fig_2.write_image(f"{base_filepath}.png", scale=3.125)
 
-        # Save the figure to the partcipant folder
-        plot_dir = os.path.join(directory_path, f"ses-{condition_str}", "plots")
+    # Save as SVG
+    fig_2.write_image(f"{base_filepath}.svg", scale=3.125) 
 
-        os.makedirs(plot_dir, exist_ok=True)
-
-        file_name = f"sub-{participant_str}_ses-{condition_str}_task-session-behav-model-variables.png"
-
-        file_path = os.path.join(plot_dir, file_name)
-
-        fig.write_image(file_path)
-
-        if plot_group_level:
-            plot_dir = os.path.join(base_dir, "plots")
-            os.makedirs(plot_dir, exist_ok=True)
-
-            # Base filename (without extension)
-            base_filename = f"adalearn_pupil-example_task_session"
-            base_filepath = os.path.join(plot_dir, base_filename)
-
-            # Save as PNG
-            fig.write_image(f"{base_filepath}.png")
-
-            # Save as SVG
-            fig.write_image(f"{base_filepath}.svg") 
+    fig_2.show()
 
 
-        fig.show()
+    # Plot 3: Ideal observer learning rate
+
+    fig_3 = go.Figure()
+
+    fig_3.add_trace(
+        go.Scatter(
+            x=task_session_comp_df['outcome_num']+1, 
+            y=task_session_comp_df['cleaned_learning_rate_ideal_observer'], 
+            mode='lines+markers',
+            line=dict(width=3),
+            marker=dict(color='rgba(91, 55, 103, 0.8)', size = 14), 
+            name='Apparent learning rate <br></b> (model)',
+            showlegend=False
+        ),
+    )
+    for cp in task_session_cp['outcome_num']+1:
+        fig_3.add_shape(
+            type="line", 
+            x0=cp, x1=cp, 
+            y0=task_session_comp_df['cleaned_learning_rate_ideal_observer'].min(), y1=task_session_comp_df['cleaned_learning_rate_ideal_observer'].max(), 
+            line=dict(color="grey", width=4, dash="dash"),
+        )
+    
+    fig_3.update_xaxes(
+        title_text="Outcome",
+        showline=True,
+        linewidth=3,
+        linecolor='black',
+        ticks="inside",          # <-- turn ticks on
+        tickwidth=1.5,            # thickness of ticks
+        tickcolor='black',
+        dtick=10,            # Tick every 10
+        tick0=5, # Start ticks at 5 to skip 0
+        range=[0.01, 75.99]
+    )
+    fig_3.update_yaxes(
+        title_text="Apparent learning rate (model)",
+        showline=True,
+        linewidth=3,
+        linecolor='black',
+        ticks="inside",          # <-- turn ticks on
+        tickwidth=1.5,            # thickness of ticks
+        tickcolor='black'
+    )
+
+    fig_3.update_layout(
+        height=720,
+        width=840,
+        showlegend=False,
+        plot_bgcolor='rgba(255, 255, 255, 1)',
+        margin=dict(l=20, r=20, t=50, b=20),
+        font=dict(size=30, family='Times New Roman'),
+    )
+
+    # Base filename (without extension)
+    base_filename = f"adalearn_pupil-example_participant_learning_rate_model"
+    base_filepath = os.path.join(plot_dir, base_filename)
+
+    # Save as PNG
+    fig_3.write_image(f"{base_filepath}.png", scale=3.125)
+
+    # Save as SVG
+    fig_3.write_image(f"{base_filepath}.svg", scale=3.125)
+
+    fig_3.show()
+
+
+    # Plot 4: Change point probability
+
+    fig_4 = go.Figure()
+
+    fig_4.add_trace(
+        go.Scatter(
+            x=task_session_comp_df['outcome_num']+1, 
+            y=task_session_comp_df['cpp'], 
+            mode='lines+markers',
+            line=dict(width=3),
+            marker=dict(color='rgba(0, 130, 150, 0.8)', size = 14), 
+            name='Change point probability',
+            showlegend=False
+        ),
+    )
+    for cp in task_session_cp['outcome_num']+1:
+        fig_4.add_shape(
+            type="line", 
+            x0=cp, x1=cp, 
+            y0=task_session_comp_df['cpp'].min()-0.005, y1=task_session_comp_df['cpp'].max(), 
+            line=dict(color="grey", width=4, dash="dash"),
+        )
+
+    fig_4.update_xaxes(
+        title_text="Outcome",
+        showline=True,
+        linewidth=3,
+        linecolor='black',
+        dtick=10,            # Tick every 10
+        tick0=5, # Start ticks at 5 to skip 0
+        range=[0.01, 75.99],
+        ticks="inside",          # <-- turn ticks on
+        tickwidth=1.5,            # thickness of ticks
+        tickcolor='black'
+    )
+    fig_4.update_yaxes(
+        title_text="Change point probability",
+        showline=True,
+        linewidth=3,
+        linecolor='black',
+        range=[task_session_comp_df['cpp'].min()-0.01, task_session_comp_df['cpp'].max()+0.01],
+        ticks="inside",          # <-- turn ticks on
+        tickwidth=1.5,            # thickness of ticks
+        tickcolor='black'
+    )
+
+    fig_4.update_layout(
+        height=720,
+        width=840,
+        showlegend=False,
+        plot_bgcolor='rgba(255, 255, 255, 1)',
+        margin=dict(l=20, r=20, t=50, b=20),
+        font=dict(size=30, family='Times New Roman'),
+    )
+
+    # Base filename (without extension)
+    base_filename = f"adalearn_pupil-example_participant_change_point_probability"
+    base_filepath = os.path.join(plot_dir, base_filename)
+
+    # Save as PNG
+    fig_4.write_image(f"{base_filepath}.png", scale=3.125)
+
+    # Save as SVG
+    fig_4.write_image(f"{base_filepath}.svg", scale=3.125) 
+
+    fig_4.show()
+
+
+    # Plot 5: Prior uncertainty
+
+    fig_5 = go.Figure()
+
+    fig_5.add_trace(
+        go.Scatter(
+            x=task_session_comp_df['outcome_num']+1, 
+            y=task_session_comp_df['prior_conf'], 
+            mode='lines+markers',
+            line=dict(width=3),
+            marker=dict(color='rgba(0, 130, 150, 0.8)', size = 14), 
+            name='Prior uncertainty',
+            showlegend=False
+        ),
+    )
+    for cp in task_session_cp['outcome_num']+1:
+        fig_5.add_shape(
+            type="line", 
+            x0=cp, x1=cp, 
+            y0=task_session_comp_df['prior_conf'].min()-0.005, y1=task_session_comp_df['prior_conf'].max(), 
+            line=dict(color="grey", width=4, dash="dash"),
+        )
+
+    fig_5.update_xaxes(
+        title_text="Outcome",
+        showline=True,
+        linewidth=3,
+        linecolor='black',
+        dtick=10,            # Tick every 10
+        tick0=5, # Start ticks at 5 to skip 0
+        range=[0.01, 75.99],
+        ticks="inside",          # <-- turn ticks on
+        tickwidth=1.5,            # thickness of ticks
+        tickcolor='black'
+    )
+    fig_5.update_yaxes(
+        title_text="Prior uncertainty",
+        showline=True,
+        linewidth=3,
+        linecolor='black',
+        range=[task_session_comp_df['prior_conf'].min()-0.01, task_session_comp_df['prior_conf'].max()+0.01],
+        ticks="inside",          # <-- turn ticks on
+        tickwidth=1.5,            # thickness of ticks
+        tickcolor='black'
+    )
+
+    fig_5.update_layout(
+        height=720,
+        width=840,
+        showlegend=False,
+        plot_bgcolor='rgba(255, 255, 255, 1)',
+        margin=dict(l=20, r=20, t=50, b=20),
+        font=dict(size=30, family='Times New Roman'),
+    )
+
+    # Base filename (without extension)
+    base_filename = f"adalearn_pupil-example_participant_prior_uncertainty"
+    base_filepath = os.path.join(plot_dir, base_filename)
+
+    # Save as PNG
+    fig_5.write_image(f"{base_filepath}.png", scale=3.125)
+
+    # Save as SVG
+    fig_5.write_image(f"{base_filepath}.svg", scale=3.125)
+
+    fig_5.show()
 
 
 

@@ -6,6 +6,7 @@ This script plots figures for the peristimulus analysis of the supplemental data
 
 import os
 import sys
+import numpy as np
 from pathlib import Path
 import plotly.io as pio
 import plotly.graph_objects as go
@@ -49,7 +50,7 @@ fig.add_trace(go.Scatter(
     x=time, 
     y=cpp, 
     mode='lines',
-    line=dict(color='rgba(220, 120, 0, 0.8)'),  
+    line=dict(color='rgba(220, 120, 0, 0.8)', width=4),  
     name='Change point probability'))
 
 # CPP error fill
@@ -68,7 +69,7 @@ fig.add_trace(go.Scatter(
     x=time, 
     y=conf, 
     mode='lines',
-    line=dict(color='rgba(0, 130, 150, 0.8)'), 
+    line=dict(color='rgba(0, 130, 150, 0.8)', width=4), 
     name='Prior uncertainty'))
 
 # Confidence error fill
@@ -82,9 +83,18 @@ fig.add_trace(go.Scatter(
     showlegend=False
 ))
 
+fig.add_vrect(
+    x0=-0.25, 
+    x1=0,
+    fillcolor='rgba(210, 0, 150, 0.2)', 
+    opacity=0.4,               
+    layer="above",            
+    line_width=0
+)
+
 # Reference lines
-fig.add_vline(x=0, line_dash='dot', line=dict(color='black', width=1.5))
-fig.add_hline(y=0, line_dash='dot', line=dict(color='black', width=1.5))
+fig.add_vline(x=0, line_dash='dot', line=dict(color='black', width=3))
+fig.add_hline(y=0, line_dash='dot', line=dict(color='black', width=3))
 
 # Cluster significance markers
 var_style_map = {
@@ -124,26 +134,32 @@ for _, row in between_coefs_clusters_df.iterrows():
 # Axes & layout
 fig.update_xaxes(
     showline=True, 
-    linewidth=1.5, 
+    linewidth=3, 
     linecolor='black', 
-    title_text="Time relative to outcome presentation (s)"
+    title_text="Time relative to outcome presentation (s)",
+    ticks="inside",
+    tickwidth=1.5,
+    tickcolor='black',
 )
 
 fig.update_yaxes(
     showline=True, 
-    linewidth=1.5, 
+    linewidth=3, 
     linecolor='black', 
-    title_text="Regression weights"
+    title_text="Regression weights",
+    ticks="inside",
+    tickwidth=1.5,
+    tickcolor='black',
 )
 
 fig.update_layout(
     plot_bgcolor='rgba(255, 255, 255, 1)',
     height=720,
     width=840,
-    font=dict(size=24, family="Times New Roman"),
+    font=dict(size=30, family="Times New Roman"),
     legend=dict(
-        x=0.65,
-        y=1.0,
+        x=0.75,
+        y=0.4,
         xanchor='right',
         yanchor='top',
         bgcolor='rgba(255, 255, 255, 0.7)')
@@ -180,7 +196,7 @@ fig.add_trace(go.Scatter(
     x=time, 
     y=cpp, 
     mode='lines',
-    line=dict(color='rgba(220, 120, 0, 0.8)'),  
+    line=dict(color='rgba(220, 120, 0, 0.8)', width=4),  
     name='Change point probability'))
 
 # CPP error fill
@@ -199,7 +215,7 @@ fig.add_trace(go.Scatter(
     x=time, 
     y=conf, 
     mode='lines',
-    line=dict(color='rgba(0, 130, 150, 0.8)'), 
+    line=dict(color='rgba(0, 130, 150, 0.8)', width=4), 
     name='Prior uncertainty'))
 
 # Confidence error fill
@@ -214,8 +230,8 @@ fig.add_trace(go.Scatter(
 ))
 
 # Reference lines
-fig.add_vline(x=0, line_dash='dot', line=dict(color='black', width=1.5))
-fig.add_hline(y=0, line_dash='dot', line=dict(color='black', width=1.5))
+fig.add_vline(x=0, line_dash='dot', line=dict(color='black', width=3))
+fig.add_hline(y=0, line_dash='dot', line=dict(color='black', width=3))
 
 # Cluster significance markers
 var_style_map = {
@@ -243,7 +259,7 @@ for _, row in between_coefs_clusters_nobc_df.iterrows():
         cluster_range = coefs_nobc_df['time'].iloc[row['cluster_start']:row['cluster_end']+1]
         fig.add_trace(go.Scatter(
             x=cluster_range,
-            y=[style['yval']- 0.005] * len(cluster_range),
+            y=[style['yval']- 0.01] * len(cluster_range),
             mode='lines',
             line=dict(color='black', width=8),
             showlegend=False,
@@ -255,27 +271,32 @@ for _, row in between_coefs_clusters_nobc_df.iterrows():
 # Axes & layout
 fig.update_xaxes(
     showline=True, 
-    linewidth=1.5, 
+    linewidth=3, 
     linecolor='black', 
-    title_text="Time relative to outcome presentation (s)"
+    title_text="Time relative to outcome presentation (s)",
+    ticks="inside",
+    tickwidth=1.5,
+    tickcolor='black',
 )
 
 fig.update_yaxes(
     showline=True, 
-    linewidth=1.5, 
+    linewidth=3, 
     linecolor='black', 
     title_text="Regression weights",
-    range=[-0.10, 0.08]
+    ticks="inside",
+    tickwidth=1.5,
+    tickcolor='black',
 ) 
 
 fig.update_layout(
     plot_bgcolor='rgba(255, 255, 255, 1)',
     height=720,
     width=840,
-    font=dict(size=24, family="Times New Roman"),
+    font=dict(size=30, family="Times New Roman"),
     legend=dict(
         x=0.95,
-        y=0.3,
+        y=0.4,
         xanchor='right',
         yanchor='top',
         bgcolor='rgba(255, 255, 255, 0.7)')

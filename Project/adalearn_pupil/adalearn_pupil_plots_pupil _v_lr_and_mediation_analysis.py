@@ -187,40 +187,47 @@ fig.add_trace(go.Scatter(
     x=grouped_pupil_bc_cp_rel_pos_df['rel_pos'],
     y=grouped_pupil_bc_cp_rel_pos_df['pupil_bc_mean'],
     mode='lines',
-    line=dict(color='rgba(128, 0, 128, 0.8)', width=3),
+    line=dict(color='rgba(128, 0, 128, 0.8)', width=4),
     name='Pupil (Baseline corrected effect window)',
     showlegend=True
 ))
 
 fig.add_shape(type="line", x0=0, x1=0, y0=0, y1=1, 
-                line=dict(dash="dot", color="black"), 
+                line=dict(dash="dot", width=3, color="black"), 
                 xref="x", yref="y domain")
     
 
 fig.update_xaxes(
     title_text="Outcomes relative to change point",
     showline=True,
-    linewidth=1,
+    linewidth=3,
     linecolor='black',
     tickmode='array',
     tickvals=list(range(-5, 6)),
     ticktext=["-5", "-4", "-3", "-2", "-1", "1", "2", "3", "4", "5", "6"],
-    range=[-5.5, 6.5]
+    range=[-5.5, 6.5],
+    ticks="inside",
+    tickwidth=1.5,
+    tickcolor='black',
 )
 
 fig.update_yaxes(
     showline=True, 
-    linewidth=1, 
+    linewidth=3, 
     linecolor='black', 
     range=[-0.05, 0.18], 
-    title_text='Phasic pupil effect signal (z-score)')
+    title_text='Phasic pupil effect signal (z-score)',
+    ticks="inside",
+    tickwidth=1.5,
+    tickcolor='black',
+)
 
 # Add the inset (e.g., CPP variable)
 fig.add_trace(go.Scatter(
     x=cpp_round_cp_df['position'],
     y=cpp_round_cp_df['mean'],
     mode='lines',
-    line=dict(color='rgba(200, 0, 0, 0.8)', width=3),
+    line=dict(color='rgba(200, 0, 0, 0.8)', width=4),
     name='CPP',
     xaxis='x2',
     yaxis='y2'
@@ -245,23 +252,23 @@ fig.add_shape(
     x0=0, x1=0,
     y0=cpp_round_cp_df['mean'].min() - 0.01,
     y1=cpp_round_cp_df['mean'].max() + 0.01,
-    line=dict(color="black", width=2, dash="dot"),
+    line=dict(color="black", width=3, dash="dot"),
     xref="x2", yref="y2"
 )
 
 fig.update_layout(
     xaxis2=dict(
-        domain=[0.12, 0.42], 
+        domain=[0.11, 0.41], 
         anchor='y2',
         range=[-5.5, 6.5],
         showticklabels=False,
         showline=True,
         linecolor='black',
-        linewidth=1.5,
+        linewidth=3,
         tickvals=list(range(-5, 6)),
         #title=dict(text="Outcomes relative to change point", font=dict(size=20)),
         #ticktext=["-5", "-4", "-3", "-2", "-1", "1", "2", "3", "4", "5", "6"],
-        tickfont=dict(size=18),
+        tickfont=dict(size=28),
     ),
     yaxis2=dict(
         domain=[0.7, 1.0],  
@@ -269,18 +276,17 @@ fig.update_layout(
         showticklabels=False,
         showline=True,
         linecolor='black',
-        linewidth=1.5,
+        linewidth=3,
         dtick=0.02,
-        title=dict(text="CPP", font=dict(size=20)),
-        tickfont=dict(size=20),
+        title=dict(text="CPP", font=dict(size=28)),
+        tickfont=dict(size=28),
     ),
     height=720, 
     width=840, 
     plot_bgcolor='rgba(255, 255, 255, 1)', 
-    font=dict(size=24, family="Times New Roman"), 
+    font=dict(size=30, family="Times New Roman"), 
     showlegend=False
 )
-
 
 # Save the figure to the group-level folder
 plot_dir = os.path.join(BASE_DIR, "plots")
@@ -295,7 +301,6 @@ fig.write_image(f"{base_filepath}.png", scale=3.125)
 
 # Save as SVG
 fig.write_image(f"{base_filepath}.svg", scale=3.125) 
-
 
 fig.show()
 
@@ -322,40 +327,47 @@ fig.add_trace(go.Scatter(
     x=grouped_pupil_nobc_cp_rel_pos_df['rel_pos'],
     y=grouped_pupil_nobc_cp_rel_pos_df['pupil_nobc_mean'],
     mode='lines',
-    line=dict(color='rgba(255, 165, 0, 0.8)', width=3),
+    line=dict(color='rgba(255, 165, 0, 0.8)', width=4),
     name='Pupil (Non-baseline corrected effect window)',
     showlegend=True
 ))
 
 fig.add_shape(type="line", x0=0, x1=0, y0=0, y1=1, 
-                line=dict(dash="dot", color="black"), 
+                line=dict(dash="dot", width=3, color="black"), 
                 xref="x", yref="y domain")
     
 
 fig.update_xaxes(
     title_text="Outcomes relative to change point",
     showline=True,
-    linewidth=1,
+    linewidth=3,
     linecolor='black',
     tickmode='array',
     tickvals=list(range(-5, 6)),
     ticktext=["-5", "-4", "-3", "-2", "-1", "1", "2", "3", "4", "5", "6"],
-    range=[-5.5, 6.5]
+    range=[-5.5, 6.5],
+    ticks="inside",
+    tickwidth=1.5,
+    tickcolor='black',
 )
 
 fig.update_yaxes(
     showline=True, 
-    linewidth=1, 
+    linewidth=3, 
     linecolor='black',
     range=[-0.18, 0.15], 
-    title_text='Tonic pupil effect signal (z-score)')
+    title_text='Tonic pupil effect signal (z-score)',
+    ticks="inside",
+    tickwidth=1.5,
+    tickcolor='black',
+)
 
 # Add the inset (e.g., prior uncertainty variable)
 fig.add_trace(go.Scatter(
     x=conf_round_cp_df['position'],
     y=conf_round_cp_df['mean'],
     mode='lines',
-    line=dict(color='rgba(200, 0, 0, 0.8)', width=3),
+    line=dict(color='rgba(200, 0, 0, 0.8)', width=4),
     name='Prior uncert',
     xaxis='x2',
     yaxis='y2'
@@ -380,13 +392,13 @@ fig.add_shape(
     x0=0, x1=0,
     y0=conf_round_cp_df['mean'].min() - 0.01,
     y1=conf_round_cp_df['mean'].max() + 0.01,
-    line=dict(color="black", width=2, dash="dot"),
+    line=dict(color="black", width=3, dash="dot"),
     xref="x2", yref="y2"
 )
 
 fig.update_layout(
     xaxis2=dict(
-        domain=[0.12, 0.42], 
+        domain=[0.13, 0.43], 
         anchor='y2',
         range=[-5.5, 6.5],
         showticklabels=False,
@@ -396,7 +408,10 @@ fig.update_layout(
         tickvals=list(range(-5, 6)),
         #title=dict(text="Outcomes relative to change point", font=dict(size=30)),
         #ticktext=["-5", "-4", "-3", "-2", "-1", "1", "2", "3", "4", "5", "6"],
-        tickfont=dict(size=20),
+        tickfont=dict(size=28),
+        ticks="inside",
+        tickwidth=1.5,
+        tickcolor='black',
     ),
     yaxis2=dict(
         domain=[0.70, 1.0],  
@@ -406,13 +421,16 @@ fig.update_layout(
         linecolor='black',
         linewidth=1.5,
         dtick=0.02,
-        title=dict(text="Prior uncert", font=dict(size=20)),
-        tickfont=dict(size=20),
+        title=dict(text="Prior uncert", font=dict(size=28)),
+        tickfont=dict(size=28),
+        ticks="inside",
+        tickwidth=1.5,
+        tickcolor='black',
     ),
     height=720, 
     width=840, 
     plot_bgcolor='rgba(255, 255, 255, 1)', 
-    font=dict(size=24, family="Times New Roman"), 
+    font=dict(size=30, family="Times New Roman"), 
     showlegend=False
 )
 
@@ -429,7 +447,6 @@ fig.write_image(f"{base_filepath}.png", scale=3.125)
 
 # Save as SVG
 fig.write_image(f"{base_filepath}.svg", scale=3.125) 
-
 
 fig.show()
 
@@ -606,7 +623,7 @@ fig.add_trace(go.Scatter(
     y=behav_group_pupil_bc_lr_df['group_avg_lr'], 
     mode='markers', 
     name='Phasic', 
-    marker=dict(color='rgba(128, 0, 128, 0.8)', size=19),
+    marker=dict(color='rgba(128, 0, 128, 0.8)', size=24),
     error_y=dict(
         type='data',
         array=behav_group_pupil_bc_lr_df['group_sem_lr'],
@@ -619,7 +636,7 @@ fig.add_trace(go.Scatter(
     y=behav_group_pupil_nobc_lr_df['group_avg_lr'], 
     mode='markers', 
     name='Tonic', 
-    marker=dict(color='rgba(255, 165, 0, 0.8)', size=19),
+    marker=dict(color='rgba(255, 165, 0, 0.8)', size=24),
     error_y=dict(
         type='data',
         array=behav_group_pupil_nobc_lr_df['group_sem_lr'],
@@ -664,7 +681,7 @@ fig.add_trace(go.Scatter(
     x=x_jittered_bc,
     y=pupil_bc_coef['coefficient'],
     mode='markers',
-    marker=dict(color='rgba(128, 0, 128, 0.3)', size=12),
+    marker=dict(color='rgba(128, 0, 128, 0.3)', size=16),
     showlegend=False,
     xaxis='x2',
     yaxis='y2'
@@ -675,7 +692,7 @@ fig.add_trace(go.Scatter(
     x=x_jittered_nobc,
     y=pupil_nobc_coef['coefficient'],
     mode='markers',
-    marker=dict(color='rgba(255, 165, 0, 0.5)', size=12),
+    marker=dict(color='rgba(255, 165, 0, 0.5)', size=16),
     showlegend=False,
     xaxis='x2',
     yaxis='y2'
@@ -690,7 +707,7 @@ fig.add_shape(
     yref='y2',   
     line=dict(
         color='black',
-        width=1.5,
+        width=3,
         dash='dot'
     )
 )
@@ -748,7 +765,7 @@ if pval_between < 0.05:
                   y0=between_star_y, y1=between_star_y,
                   xref='x2',
                   yref='y2',
-                  line=dict(color='black', width=1))
+                  line=dict(color='black', width=8))
 
     fig.add_annotation(
         text='*',
@@ -767,13 +784,25 @@ ymax = max(bc_bar_top, nobc_bar_top) + 0.2
 
 fig.update_layout(
     xaxis=dict(
-        showline=True, linewidth=1.5, linecolor='black', title_text="Pupil signal (z-score)"
+        showline=True,
+        linewidth=3, 
+        linecolor='black', 
+        title_text="Pupil signal (z-score)",
+        ticks="inside",
+        tickwidth=1.5,
+        tickcolor='black',
     ),
     yaxis=dict(
-        showline=True, linewidth=1.5, linecolor='black', title_text="Apparent learning rate (participant)"
+        showline=True, 
+        linewidth=3, 
+        linecolor='black', 
+        title_text="Apparent learning rate (participant)",
+        ticks="inside",
+        tickwidth=1.5,
+        tickcolor='black',
     ),
     xaxis2=dict(
-        domain=[0.12, 0.42],  # Position inset on the right side
+        domain=[0.14, 0.44],  # Position inset on the right side
         anchor='y2',
         tickmode='array',
         tickvals=[0, 1],
@@ -782,8 +811,11 @@ fig.update_layout(
         linewidth=1.5,          
         linecolor='black',    
         tickfont=dict(size=20),  
-        titlefont=dict(size=20),
-        tickangle=0
+        titlefont=dict(size=24),
+        tickangle=0,
+        ticks="inside",
+        tickwidth=1.5,
+        tickcolor='black',
     ),
     yaxis2=dict(
     domain=[0.70, 1.0],
@@ -793,10 +825,13 @@ fig.update_layout(
     linewidth=1.5,          
     linecolor='black',    
     tickfont=dict(size=20),  
-    titlefont=dict(size=20),
-    range=[ymin, ymax]  # Force the y-axis range
+    titlefont=dict(size=24),
+    range=[ymin, ymax],  # Force the y-axis range
+    ticks="inside",
+    tickwidth=1.5,
+    tickcolor='black',
     ),
-    font=dict(size=24, family="Times New Roman"),
+    font=dict(size=30, family="Times New Roman"),
     plot_bgcolor='rgba(255, 255, 255, 1)',
     height=720,
     width=840,
@@ -833,15 +868,29 @@ fig.show()
 mediation_group = dataframes['pupil_lr_uncert_nobc_mediation']
 
 
-def format_annotation_text(title, coef, sem, ci_lower, ci_upper):
+def format_annotation_text(title, coef, ci_lower, ci_upper, reduced_text = False):
     ci_same_sign = (ci_lower > 0 and ci_upper > 0) or (ci_lower < 0 and ci_upper < 0)
 
-    text = f"{title}"
+    text = (
+        f"{title}<br>"
+        f"({coef:.3f}, 95% <i>CI</i>: {ci_lower:.3f}–{ci_upper:.3f})"
+    )
 
-    if ci_same_sign:
-        return f"<b>{text}</b>"
+    path = (
+        f"{title}"
+    )
+
+    if reduced_text:
+        if ci_same_sign:
+            return f"<b>{path}</b>"
+        else:
+            return path
     else:
-        return text
+        if ci_same_sign:
+            return f"<b>{text}</b>"
+        else:
+            return text
+    
 
 def add_circle(center_x, center_y, radius, label):
     fig.add_shape(
@@ -870,21 +919,21 @@ fig.update_yaxes(range=[0, 8.5], showticklabels=False, scaleanchor="x", scalerat
 fig.add_shape(type="line",
     xref="x", yref="y",
     x0=1, y0=2, x1=5,
-    y1=6,
+    y1=8,
     line=dict(
         color="Black",
-        width=3,
+        width=4,
         dash='dash'
     ),
 )
 
 fig.add_shape(type="line",
     xref="x", yref="y",
-    x0=5, y0=6, x1=9,
+    x0=5, y0=8, x1=9,
     y1=2,
     line=dict(
         color="Black",
-        width=3,
+        width=4,
         dash='dash'
     ),
 )
@@ -895,7 +944,7 @@ fig.add_shape(type="line",
     y1=2.10,
     line=dict(
         color="Black",
-        width=3,
+        width=4,
         dash='dash'
     ),
 )
@@ -906,80 +955,68 @@ fig.add_shape(type="line",
     y1=1.9,
     line=dict(
         color="Black",
-        width=3,
+        width=4,
     ),
 )
 
 add_circle(1, 2, 1.4, "Prior<br>uncertainty")
 add_circle(9, 2, 1.4, "Apparent<br>learning<br>rate")
-add_circle(5, 6, 1.4, "Pupil:<br>non-corrected<br>(tonic)")
+add_circle(5, 8, 1.4, "Pupil:<br>non-corrected<br>(tonic)")
 
 total_path_text = format_annotation_text(
     "Total effect (path c)",
     mediation_group['boot_mean'][2],
-    mediation_group['sem'][2],
     mediation_group['ci_lower'][2],
-    mediation_group['ci_upper'][2]
+    mediation_group['ci_upper'][2],
+    reduced_text=False
 )
 
 fig.add_annotation(
     x=5,  
-    y=0.80,
+    y=0.5,
     xref="x",
     yref="y",
     text=total_path_text,
     showarrow=False,
-    bordercolor="white",
-    borderwidth=1,
-    borderpad=4,
-    bgcolor="white",
-    opacity=0.8
+    borderpad=4
 )
 
 direct_path_text = format_annotation_text(
     "Direct effect (path c')",
     mediation_group['boot_mean'][3],
-    mediation_group['sem'][3],
     mediation_group['ci_lower'][3],
-    mediation_group['ci_upper'][3]
+    mediation_group['ci_upper'][3],
+    reduced_text=False
 )
 
 fig.add_annotation(
     x=5,  
-    y=3.1,
+    y=3.4,
     xref="x",
     yref="y",
     text=direct_path_text,
     showarrow=False,
-    bordercolor="white",
-    borderwidth=1,
-    borderpad=4,
-    bgcolor="white",
-    opacity=0.8
+    borderpad=4
 )
 
 
 pupil_corrected_path_text = format_annotation_text(
     "Indirect effect (path a*b)",
     mediation_group['boot_mean'][4],
-    mediation_group['sem'][4],
     mediation_group['ci_lower'][4],
-    mediation_group['ci_upper'][4]
+    mediation_group['ci_upper'][4],
+    reduced_text=False
 )
 
 
 fig.add_annotation(
     x=5,  
-    y=8.2,
+    y=10.5,
     xref="x",
     yref="y",
     text=pupil_corrected_path_text,
     showarrow=False,
-    bordercolor="white",
-    borderwidth=1,
-    borderpad=4,
-    bgcolor="white",
-    opacity=0.8
+    borderpad=4
 )
 
 
@@ -987,49 +1024,41 @@ fig.add_annotation(
 pupil_corrected_path_a_text = format_annotation_text(
     "Path a",
     mediation_group['boot_mean'][0],
-    mediation_group['sem'][0],
     mediation_group['ci_lower'][0],
-    mediation_group['ci_upper'][0]
+    mediation_group['ci_upper'][0], 
+    reduced_text=True
 )
 
 
 fig.add_annotation(
-    x=1.2,  
+    x=1.0,  
     y=5.1,
     xref="x",
     yref="y",
     text=pupil_corrected_path_a_text,
     font=dict(color="grey"),
     showarrow=False,
-    bordercolor="white",
-    borderwidth=1,
-    borderpad=4,
-    bgcolor="white",
-    opacity=0.8
+    borderpad=4
 )
 
 pupil_corrected_path_b_text = format_annotation_text(
     "Path b",
     mediation_group['boot_mean'][1],
-    mediation_group['sem'][1],
     mediation_group['ci_lower'][1],
-    mediation_group['ci_upper'][1]
+    mediation_group['ci_upper'][1], 
+    reduced_text=True
 )
 
 
 fig.add_annotation(
-    x=8.2,  
+    x=8.7,  
     y=5.1,
     xref="x",
     yref="y",
     text=pupil_corrected_path_b_text,
     font=dict(color="grey"),
     showarrow=False,
-    bordercolor="white",
-    borderwidth=1,
-    borderpad=4,
-    bgcolor="white",
-    opacity=0.8
+    borderpad=4
 )
 
 
@@ -1070,117 +1099,105 @@ fig.update_yaxes(range=[0, 8.5], showticklabels=False, scaleanchor="x", scalerat
 fig.add_shape(type="line",
     xref="x", yref="y",
     x0=1, y0=2, x1=5,
-    y1=6,
+    y1=8,
     line=dict(
         color="Black",
-        width=3,
+        width=4,
         dash='dash'
     ),
 )
 
 fig.add_shape(type="line",
     xref="x", yref="y",
-    x0=5, y0=6, x1=9,
+    x0=5, y0=8, x1=9,
     y1=2,
     line=dict(
         color="Black",
-        width=3,
+        width=4,
         dash='dash'
     ),
 )
 
 fig.add_shape(type="line",
     xref="x", yref="y",
-    x0=1, y0=2.05, x1=9,
-    y1=2.05,
+    x0=1, y0=2.10, x1=9,
+    y1=2.10,
     line=dict(
         color="Black",
-        width=3,
+        width=4,
         dash='dash'
     ),
 )
 
 fig.add_shape(type="line",
     xref="x", yref="y",
-    x0=1, y0=1.95, x1=9,
-    y1=1.95,
+    x0=1, y0=1.90, x1=9,
+    y1=1.90,
     line=dict(
         color="Black",
-        width=3,
+        width=4,
     ),
 )
 
 add_circle(1, 2, 1.4, "CPP")
 add_circle(9, 2, 1.4, "Apparent<br>learning<br>rate")
-add_circle(5, 6, 1.4, "Pupil:<br>non-corrected<br>(phasic)")
+add_circle(5, 8, 1.4, "Pupil:<br>corrected<br>(phasic)")
 )
 
 total_path_text = format_annotation_text(
     "Total effect (path c)",
     mediation_group['boot_mean'][2],
-    mediation_group['sem'][2],
     mediation_group['ci_lower'][2],
-    mediation_group['ci_upper'][2]
+    mediation_group['ci_upper'][2], 
+    reduced_text=False
 )
 
 fig.add_annotation(
     x=5,  
-    y=0.75,
+    y=0.5,
     xref="x",
     yref="y",
     text=total_path_text,
     showarrow=False,
-    bordercolor="white",
-    borderwidth=1,
-    borderpad=4,
-    bgcolor="white",
-    opacity=0.8
+    borderpad=4
 )
 
 direct_path_text = format_annotation_text(
     "Direct effect (path c')",
     mediation_group['boot_mean'][3],
-    mediation_group['sem'][3],
     mediation_group['ci_lower'][3],
-    mediation_group['ci_upper'][3]
+    mediation_group['ci_upper'][3], 
+    reduced_text=False
 )
 
 fig.add_annotation(
     x=5,  
-    y=3.3,
+    y=3.4,
     xref="x",
     yref="y",
     text=direct_path_text,
     showarrow=False,
-    bordercolor="white",
-    borderwidth=1,
-    borderpad=4,
-    bgcolor="white",
-    opacity=0.8
+    borderpad=4
 )
 
 
 pupil_corrected_path_text = format_annotation_text(
-    "Indirect effect <br>(Pupil: corrected)",
+    "Indirect effect (path a*b)",
     mediation_group['boot_mean'][4],
-    mediation_group['sem'][4],
     mediation_group['ci_lower'][4],
-    mediation_group['ci_upper'][4]
+    mediation_group['ci_upper'][4],
+    reduced_text=False
 )
 
 
 fig.add_annotation(
     x=5,  
-    y=8.2,
+    y=10.5,
     xref="x",
     yref="y",
     text=pupil_corrected_path_text,
     showarrow=False,
-    bordercolor="white",
-    borderwidth=1,
-    borderpad=4,
-    bgcolor="white",
-    opacity=0.8
+    borderpad=4
 )
 
 
@@ -1188,49 +1205,41 @@ fig.add_annotation(
 pupil_corrected_path_a_text = format_annotation_text(
     "Path a",
     mediation_group['boot_mean'][0],
-    mediation_group['sem'][0],
     mediation_group['ci_lower'][0],
-    mediation_group['ci_upper'][0]
+    mediation_group['ci_upper'][0],
+    reduced_text=True
 )
 
 
 fig.add_annotation(
-    x=1.5,  
-    y=5.5,
+    x=1.0,  
+    y=5.1,
     xref="x",
     yref="y",
     text=pupil_corrected_path_a_text,
     font=dict(color="grey"),
     showarrow=False,
-    bordercolor="white",
-    borderwidth=1,
-    borderpad=4,
-    bgcolor="white",
-    opacity=0.8
+    borderpad=4
 )
 
 pupil_corrected_path_b_text = format_annotation_text(
     "Path b",
     mediation_group['boot_mean'][1],
-    mediation_group['sem'][1],
     mediation_group['ci_lower'][1],
-    mediation_group['ci_upper'][1]
+    mediation_group['ci_upper'][1],
+    reduced_text=True
 )
 
 
 fig.add_annotation(
-    x=8.5,  
-    y=5.5,
+    x=8.7,  
+    y=5.1,
     xref="x",
     yref="y",
     text=pupil_corrected_path_b_text,
     font=dict(color="grey"),
     showarrow=False,
-    bordercolor="white",
-    borderwidth=1,
     borderpad=4,
-    bgcolor="white",
-    opacity=0.8
 )
 
 

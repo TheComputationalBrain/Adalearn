@@ -56,7 +56,7 @@ for var in dataframes['shift_optimization_results']['latent_var'].unique():
         var_label = 'CPP'
         title_label = 'cpp'
     elif var == 'prior_conf':
-        var_label = 'Prior uncertainty'
+        var_label = 'Prior uncert'
         title_label = 'prior_uncert'
     else:
         var_label = "variable"
@@ -69,9 +69,9 @@ for var in dataframes['shift_optimization_results']['latent_var'].unique():
         name='Original',
         line=dict(
             color='rgba(0, 130, 150, 0.8)',
-            width=3
+            width=4
         ),
-        marker=dict(size=12)
+        marker=dict(size=16)
     ))
 
     fig.add_trace(go.Scatter(
@@ -81,9 +81,9 @@ for var in dataframes['shift_optimization_results']['latent_var'].unique():
         name='Shifted',
                 line=dict(
             color='rgba(128, 0, 128, 0.8)',
-            width=3
+            width=4
         ),
-        marker=dict(size=12)
+        marker=dict(size=16)
     ))
 
 
@@ -94,27 +94,33 @@ for var in dataframes['shift_optimization_results']['latent_var'].unique():
         name='Null',
                 line=dict(
             color='rgba(220, 120, 0, 0.8)',
-            width=3
+            width=4
         ),
-        marker=dict(size=12)
+        marker=dict(size=16)
     ))
 
 
     fig.update_layout(
         xaxis=dict(
             showline=True, 
-            linewidth=1.5, 
+            linewidth=3, 
             linecolor='black', 
             title_text="Participant", 
-            tickvals=list(range(1, len(latent_var_df['participant'])+1, 2)),
+            tickvals=list(range(1, len(latent_var_df['participant'])+1, 5)),
+            ticks="inside",
+            tickwidth=1.5,
+            tickcolor='black',
         ),
         yaxis=dict(
             showline=True, 
-            linewidth=1.5, 
+            linewidth=3, 
             linecolor='black', 
-            title_text=f"{var_label} vs. apparent learning rate (correlation)"
+            title_text=f"{var_label} vs. apparent learning rate <br>(correlation)",
+            ticks="inside",
+            tickwidth=1.5,
+            tickcolor='black',
         ),
-        font=dict(size=24, family="Times New Roman"),
+        font=dict(size=30, family="Times New Roman"),
         plot_bgcolor='rgba(255, 255, 255, 1)',
         height=720,
         width=840,
@@ -138,7 +144,7 @@ for var in dataframes['shift_optimization_results']['latent_var'].unique():
     fig.write_image(f"{base_filepath}.png", scale=3.125)
 
     # Save as SVG
-    fig.write_image(f"{base_filepath}.svg") 
+    fig.write_image(f"{base_filepath}.svg", scale=3.125) 
 
     fig.show()
 
@@ -174,9 +180,9 @@ fig.add_trace(go.Scatter(
     name='Change point probability',
     line=dict(
         color='rgba(220, 120, 0, 0.8)',
-        width=3
+        width=4
     ),
-    marker=dict(size=12)
+    marker=dict(size=16)
 ))
 
 fig.add_trace(go.Scatter(
@@ -186,26 +192,32 @@ fig.add_trace(go.Scatter(
     name='Prior uncertainty',
     line=dict(  
         color='rgba(0, 130, 150, 0.8)',
-        width=3
+        width=4
     ),
-    marker=dict(size=12)
+    marker=dict(size=16)
 ))  
 
 fig.update_layout(
     xaxis=dict(
         showline=True,
-        linewidth=1.5,
+        linewidth=3,
         linecolor='black',
         title_text="Participant",
-        tickvals=list(range(1, len(group_fraction_shift_df['participant'])+1, 2)),
+        tickvals=list(range(1, len(group_fraction_shift_df['participant'])+1, 5)),
+        ticks="inside",
+        tickwidth=1.5,
+        tickcolor='black',
     ),
     yaxis=dict(
         showline=True,
-        linewidth=1.5,
+        linewidth=3,
         linecolor='black',
-        title_text="Fraction of shifted observations"
+        title_text="Fraction of shifted observations",
+        ticks="inside",
+        tickwidth=1.5,
+        tickcolor='black',
     ),
-    font=dict(size=24, family="Times New Roman"),
+    font=dict(size=30, family="Times New Roman"),
     plot_bgcolor='rgba(255, 255, 255, 1)',
     height=720,
     width=840,
@@ -267,19 +279,31 @@ fig.add_trace(go.Scatter(
     x=line_x,
     y=line_y,
     mode='lines',
-    line=dict(color='rgba(0, 130, 150, 0.8)', width=3,),
+    line=dict(color='rgba(0, 130, 150, 0.8)', width=4),
     showlegend=False
 ))
 
 
 fig.update_layout(
      xaxis=dict(
-            showline=True, linewidth=1.5, linecolor='black', title_text="Fraction of shifted observations - CPP"
+            showline=True, 
+            linewidth=3, 
+            linecolor='black', 
+            title_text="Fraction of shifted observations - CPP",
+            ticks="inside",
+            tickwidth=1.5,
+            tickcolor='black',
         ),
         yaxis=dict(
-            showline=True, linewidth=1.5, linecolor='black', title_text=f"Fraction of shifted observations - Prior uncertainty "
+            showline=True, 
+            linewidth=3, 
+            linecolor='black', 
+            title_text=f"Fraction of shifted observations - Prior uncert",
+            ticks="inside",
+            tickwidth=1.5,
+            tickcolor='black',
         ),
-        font=dict(size=24, family="Times New Roman"),
+        font=dict(size=30, family="Times New Roman"),
         plot_bgcolor='rgba(255, 255, 255, 1)',
         height=720,
         width=840,
@@ -297,18 +321,13 @@ base_filepath = os.path.join(plot_dir, base_filename)
 fig.write_image(f"{base_filepath}.png", scale=3.125)
 
 # Save as SVG
-fig.write_image(f"{base_filepath}.svg") 
+fig.write_image(f"{base_filepath}.svg", scale=3.125) 
 
 fig.show()
 
 
 ######################################################## Paired differences between parameters
-model_uncertainty_params = dataframes['uncertainty_params_on_lr_df']
 shift_corr_diff_ttest = dataframes['lag_corr_difference_paired_ttest']
-
-conf_coef = model_uncertainty_params[model_uncertainty_params['variable'] == 'conf_zscore'].sort_values('participant')
-cpp_coef = model_uncertainty_params[model_uncertainty_params['variable'] == 'cpp_zscore'].sort_values('participant')
-
 
 fig = go.Figure()
 
@@ -339,6 +358,9 @@ for var in latent_vars:
     mean_var_corr_diff = np.mean(var_df['corr_diff'])
     sem_var_corr_diff = stats.sem(var_df['corr_diff'])
 
+    # numeric x for the bar
+    x_bar = x_positions[var]
+
     # jitter around the numeric x position
     jitter = np.random.normal(loc=0.0, scale=jitter_width, size=len(var_df))
     x_numeric = x_bar + jitter
@@ -354,9 +376,6 @@ for var in latent_vars:
         ),
         showlegend=False
     ))
-
-    # numeric x for the bar
-    x_bar = x_positions[var]
 
     fig.add_trace(go.Bar(
         x=[x_bar],
@@ -408,7 +427,7 @@ fig.add_shape(
     type="line",
     x0=x1, x1=x2,
     y0=y_line, y1=y_line,
-    line=dict(color="black", width=2)
+    line=dict(color="black", width=3)
 )
 
 # significance star (choose * ** *** dynamically if you want)
@@ -420,7 +439,18 @@ fig.add_annotation(
     font=dict(size=50, color='black')
 )
 
-# Adding model predictions insert
+# Adding corr (not against null) insert
+#Run ttest
+cpp_corr_mean = np.mean(dataframes['shift_optimization_results']
+                .loc[dataframes['shift_optimization_results']['latent_var'] == var1, 'corr_after_shift'])
+cpp_corr_sem = stats.sem(...)
+
+conf_corr_mean = np.mean(dataframes['shift_optimization_results']
+                .loc[dataframes['shift_optimization_results']['latent_var'] == var2, 'corr_after_shift'])
+conf_corr_sem = stats.sem(...)
+
+ttest_corr = stats.ttest_rel(dataframes['shift_optimization_results'].loc[dataframes['shift_optimization_results']['latent_var'] == var1, 'corr_after_shift'], dataframes['shift_optimization_results'].loc[dataframes['shift_optimization_results']['latent_var'] == var2, 'corr_after_shift'])
+
 # loop and plot
 for var in latent_vars:
     var_df = dataframes['shift_optimization_results'][
@@ -429,6 +459,9 @@ for var in latent_vars:
 
     mean_var_corr = np.mean(var_df['corr_after_shift'])
     sem_var_corr = stats.sem(var_df['corr_after_shift'])
+
+    # numeric x for the bar
+    x_bar = x_positions[var]
 
     # jitter around the numeric x position
     jitter = np.random.normal(loc=0.0, scale=jitter_width, size=len(var_df))
@@ -447,9 +480,6 @@ for var in latent_vars:
         yaxis='y2',
         showlegend=False
     ))
-
-    # numeric x for the bar
-    x_bar = x_positions[var]
 
     fig.add_trace(go.Bar(
         x=[x_bar],
@@ -473,8 +503,29 @@ for var in latent_vars:
         showlegend=False
     ))
 
-# Add a horizontal line at y=0
-fig.add_hline(y=0, line_dash="dash", line_color="black")
+
+if ttest_corr[1] < 0.05:
+
+    # add the connecting line
+    fig.add_shape(
+        type="line",
+        x0=x1, x1=x2,
+        y0=0.7, y1=0.7,
+        line=dict(color="black", width=3),
+        xref='x2',
+        yref='y2',
+    )
+
+    # significance star (choose * ** *** dynamically if you want)
+    fig.add_annotation(
+        x=(x1 + x2) / 2,
+        y=0.7 + 0.05,
+        text='*',
+        showarrow=False,
+        font=dict(size=50, color='black'),
+        xref='x2',
+        yref='y2',
+    )
 
 # layout
 fig.update_layout(
@@ -483,39 +534,54 @@ fig.update_layout(
         tickvals=list(x_positions.values()),
         ticktext=labels,
         showline=True,
-        linewidth=1.5,
+        linewidth=3,
         linecolor='black',
+        ticks="inside",
+        tickwidth=1.5,
+        tickcolor='black',
     ),
     yaxis=dict(
         range=[-0.1, 0.80], 
-        showline=True, linewidth=1.5, linecolor='black',
-        title_text="Shifted correlation difference to null"
+        showline=True, 
+        linewidth=3, 
+        linecolor='black',
+        title_text="Shifted correlation difference to null",
+        tickvals=[0, 0.2, 0.4, 0.6, 0.8],
+        ticks="inside",
+        tickwidth=1.5,
+        tickcolor='black',
     ),
     xaxis2=dict(
-        domain=[0.7, 1.0],
+        domain=[0.69, 0.99],
         anchor='y2',
         showticklabels=True,
         showline=True,
         linecolor='black',
-        linewidth=1.5,
+        linewidth=3,
         tickmode='array',
         tickvals=list(x_positions.values()),
-        ticktext=labels,
-        tickfont=dict(size=18),
-        titlefont=dict(size=20)
+        ticktext=['CPP', 'Prior uncert'],
+        tickfont=dict(size=22),
+        titlefont=dict(size=24),
+        ticks="inside",
+        tickwidth=1.5,
+        tickcolor='black',
     ),
     yaxis2=dict(
         title_text="Shifted correlation",
-        domain=[0.7, 1.0],  # inset y position (change to resize/relocate)
+        domain=[0.69, 0.99],  # inset y position (change to resize/relocate)
         anchor='x2',
         showticklabels=True,
         showline=True,
         linecolor='black',
-        linewidth=1.5,
-        tickfont=dict(size=18),
-        titlefont=dict(size=20)
+        linewidth=3,
+        tickfont=dict(size=22),
+        titlefont=dict(size=24),
+        ticks="inside",
+        tickwidth=1.5,
+        tickcolor='black',
     ),
-    font=dict(size=24, family="Times New Roman"),
+    font=dict(size=30, family="Times New Roman"),
     plot_bgcolor='rgba(255, 255, 255, 1)',
     height=720,
     width=840
@@ -603,7 +669,7 @@ for var in variable_labels:
         y=y_line,
         mode='lines',
         name=f"{var_label} fit",
-        line=dict(color=line_color, width=5, dash='solid'),
+        line=dict(color=line_color, width=4, dash='solid'),
         showlegend=False
     ))
 
@@ -615,22 +681,30 @@ fig.update_layout(
         ticktext=labels,
         title_text="Average update frequency (%)",
         showline=True,
-        linewidth=1.5,
+        linewidth=3,
         linecolor='black',
+        ticks="inside",
+        tickwidth=1.5,
+        tickcolor='black',
+        
     ),
     yaxis=dict(
         showline=True, 
-        linewidth=1.5, 
+        linewidth=3, 
         linecolor='black', 
-        title_text=f"Average proportion of trials shifted (%)"
+        title_text=f"Average proportion of trials shifted (%)",
+        tickvals = list(range(36, 54, 4)),
+        ticks="inside",
+        tickwidth=1.5,
+        tickcolor='black',
     ),
-    font=dict(size=24, family="Times New Roman"),
+    font=dict(size=30, family="Times New Roman"),
     plot_bgcolor='rgba(255, 255, 255, 1)',
     height=720,
     width=840,
     legend=dict(
-            x=0.60,
-            y=0.15,
+            x=0.50,
+            y=0.21,
             xanchor='left',
             yanchor='top'
     )
@@ -721,7 +795,7 @@ for var in dataframes['shift_optimization_results']['latent_var'].unique():
         y=y_line,
         mode='lines',
         name=f"{var_label} fit",
-        line=dict(color=line_color, width=5, dash='solid'),
+        line=dict(color=line_color, width=4, dash='solid'),
         showlegend=False
     ))
 
@@ -732,22 +806,28 @@ fig.update_layout(
         ticktext=labels,
         title_text="Average update frequency (%)",
         showline=True,
-        linewidth=1.5,
+        linewidth=3,
         linecolor='black',
+        ticks="inside",
+        tickwidth=1.5,
+        tickcolor='black',
     ),
     yaxis=dict(
         showline=True, 
-        linewidth=1.5, 
+        linewidth=3, 
         linecolor='black', 
-        title_text=f"Shifted correlation difference to null"
+        title_text=f"Shifted correlation difference to null",
+        ticks="inside",
+        tickwidth=1.5,
+        tickcolor='black',    
     ),
-    font=dict(size=24, family="Times New Roman"),
+    font=dict(size=30, family="Times New Roman"),
     plot_bgcolor='rgba(255, 255, 255, 1)',
     height=720,
     width=840,
     legend=dict(
-            x=0.60,
-            y=0.15,
+            x=0.7,
+            y=0.21,
             xanchor='left',
             yanchor='top'
     )
