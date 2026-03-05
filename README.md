@@ -2,12 +2,14 @@
 
 This repository contains core materials for running and analyzing the studies in the **ADALEARN** project.
 
-The ADALEARN project investigates mechanisms that drive adaptive changes in learning rate within a dynamically changing probabilistic learning task, with a specific focus on the putative role of **noradrenaline**.
+The ADALEARN project investigates mechanisms that drive adaptive changes in learning rate within a dynamically changing probabilistic learning task, with a specific focus on the causative role of **noradrenaline** within the representation of uncertainty during this learning process.
 
 The project includes three separate studies:
 - [`adalearn_pupil`](#adalearn_pupil)
 - [`adalearn_VNS`](#adalearn_vns)
 - [`adalearn_atomoxetine`](#adalearn_atomoxetine)
+
+Currently the project contains only the data and analysis scripts for **adalearn_pupil** project. The other studies will be added to the repo when complete.  
 
 ---
 
@@ -24,9 +26,9 @@ The project includes three separate studies:
 
 ## Overview
 
-The repository is organized into folders corresponding to each of the three studies. Each study folder includes:
+The repository is (or will be) organized into folders corresponding to each of the three studies. Each study folder includes:
 
-- The task implementation
+- The task
 - Raw and processed data
 - Analysis scripts
 
@@ -40,7 +42,7 @@ Because the studies share a common methodological framework, general-purpose fun
 
 ## Tasks
 
-The same probabilistic learning task is used across all three studies. It is adapted from the original implementation (for more information on the task, please see the original repository):
+All of the studies utilise the same probabilistic learning task. It is adapted from the original implementation (for more information on the task, please see the original repository):
 - Paper: [https://doi.org/10.1162/opmi_a_00139](https://doi.org/10.1162/opmi_a_00139)
 - GitHub: [cedricfoucault/ada-learn](https://github.com/cedricfoucault/ada-learn)
 
@@ -73,18 +75,6 @@ Analysis scripts are provided in the `analysis/` folder of each study. Each scri
 - Each script can be run independently.
 - Results (e.g., plots, CSV outputs) are saved in structured output directories.
 
-Given the dependency of some scripts on the presence of relevant .csv files, the analysis scripts have a natural order in which they should be run (this is specified in the docstring at the top of each script). To make it easier to run, for certain projects (e.g. adalearn_pupil) a meta_script is available that can produce all of the data by executing the files in the correct order. This meta-script can be run in the terminal after navigating to its directory. For example, in the adalearn_pupil folder: 
-
-```python
-python run_adalearn_pupil_analysis_pipeline.py
-```
-
-In addition, a meta-script may be available for the production of all plots in the analysis. This can also be run from the terminal. For example, in the adalearn_pupil folder: 
-
-```python
-python run_adalearn_pupil_plot_pipeline.py
-```
-
 ---
 
 ## Requirements
@@ -101,5 +91,7 @@ pip install -r requirements.txt
 ---
 
 ## Contact
+
+For any further inquiries, please contact us:
 
 email: agreenhousetucknott@gmail.com
