@@ -276,3 +276,34 @@ def results_dict_to_df(results_dict):
             "significant_fdr": reject
         })
     return pd.DataFrame(records)
+
+
+
+def assign_quartile_group(df, new_column_name=None, quartile_column=None):
+    """
+    Assigns each row in a group to a quartile based on a specified column.
+
+    Parameters:
+    - df: pd.DataFrame, the dataframe of data to assign quartiles to
+    - new_column_name: str, the name of the new column to store quartile assignments
+    - quartile_column: str, the name of the column to use for quartile assignment
+
+    Returns:
+    - pd.DataFrame, the dataframe with an additional column for quartile assignments
+    """
+    if new_column_name is None:
+        print("Error: new_column_name must be specified.")
+        return df
+    if quartile_column is None:
+        print("Error: quartile_column must be specified.")
+        return df
+    
+    df = df.copy()
+
+    df[new_column_name] = pd.qcut(
+        df[quartile_column],
+        q=4,
+        labels=['Q1', 'Q2', 'Q3', 'Q4']
+    )
+
+    return df

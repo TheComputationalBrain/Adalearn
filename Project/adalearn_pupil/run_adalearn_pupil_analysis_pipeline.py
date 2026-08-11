@@ -45,7 +45,9 @@ if __name__ == "__main__":
     "adalearn_pupil_group_level_analysis_pupil_assessment.py",
     "adalearn_pupil_group_level_analysis_pupil_peristimulus_regression.py",
     "adalearn_pupil_group_level_analysis_pupil_v_lr_and_mediation.py",
+    "adalearn_pupil_group_level_analysis_uncertainty_v_lr_across_tonic_arousal.py",
     "adalearn_pupil_group_level_analysis_update_lag_assessment.py",
+    "adalearn_pupil_group_level_analysis_update_lag_assessment_IO.py",
     "supplement_dataset/naconf_group_level_analysis_pupil_regression.py",
 
 ]

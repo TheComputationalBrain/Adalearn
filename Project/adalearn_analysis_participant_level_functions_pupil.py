@@ -1999,6 +1999,7 @@ def pupil_on_learning_rate_regression_analysis(participant_str, computational_va
     model = sm.OLS(y, X).fit()
 
     # --- Extract regression results ---
+    cov_matrix = model.cov_params()
     conf_int = model.conf_int().values
     mse = mean_squared_error(y, model.predict(X))
     rmse = np.sqrt(mse)
@@ -2016,7 +2017,7 @@ def pupil_on_learning_rate_regression_analysis(participant_str, computational_va
         "included_covariates": ', '.join(covariates) if covariates else 'None'
     })
 
-    return pupil_v_lr_df, regression_df_filtered
+    return pupil_v_lr_df, regression_df_filtered, cov_matrix
 
 
 

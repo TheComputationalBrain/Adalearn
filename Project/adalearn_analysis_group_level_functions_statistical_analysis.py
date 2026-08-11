@@ -81,3 +81,25 @@ def corr_with_alt(x, y):
     - Output of the stats.pearsonr
     """
     return stats.pearsonr(x, y, alternative='two-sided')
+
+
+
+def compute_simple_slope(coef_df, predictor, moderator, interaction, z):
+    """
+    Compute the simple slope of a regression model at a specific value of the moderator.
+    
+    Parameters:
+    - coef_df: pd.DataFrame, DataFrame containing regression coefficients with columns ['variable', 'coefficient'].
+    - predictor: str, name of the predictor variable.
+    - moderator: str, name of the moderator variable.
+    - interaction: str, name of the interaction term (predictor * moderator).
+    - z: float, the value of the moderator at which to compute the simple slope.
+    
+    Returns:
+    - simple_slope: float, the computed simple slope at the specified value of the moderator.
+    """
+    coefs = coef_df.set_index('variable')['coefficient']
+    b_x  = coefs[predictor]
+    b_xz = coefs[interaction]
+
+    return b_x + b_xz * z

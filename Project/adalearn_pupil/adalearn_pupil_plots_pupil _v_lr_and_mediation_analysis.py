@@ -48,7 +48,8 @@ dataframes = group_data_utils.load_sample_csvs(
         'outcome_epoched_pupil_nobc_df', 
         'cluster_permutation_analysis', 
         'cluster_permutation_analysis_nobc',
-        'pupil_v_lr_coef_ttest_df'
+        'pupil_v_lr_coef_ttest_df',
+        'pupil_signal_lr_simple_slopes'
         ],
     prefix='sample_level_analysis-ses_01-task_Adalearn_Pupil-')
 
@@ -1142,7 +1143,7 @@ fig.add_shape(type="line",
 add_circle(1, 2, 1.4, "CPP")
 add_circle(9, 2, 1.4, "Apparent<br>learning<br>rate")
 add_circle(5, 8, 1.4, "Pupil:<br>corrected<br>(phasic)")
-)
+
 
 total_path_text = format_annotation_text(
     "Total effect (path c)",

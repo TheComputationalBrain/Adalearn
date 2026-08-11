@@ -789,6 +789,112 @@ fig.write_image(f"{base_filepath}.svg", scale=3.125)
 fig.show()
 
 
+###################### Binned relationship between CPP and apparent learning rate
+
+# Evaluating the relationship between learning rate and change point probability based on behavioural responses
+_, bin_edges_cpp_lr = pd.qcut(behav_uncertainty_df["cpp"], nbins_uncert_lr, retbins=True)
+
+behav_uncertainty_df["cpp_bin"] = pd.cut(behav_uncertainty_df["cpp"], bins=bin_edges_cpp_lr, labels=False, include_lowest=True)
+
+avg_cpp_per_bin = behav_uncertainty_df.groupby('cpp_bin')['cpp'].mean()
+
+behav_uncertainty_df = behav_uncertainty_df.merge(avg_cpp_per_bin, on='cpp_bin', suffixes=('', '_bin_avg'))
+
+# Storing the average learning rate at the participant level
+binned_data =  {"cpp_bin": [], "cpp_bin_label": [], "avg_lr": [], "participant": []}
+
+for participant in behav_uncertainty_df["participant"].unique():
+    participant_data = behav_uncertainty_df[behav_uncertainty_df["participant"] == participant]
+    
+    for cpp_bin in sorted(participant_data["cpp_bin"].unique()):
+            
+        bin_data = participant_data[
+            (participant_data["cpp_bin"] == cpp_bin)]
+        
+        avg_lr = bin_data["cleaned_learning_rate_estimate"].mean()
+        bin_label = bin_data['cpp_bin_avg'].unique()[0]  
+
+        binned_data['cpp_bin_label'].append(bin_label)
+        binned_data["cpp_bin"].append(cpp_bin)
+        binned_data["avg_lr"].append(avg_lr)
+        binned_data["participant"].append(participant)
+
+participant_cpp_lr_df = pd.DataFrame(binned_data)
+
+group_avg_data = {"cpp_bin": [], "cpp_bin_label": [], "group_avg_lr": [], "group_sem_lr": []}
+
+for bin in sorted(participant_cpp_lr_df['cpp_bin'].unique()):
+    data = participant_cpp_lr_df[participant_cpp_lr_df['cpp_bin'] == bin]
+    learning_rate = data['avg_lr'].mean()
+    lr_sem = stats.sem(data['avg_lr'])
+    bin_label = data['cpp_bin_label'].unique()[0] 
+
+    group_avg_data["cpp_bin"].append(bin)
+    group_avg_data["cpp_bin_label"].append(bin_label)
+    group_avg_data["group_avg_lr"].append(learning_rate)
+    group_avg_data["group_sem_lr"].append(lr_sem)
+
+behav_group_cpp_lr_df = pd.DataFrame(group_avg_data)
+
+
+fig = go.Figure()
+
+fig.add_trace(go.Scatter(
+            x=behav_group_cpp_lr_df['cpp_bin_label'],
+            y=behav_group_cpp_lr_df['group_avg_lr'], 
+            mode='markers', 
+            showlegend=False,
+            marker=dict(size=24, color='rgba(0, 130, 150, 0.8)'),
+            error_y=dict(
+                type='data',
+                array=behav_group_cpp_lr_df['group_sem_lr'],
+                visible=True ),
+            ))
+        
+fig.update_xaxes(
+    showline=True, 
+    linewidth=3, 
+    linecolor='black', 
+    title_text="Change point probability",
+    ticks="inside",
+    tickwidth=1.5,
+    tickcolor='black',
+)
+
+fig.update_yaxes(
+    showline=True, 
+    linewidth=3, 
+    linecolor='black', 
+    title_text="Apparent learning rate (participant)",
+    ticks="inside",
+    tickwidth=1.5,
+    tickcolor='black',
+)
+
+fig.update_layout(
+    plot_bgcolor='rgba(255, 255, 255, 1)',
+    font=dict(size=30, family="Times New Roman"),
+    height=720,
+    width=840)
+
+# Save the figure to the group-level folder
+plot_dir = os.path.join(BASE_DIR, "plots")
+os.makedirs(plot_dir, exist_ok=True)
+
+# Base filename (without extension)
+base_filename = f"adalearn_pupil-group_level_prior_cpp_v_lr_relationship"
+base_filepath = os.path.join(plot_dir, base_filename)
+
+# Save as PNG
+fig.write_image(f"{base_filepath}.png", scale=3.125)
+
+# Save as SVG
+fig.write_image(f"{base_filepath}.svg", scale=3.125) 
+
+fig.show()
+
+
+
 ####################################################### Realtionship between CPP and prior uncertainty around change points
 
 computational_var_df = dataframes['computational_var_df'].copy()
@@ -919,7 +1025,7 @@ fig.update_yaxes(
     showline=True, 
     linewidth=3, 
     linecolor='black', 
-    title_text='Prior uncertainty (SD)',
+    title_text='Prior confidence (SD)',
     ticks="inside",
     tickwidth=1.5,
     tickcolor='black',

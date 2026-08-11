@@ -565,7 +565,12 @@ def evaluation_of_learning_rate(participant_str, condition_str, directory_path, 
         baseline_learning_rates = computational_var_df.iloc[baseline_trial_indices][f'cleaned_learning_rate_{parameter_estimate}']
 
         # Compute the mean
-        baseline_lr = np.mean(baseline_learning_rates)
+        baseline_lr = pd.DataFrame({
+            'mean': [np.mean(baseline_learning_rates)],
+            'std': [np.std(baseline_learning_rates)],
+            'n': [len(baseline_learning_rates)]
+        })
+        #baseline_lr = np.mean(baseline_learning_rates)
 
     if baseline_method == "quantile_within_sessions":
         baseline_trial_indices_list = []
@@ -582,7 +587,12 @@ def evaluation_of_learning_rate(participant_str, condition_str, directory_path, 
             # Compute average learning rate within each session and store
             avg_lr_within_sessions_list.append(computational_var_df.iloc[baseline_trial_indices][f'cleaned_learning_rate_{parameter_estimate}'].mean())
 
-        baseline_lr = np.mean(avg_lr_within_sessions_list)
+        baseline_lr = pd.DataFrame({
+                    'mean': [np.mean(avg_lr_within_sessions_list)],
+                    'std': [np.std(avg_lr_within_sessions_list)],
+                    'n': [len(avg_lr_within_sessions_list)]
+                })
+        #baseline_lr = np.mean(avg_lr_within_sessions_list)
 
     # Compute the average learning rate for the close and far trials around change points
     # Identify change points

@@ -1,5 +1,5 @@
 """
-This script investigates whether the correlation between learning rate and change-point probability (cpp) or confidence can be increased by allowing trial-specific temporal shifts of the learning rate. The main approach is to optimize the alignment of the update sequence with respect to the sequence of cpp (or confidence) and error for each participant, then measure the resulting correlation. The script also estimates a null distribution of correlations by shuffling cpp (or confidence) and error values with respect to update across participants, enabling statistical comparison.
+This script investigates whether the correlation between learning rate and change-point probability (cpp) or confidence can be increased by allowing trial-specific temporal shifts of the learning rate. The main approach is to optimize the alignment of the update sequeshiftnce with respect to the sequence of cpp (or confidence) and error for each participant, then measure the resulting correlation. The script also estimates a null distribution of correlations by shuffling cpp (or confidence) and error values with respect to update across participants, enabling statistical comparison.
 
 Key functionalities:
 - Computes original correlations between learning rate and cpp (and prior confidence) per participant.
@@ -58,9 +58,10 @@ for indep_var in INDEP_VARS:
         rhos_sper[indep_var].append(corr)
 
 # shift update to improve the correlation
-shifts, corrs, null_means, ttest_results = {}, {}, {}, {}
+shifts, corrs, null_means, null_shift_vectors, ttest_results = {}, {}, {}, {}, {}
 all_results = []
 group_summary_list = []
+null_vectors = []
 
 for indep_var in INDEP_VARS:
     print(f'\n\nProcessing latent variable: {indep_var}\n') 
@@ -71,11 +72,11 @@ for indep_var in INDEP_VARS:
     for sub_id in participants:
         print(f'Processing participant {sub_id}...')
         # Run your participant function
-        res = group_comp_utils.process_participant_shift_update(sub_id, shift_data, indep_var, remove=REMOVE)
+        res = group_comp_utils.process_participant_shift_update(sub_id, shift_data, indep_var, remove=REMOVE, error_col='estimate_errors', update_col='estimate_updates')
         results.append(res)
 
     # Unpack results (each res should be a tuple: (shift, corr, null_mean))
-    shifts[indep_var], corrs[indep_var], null_means[indep_var] = zip(*results)
+    shifts[indep_var], corrs[indep_var], null_means[indep_var], null_shift_vectors[indep_var] = zip(*results)
 
     # Integrate optimal shifts into main dataframe
     shift_data[f'optimal_shift_{indep_var}'] = np.nan
@@ -108,6 +109,28 @@ for indep_var in INDEP_VARS:
     
     ttest_results[indep_var] = ttest
 
+    # Storing null vectors
+    null_shifts = []
+
+    for participant, participant_null_vectors in zip(
+            participants,
+            null_shift_vectors[indep_var]):
+
+        for null_iter, shift_vector in enumerate(participant_null_vectors):
+
+            for trial, shifted in enumerate(shift_vector):
+
+                null_shifts.append({
+                    "participant": participant,
+                    "latent_var": indep_var,
+                    "null_iter": null_iter,
+                    "trial": trial,
+                    "shifted": shifted
+                })
+
+    null_shift_df = pd.DataFrame(null_shifts)
+    null_vectors.append(null_shift_df)
+
     group_summary_list.append(pd.DataFrame([{
         'latent_var': indep_var,
         't_stat': ttest.statistic,
@@ -128,6 +151,7 @@ for indep_var in INDEP_VARS:
 
 results_df = pd.concat(all_results, ignore_index=True)
 group_summary_df = pd.concat(group_summary_list, ignore_index=True)
+null_vectors_df = pd.concat(null_vectors, ignore_index=True)
 
 # Average estimates shifted for each variable
 print(f"\n\nOptimal estimate shift for CPP: {shift_data['optimal_shift_cpp'].mean():.2f}")
@@ -179,7 +203,6 @@ ttest_df = pd.DataFrame({
     'p_value': [p_val_diff, p_val_shift],
     'n_participants': [len(cpp_diff_data), len(cpp_shift_corr_data)]
 })
-
 
 for indep_var in INDEP_VARS:
 
@@ -236,7 +259,6 @@ fraction_corr, fraction_p_val = stats.pearsonr(
     group_fraction_shift_df['prior_conf_shift_mean']
 )
 print(f'\nCorrelation between fraction of trials shifted for cpp and prior confidence: r = {fraction_corr:.3f}, p = {fraction_p_val:.3e}')
-
 
 # Check correlation between fraction shifts and average update frequency
 fraction_shift_corr_output = []
@@ -304,6 +326,17 @@ for var in update_shift_corr_df['latent_var'].unique():
     var_df = update_shift_corr_df[update_shift_corr_df['latent_var'] == var]
     print(f"{var}: r = {var_df['update_shift_corr'].values[0]:.3f}, p = {var_df['update_shift_pval'].values[0]:.3f}")
 
+# Collecting null shifted vectors
+null_shift_summary_df = pd.concat(
+    [df for df in null_shift_dfs.values()],
+    ignore_index=True
+)
+
+for col in null_shift_summary_df.columns:
+    null_shift_summary_df[col] = null_shift_summary_df[col].apply(
+        lambda x: x[0] if isinstance(x, list) and len(x) == 1 else x
+    )
+
 # Saving files to .csv
 group_data_utils.save_sample_dataframes_to_csv(dataframes={
     'shifted_estimate_results': shift_data,
@@ -312,7 +345,8 @@ group_data_utils.save_sample_dataframes_to_csv(dataframes={
     'between_variable_shift_optimization': group_fraction_shift_df,
     'fraction_shift_correlation': fraction_shift_corr_df,
     'update_shift_correlation': update_shift_corr_df,
-    'lag_corr_difference_paired_ttest': ttest_df
+    'lag_corr_difference_paired_ttest': ttest_df,
+    'null_shifted_vectors_summary': null_shift_summary_df
     },
     directory_path=BASE_DIR,
     condition_str=CONDITION_STR,

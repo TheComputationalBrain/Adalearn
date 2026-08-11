@@ -21,6 +21,7 @@ parent_dir = Path(__file__).resolve().parent.parent
 sys.path.append(str(parent_dir))
 
 import adalearn_analysis_group_level_functions_data_utilities as group_data_utils
+import adalearn_analysis_group_level_functions_statistical_analysis as group_stats
 import adalearn_analysis_group_level_functions_pupil_analysis as group_pupil
 import adalearn_analysis_participant_level_functions_pupil as pupil
 
@@ -62,8 +63,10 @@ pupil_position_effect_list = []
 pupil_bc_around_cp_list = []
 pupil_nobc_around_cp_list = []
 pupil_v_lr_regress_coef_df_list = []
+pupil_signal_corr_list = []
 nobc_mediation_results_list = []
 bc_mediation_results_list = []
+cov_matrix_dict = {}
 
 # Setting the variables for the mediation analysis
 uncertainty_on_lr_var = dataframes['uncertainty_params_ttest_df']
@@ -174,6 +177,14 @@ for participant in participant_list:
 
     pupil_nobc_effect.append(avg_pupil_nobc_effect)
 
+    pupil_sig_corr = stats.pearsonr(x=pupil_variable_bc, y=pupil_variable_nobc)
+
+    pupil_signal_corr_list.append(pd.DataFrame({
+        'participant': [participant_str],
+        'corr_coef': [pupil_sig_corr.statistic],
+        'corr_p': [pupil_sig_corr.pvalue]
+    }))
+
     # Position data
     epoch_positions = epoch_positions.set_index('time')
 
@@ -209,11 +220,13 @@ for participant in participant_list:
 
 
     # Running regression analysis for pupil effect on learning rate 
-    pupil_v_lr_df, regression_df_filtered = pupil.pupil_on_learning_rate_regression_analysis(participant_str=participant_str, computational_var_df=data_comp_filtered, pupil_bc=pupil_variable_bc, pupil_nobc=pupil_variable_nobc, position_data =pupil_position_df, exclude_zero=False, covariates=['interaction','outcome', 'outcome_num', 'task_session'])
+    pupil_v_lr_df, regression_df_filtered, cov_matrix = pupil.pupil_on_learning_rate_regression_analysis(participant_str=participant_str, computational_var_df=data_comp_filtered, pupil_bc=pupil_variable_bc, pupil_nobc=pupil_variable_nobc, position_data =pupil_position_df, exclude_zero=False, covariates=['interaction','outcome', 'outcome_num', 'task_session'])
 
     pupil_lr_regress_raw_list.append(regression_df_filtered)
 
     pupil_v_lr_regress_coef_df_list.append(pupil_v_lr_df)
+
+    cov_matrix_dict[participant_str] = cov_matrix
 
     # Running mediation analysis (prior uncertainty and nobc pupil effect)
     print(f'\nRunning mediation analysis...')
@@ -239,31 +252,78 @@ group_pupil_nobc_around_cp_df = pd.concat(pupil_nobc_around_cp_list, ignore_inde
 group_pupil_v_lr_dfs = pd.concat(pupil_v_lr_regress_coef_df_list, ignore_index=True)
 group_nobc_mediation_df = pd.concat(nobc_mediation_results_list, ignore_index=True)
 group_bc_mediation_df = pd.concat(bc_mediation_results_list, ignore_index=True)
+group_pupil_sig_corr_df = pd.concat(pupil_signal_corr_list, ignore_index=True)
 
 # Running t-tests on pupil v learning rate regression 
 pupil_v_lr_bc_coef = group_pupil_v_lr_dfs[group_pupil_v_lr_dfs['variable'] == 'pupil_bc_zscore'].sort_values('participant').copy()
 
 pupil_v_lr_nobc_coef = group_pupil_v_lr_dfs[group_pupil_v_lr_dfs['variable'] == 'pupil_nobc_zscore'].sort_values('participant').copy()
 
+interaction_v_lr_coef = group_pupil_v_lr_dfs[group_pupil_v_lr_dfs['variable'] == 'pupil_signal_interact_zscore'].sort_values('participant').copy()
+
 pupil_v_lr_bc_coef_mean = pupil_v_lr_bc_coef['coefficient'].mean()
 pupil_v_lr_nobc_coef_mean = pupil_v_lr_nobc_coef['coefficient'].mean()
+pupil_v_lr_interact_coef_mean = interaction_v_lr_coef['coefficient'].mean()
 pupil_v_lr_bc_coef_sem = stats.sem(pupil_v_lr_bc_coef['coefficient'])
 behav_v_lr_nobc_coef_sem = stats.sem(pupil_v_lr_nobc_coef['coefficient'])
+interaction_v_lr_coef_sem = stats.sem(interaction_v_lr_coef['coefficient'])
 
 # t-tests against zero and between coefficients
 t_bc_pupil = stats.ttest_1samp(pupil_v_lr_bc_coef['coefficient'], 0)
 t_nobc_pupil = stats.ttest_1samp(pupil_v_lr_nobc_coef['coefficient'], 0)
+t_interact_pupil = stats.ttest_1samp(interaction_v_lr_coef['coefficient'], 0)
 t_between_coef = stats.ttest_rel(pupil_v_lr_bc_coef['coefficient'], pupil_v_lr_nobc_coef['coefficient'], alternative='two-sided')
 
 pupil_v_lr_ttest_df = pd.DataFrame({
-    'variable': ['pupil_bc', 'pupil_nobc', 'between_pupil_coef'],
-    'regression_coef': [pupil_v_lr_bc_coef_mean, pupil_v_lr_nobc_coef_mean, None],
-    'regress_coef_sem': [pupil_v_lr_bc_coef_sem, behav_v_lr_nobc_coef_sem, None],
-    't_statistic': [t_bc_pupil.statistic, t_nobc_pupil.statistic, t_between_coef.statistic],
-    'p_value': [t_bc_pupil.pvalue, t_nobc_pupil.pvalue, t_between_coef.pvalue]
+    'variable': ['pupil_bc', 'pupil_nobc', 'between_pupil_coef', 'pupil_sig_interaction'],
+    'regression_coef': [pupil_v_lr_bc_coef_mean, pupil_v_lr_nobc_coef_mean, None, pupil_v_lr_interact_coef_mean],
+    'regress_coef_sem': [pupil_v_lr_bc_coef_sem, behav_v_lr_nobc_coef_sem, None, interaction_v_lr_coef_sem],
+    't_statistic': [t_bc_pupil.statistic, t_nobc_pupil.statistic, t_between_coef.statistic, t_interact_pupil.statistic],
+    'p_value': [t_bc_pupil.pvalue, t_nobc_pupil.pvalue, t_between_coef.pvalue, t_interact_pupil.pvalue]
 })
 
 print(pupil_v_lr_ttest_df)
+
+# Running simple slope analysis if interaction is significant
+if t_interact_pupil.pvalue < 0.05:
+    mod_values = {"-1 SD": -1.0, "Mean": 0.0, "+1 SD": 1.0}
+
+    rows = []
+    group_results = []
+
+    for pid in group_pupil_v_lr_dfs['participant'].unique():
+        coef_df = group_pupil_v_lr_dfs[group_pupil_v_lr_dfs['participant'] == pid]
+        for label, z in mod_values.items():
+            slope = group_stats.compute_simple_slope(
+                coef_df,
+                predictor="pupil_bc_zscore",
+                moderator="pupil_nobc_zscore",
+                interaction="pupil_signal_interact_zscore",
+                z=z
+            )
+            rows.append({"participant": pid, "level": label, "mod_value": z, "slope": slope})
+
+    participant_slopes_df = pd.DataFrame(rows)
+
+    for label, sub in participant_slopes_df.groupby("level"):
+        slopes = sub["slope"].values
+        t_stat, p_val = stats.ttest_1samp(slopes, popmean=0)
+        group_results.append({
+            "level": label,
+            "mod_value": sub["mod_value"].iloc[0],
+            "mean_slope": slopes.mean(),
+            "sd_slope": slopes.std(ddof=1),
+            "n": len(slopes),
+            "t": t_stat,
+            "p": p_val
+        })
+
+    group_simple_slopes_df = pd.DataFrame(group_results)
+    print(group_simple_slopes_df)   
+
+# Pupil signal correlation (ttest against zero)
+pupil_signal_corr_ttest = stats.ttest_1samp(a=group_pupil_sig_corr_df['corr_coef'], popmean=0)
+print(f'\nPupil signal correlation t-test against zero: t-statistic = {pupil_signal_corr_ttest.statistic}, p-value = {pupil_signal_corr_ttest.pvalue}')
 
 # Collating the mediation analysis
 group_nobc_mediation_analysis_df = pd.DataFrame()
@@ -343,6 +403,8 @@ group_data_utils.save_sample_dataframes_to_csv(dataframes={
     'pupil_nobc_around_cp': group_pupil_nobc_around_cp_df,
     'pupil_lr_uncert_nobc_mediation': group_nobc_mediation_analysis_df,
     'pupil_lr_uncert_bc_mediation': group_bc_mediation_analysis_df,
+    'pupil_corr_signal_df': group_pupil_sig_corr_df,
+    'pupil_signal_lr_simple_slopes': group_simple_slopes_df
 },
 directory_path=BASE_DIR,
 condition_str=CONDITION_STR,

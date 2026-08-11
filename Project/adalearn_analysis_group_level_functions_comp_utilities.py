@@ -91,51 +91,80 @@ def optimize_shift_update(indep_var, error, update, sequence_len, remove, n=N_IT
     return shift, compute_correlation_with_shifted_update(indep_var, error, update, shift, remove)
 
 
+def null_optimized_corr_update(
+        data,
+        target_id,
+        indep_var,
+        remove,
+        error_col='estimate_errors',
+        update_col='estimate_updates',
+        n=N_ITER,
+        null_n=N_NULL_ITER):
 
-def null_optimized_corr_update(data, target_id, indep_var, remove, n=N_ITER, null_n=N_NULL_ITER):
-    """Compute the null distribution of the correlation using the shifted update
-    
-    This null distribution is estimated by replacing indep_var and error values of the
-    target participant with those of a randomly sampled (other) participant.
-    """
     target_sub_data = data.loc[data['participant'] == target_id]
     null_ids = list(set(data['participant'].unique()) - {target_id})
+
     null_dist_corr = []
+    null_shift_vectors = []
 
-    # estimate the null distribution by sampling other pariticpants
     for id in np.random.choice(null_ids,
-                               size=null_n, replace=False):
+                               size=null_n,
+                               replace=False):
+
         null_sub_data = data.loc[data['participant'] == id].copy(deep=True)
+
         shift, corr = optimize_shift_update(
-                            null_sub_data[indep_var].to_numpy(),
-                            null_sub_data['estimate_errors'].to_numpy(),
-                            target_sub_data['estimate_updates'].to_numpy(),
-                            target_sub_data.shape[0]/target_sub_data['task_session'].max(),
-                            remove,
-                            n)
+            null_sub_data[indep_var].to_numpy(),
+            null_sub_data[error_col].to_numpy(),
+            target_sub_data[update_col].to_numpy(),
+            target_sub_data.shape[0] /
+            target_sub_data['task_session'].max(),
+            remove,
+            n
+        )
+
         null_dist_corr.append(corr)
-    return null_dist_corr
+        null_shift_vectors.append({
+            "null_participant": id,
+            "shift_vector": shift.copy()
+        })
 
+    return null_dist_corr, null_shift_vectors
 
+def process_participant_shift_update(
+        sub_id,
+        data,
+        indep_var,
+        remove=False,
+        error_col='estimate_errors',
+        update_col='estimate_updates'):
 
-def process_participant_shift_update(sub_id, data, indep_var, remove=False):
-    """Process correlation analysis for a single participant with optimized shift of the update."""
     sub_data = data.loc[data['participant'] == sub_id].copy(deep=True)
-    
-    # get within participant correlation after shift
-    print(f'optimizing shift update...')
-    shift, corr = optimize_shift_update(
-                                 sub_data[indep_var].to_numpy(),
-                                 sub_data['estimate_errors'].to_numpy(),
-                                 sub_data['estimate_updates'].to_numpy(),
-                                 sub_data.shape[0]/sub_data['task_session'].max(),
-                                 remove)
-    
-    # get null distribution of correlation after shift
-    null_dist_corr = null_optimized_corr_update(data, sub_id, indep_var, remove)
-    
-    return shift, corr, np.mean(null_dist_corr)
 
+    print('optimizing shift update...')
+
+    print(sub_data[indep_var])
+    print(sub_data[error_col])
+    print(sub_data[update_col])
+
+    shift, corr = optimize_shift_update(
+        sub_data[indep_var].to_numpy(),
+        sub_data[error_col].to_numpy(),
+        sub_data[update_col].to_numpy(),
+        sub_data.shape[0] / sub_data['task_session'].max(),
+        remove
+    )
+
+    null_dist_corr, null_shift_vectors = null_optimized_corr_update(
+        data,
+        sub_id,
+        indep_var,
+        remove,
+        error_col=error_col,
+        update_col=update_col
+    )
+
+    return shift, corr, np.mean(null_dist_corr), null_shift_vectors
 
 
 def apply_shift(update, shift, remove=False):
