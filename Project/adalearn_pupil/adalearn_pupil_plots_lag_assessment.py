@@ -38,7 +38,11 @@ dataframes = group_data_utils.load_sample_csvs(
         'between_variable_shift_optimization',
         'fraction_shift_correlation',
         'update_shift_correlation',
-        'lag_corr_difference_paired_ttest'
+        'lag_corr_difference_paired_ttest',
+        'shifted_ideal_observer_results',
+        'shift_optimization_IO_group_summary',
+        'shift_optimization_IO_results',
+        'null_shifted_vectors_summary',
         ],
     prefix='sample_level_analysis-ses_01-task_Adalearn_Pupil-')
 
@@ -327,68 +331,54 @@ fig.show()
 
 
 ######################################################## Paired differences between parameters
-shift_corr_diff_ttest = dataframes['lag_corr_difference_paired_ttest']
+results = dataframes['shift_optimization_results']
 
 fig = go.Figure()
 
 # reproducible jitter
 np.random.seed(42)
-jitter_width = 0.08  
+jitter_width = 0.08
 
-# get latent variables in the order they appear and make numeric positions
-latent_vars = list(dataframes['shift_optimization_results']['latent_var'].unique())
+# latent variables in order of appearance -> numeric positions
+latent_vars = list(results['latent_var'].unique())
 x_positions = {v: i for i, v in enumerate(latent_vars)}
 
-# build readable labels in same order
-labels = []
+# readable labels
+label_map = {'cpp': 'Change point probability', 'prior_conf': 'Prior uncertainty'}
+labels = [label_map.get(v, str(v).title()) for v in latent_vars]
+
+# ---------- bars, points, one-sample t-tests vs zero, stars above bars ----------
+star_y_positions = {}   # remember how high each star sits, to place the bracket above
 for var in latent_vars:
-    if var == 'cpp':
-        labels.append('Change point probability')
-    elif var == 'prior_conf':
-        labels.append('Prior uncertainty')
-    else:
-        labels.append(str(var).title())
+    var_df = results[results['latent_var'] == var].copy()
+    vals = var_df['corr_diff'].dropna()
 
-# loop and plot
-for var in latent_vars:
-    var_df = dataframes['shift_optimization_results'][
-        dataframes['shift_optimization_results']['latent_var'] == var
-    ].copy()
-
-    mean_var_corr_diff = np.mean(var_df['corr_diff'])
-    sem_var_corr_diff = stats.sem(var_df['corr_diff'])
-
-    # numeric x for the bar
+    mean_val = np.mean(vals)
+    sem_val = stats.sem(vals)
     x_bar = x_positions[var]
 
-    # jitter around the numeric x position
-    jitter = np.random.normal(loc=0.0, scale=jitter_width, size=len(var_df))
-    x_numeric = x_bar + jitter
+    # one-sample t-test against zero
+    t_stat, p_val = stats.ttest_1samp(vals, popmean=0)
+    print(f"{var} vs 0: t({len(vals) - 1}) = {t_stat:.3f}, p = {p_val:.4g}")
 
+    # jittered individual points
+    jitter = np.random.normal(loc=0.0, scale=jitter_width, size=len(var_df))
     fig.add_trace(go.Scatter(
-        x=x_numeric,
+        x=x_bar + jitter,
         y=var_df['corr_diff'],
         mode='markers',
         name='individuals',
-        marker=dict(
-            size=16,
-            color='rgba(0, 130, 150, 0.3)',
-        ),
+        marker=dict(size=16, color='rgba(0, 130, 150, 0.3)'),
         showlegend=False
     ))
 
+    # bar with SEM
     fig.add_trace(go.Bar(
         x=[x_bar],
-        y=[mean_var_corr_diff],
+        y=[mean_val],
         width=0.6,
         name=str(var),
-        error_y=dict(
-            type='data',
-            array=[sem_var_corr_diff],
-            visible=True,
-            thickness=3,
-            width=10
-        ),
+        error_y=dict(type='data', array=[sem_val], visible=True, thickness=3, width=10),
         marker=dict(
             color='rgba(0, 130, 150, 0.4)',
             line_color='rgba(0, 130, 150, 0.8)',
@@ -397,135 +387,56 @@ for var in latent_vars:
         showlegend=False
     ))
 
-# Add a horizontal line at y=0
+    # star just above the highest element of this bar (error bar or top data point)
+    top = max(mean_val + sem_val, vals.max())
+    y_star = top + 0.02
+    star_y_positions[var] = y_star
+
+    fig.add_annotation(
+        x=x_bar,
+        y=y_star,
+        text='*',
+        showarrow=False,
+        yanchor='bottom',
+        font=dict(size=38, color='black')
+    )
+
+# horizontal line at y=0
 fig.add_hline(y=0, line_dash="dash", line_color="black")
 
-# define the variable names to compare
-var1 = "cpp"
-var2 = "prior_conf"
+# ---------- between-parameter comparison (paired t-test) ----------
+var1, var2 = "cpp", "prior_conf"
 
-# extract means + SEMs
-conf_mean = np.mean(dataframes['shift_optimization_results']
-                    .loc[dataframes['shift_optimization_results']['latent_var'] == var1, 'corr_diff'])
-conf_sem = stats.sem(dataframes['shift_optimization_results']
-                     .loc[dataframes['shift_optimization_results']['latent_var'] == var1, 'corr_diff'])
+wide = results.pivot_table(index='participant', columns='latent_var', values='corr_diff')
+wide = wide[[var1, var2]].dropna()
+ttest_between = stats.ttest_rel(wide[var1], wide[var2])
+p_between = ttest_between.pvalue
+print(f"{var1} vs {var2}: t({len(wide) - 1}) = {ttest_between.statistic:.3f}, p = {p_between:.4g}")
 
-cpp_mean = np.mean(dataframes['shift_optimization_results']
-                   .loc[dataframes['shift_optimization_results']['latent_var'] == var2, 'corr_diff'])
-cpp_sem = stats.sem(dataframes['shift_optimization_results']
-                    .loc[dataframes['shift_optimization_results']['latent_var'] == var2, 'corr_diff'])
 
-# get x positions
-x1 = x_positions[var1]
-x2 = x_positions[var2]
 
-# height for comparison line (slightly above both bars)
-y_line = max(conf_mean + conf_sem, cpp_mean + cpp_sem) + 0.17
+x1, x2 = x_positions[var1], x_positions[var2]
 
-# add the connecting line
+# bracket sits clearly above both per-bar stars
+y_line = max(star_y_positions[var1], star_y_positions[var2]) + 0.20
+
 fig.add_shape(
     type="line",
-    x0=x1, x1=x2,
-    y0=y_line, y1=y_line,
+    x0=x1, x1=x2, y0=y_line, y1=y_line,
     line=dict(color="black", width=3)
 )
 
-# significance star (choose * ** *** dynamically if you want)
 fig.add_annotation(
     x=(x1 + x2) / 2,
-    y=y_line + 0.05,
+    y=y_line + 0.02,
     text='*',
     showarrow=False,
-    font=dict(size=50, color='black')
+    yanchor='bottom',
+    font=dict(size=38, color='black')
 )
 
-# Adding corr (not against null) insert
-#Run ttest
-cpp_corr_mean = np.mean(dataframes['shift_optimization_results']
-                .loc[dataframes['shift_optimization_results']['latent_var'] == var1, 'corr_after_shift'])
-cpp_corr_sem = stats.sem(...)
-
-conf_corr_mean = np.mean(dataframes['shift_optimization_results']
-                .loc[dataframes['shift_optimization_results']['latent_var'] == var2, 'corr_after_shift'])
-conf_corr_sem = stats.sem(...)
-
-ttest_corr = stats.ttest_rel(dataframes['shift_optimization_results'].loc[dataframes['shift_optimization_results']['latent_var'] == var1, 'corr_after_shift'], dataframes['shift_optimization_results'].loc[dataframes['shift_optimization_results']['latent_var'] == var2, 'corr_after_shift'])
-
-# loop and plot
-for var in latent_vars:
-    var_df = dataframes['shift_optimization_results'][
-        dataframes['shift_optimization_results']['latent_var'] == var
-    ].copy()
-
-    mean_var_corr = np.mean(var_df['corr_after_shift'])
-    sem_var_corr = stats.sem(var_df['corr_after_shift'])
-
-    # numeric x for the bar
-    x_bar = x_positions[var]
-
-    # jitter around the numeric x position
-    jitter = np.random.normal(loc=0.0, scale=jitter_width, size=len(var_df))
-    x_numeric = x_bar + jitter
-
-    fig.add_trace(go.Scatter(
-        x=x_numeric,
-        y=var_df['corr_after_shift'],
-        mode='markers',
-        name='individuals',
-        marker=dict(
-            size=16,
-            color='rgba(0, 130, 150, 0.3)',
-        ),
-        xaxis='x2',
-        yaxis='y2',
-        showlegend=False
-    ))
-
-    fig.add_trace(go.Bar(
-        x=[x_bar],
-        y=[mean_var_corr],
-        width=0.6,
-        name=str(var),
-        error_y=dict(
-            type='data',
-            array=[sem_var_corr],
-            visible=True,
-            thickness=3,
-            width=10
-        ),
-        marker=dict(
-            color='rgba(0, 130, 150, 0.4)',
-            line_color='rgba(0, 130, 150, 0.8)',
-            line_width=1.0
-        ),
-        xaxis='x2',
-        yaxis='y2',
-        showlegend=False
-    ))
-
-
-if ttest_corr[1] < 0.05:
-
-    # add the connecting line
-    fig.add_shape(
-        type="line",
-        x0=x1, x1=x2,
-        y0=0.7, y1=0.7,
-        line=dict(color="black", width=3),
-        xref='x2',
-        yref='y2',
-    )
-
-    # significance star (choose * ** *** dynamically if you want)
-    fig.add_annotation(
-        x=(x1 + x2) / 2,
-        y=0.7 + 0.05,
-        text='*',
-        showarrow=False,
-        font=dict(size=50, color='black'),
-        xref='x2',
-        yref='y2',
-    )
+# make sure the y-axis is tall enough to show the bracket and its star
+y_max = max(0.8, y_line + 0.12)
 
 # layout
 fig.update_layout(
@@ -541,42 +452,12 @@ fig.update_layout(
         tickcolor='black',
     ),
     yaxis=dict(
-        range=[-0.1, 0.80], 
-        showline=True, 
-        linewidth=3, 
+        range=[-0.1, y_max],
+        showline=True,
+        linewidth=3,
         linecolor='black',
         title_text="Shifted correlation difference to null",
         tickvals=[0, 0.2, 0.4, 0.6, 0.8],
-        ticks="inside",
-        tickwidth=1.5,
-        tickcolor='black',
-    ),
-    xaxis2=dict(
-        domain=[0.69, 0.99],
-        anchor='y2',
-        showticklabels=True,
-        showline=True,
-        linecolor='black',
-        linewidth=3,
-        tickmode='array',
-        tickvals=list(x_positions.values()),
-        ticktext=['CPP', 'Prior uncert'],
-        tickfont=dict(size=22),
-        titlefont=dict(size=24),
-        ticks="inside",
-        tickwidth=1.5,
-        tickcolor='black',
-    ),
-    yaxis2=dict(
-        title_text="Shifted correlation",
-        domain=[0.69, 0.99],  # inset y position (change to resize/relocate)
-        anchor='x2',
-        showticklabels=True,
-        showline=True,
-        linecolor='black',
-        linewidth=3,
-        tickfont=dict(size=22),
-        titlefont=dict(size=24),
         ticks="inside",
         tickwidth=1.5,
         tickcolor='black',
@@ -587,19 +468,15 @@ fig.update_layout(
     width=840
 )
 
-# Save the figure to the group-level folder
+# save
 plot_dir = os.path.join(BASE_DIR, "plots")
 os.makedirs(plot_dir, exist_ok=True)
 
-# Base filename (without extension)
-base_filename = f"adalearn_pupil-group_level_lag_analysis_paired_differences_between_parameters"
+base_filename = "adalearn_pupil-group_level_lag_analysis_paired_differences_between_parameters"
 base_filepath = os.path.join(plot_dir, base_filename)
 
-# Save as PNG
 fig.write_image(f"{base_filepath}.png", scale=3.125)
-
-# Save as SVG
-fig.write_image(f"{base_filepath}.svg", scale=3.125) 
+fig.write_image(f"{base_filepath}.svg", scale=3.125)
 
 fig.show()
 
@@ -849,3 +726,187 @@ fig.write_image(f"{base_filepath}.svg", scale=3.125)
 
 fig.show()
 
+
+################################################### Comparison of shifted trials between optimized parameters
+
+
+participant_data = dataframes['shifted_estimate_results']
+io_data = dataframes['shifted_ideal_observer_results']
+null_data = dataframes['null_shifted_vectors_summary']
+
+
+prop_trial_shift_results = {'participant': [], 'subj_cpp_trial_shift': [], 'io_cpp_trial_shift': [], 'subj_conf_trial_shift': [], 'io_conf_trial_shift': [], 'null_cpp_trial_shift': [], 'null_conf_trial_shift': []}
+
+for participant in participant_data['participant'].unique():
+    participant_df = participant_data[participant_data['participant'] == participant]
+    io_df = io_data[io_data['participant'] == participant]
+    null_data_df = null_data[null_data['participant'] == participant]
+
+    # CPP
+
+    subj_cpp_trial_shift = (participant_df['optimal_shift_cpp'].sum() / len(participant_df['optimal_shift_cpp'].dropna())) * 100
+
+    io_cpp_trial_shift = (io_df['optimal_shift_cpp'].sum() / len(io_df['optimal_shift_cpp'].dropna())) * 100
+
+    # Conf
+
+    subj_conf_trial_shift = (participant_df['optimal_shift_prior_conf'].sum() / len(participant_df['optimal_shift_prior_conf'].dropna())) * 100
+
+    io_conf_trial_shift = (io_df['optimal_shift_prior_conf'].sum() / len(io_df['optimal_shift_prior_conf'].dropna())) * 100
+
+    # Append results
+    prop_trial_shift_results['participant'].append(participant)
+    prop_trial_shift_results['subj_cpp_trial_shift'].append(subj_cpp_trial_shift)
+    prop_trial_shift_results['io_cpp_trial_shift'].append(io_cpp_trial_shift)
+    prop_trial_shift_results['subj_conf_trial_shift'].append(subj_conf_trial_shift)
+    prop_trial_shift_results['io_conf_trial_shift'].append(io_conf_trial_shift)
+
+    # Null
+    for condition in null_data_df['condition'].unique():
+
+        null_condition_df = null_data_df[null_data_df['condition'] == condition]
+
+        null_trial_shift = (null_condition_df['prop_shifted'].mean()) * 100
+
+        if condition == 'cpp':
+            prop_trial_shift_results['null_cpp_trial_shift'].append(null_trial_shift)
+        elif condition == 'prior_conf':
+            prop_trial_shift_results['null_conf_trial_shift'].append(null_trial_shift)  
+
+
+trial_shift_results_df = pd.DataFrame(prop_trial_shift_results)
+
+columns = ['subj_cpp_trial_shift', 'io_cpp_trial_shift',
+       'subj_conf_trial_shift', 'io_conf_trial_shift', 'null_cpp_trial_shift',
+       'null_conf_trial_shift']
+
+for column in trial_shift_results_df.columns:
+    if column in columns:
+        print(f'{column}: {trial_shift_results_df[column].mean()} +/- {trial_shift_results_df[column].std()}')
+
+
+def rgba(rgb, alpha):
+    r, g, b = rgb
+    return f'rgba({r},{g},{b},{alpha})'
+
+groups = ['Change point probability', 'Prior uncertainty']
+series = {
+    'Participant':    {'Change point probability': 'subj_cpp_trial_shift', 'Prior uncertainty': 'subj_conf_trial_shift', 'rgb': (0, 130, 150)},
+    'Ideal observer': {'Change point probability': 'io_cpp_trial_shift',   'Prior uncertainty': 'io_conf_trial_shift',   'rgb': (179, 1, 1)},
+    'Null':           {'Change point probability': 'null_cpp_trial_shift', 'Prior uncertainty': 'null_conf_trial_shift', 'rgb': (255, 127, 14)},
+}
+
+bar_alpha = 0.5     # bar fill
+line_alpha = 0.8    # bar outline
+point_alpha = 0.3  # individual points (lower than bars)
+
+bar_width = 0.25
+offsets = {'Participant': -bar_width, 'Ideal observer': 0.0, 'Null': bar_width}
+group_pos = {g: i for i, g in enumerate(groups)}
+
+fig = go.Figure()
+rng = np.random.default_rng(0)
+error_traces = []  # added last so they sit on top
+
+for name, cfg in series.items():
+    xs = [group_pos[g] + offsets[name] for g in groups]
+    cols = [cfg[g] for g in groups]
+    means = [trial_shift_results_df[c].mean() for c in cols]
+    sems = [trial_shift_results_df[c].sem() for c in cols]
+
+    # Bars (no error bars here)
+    fig.add_trace(go.Bar(
+        x=xs, y=means, width=bar_width * 0.9,
+        name=name,
+        marker=dict(color=rgba(cfg['rgb'], bar_alpha),
+                    line_color=rgba(cfg['rgb'], line_alpha),
+                    line_width=1.0))
+    )
+    
+
+    # Individual points, jittered around each bar's center
+    px, py, ptxt = [], [], []
+    for g, c in zip(groups, cols):
+        vals = trial_shift_results_df[c]
+        jitter = rng.uniform(-bar_width * 0.3, bar_width * 0.3, size=len(vals))
+        px.extend(group_pos[g] + offsets[name] + jitter)
+        py.extend(vals.tolist())
+        ptxt.extend(trial_shift_results_df['participant'].astype(str).tolist())
+
+    fig.add_trace(go.Scatter(
+        x=px, y=py, mode='markers',
+        marker=dict(
+            color=rgba(cfg['rgb'], point_alpha),
+            size=15,
+            line=dict(color='rgba(0,0,0,0)', width=1),
+        ),
+        text=ptxt,
+        hovertemplate='ID %{text}<br>%{y:.1f}%<extra></extra>',
+        showlegend=False,
+    ))
+
+    # SEM error bars stored to draw on top of everything
+    error_traces.append(go.Scatter(
+        x=xs, y=means, mode='markers',
+        marker=dict(color='rgba(0,0,0,0)', size=1),
+        error_y=dict(
+            type='data', array=sems, visible=True,
+            color='rgba(0,0,0,1)', thickness=1.5, width=8,
+        ),
+        hoverinfo='skip',
+        showlegend=False,
+    ))
+
+for trace in error_traces:
+    fig.add_trace(trace)
+
+fig.update_layout(
+    xaxis=dict(
+        tickmode='array',
+        tickvals=list(group_pos.values()),
+        ticktext=groups,
+        title='Optimized parameter',
+        showline=True,
+        linewidth=3,
+        linecolor='black',
+        ticks="inside",
+        tickwidth=1.5,
+        tickcolor='black',
+    ),
+    yaxis=dict(
+        showline=True, 
+        linewidth=3,
+        linecolor='black', 
+        title_text=f"Percentage of trials shifted (%)",
+        ticks="inside",
+        tickwidth=1.5,
+        tickcolor='black',    
+    ),
+    font=dict(size=28, family="Times New Roman"),
+    plot_bgcolor='rgba(255, 255, 255, 1)',
+    height=720,
+    width=840,
+    legend=dict(
+            x=0.7,
+            y=1.20,
+            xanchor='left',
+            yanchor='top'
+    )
+)
+
+
+# Save the figure to the group-level folder
+plot_dir = os.path.join(BASE_DIR, "plots")
+os.makedirs(plot_dir, exist_ok=True)
+
+# Base filename (without extension)
+base_filename = f"adalearn_pupil-group_level_lag_analysis_comparison_of_shifted_trials_between_optimized_parameters"
+base_filepath = os.path.join(plot_dir, base_filename)
+
+# Save as PNG
+fig.write_image(f"{base_filepath}.png", scale=3.125)
+
+# Save as SVG
+fig.write_image(f"{base_filepath}.svg", scale=3.125) 
+
+fig.show()
