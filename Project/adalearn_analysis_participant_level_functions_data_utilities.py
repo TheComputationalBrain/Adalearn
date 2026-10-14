@@ -390,7 +390,7 @@ def plot_session_behav_comp(participant_str, condition_str, directory_path, base
         tickcolor='black'
     )
     fig_4.update_yaxes(
-        title_text="Change point probability",
+        title_text="Change point probability (ideal observer)",
         showline=True,
         linewidth=3,
         linecolor='black',
@@ -458,7 +458,7 @@ def plot_session_behav_comp(participant_str, condition_str, directory_path, base
         tickcolor='black'
     )
     fig_5.update_yaxes(
-        title_text="Prior uncertainty",
+        title_text="Prior uncertainty (SD, ideal observer)",
         showline=True,
         linewidth=3,
         linecolor='black',
